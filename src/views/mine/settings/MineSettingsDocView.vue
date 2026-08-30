@@ -5,7 +5,7 @@ import { showFailToast } from 'vant'
 import { postMiscArtiCleInfoApi } from '@/api/misc'
 import { getLocale } from '@/i18n'
 import mainBgUrl from '@/assets/images/main_bg.webp'
-import imgFishLogo from '@/assets/images/img_fish_logo.png'
+import imgFishLogo from '@/assets/images/img_fish_browser_logo.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { t } from '@/i18n'
 
@@ -94,7 +94,7 @@ onMounted(() => {
         <div class="about-logo">
           <img class="about-logo__fish" :src="imgFishLogo" alt="" />
           <div class="about-logo__text">
-            <p class="about-logo__title">小鱼视频真人竞技</p>
+            <p class="about-logo__title">U POKER</p>
             <p class="about-logo__subtitle">xypk.com</p>
           </div>
         </div>

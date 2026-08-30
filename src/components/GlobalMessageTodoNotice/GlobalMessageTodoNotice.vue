@@ -24,7 +24,7 @@ import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { invalidateCreditCache, invalidateUcCache } from '@/utils/messageCenterCache'
-import { t } from '@/i18n'
+import { t, tColon } from '@/i18n'
 
 type TodoSectionType = 'uc' | 'bringIn' | 'joinClub'
 
@@ -389,7 +389,7 @@ onBeforeUnmount(() => {
               class="todo-card"
             >
               <div class="card-footer">
-                <p>申请充值：{{ formatUcAmount(item.gold_num) }}</p>
+                <p>{{ tColon(t('Page_Todo_RechargeRequest')) }}{{ formatUcAmount(item.gold_num) }}</p>
               </div>
 
               <div class="card-divider"></div>
@@ -429,7 +429,7 @@ onBeforeUnmount(() => {
             <h3>{{ t('UIMessage_BuyInApply') }}</h3>
             <article v-for="item in bringInList" :key="String(item.id ?? '')" class="todo-card">
               <div class="card-footer card-footer--credit">
-                <p>{{ t('UIMessage_BuyInApply') }}：{{ formatBringInAmount(item.bring_in) }}</p>
+                <p>{{ tColon(t('UIMessage_BuyInApply')) }}{{ formatBringInAmount(item.bring_in) }}</p>
               </div>
 
               <div class="card-divider"></div>

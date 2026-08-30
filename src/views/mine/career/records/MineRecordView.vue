@@ -8,14 +8,14 @@ import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { formatUC } from '@/utils/roomVisibility'
-import { formatDateTime, toTimestampMs } from '@/utils/time'
+import { formatDateTime, formatMonthLabel, toTimestampMs } from '@/utils/time'
 import { localStore } from '@/utils/localStore'
 import { userCache } from '@/utils/userCache'
 import { createKeyedRefresh } from '@/utils/keyedRefresh'
 import { USER_STORE_CAREER } from '@/utils/indexedDB'
 import { useGameStore } from '@/stores/game'
 import dayjs from 'dayjs'
-import { t } from '@/i18n'
+import { t, tJoin } from '@/i18n'
 
 const router = useRouter()
 const route = useRoute()
@@ -61,7 +61,7 @@ interface RecordCard {
   duration: string
   endAt: string
   endDay: string
-  endMonth: string
+  endTs: number
   dateKey: string
   showDate: boolean
   isDateLastData: boolean
@@ -74,14 +74,44 @@ interface TabItem {
 }
 
 const gameTabs: TabItem[] = [
-  { label: t('GameType_0'), key: 'nlh' },
-  { label: t('adaptation10009'), key: 'plo' },
-  { label: t('PokerType_2'), key: '6+' },
+  {
+    get label() {
+      return t('GameType_0')
+    },
+    key: 'nlh',
+  },
+  {
+    get label() {
+      return t('adaptation10009')
+    },
+    key: 'plo',
+  },
+  {
+    get label() {
+      return t('PokerType_2')
+    },
+    key: '6+',
+  },
 ]
 const timeTabs: TabItem[] = [
-  { label: t('UIData_Today'), key: 'today' },
-  { label: "7" + t('UIHappyShop_ActivityShopDay'), key: 'week' },
-  { label: "30" + t('UIHappyShop_ActivityShopDay'), key: 'month' },
+  {
+    get label() {
+      return t('UIData_Today')
+    },
+    key: 'today',
+  },
+  {
+    get label() {
+      return tJoin(7, t('UIHappyShop_ActivityShopDay'))
+    },
+    key: 'week',
+  },
+  {
+    get label() {
+      return tJoin(30, t('UIHappyShop_ActivityShopDay'))
+    },
+    key: 'month',
+  },
 ]
 const selectedGame = ref(gameTabs[0].key)
 const selectedTime = ref(timeTabs[0].key)
@@ -122,9 +152,9 @@ function profitTitle(): string {
     case 'today':
       return t('UIClub_Income3')
     case 'week':
-      return "7" + t('UIClub_Income')
+      return t('Page_Career_ProfitDays', 7)
     case 'month':
-      return "30" + t('UIClub_Income')
+      return t('Page_Career_ProfitDays', 30)
     default:
       return t('UIClub_Income3')
   }
@@ -210,7 +240,6 @@ function mapRecord(row: Record<string, unknown>, index: number): RecordCard {
   const durationMinutes = Math.max(0, Math.round(toSafeNumber(row.play_duration) / 60))
   const endTs = toTimestampMs(row.end_time)
   const endDay = endTs > 0 ? dayjs(endTs).format('DD') : '--'
-  const endMonth = endTs > 0 ? dayjs(endTs).format("M" + t('UIMine_VIP_month')) : '--'
   const dateKey = endTs > 0 ? dayjs(endTs).format('YYYY-MM-DD') : '--'
   return {
     id: String(row.RoomID ?? row.MatchID ?? index + 1),
@@ -221,7 +250,7 @@ function mapRecord(row: Record<string, unknown>, index: number): RecordCard {
     duration: formatDuration(durationMinutes),
     endAt: endTs > 0 ? formatDateTime(row.end_time, 'MM/DD HH:mm') : '--',
     endDay,
-    endMonth,
+    endTs,
     dateKey,
     showDate: true,
     isDateLastData: false,
@@ -294,7 +323,7 @@ interface RecordSummaryCache {
 
 function recordCacheKey(): string {
   const sourceId = isClub.value ? getCareerSelectedClubId() : -1
-  return `${sourceId}_record_${selectedTime.value}_${selectedGame.value}`
+  return `${sourceId}_record_v2_${selectedTime.value}_${selectedGame.value}`
 }
 
 // 命中缓存后立即触发后台刷新；30s TTL 内同 key 跳过；同 key 已在飞行则合并。
@@ -533,7 +562,7 @@ onBeforeUnmount(() => {
             ]"
           >
             <div v-if="card.showDate" class="date">{{ card.endDay }}</div>
-            <div v-if="card.showDate" class="month">{{ card.endMonth }}</div>
+            <div v-if="card.showDate" class="month">{{ formatMonthLabel(card.endTs) }}</div>
             <AppSvgIcon v-if="card.showDate" name="clock" class="tx__time-icon" />
           </div>
           <div class="glass-card record-card" @click="goToDetail(card)">
@@ -848,6 +877,7 @@ onBeforeUnmount(() => {
     font-size: 0.3rem;
     line-height: 0.2rem;
     margin-bottom: 0.1rem;
+    white-space: nowrap;
   }
 
   .tx__time-icon {

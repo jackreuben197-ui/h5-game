@@ -13,7 +13,7 @@ import { showGameToast } from '@/components/Toast'
 import { localStore } from '@/utils/localStore'
 import { userCache } from '@/utils/userCache'
 import { USER_STORE_CAREER } from '@/utils/indexedDB'
-import { t } from '@/i18n'
+import { t, tJoin } from '@/i18n'
 
 const CAREER_CLUB_STORE_KEY = 'CAREER_SELECTED_CLUB_ID'
 const CAREER_CLUB_ALL = 'all'
@@ -39,9 +39,24 @@ const gameTabs: TabItem[] = [
   // { label: t('Mahjong_Name'), key: 'mahjong' },
 ]
 const dateTabs: TabItem[] = [
-  { label: t('UIData_Today'), key: 'today' },
-  { label: '7' + t('UIHappyShop_ActivityShopDay'), key: 'week' },
-  { label: '30' + t('UIHappyShop_ActivityShopDay'), key: 'month' },
+  {
+    get label() {
+      return t('UIData_Today')
+    },
+    key: 'today',
+  },
+  {
+    get label() {
+      return tJoin(7, t('UIHappyShop_ActivityShopDay'))
+    },
+    key: 'week',
+  },
+  {
+    get label() {
+      return tJoin(30, t('UIHappyShop_ActivityShopDay'))
+    },
+    key: 'month',
+  },
 ]
 const selectedGameTab = ref(gameTabs[0].key)
 const selectedDateTab = ref(dateTabs[0].key)

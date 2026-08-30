@@ -9,7 +9,7 @@ import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import DateRangePicker from '@/components/DateRangePicker/DateRangePicker.vue'
 import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 
-import { t } from '@/i18n'
+import { t, tJoin } from '@/i18n'
 import {
   addDays,
   addMonths,
@@ -57,10 +57,30 @@ interface FilterTab {
 }
 
 const filterTabs: FilterTab[] = [
-  { label: t('UIData_Today'), key: 'today' },
-  { label: '7' + t('UIHappyShop_ActivityShopDay'), key: 'week' },
-  { label: '14' + t('UIHappyShop_ActivityShopDay'), key: 'halfmonth' },
-  { label: 'Customize', key: 'customize' },
+  {
+    get label() {
+      return t('UIData_Today')
+    },
+    key: 'today',
+  },
+  {
+    get label() {
+      return tJoin(7, t('UIHappyShop_ActivityShopDay'))
+    },
+    key: 'week',
+  },
+  {
+    get label() {
+      return tJoin(14, t('UIHappyShop_ActivityShopDay'))
+    },
+    key: 'halfmonth',
+  },
+  {
+    get label() {
+      return t('UIGuild_MemberDetailsTimeCustom')
+    },
+    key: 'customize',
+  },
 ]
 const activeFilter = ref<FilterTab['key']>(filterTabs[0].key)
 const loading = ref(false)

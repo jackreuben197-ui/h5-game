@@ -9,7 +9,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { formatDateTime, toTimestampMs } from '@/utils/time'
 import dayjs from 'dayjs'
-import { t } from '@/i18n'
+import { t, tJoin } from '@/i18n'
 
 interface SummaryMetric {
   label: string
@@ -41,13 +41,38 @@ const backgroundStyle = computed(() => ({
 
 const title = computed(() => t('UIMahjong_Record'))
 
-const timeTabs = [
-  t('UIData_Today'),
-  '7' + t('UIHappyShop_ActivityShopDay'),
-  '30' + t('UIHappyShop_ActivityShopDay'),
-  t('UIMine_VIP_dataAll'),
+interface TimeTab {
+  label: string
+  key: string
+}
+
+const timeTabs: TimeTab[] = [
+  {
+    get label() {
+      return t('UIData_Today')
+    },
+    key: 'today',
+  },
+  {
+    get label() {
+      return tJoin(7, t('UIHappyShop_ActivityShopDay'))
+    },
+    key: 'week',
+  },
+  {
+    get label() {
+      return tJoin(30, t('UIHappyShop_ActivityShopDay'))
+    },
+    key: 'month',
+  },
+  {
+    get label() {
+      return t('UIMine_VIP_dataAll')
+    },
+    key: 'all',
+  },
 ]
-const selectedTime = ref(timeTabs[0])
+const selectedTime = ref(timeTabs[0].key)
 const loading = ref(false)
 
 const leftMetrics = ref<SummaryMetric[]>([
@@ -72,13 +97,13 @@ const records = ref<RecordCard[]>([])
 
 function profitTitle(): string {
   switch (selectedTime.value) {
-    case t('UIData_Today'):
+    case 'today':
       return t('UIBill_payLookHandCardTodayWin')
-    case '7' + t('UIHappyShop_ActivityShopDay'):
-      return '7' + t('UIClub_Income')
-    case '30' + t('UIHappyShop_ActivityShopDay'):
-      return '30' + t('UIClub_Income')
-    case t('UIMine_VIP_dataAll'):
+    case 'week':
+      return t('Page_Career_ProfitDays', 7)
+    case 'month':
+      return t('Page_Career_ProfitDays', 30)
+    case 'all':
       return t('UIClub_Income2')
     default:
       return t('UIBill_payLookHandCardTodayWin')
@@ -171,13 +196,13 @@ function mapRecord(row: Record<string, unknown>, index: number): RecordCard {
 
 function resolveTimeType(): number {
   switch (selectedTime.value) {
-    case t('UIData_Today'):
+    case 'today':
       return 1
-    case '7' + t('UIHappyShop_ActivityShopDay'):
+    case 'week':
       return 2
-    case '30' + t('UIHappyShop_ActivityShopDay'):
+    case 'month':
       return 3
-    case t('UIMine_VIP_dataAll'):
+    case 'all':
       return 4
     default:
       return 1
@@ -307,13 +332,13 @@ onMounted(() => {
         <div class="time-tabs">
           <button
             v-for="item in timeTabs"
-            :key="item"
+            :key="item.key"
             type="button"
             class="time-tab"
-            :class="{ active: selectedTime === item }"
-            @click="selectTimeTab(item)"
+            :class="{ active: selectedTime === item.key }"
+            @click="selectTimeTab(item.key)"
           >
-            {{ item }}
+            {{ item.label }}
           </button>
         </div>
 

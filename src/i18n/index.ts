@@ -115,6 +115,27 @@ const LOCALE_TO_SERVER_LANG: Record<LocaleCode, string> = {
   vi: 'vi_VN',
 }
 
+const LOCALE_TO_INTL_LOCALE: Record<LocaleCode, string> = {
+  cn: 'zh-CN',
+  zh: 'zh-TW',
+  en: 'en-US',
+  pt: 'pt-BR',
+  de: 'de-DE',
+  es: 'es-ES',
+  fr: 'fr-FR',
+  hi: 'hi-IN',
+  it: 'it-IT',
+  ja: 'ja-JP',
+  ko: 'ko-KR',
+  ru: 'ru-RU',
+  th: 'th-TH',
+  vi: 'vi-VN',
+}
+
+export function toIntlLocale(locale: LocaleCode = currentLocale.value): string {
+  return LOCALE_TO_INTL_LOCALE[locale] ?? 'en-US'
+}
+
 // 服务端还没有配置某个语言的内容时统一回落到英文。
 export const FALLBACK_SERVER_LANG = 'en_US'
 
@@ -140,6 +161,10 @@ export function tJoin(...parts: (string | number | null | undefined)[]): string 
     .map((part) => (part === null || part === undefined ? '' : String(part).trim()))
     .filter((part) => part.length > 0)
     .join(separator)
+}
+
+export function tColon(label: string): string {
+  return NO_SEPARATOR_LOCALES.has(currentLocale.value) ? `${label}：` : `${label}: `
 }
 
 export function ucLabel(): string {

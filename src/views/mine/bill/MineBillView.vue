@@ -746,7 +746,7 @@ onMounted(() => {
           :class="['tab', { active: activeTab === item.value }]"
           @click="selectTab(item.value)"
         >
-          {{ item.label }}
+          <span v-fit-text="{ maxLines: 2 }" class="tab__text">{{ item.label }}</span>
         </button>
       </div>
 
@@ -946,22 +946,29 @@ onMounted(() => {
 .bill-tabs {
   margin-top: 0.16rem;
   display: flex;
+  align-items: stretch;
+  gap: 0.16rem;
   padding: 0 0.2rem;
-  justify-content: space-between;
-  overflow-x: auto;
 }
 
 .tab {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
   border: 0;
   background: transparent;
   color: rgba(255, 255, 255, 0.72);
   font-size: 0.37rem;
   padding: 0.1rem 0 0rem;
-  white-space: nowrap;
 
   &.active {
     color: #fff;
-    border-bottom: 0.03rem solid rgba(255, 255, 255, 0.9);
+
+    .tab__text {
+      border-bottom: 0.03rem solid rgba(255, 255, 255, 0.9);
+    }
   }
 
   @include theme-light {
@@ -969,9 +976,21 @@ onMounted(() => {
 
     &.active {
       color: var(--c-brand);
-      border-bottom-color: var(--c-brand);
+
+      .tab__text {
+        border-bottom-color: var(--c-brand);
+      }
     }
   }
+}
+
+.tab__text {
+  display: inline-block;
+  min-width: 0;
+  max-width: 100%;
+  line-height: 1.2;
+  text-align: center;
+  padding-bottom: 0.04rem;
 }
 
 .glass-card {

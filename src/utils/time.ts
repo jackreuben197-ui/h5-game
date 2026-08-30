@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { getLocale, toIntlLocale } from '@/i18n'
 
 // 统一把时间值转毫秒时间戳，兼容 number/string/Date。
 export function toTimestampMs(value: unknown): number {
@@ -44,6 +45,18 @@ export function formatDateTime(value: unknown, pattern = 'MM-DD HH:mm'): string 
   const timestampMs = toTimestampMs(value)
   if (timestampMs <= 0) return '--:--'
   return dayjs(timestampMs).format(pattern)
+}
+
+export function formatMonthLabel(value: unknown): string {
+  const timestampMs = toTimestampMs(value)
+  if (timestampMs <= 0) return '--'
+  const date = new Date(timestampMs)
+  if (getLocale() === 'vi') return `Th.${date.getMonth() + 1}`
+  try {
+    return new Intl.DateTimeFormat(toIntlLocale(), { month: 'short' }).format(date)
+  } catch {
+    return dayjs(timestampMs).format('MM')
+  }
 }
 
 // 秒数转倒计时文案：优先 HH:mm:ss，不足 1 小时时 mm:ss。

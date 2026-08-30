@@ -12,7 +12,7 @@ import iconDiamond from '@/assets/icons/icon_diamond.png'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useGameStore } from '@/stores/game'
 import { formatUC } from '@/utils/roomVisibility'
-import { formatDateTime } from '@/utils/time'
+import { formatDateTime, formatMonthLabel } from '@/utils/time'
 import { createKeyedRefresh } from '@/utils/keyedRefresh'
 import { userCache } from '@/utils/userCache'
 import { USER_STORE_CAREER } from '@/utils/indexedDB'
@@ -20,7 +20,7 @@ import {
   multiLanguageTemplateVersion,
   resolveTemplateTextByKey,
 } from '@/utils/multiLanguageTemplate'
-import { getLocale, t } from '@/i18n'
+import { getLocale, t, tJoin } from '@/i18n'
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
@@ -53,9 +53,24 @@ const gameTabs: GameTab[] = [
 ]
 
 const dateTabs: TabItem[] = [
-  { label: t('UIData_Today'), key: 'today' },
-  { label: '7' + t('UIHappyShop_ActivityShopDay'), key: 'week' },
-  { label: '30' + t('UIHappyShop_ActivityShopDay'), key: 'month' },
+  {
+    get label() {
+      return t('UIData_Today')
+    },
+    key: 'today',
+  },
+  {
+    get label() {
+      return tJoin(7, t('UIHappyShop_ActivityShopDay'))
+    },
+    key: 'week',
+  },
+  {
+    get label() {
+      return tJoin(30, t('UIHappyShop_ActivityShopDay'))
+    },
+    key: 'month',
+  },
 ]
 
 // 币种筛选：1-联盟币 2-USDT 3-记分牌 4-钻石。
@@ -244,7 +259,7 @@ function flattenDateGroup(group: StatsMttHistoryDateGroup): MttRecord[] {
   const isValid = Boolean(dateTs?.isValid())
   const dateKey = isValid ? dateTs!.format('YYYY-MM-DD') : '--'
   const endDay = isValid ? dateTs!.format('DD') : '--'
-  const endMonth = isValid ? dateTs!.format('M' + t('UIMine_VIP_month')) : '--'
+  const endMonth = isValid ? formatMonthLabel(dateTs!.valueOf()) : '--'
 
   const rows = Array.isArray(group.list) ? group.list : []
   return rows.map((row) => mapMttRecord(row, dateKey, endDay, endMonth))
@@ -730,6 +745,7 @@ onBeforeUnmount(() => {
     font-size: 0.3rem;
     line-height: 0.2rem;
     margin-bottom: 0.1rem;
+    white-space: nowrap;
   }
 
   .date-icon {

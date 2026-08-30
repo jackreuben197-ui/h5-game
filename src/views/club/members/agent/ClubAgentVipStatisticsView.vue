@@ -383,7 +383,7 @@ onBeforeUnmount(() => {
             </div>
             <div class="metric">
               <b>{{ formatCount(row.sevenDays.hand_num) }}</b>
-              <span>7{{ t('UIHappyShop_ActivityShopDay') }}</span>
+              <span>{{ tJoin(7, t('UIHappyShop_ActivityShopDay')) }}</span>
             </div>
           </article>
           <article class="glass stat-card">
@@ -401,7 +401,7 @@ onBeforeUnmount(() => {
             </div>
             <div class="metric">
               <b>{{ formatAmount(row.sevenDays.profit) }}</b>
-              <span>7{{ t('UIHappyShop_ActivityShopDay') }}</span>
+              <span>{{ tJoin(7, t('UIHappyShop_ActivityShopDay')) }}</span>
             </div>
           </article>
           <article class="glass stat-card">
@@ -419,7 +419,7 @@ onBeforeUnmount(() => {
             </div>
             <div class="metric">
               <b>{{ formatAmount(row.sevenDays.fee) }}</b>
-              <span>7{{ t('UIHappyShop_ActivityShopDay') }}</span>
+              <span>{{ tJoin(7, t('UIHappyShop_ActivityShopDay')) }}</span>
             </div>
           </article>
         </template>

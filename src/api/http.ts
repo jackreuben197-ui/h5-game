@@ -1,4 +1,8 @@
-import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
+import axios, {
+  type AxiosError,
+  type AxiosRequestConfig,
+  type InternalAxiosRequestConfig,
+} from 'axios'
 import { closeToast, showFailToast, showLoadingToast } from 'vant'
 import { useGameStore } from '@/stores/game'
 import { useLoginModalStore } from '@/stores/loginModal'
@@ -18,16 +22,31 @@ const http = axios.create({
   timeout: 60000,
 })
 
+export interface HttpRequestOptionsExt extends AxiosRequestConfig {
+  suppressBusinessToast?: boolean
+  suppressBusinessCodes?: number[]
+  suppressAuthRedirect?: boolean
+  allowGuestAccount?: boolean
+  authToken?: string | false
+  xClub?: string | number | false
+}
+
 export interface HttpRequestConfigExt extends InternalAxiosRequestConfig {
   suppressBusinessToast?: boolean
   suppressBusinessCodes?: number[]
+  suppressAuthRedirect?: boolean
+  allowGuestAccount?: boolean
+  authToken?: string | false
   xClub?: string | number | false
 }
+
+const REAL_USER_REQUIRED_ERROR = 'H5_REAL_USER_REQUIRED'
 
 let authRedirecting = false
 const PRE_LOGIN_PATHS = [
   '/user/login',
   '/user/login2',
+  '/user/experience/login',
   '/user/login_third_party',
   '/user/register',
   '/user/sendcode',
@@ -37,6 +56,7 @@ const PRE_LOGIN_PATHS = [
   '/user/modify/password',
   '/misc/article/info',
   '/misc/h5/display',
+  '/misc/banner/list',
   '/config/register/area',
   '/org/club/default',
   '/roomcenter/guest/all/rooms',
@@ -48,17 +68,29 @@ const PRE_LOGIN_PATHS = [
   '/config/before/login/config',
 ]
 
+const GUEST_PREVIEW_PATHS = [
+  '/misc/banner/list',
+  '/gc/cowboy/room/list',
+  '/roomcenter/mtt/list',
+  '/roomcenter/user/all/rooms',
+  '/roomcenter/user/all/room/ids',
+  '/roomcenter/user/contrast/rooms',
+  '/roomcenter/user/rooms/list',
+  '/roomcenter/user/all/mtt/sng/ids',
+  '/roomcenter/user/mtt/sng/rooms/list',
+]
+
+function isGuestPreviewRequest(url: string): boolean {
+  if (GUEST_PREVIEW_PATHS.some((path) => url.includes(path))) {
+    return true
+  }
+  // 比赛详情、公开排名、牌桌和奖励信息允许预览；myrank/user_wallet/buyin 等不在此白名单。
+  return /^\/roomcenter\/mtt\/[^/]+\/(?:detail|ranks|hranks|rooms|real_prize)$/.test(url)
+}
+
 const TELEGRAM_LOGIN_LOADING_MESSAGE = '正在通过 Telegram 自动登录...'
 let telegramAutoLoginPromise: Promise<boolean> | null = null
 let telegramLoadingVisible = false
-
-const REAL_ROUTE_BY_GUEST_NAME: Record<string, string> = {
-  'guest-home': 'lobby',
-  'guest-club': 'club',
-  'guest-friendsTable': 'friendsTable',
-  'guest-message': 'message',
-  'guest-mine': 'mine',
-}
 
 function shouldAttachXClub(url: string): boolean {
   if (/^\/?(?:(?:org|cmsext)\/club|cmsext\/room|order\/club)\//.test(url)) {
@@ -111,6 +143,16 @@ function resolveXClub(config: HttpRequestConfigExt): string {
 
 // 统一处理登录失效：清理登录态并打开登录弹窗。
 async function forceToLogin(): Promise<void> {
+  const currentStore = useGameStore(pinia)
+  if (currentStore.isGuestAccount) {
+    currentStore.clearLogin()
+    LoginSession.ClearWS()
+    void import('@/session/experienceSession')
+      .then(({ ensureExperienceSession }) => ensureExperienceSession())
+      .catch((error) => console.warn('[http] restore experience session failed:', error))
+    return
+  }
+
   const autoLoginSucceeded = await ensureTelegramAutoLogin()
   if (autoLoginSucceeded) {
     return
@@ -135,12 +177,32 @@ async function forceToLogin(): Promise<void> {
 http.interceptors.request.use(async (config) => {
   const extConfig = config as HttpRequestConfigExt
   const gameStore = useGameStore(pinia)
-  let token = gameStore.sessionToken
+  const configuredToken = extConfig.authToken
+  let token =
+    configuredToken === false
+      ? ''
+      : typeof configuredToken === 'string'
+        ? configuredToken.trim()
+        : gameStore.sessionToken
   const requestUrl = config.url || ''
   const normalizedUrl = requestUrl.startsWith('/') ? requestUrl : `/${requestUrl}`
   // 登录前接口不要求 token。
   const isPreLoginRequest = PRE_LOGIN_PATHS.some((path) => normalizedUrl.includes(path))
   resolveContentType(config)
+
+  // 体验账号也持有有效 token。除公开接口和显式允许的身份接口外，所有真实账号
+  // 数据请求都在 H5 发出前拦截，避免依赖服务端业务错误来判断游客身份。
+  if (
+    gameStore.isGuestAccount &&
+    !isPreLoginRequest &&
+    !isGuestPreviewRequest(normalizedUrl) &&
+    !extConfig.allowGuestAccount
+  ) {
+    useLoginModalStore(pinia).open()
+    const error = new Error('该功能需要注册或登录') as Error & { code?: string }
+    error.code = REAL_USER_REQUIRED_ERROR
+    return Promise.reject(error)
+  }
 
   // Telegram Mini App 场景优先自动登录，登录期间串行等待并阻断后续业务请求。
   if (!token && !isPreLoginRequest && isTelegramMiniAppEnv()) {
@@ -157,7 +219,8 @@ http.interceptors.request.use(async (config) => {
     return Promise.reject(new Error('未登录或登录已过期'))
   }
 
-  if (token) {
+  // 登录前接口默认不携带当前会话 token；体验账号退出走独立 /user/logout。
+  if (token && (!isPreLoginRequest || typeof configuredToken === 'string')) {
     // 与服务端约定：使用 Md5at 请求头传 token。
     config.headers.Md5at = token
   }
@@ -186,7 +249,7 @@ http.interceptors.response.use(
       (businessCode !== undefined && suppressCodes.includes(Number(businessCode)))
 
     // 服务端返回 90010：token 失效，打开登录弹窗。
-    if (businessCode === 90010) {
+    if (businessCode === 90010 && !requestConfig.suppressAuthRedirect) {
       void forceToLogin()
       return Promise.reject(new Error('登录已失效，请重新登录'))
     }
@@ -198,8 +261,12 @@ http.interceptors.response.use(
     return response
   },
   (error: AxiosError<{ message?: string; code?: number }>) => {
+    if ((error as AxiosError & { code?: string }).code === REAL_USER_REQUIRED_ERROR) {
+      return Promise.reject(error)
+    }
     const businessCode = error.response?.data?.code
-    if (businessCode === 90010) {
+    const requestConfig = error.config as HttpRequestConfigExt | undefined
+    if (businessCode === 90010 && !requestConfig?.suppressAuthRedirect) {
       void forceToLogin()
       return Promise.reject(error)
     }
@@ -312,6 +379,7 @@ async function doTelegramAutoLogin(): Promise<boolean> {
       localStore.setItem(StorageKey.TOKEN_EXPIREAT, expireAt)
     }
     const gameStore = useGameStore(pinia)
+    gameStore.setGuestAccount(false)
     gameStore.setSessionToken(token)
     gameStore.setLoginUser({
       account: 'telegram',
@@ -341,14 +409,8 @@ async function doTelegramAutoLogin(): Promise<boolean> {
       throw error
     }
 
-    const currentRoute = router.currentRoute.value
-    if (currentRoute.name === 'login') {
+    if (router.currentRoute.value.name === 'login') {
       await router.replace({ name: 'lobby' })
-    } else if (typeof currentRoute.name === 'string') {
-      const realRouteName = REAL_ROUTE_BY_GUEST_NAME[currentRoute.name]
-      if (realRouteName) {
-        await router.replace({ name: realRouteName })
-      }
     }
 
     return true

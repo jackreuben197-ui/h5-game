@@ -41,6 +41,7 @@ import {
 } from '@bridge-protocol'
 import { useGameStore } from '@/stores/game'
 import LoginSession from '@/session/loginSession'
+import { requireRealUser } from '@/session/realUserGate'
 
 type DetailTabName = 'status' | 'players' | 'rewards' | 'tables' | 'blinds'
 
@@ -127,11 +128,11 @@ const btnConfig = computed<{ text: string; active: boolean }>(() => {
 
 /* ===== 数据加载 ===== */
 
-async function loadDetail(): Promise<void> {
+async function loadDetail(force = false): Promise<void> {
   if (!matchId.value) return
   if (detailRequest) {
     await detailRequest
-    return
+    if (!force) return
   }
   const request = (async () => {
     try {
@@ -327,6 +328,16 @@ watch(activeTab, () => {
   loadActiveTabData()
 })
 
+// 首次挂载时体验登录可能仍在进行；token 就绪或游客切真实账号后刷新当前详情。
+watch(
+  () => gameStore.sessionToken,
+  (token, previousToken) => {
+    if (token && token !== previousToken) {
+      refreshStatusAndRankData()
+    }
+  },
+)
+
 onMounted(() => {
   refreshStatusAndRankData()
   // Cocos 返回 H5 时页面不会重新挂载，同时刷新淘汰状态和最终排名。
@@ -350,7 +361,9 @@ onUnmounted(() => {
 })
 
 async function handleBtnClick(): Promise<void> {
-  if (!btnConfig.value.active || btnLoading.value) return
+  if (btnLoading.value) return
+  if (!requireRealUser(resumeMttActionAfterLogin)) return
+  if (!btnConfig.value.active) return
   const s = stateCode.value
 
   // 报名：弹买入弹窗
@@ -408,12 +421,19 @@ async function handleBtnClick(): Promise<void> {
   }
 }
 
+async function resumeMttActionAfterLogin(): Promise<void> {
+  // 登录后重新获取用户维度的报名状态，再从原按钮动作继续。
+  await loadDetail(true)
+  await handleBtnClick()
+}
+
 async function handleBuyinConfirm(payload: {
   ticket: boolean
   ratio: number
   useFree: boolean
   clubId?: number
 }): Promise<void> {
+  if (!requireRealUser(() => handleBuyinConfirm(payload))) return
   showBuyinModal.value = false
   const id = matchId.value
   btnLoading.value = true
@@ -435,6 +455,7 @@ async function handleBuyinConfirm(payload: {
 }
 
 async function handleBuyinRecharge(payload: { clubId: number }): Promise<void> {
+  if (!requireRealUser(() => handleBuyinRecharge(payload))) return
   if (payload.clubId <= 0 || navigatingToRecharge.value) return
   navigatingToRecharge.value = true
   try {
@@ -457,6 +478,10 @@ function handlePlayersRefresh(mode: 'rank' | 'hunter'): void {
 
 async function handleEnterTable(rid: number): Promise<void> {
   if (btnLoading.value) return
+  if (!gameStore.sessionToken) {
+    requireRealUser(() => handleEnterTable(rid))
+    return
+  }
   btnLoading.value = true
   try {
     const wsPort = await LoginSession.EnsureWS().catch(() => 0)

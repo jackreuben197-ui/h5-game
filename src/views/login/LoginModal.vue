@@ -16,6 +16,12 @@ import { localStore } from '@/utils/localStore'
 import { useGameStore } from '@/stores/game'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { syncPostAuthData } from '@/session/postAuthSync'
+import LoginSession from '@/session/loginSession'
+import { ensureExperienceSession, logoutCurrentSession } from '@/session/experienceSession'
+import {
+  clearPendingRealUserAction,
+  takePendingRealUserAction,
+} from '@/session/realUserGate'
 import { SUPPORTED_LOCALES_OPTIONS, getLocale, setLocale, t, type LocaleCode } from '@/i18n'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import icPhone from '@/assets/icons/ic_phone.svg'
@@ -49,15 +55,6 @@ const LOGIN_TYPE_PHONE = 1
 const LOGIN_TYPE_EMAIL = 2
 
 const PROTOCOL_TYPE_AGREEMENT = 3
-
-// 登录成功后：当前在 guest 假页时切到对应真页；在真页时原地不动。
-const GUEST_TO_REAL_ROUTE: Record<string, string> = {
-  'guest-home': 'lobby',
-  'guest-club': 'club',
-  'guest-friendsTable': 'friendsTable',
-  'guest-message': 'message',
-  'guest-mine': 'mine',
-}
 
 const router = useRouter()
 const gameStore = useGameStore()
@@ -117,6 +114,7 @@ watch(
       // 关闭未登录态弹窗（含点击遮罩关闭）时清空残留的跳转目标，避免下次登录被错误带跳。
       loginModalStore.mode = ''
       loginModalStore.pendingRedirect = ''
+      clearPendingRealUserAction()
       return
     }
     // 每次打开同步一次最新缓存（避免外部修改导致状态过期）。
@@ -377,15 +375,30 @@ function applyDebugAccount(account: DebugAccount): void {
 
 async function handleLogin(target: string) {
   const effectiveInviteCode = resolveAgentInviteCode() || inviteCodeFromChannel.value
+  const replacingExperienceAccount = gameStore.isGuestAccount && Boolean(gameStore.sessionToken)
 
-  const res = await loginV2Api({
-    phone: contactType.value === 'phone' ? target : undefined,
-    email: contactType.value === 'email' ? target : undefined,
-    password: md5(form.password.trim()),
-    area: contactType.value === 'phone' ? normalizeArea() : undefined,
-    invite_code: effectiveInviteCode || undefined,
-    trace_hash: traceHashFromChannel.value || undefined,
-  })
+  // 体验账号必须先调用服务端 /user/logout 释放，再获取真实账号 token。
+  // 若真实登录失败，重新领取体验账号，页面仍可继续预览。
+  if (replacingExperienceAccount) {
+    await logoutCurrentSession()
+  }
+
+  let res: Awaited<ReturnType<typeof loginV2Api>>
+  try {
+    res = await loginV2Api({
+      phone: contactType.value === 'phone' ? target : undefined,
+      email: contactType.value === 'email' ? target : undefined,
+      password: md5(form.password.trim()),
+      area: contactType.value === 'phone' ? normalizeArea() : undefined,
+      invite_code: effectiveInviteCode || undefined,
+      trace_hash: traceHashFromChannel.value || undefined,
+    })
+  } catch (error) {
+    if (replacingExperienceAccount) {
+      void ensureExperienceSession()
+    }
+    throw error
+  }
   const token = String(res.token || '').trim()
   if (!token) {
     throw new Error(t('UILogin_Text') + " token")
@@ -396,6 +409,12 @@ async function handleLogin(target: string) {
   if (Number.isFinite(expireAt) && expireAt > 0) {
     localStore.setItem(StorageKey.TOKEN_EXPIREAT, expireAt)
   }
+  // 游客 token → 真实 token 时必须断开旧 WS，避免复用游客会话的端口/连接。
+  if (gameStore.sessionToken && gameStore.sessionToken !== token) {
+    LoginSession.ClearWS()
+  }
+  // 登录/注册成功后，当前 token 已经属于真实账号。
+  gameStore.setGuestAccount(false)
   gameStore.setSessionToken(token)
   gameStore.setLoginUser({
     account: target,
@@ -411,18 +430,17 @@ async function handleLogin(target: string) {
   const pendingRedirect = loginModalStore.consumePendingRedirect()
   if (pendingRedirect) {
     await router.replace(pendingRedirect)
-  } else {
-    // 假页 → 真页切换；非 guest 路由（如 /wallet）保持原页。
-    const currentName = router.currentRoute.value.name
-    const realRouteName =
-      typeof currentName === 'string' ? GUEST_TO_REAL_ROUTE[currentName] : undefined
-    if (realRouteName) {
-      await router.replace({ name: realRouteName })
-    }
   }
+  // 先取出待续接动作，避免关闭弹窗的 watcher 把它当作用户取消而清掉。
+  const pendingAction = takePendingRealUserAction()
   loginModalStore.close()
   // 登录成功后清除本地缓存的代理邀请码
   clearAgentInviteCodeCache()
+  if (pendingAction) {
+    void Promise.resolve(pendingAction()).catch((error) => {
+      console.warn('[login] resume pending action failed:', error)
+    })
+  }
 }
 
 async function handleRegister(target: string) {
@@ -538,7 +556,10 @@ function hydrateFormFromLocal() {
   )
   contactType.value = storedType === LOGIN_TYPE_EMAIL ? 'email' : 'phone'
   form.area = readLocalString(StorageKey.KEY_PHONE_FIRST, '55') || '55'
-  form.phone = readLocalString(StorageKey.KEY_PHONE, gameStore.loginAccount || '')
+  form.phone = readLocalString(
+    StorageKey.KEY_PHONE,
+    gameStore.isRealUser ? gameStore.loginAccount || '' : '',
+  )
   form.email = readLocalString(LOGIN_EMAIL_KEY)
   form.password = readSavedPassword(contactType.value)
 }

@@ -14,7 +14,6 @@ import { showFailToast } from 'vant'
 import { postOrgClubNoticeApi, postOrgClubNoticeIgnoreApi } from '@/api/cmsext'
 import { enterTable } from '@/bridge/core'
 import MainBottomTab from '@/components/Tabbar/MainBottomTab.vue'
-import LoginModal from '@/views/login/LoginModal.vue'
 import type { MttItem, MttActionType } from '@/components/ListItem/MttCard.vue'
 import type { TabOption } from '@/components/Tabbar/GameTypeTabbar.vue'
 import type { EnterTablePayload } from '@bridge-protocol'
@@ -32,7 +31,6 @@ import { useMttListStore } from '@/stores/mttList'
 import { useMainTabsStore } from '@/stores/mainTabs'
 import { useRoomListStore } from '@/stores/roomList'
 import { useUserInfoStore } from '@/stores/userInfo'
-import { useLoginModalStore } from '@/stores/loginModal'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import { useCachedImage } from '@/utils/imageCache'
 import { localStore } from '@/utils/localStore'
@@ -62,6 +60,7 @@ import {
   resolveTemplateTextByKey,
 } from '@/utils/multiLanguageTemplate'
 import { formatDateTime, formatTodayAwareTimeLabel, toTimestampMs } from '@/utils/time'
+import { requireRealUser } from '@/session/realUserGate'
 
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.png'
@@ -145,7 +144,6 @@ const mttListStore = useMttListStore()
 const roomListStore = useRoomListStore()
 const userInfoStore = useUserInfoStore()
 const tabsStore = useMainTabsStore()
-const loginModalStore = useLoginModalStore()
 const router = useRouter()
 const isChannelPackage = isChannelPackageHost()
 
@@ -182,7 +180,7 @@ const selectedClubId = computed(() => toSafeInt(currentClub.value?.club_id))
 const selectedTribeId = computed(() => toSafeInt(currentClub.value?.tribe_id))
 
 const canCreateTable = computed(() => {
-  if (!gameStore.sessionToken) {
+  if (!gameStore.isRealUser) {
     return false
   }
   const userLevel = toSafeInt(currentJoinedClub.value?.user_level)
@@ -190,7 +188,7 @@ const canCreateTable = computed(() => {
 })
 
 const canManageClub = computed(() => {
-  return Boolean(gameStore.sessionToken && currentJoinedClub.value)
+  return Boolean(gameStore.isRealUser && currentJoinedClub.value)
 })
 
 const showFloatingActionArea = computed(() => {
@@ -373,7 +371,7 @@ onMounted(() => {
 
 async function initializeClubIndex(): Promise<void> {
   // 渠道游客无 token，postAuthSync 不会执行，这里补拉全局配置（平台 MTT 可见性等依赖它）。
-  if (!gameStore.sessionToken) {
+  if (!gameStore.isRealUser) {
     void appConfigStore.ensureGuestGlobalConfig()
   }
 
@@ -392,8 +390,10 @@ async function initializeClubIndex(): Promise<void> {
   // if (currentJoinedClub.value) {
   bootstrapRoomList()
   // }
-  if (gameStore.sessionToken && currentJoinedClub.value) {
+  if (gameStore.sessionToken && currentClub.value) {
     mttListStore.bootstrapMttList()
+  }
+  if (gameStore.isRealUser && currentJoinedClub.value) {
     void fetchClubNotice({ showPopup: true })
   }
 
@@ -461,21 +461,6 @@ function bootstrapRoomList(): void {
   syncExpandedMapWithRecords(roomListStore.records)
 }
 
-function notifyNotLogin(): void {
-  loginModalStore.open()
-}
-
-function handleGuestPageClick(event: MouseEvent): void {
-  if (gameStore.sessionToken) {
-    return
-  }
-
-  event.preventDefault()
-  event.stopPropagation()
-  event.stopImmediatePropagation()
-  notifyNotLogin()
-}
-
 // 缓存分组展开状态，避免静默刷新后折叠状态丢失。
 function persistRoomGroupExpandedCache(): void {
   const payload: RoomGroupExpandedCachePayload = {
@@ -536,7 +521,7 @@ function buildGroupKey(room: RoomRecord): string {
 
 async function handleTableClick(room: RoomRecord): Promise<void> {
   if (isChannelPackage && !gameStore.sessionToken) {
-    notifyNotLogin()
+    requireRealUser()
     return
   }
   if (!gameStore.sessionToken) {
@@ -597,6 +582,7 @@ function handleClubHeaderTabClick(tab: ClubHeaderTabName): void {
 }
 
 function handleQuickActionClick(action: 'safety' | 'ranking'): void {
+  if (!requireRealUser(() => handleQuickActionClick(action))) return
   if (action === 'safety') {
     if (selectedTribeId.value <= 0) {
       showFailToast(t('UIClub_CurrentClubOfNot'))
@@ -610,6 +596,7 @@ function handleQuickActionClick(action: 'safety' | 'ranking'): void {
 }
 
 function handleOpenCustomerService(): void {
+  if (!requireRealUser(handleOpenCustomerService)) return
   const clubId = selectedClubId.value
   if (clubId <= 0) {
     showFailToast(t('UIClub_CurrentClubNo'))
@@ -623,7 +610,13 @@ function handleOpenCustomerService(): void {
   })
 }
 
+function handleRecharge(): void {
+  if (!requireRealUser(handleRecharge)) return
+  void router.push('/wallet')
+}
+
 function handleCreateTableClick(): void {
+  if (!requireRealUser(handleCreateTableClick)) return
   if (!canCreateTable.value) {
     showFailToast(t('UIClub_AdminOrFounderCanTable'))
     return
@@ -637,6 +630,7 @@ function handleFloatingMenuClick(): void {
 }
 
 function goToClubDetail(): void {
+  if (!requireRealUser(goToClubDetail)) return
   void router.push('/club/detail')
 }
 
@@ -793,7 +787,7 @@ function resolveNameByUnityRule(rawName: string): string {
 
 function handleMttCardAction(item: MttItem): void {
   if (isChannelPackage && !gameStore.sessionToken) {
-    notifyNotLogin()
+    requireRealUser(() => handleMttCardAction(item))
     return
   }
   router.push({ name: 'mtt-detail', query: { id: String(item.id) } })
@@ -801,7 +795,7 @@ function handleMttCardAction(item: MttItem): void {
 
 function handleMttCardClick(item: MttItem): void {
   if (isChannelPackage && !gameStore.sessionToken) {
-    notifyNotLogin()
+    requireRealUser(() => handleMttCardClick(item))
     return
   }
   router.push({ name: 'mtt-detail', query: { id: String(item.id) } })
@@ -1144,7 +1138,6 @@ const handleBack = () => {
       <HeaderBack
         :show-back="!isChannelPackage"
         @back="handleBack"
-        @click.capture="handleGuestPageClick"
       >
         <div class="club-identity">
           <div class="club-avatar">
@@ -1173,7 +1166,7 @@ const handleBack = () => {
             :name="t('UIGuildFund_RechargeText')"
             :icon="walletIcon"
             icon-alt="wallet"
-            @click="router.push('/wallet')"
+            @click="handleRecharge"
           />
           <TopActionButton
             v-if="currentClub?.support_im_rid"
@@ -1225,7 +1218,7 @@ const handleBack = () => {
           </button>
         </div>
 
-        <div class="club-quick-actions" @click.capture="handleGuestPageClick">
+        <div class="club-quick-actions">
           <button
             class="club-quick-card club-quick-card--safety"
             type="button"
@@ -1400,7 +1393,6 @@ const handleBack = () => {
       <SafetyGuardDialog v-model:show="showSafetyGuardPopup" :tribe-id="selectedTribeId" />
     </div>
     <MainBottomTab v-if="showChannelTabbar" />
-    <LoginModal />
   </div>
 </template>
 
@@ -1880,6 +1872,8 @@ const handleBack = () => {
   margin-top: -0.03rem;
   max-height: calc(100dvh - 6.9rem);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   padding: 0.34rem 0.96rem 2.2rem 0.38rem;
   background: rgba(255, 255, 255, 0.22);
   backdrop-filter: blur(0.8032rem) saturate(1.04);
@@ -1898,6 +1892,8 @@ const handleBack = () => {
   margin-top: 0;
   max-height: calc(100dvh - 6.9rem);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   padding: 0.34rem 0.38rem 2.2rem;
   backdrop-filter: blur(0.3533rem) saturate(1.04);
 }

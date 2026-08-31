@@ -6,6 +6,7 @@ export const clubTabRoute: RouteRecordRaw = {
   component: () => import('@/views/club/ClubListView.vue'),
   meta: {
     requiresAuth: true,
+    guestPreview: true,
     tabKey: 'club',
     moduleTitle: '俱乐部',
     desktopLayout: 'primary',
@@ -37,6 +38,7 @@ export const clubRoutes: RouteRecordRaw[] = [
         path: 'table/create',
         name: 'club-table-create',
         component: () => import('@/views/table/CreateTableSelect.vue'),
+        meta: { guestPreview: true },
       },
       {
         path: 'jackpot',

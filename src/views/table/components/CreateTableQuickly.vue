@@ -40,6 +40,8 @@ import blueBlur from '@/assets/images/blue_blur.png'
 import greenBlur from '@/assets/images/green_blur.png'
 import purpleBlur from '@/assets/images/purple_blur.png'
 import { t } from '@/i18n'
+import { useGameStore } from '@/stores/game'
+import { requireRealUser } from '@/session/realUserGate'
 
 const emit = defineEmits<{
   'edit-template': [roomConfig: Record<string, unknown>]
@@ -49,6 +51,7 @@ const router = useRouter()
 const route = useRoute()
 const userInfoStore = useUserInfoStore()
 const appConfigStore = useAppConfigStore()
+const gameStore = useGameStore()
 const { isDark } = useTheme()
 
 const formState = reactive<NlhFormState>({
@@ -338,6 +341,7 @@ function buildGameTypeParams(gamePlayType: number): Record<string, unknown> {
 }
 
 async function fetchQuickPresetConfig(): Promise<void> {
+  if (!gameStore.isRealUser) return
   try {
     const gpt = Math.floor(toNumber(route.query.game_play_type, 0)) || 1
     const res = await postOrggetTemplateApi({
@@ -391,6 +395,10 @@ function onSelectTemplate(template: TemplateItem): void {
 }
 
 async function fetchTemplates() {
+  if (!gameStore.isRealUser) {
+    templates.value = []
+    return
+  }
   loadingTemplates.value = true
   try {
     const isFriendsTable = currentOriginType.value === 4
@@ -444,9 +452,24 @@ async function fetchTemplates() {
 }
 
 onMounted(() => {
-  void fetchTemplates()
-  void fetchQuickPresetConfig()
+  if (gameStore.isRealUser) {
+    void fetchTemplates()
+    void fetchQuickPresetConfig()
+  }
 })
+
+watch(
+  () => gameStore.isRealUser,
+  (isReal) => {
+    if (!isReal) {
+      templates.value = []
+      quickPresetConfig.value = null
+      return
+    }
+    void fetchTemplates()
+    void fetchQuickPresetConfig()
+  },
+)
 
 defineExpose({
   refreshTemplates: fetchTemplates,
@@ -643,6 +666,7 @@ function buildTopPanelCreateRequest(): Record<string, unknown> {
 const isSubmitting = ref(false)
 
 async function onQuickCreate() {
+  if (!requireRealUser(resumeQuickCreateAfterLogin)) return
   if (!quickPresetConfig.value?.templateId) {
     showGameToast(t('UITable_NoCan'))
     return
@@ -662,6 +686,11 @@ async function onQuickCreate() {
   } finally {
     isSubmitting.value = false
   }
+}
+
+async function resumeQuickCreateAfterLogin(): Promise<void> {
+  await Promise.all([fetchTemplates(), fetchQuickPresetConfig()])
+  await onQuickCreate()
 }
 
 // ── 模板卡片工具 ──────────────────────────────────────────
@@ -773,6 +802,7 @@ function getTemplateSeatCount(tpl: TemplateItem): number {
 }
 
 async function onCreateFromTemplate(tpl: TemplateItem) {
+  if (!requireRealUser(() => onCreateFromTemplate(tpl))) return
   onSelectTemplate(tpl)
   if (isSubmitting.value) return
   isSubmitting.value = true
@@ -809,6 +839,7 @@ async function onCreateFromTemplate(tpl: TemplateItem) {
 }
 
 function onEditTemplate(tpl: TemplateItem) {
+  if (!requireRealUser(() => onEditTemplate(tpl))) return
   emit('edit-template', { ...tpl.room_config, name: tpl.name })
 }
 
@@ -818,11 +849,13 @@ const deleteDialog = reactive<{ show: boolean; template: TemplateItem | null }>(
 })
 
 function onDeleteTemplate(tpl: TemplateItem) {
+  if (!requireRealUser(() => onDeleteTemplate(tpl))) return
   deleteDialog.template = tpl
   deleteDialog.show = true
 }
 
 async function onDeleteConfirm() {
+  if (!requireRealUser(onDeleteConfirm)) return
   const tpl = deleteDialog.template
   if (!tpl) return
   deleteDialog.show = false
@@ -888,7 +921,7 @@ async function onDeleteConfirm() {
 
       <!-- 底部收费 + 创建 -->
       <div class="quick-bottom-bar">
-        <div v-if="quickPresetConfig" class="quick-fee">
+        <div class="quick-fee">
           <div class="quick-fee__row">
             <span class="quick-fee__label">{{ t('UIClub_FundRecharge_9jO4mlS6') }}:</span>
             <div class="quick-fee__original-wrap">
@@ -913,7 +946,6 @@ async function onDeleteConfirm() {
           </div>
         </div>
         <button
-          v-if="quickPresetConfig"
           class="quick-create-btn"
           :disabled="isSubmitting"
           @click="onQuickCreate"

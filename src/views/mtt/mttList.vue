@@ -13,6 +13,7 @@ import { isChannelPackageHost } from '@/utils/channelPackage'
 import ClubZoneQuickActions from '@/components/Club/ClubZoneQuickActions.vue'
 import MainBottomTab from '@/components/Tabbar/MainBottomTab.vue'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
+import { requireRealUser } from '@/session/realUserGate'
 
 type MttTabName = 'all' | 'poker' | 'mahjong'
 
@@ -23,9 +24,12 @@ const router = useRouter()
 const isChannelPackage = isChannelPackageHost()
 const { isVersionB: isChannelMenuVersionB } = useChannelBottomMenu()
 
-const selectedClubId = computed(() => toSafeInt(userInfoStore.currentClub?.club_id))
+const selectedClub = computed(
+  () => userInfoStore.currentClub ?? userInfoStore.channelDefaultClub,
+)
+const selectedClubId = computed(() => toSafeInt(selectedClub.value?.club_id))
 const selectedTribeId = computed(() =>
-  toSafeInt((userInfoStore.currentClub as Record<string, unknown> | null)?.tribe_id),
+  toSafeInt((selectedClub.value as Record<string, unknown> | null)?.tribe_id),
 )
 
 // 目前没有麻将赛事，暂时隐藏「全部 / 扑克赛事」切换 tab；恢复时改回 true 即可。
@@ -61,7 +65,13 @@ function handleBack() {
   router.push('/home')
 }
 
+function handleRecharge() {
+  if (!requireRealUser(handleRecharge)) return
+  void router.push('/wallet')
+}
+
 function handleOpenCustomerService() {
+  if (!requireRealUser(handleOpenCustomerService)) return
   const clubId = selectedClubId.value
   if (clubId <= 0) {
     showFailToast(t('UIClub_CurrentClubNo'))
@@ -96,10 +106,10 @@ function handleOpenCustomerService() {
               :name="t('UIGuildFund_RechargeText')"
               :icon="walletIcon"
               icon-alt="wallet"
-              @click="router.push('/wallet')"
+              @click="handleRecharge"
             />
             <TopActionButton
-              v-if="userInfoStore.currentClub?.support_im_rid"
+              v-if="selectedClub?.support_im_rid"
               :name="t('UIMineMain01')"
               :icon="serviceIcon"
               icon-alt="service"

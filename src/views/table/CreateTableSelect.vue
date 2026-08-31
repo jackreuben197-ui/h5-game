@@ -7,6 +7,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { postOrgClubGoldApi } from '@/api/org'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { t } from '@/i18n'
+import { useGameStore } from '@/stores/game'
+import { requireRealUser } from '@/session/realUserGate'
 
 interface GameTypeItem {
   key: string
@@ -17,6 +19,7 @@ interface GameTypeItem {
 const router = useRouter()
 const route = useRoute()
 const userInfoStore = useUserInfoStore()
+const gameStore = useGameStore()
 const selectedKey = ref('')
 const originType = computed(() => {
   const v = Number(route.query.origin_type)
@@ -53,6 +56,7 @@ function onSelect(item: GameTypeItem): void {
 }
 
 async function prefetchClubDiamondBalance(): Promise<void> {
+  if (!gameStore.isRealUser) return
   const clubRandomId = userInfoStore.currentClub?.random_id
   if (!clubRandomId) {
     return
@@ -73,6 +77,11 @@ const handleBack = () => {
   router.push(shouldReturnHome.value ? '/home' : '/club/index')
 }
 
+function openJackpot(): void {
+  if (!requireRealUser(openJackpot)) return
+  void router.push('/club/jackpot')
+}
+
 onMounted(() => {
   void prefetchClubDiamondBalance()
 })
@@ -89,7 +98,7 @@ onMounted(() => {
             class="jackpot-action"
             :name="t('jackpot')"
             icon-alt="wallet"
-            @click="router.push('/club/jackpot')"
+            @click="openJackpot"
           />
         </template>
       </HeaderBack>

@@ -24,6 +24,7 @@ import { isChannelPackageHost } from '@/utils/channelPackage'
 import ClubZoneQuickActions from '@/components/Club/ClubZoneQuickActions.vue'
 import MainBottomTab from '@/components/Tabbar/MainBottomTab.vue'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
+import { requireRealUser } from '@/session/realUserGate'
 
 interface Props {
   embedded?: boolean
@@ -71,10 +72,13 @@ const expandedMap = reactive<Record<string, boolean>>({})
 const pageStyle = computed<CSSProperties>(() => ({
   '--tab-bg': `url(${tabBg})`,
 }))
-const selectedClubId = computed(() => toSafeInt(userInfoStore.currentClub?.club_id))
-const selectedClubRandomId = computed(() => toSafeInt(userInfoStore.currentClub?.random_id))
+const selectedClub = computed(
+  () => userInfoStore.currentClub ?? userInfoStore.channelDefaultClub,
+)
+const selectedClubId = computed(() => toSafeInt(selectedClub.value?.club_id))
+const selectedClubRandomId = computed(() => toSafeInt(selectedClub.value?.random_id))
 const selectedTribeId = computed(() =>
-  toSafeInt((userInfoStore.currentClub as Record<string, unknown> | null)?.tribe_id),
+  toSafeInt((selectedClub.value as Record<string, unknown> | null)?.tribe_id),
 )
 
 const filteredRecords = computed(() => {
@@ -325,7 +329,12 @@ function toSafeInt(value: unknown): number {
 function handleBack() {
   router.push('/home')
 }
+function handleRecharge(): void {
+  if (!requireRealUser(handleRecharge)) return
+  void router.push('/wallet')
+}
 function handleOpenCustomerService(): void {
+  if (!requireRealUser(handleOpenCustomerService)) return
   const clubId = selectedClubId.value
   if (clubId <= 0) {
     showFailToast(t('UIClub_CurrentClubNo'))
@@ -364,10 +373,10 @@ function handleOpenCustomerService(): void {
               :name="t('UIGuildFund_RechargeText')"
               :icon="walletIcon"
               icon-alt="wallet"
-              @click="router.push('/wallet')"
+              @click="handleRecharge"
             />
             <TopActionButton
-              v-if="userInfoStore.currentClub?.support_im_rid"
+              v-if="selectedClub?.support_im_rid"
               :name="t('UIMineMain01')"
               :icon="serviceIcon"
               icon-alt="service"
@@ -475,6 +484,8 @@ function handleOpenCustomerService(): void {
   padding-top: 0;
   max-height: calc(100dvh - 2rem);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   padding-right: 0.38rem;
   padding-bottom: 0.5333rem;
   padding-left: 0.38rem;

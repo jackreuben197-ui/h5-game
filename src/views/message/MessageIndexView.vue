@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { postMsgMessageTodoApi, postMsgMessageUnreadApi } from '@/api/msg'
@@ -19,6 +19,8 @@ import iconBoxClub from '@/assets/icons/icon_club_shield.png'
 import iconBoxClubLight from '@/assets/icons/icon_club_shield_light.png'
 import iconBoxTribe from '@/assets/icons/icon_box_tribe.png'
 import iconBoxTribeLight from '@/assets/icons/icon_box_tribe_light.png'
+import { useGameStore } from '@/stores/game'
+import { requireRealUser } from '@/session/realUserGate'
 
 interface BoxItem {
   icon: string
@@ -30,6 +32,7 @@ interface BoxItem {
 }
 
 const userInfoStore = useUserInfoStore()
+const gameStore = useGameStore()
 
 const boxList = ref<BoxItem[]>([
   {
@@ -83,7 +86,7 @@ const displayUser = computed(() => {
     nickname: userInfoStore.userInfo?.user.nickname || '-',
     userID: userInfoStore.userInfo?.user.un_id || '-',
     avatar: userInfoStore.userInfo?.user.avatar || '',
-    diamond: userInfoStore.userInfo?.user.diamonds ?? 0,
+    diamond: gameStore.isRealUser ? (userInfoStore.userInfo?.user.diamonds ?? 0) : 0,
     gold: userInfoStore.userInfo?.user.gold ?? 0,
   }
 })
@@ -135,6 +138,7 @@ function goToMessagePage(
   title: string,
   msgType?: number,
 ): void {
+  if (!requireRealUser(() => goToMessagePage(type, title, msgType))) return
   void router.push({
     path: '/message/detail',
     query: {
@@ -146,13 +150,34 @@ function goToMessagePage(
 }
 
 function goToMineShop(): void {
+  if (!requireRealUser(goToMineShop)) return
   void router.push('/mine/shop')
 }
 
+async function loadPrivateMessageData(): Promise<void> {
+  if (!gameStore.isRealUser) return
+  await Promise.allSettled([fetchUnreadCounts(), fetchBellStatus()])
+}
+
 onMounted(() => {
-  void fetchUnreadCounts()
-  void fetchBellStatus()
+  void loadPrivateMessageData()
 })
+
+watch(
+  () => gameStore.isRealUser,
+  (isReal) => {
+    if (isReal) {
+      void loadPrivateMessageData()
+      return
+    }
+    creditUnreadCount.value = 0
+    ucUnreadCount.value = 0
+    showBell.value = false
+    boxList.value.forEach((box) => {
+      box.unreadCount = 0
+    })
+  },
+)
 </script>
 
 <template>

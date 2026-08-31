@@ -11,10 +11,12 @@ import { useWalletStore } from '@/stores/wallet'
 
 const emit = defineEmits<{
   'open-cs-chat': [orderData: Record<string, unknown>]
+  'require-auth': [action?: () => void | Promise<void>]
 }>()
 const props = defineProps<{
   clubId?: number
   balance?: number
+  preview?: boolean
 }>()
 
 const walletStore = useWalletStore()
@@ -34,7 +36,9 @@ const mainWithdrawAccountShown = computed(() => withdrawUserDescription(selected
 const sheetOpen = ref(false)
 const walletListExpanded = ref(false)
 
-const canSubmit = computed(() => addressInput.value.trim().length > 0 && !submitting.value)
+const canSubmit = computed(
+  () => Boolean(props.preview) || (addressInput.value.trim().length > 0 && !submitting.value),
+)
 
 /** Сохранённый адрес игрока: user_description / user_decription (см. API). */
 function withdrawUserDescription(item: OnlineWithdrawTypeItem | null | undefined): string {
@@ -112,8 +116,13 @@ function parseWithdrawGoldCents(raw: string): number | null {
 }
 
 watch(
-  () => props.clubId,
-  (clubId) => {
+  [() => props.clubId, () => props.preview],
+  ([clubId, preview]) => {
+    if (preview) {
+      savedAddresses.value = []
+      selectedAddress.value = null
+      return
+    }
     if (Number(clubId) > 0) {
       void loadSavedAddresses()
     }
@@ -122,6 +131,10 @@ watch(
 )
 
 async function loadSavedAddresses(): Promise<void> {
+  if (props.preview) {
+    savedAddresses.value = []
+    return
+  }
   const base = withdrawClubPayload()
   if (!('club_id' in base)) {
     savedAddresses.value = []
@@ -158,6 +171,10 @@ async function loadSavedAddresses(): Promise<void> {
 }
 
 async function openSheet(): Promise<void> {
+  if (props.preview) {
+    emit('require-auth', openSheet)
+    return
+  }
   walletListExpanded.value = false
   sheetOpen.value = true
   await loadSavedAddresses()
@@ -171,6 +188,10 @@ function selectAddress(addr: OnlineWithdrawTypeItem): void {
 }
 
 async function onSheetSave(): Promise<void> {
+  if (props.preview) {
+    emit('require-auth', onSheetSave)
+    return
+  }
   const club = assertClubPayload()
   if (!club) return
   const addrTrim = addressInput.value.trim()
@@ -202,6 +223,10 @@ async function onSheetSave(): Promise<void> {
 }
 
 async function handleSubmit(): Promise<void> {
+  if (props.preview) {
+    emit('require-auth', handleSubmit)
+    return
+  }
   if (!canSubmit.value) return
   const club = assertClubPayload()
   if (!club) return

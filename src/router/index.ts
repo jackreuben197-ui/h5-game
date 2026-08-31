@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory, type RouteLocationNormalized } from 'vue-router'
 import { useGameStore } from '@/stores/game'
 import { useWalletStore } from '@/stores/wallet'
+import { useLoginModalStore } from '@/stores/loginModal'
 import { pinia } from '@/stores/pinia'
 import { createLogger } from '@/utils/logger'
 import { isChannelPackageHost } from '@/utils/channelPackage'
@@ -20,6 +21,9 @@ function walletRouteClubId(to: RouteLocationNormalized): number | undefined {
 }
 
 function preloadWalletPriceList(to: RouteLocationNormalized): true {
+  if (!useGameStore(pinia).isRealUser) {
+    return true
+  }
   const walletStore = useWalletStore(pinia)
   void walletStore.loadPriceList(walletRouteClubId(to)).catch((error: unknown) => {
     log.warn('wallet price list preload failed', error)
@@ -56,7 +60,12 @@ const router = createRouter({
       path: '/wallet',
       name: 'wallet',
       component: () => import('@/views/wallet/WalletIndexView.vue'),
-      meta: { requiresAuth: true, tabKey: 'wallet', desktopLayout: 'content' },
+      meta: {
+        requiresAuth: true,
+        guestPreview: true,
+        tabKey: 'wallet',
+        desktopLayout: 'content',
+      },
       beforeEnter: preloadWalletPriceList,
     },
     {
@@ -82,25 +91,35 @@ const router = createRouter({
       path: '/gameList',
       name: 'game-list',
       component: () => import('@/views/home/gameList.vue'),
-      meta: { requiresAuth: true, tabKey: 'poker', desktopLayout: 'content' },
+      meta: {
+        requiresAuth: true,
+        guestPreview: true,
+        tabKey: 'poker',
+        desktopLayout: 'content',
+      },
     },
     {
       path: '/mttList',
       name: 'mtt-list',
       component: () => import('@/views/mtt/mttList.vue'),
-      meta: { requiresAuth: true, tabKey: 'mtt', desktopLayout: 'content' },
+      meta: {
+        requiresAuth: true,
+        guestPreview: true,
+        tabKey: 'mtt',
+        desktopLayout: 'content',
+      },
     },
     {
       path: '/mtt/detail',
       name: 'mtt-detail',
       component: () => import('@/views/mtt/MttDetailView.vue'),
-      meta: { requiresAuth: true, desktopLayout: 'content' },
+      meta: { requiresAuth: true, guestPreview: true, desktopLayout: 'content' },
     },
     {
       path: '/createTable',
       name: 'createTable',
       component: () => import('@/views/table/CreateTableTemplate.vue'),
-      meta: { requiresAuth: true, desktopLayout: 'content' },
+      meta: { requiresAuth: true, guestPreview: true, desktopLayout: 'content' },
     },
     {
       path: '/createMtt',
@@ -117,49 +136,29 @@ const router = createRouter({
   ],
 })
 
-// 未登录场景下，5 个底部 Tab 的真实页面会被重定向到对应访客页，而不是跳登录。
-const GUEST_FALLBACK_BY_NAME: Record<string, string> = {
-  lobby: 'guest-home',
-  club: 'guest-club',
-  friendsTable: 'guest-friendsTable',
-  message: 'guest-message',
-  mine: 'guest-mine',
-}
-
 router.beforeEach((to, from) => {
   const gameStore = useGameStore(pinia)
   const token = gameStore.sessionToken
+  const isRealUser = gameStore.isRealUser
   const isChannelPackage = isChannelPackageHost()
   log.info('beforeEach', {
     from: from.fullPath || '<init>',
     to: to.fullPath,
     requiresAuth: Boolean(to.meta.requiresAuth),
     hasToken: Boolean(token),
+    isGuestAccount: gameStore.isGuestAccount,
   })
 
-  if (isChannelPackage && (to.name === 'club' || to.name === 'guest-club')) {
+  if (isChannelPackage && to.name === 'club') {
     return { name: 'club-index' }
   }
 
-  if (to.meta.requiresAuth && !token) {
+  if (to.meta.requiresAuth && !isRealUser && !to.meta.guestPreview) {
     if (isChannelPackage && to.name === 'club-index') {
       return true
     }
-    const guestName = typeof to.name === 'string' ? GUEST_FALLBACK_BY_NAME[to.name] : undefined
-    if (guestName) {
-      if (isChannelPackage && guestName === 'guest-club') {
-        return { name: 'club-index' }
-      }
-      log.warn('redirect to guest page: token missing', {
-        from: from.fullPath || '<init>',
-        to: to.fullPath,
-        guest: guestName,
-      })
-      return { name: guestName }
-    }
-
-    // 非 5tab 的鉴权页面拦截：仅取消导航/兜底 guest-home，不自动弹窗。
-    // 弹窗只在 (a) 用户主动点登录 / (b) http 401 / (c) ws token 失效 三种情形触发。
+    // 需要真实账号的页面统一在前端拦截并记录目标地址，登录后继续原流程。
+    useLoginModalStore(pinia).open(to.fullPath)
     if (from.name) {
       log.warn('cancel nav: token missing', {
         from: from.fullPath || '<init>',
@@ -167,16 +166,16 @@ router.beforeEach((to, from) => {
       })
       return false
     }
-    log.warn('initial nav fallback to guest-home: token missing', {
+    log.warn('initial nav fallback to home: real user required', {
       to: to.fullPath,
     })
-    return { name: 'guest-home' }
+    return { name: 'lobby' }
   }
   if (isChannelPackage && to.name === 'friendsTable') {
     return { name: 'wallet' }
   }
   if (to.name === 'login') {
-    if (token) {
+    if (isRealUser) {
       log.warn('redirect to lobby: already logged in', {
         from: from.fullPath || '<init>',
       })
@@ -186,8 +185,9 @@ router.beforeEach((to, from) => {
       log.warn('cancel nav to /login', { from: from.fullPath })
       return false
     }
-    log.warn('initial nav to /login fallback to guest-home')
-    return { name: 'guest-home' }
+    log.warn('initial nav to /login fallback to home')
+    useLoginModalStore(pinia).open()
+    return { name: 'lobby' }
   }
 
   return true
@@ -219,7 +219,7 @@ router.afterEach((to, from, failure) => {
 
   if (to.meta.requiresAuth) {
     const gameStore = useGameStore(pinia)
-    if (gameStore.sessionToken.trim()) {
+    if (gameStore.isRealUser) {
       syncPostAuthData()
     }
   }

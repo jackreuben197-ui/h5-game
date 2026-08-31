@@ -257,7 +257,16 @@ async function forceToLoginFromWs(reason: string): Promise<void> {
   giveUpReconnect('auth-invalid')
 
   const gameStore = useGameStore(pinia)
+  const wasGuestAccount = gameStore.isGuestAccount
   gameStore.clearLogin()
+
+  if (wasGuestAccount) {
+    void import('@/session/experienceSession')
+      .then(({ ensureExperienceSession }) => ensureExperienceSession())
+      .catch((error) => log.warn('restore experience session failed:', error))
+    authRedirecting = false
+    return
+  }
 
   // 登录态失效时原地弹出登录弹窗 + 文案提示，不强制跳页。
   showFailToast(t('tokenFail'))

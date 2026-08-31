@@ -2,9 +2,10 @@
 import { computed, defineAsyncComponent } from 'vue'
 import { useGameStore } from '@/stores/game'
 import ExternalLinkFrame from '@/components/ExternalLinkFrame/ExternalLinkFrame.vue'
+import LoginModal from '@/views/login/LoginModal.vue'
 
 const gameStore = useGameStore()
-const hasSession = computed(() => Boolean(gameStore.sessionToken.trim()))
+const hasSession = computed(() => gameStore.isRealUser)
 
 // 访客页不需要消息审核与客服完整业务包；登录态出现后再加载并挂载。
 const GlobalMessageTodoNotice = defineAsyncComponent(
@@ -17,6 +18,7 @@ const GlobalCustomerServiceChat = defineAsyncComponent(
 
 <template>
   <RouterView />
+  <LoginModal />
   <GlobalBridgeDialogHost />
   <GlobalBridgePanelHost />
   <ExternalLinkFrame />

@@ -9,6 +9,7 @@ import { dzpkPersistStorage, localStore } from '@/utils/localStore'
 
 interface GameState {
   sessionToken: string
+  isGuestAccount: boolean
   websocketPort: number
   loginAccount: string
   loginNickname: string
@@ -26,6 +27,8 @@ export const useGameStore = defineStore(
     state: (): GameState => ({
       // 启动时从 dzpk_TOKEN 恢复 token，保证与 Cocos 键名一致。
       sessionToken: localStore.getItem<string>(StorageKey.TOKEN, '') || '',
+      // 体验 token 与真实 token 都是有效 token，身份由体验登录来源及 user/info 判定。
+      isGuestAccount: false,
       // 启动时恢复 websocket 端口缓存，对齐 Cocos LoginSession 的 SyncWS 能力。
       websocketPort: Number(localStore.getItem<number | string>(StorageKey.WS_PORT, 0)) || 0,
       loginAccount: '',
@@ -37,7 +40,17 @@ export const useGameStore = defineStore(
       lastBridgeAck: '',
       lastBridgeAckAt: 0,
     }),
+    getters: {
+      isRealUser: (state): boolean =>
+        Boolean(state.sessionToken.trim()) && !state.isGuestAccount,
+    },
     actions: {
+      setGuestAccount(isGuest: boolean): void {
+        this.isGuestAccount = isGuest
+        if (isGuest) {
+          useUserInfoStore().clearPrivateInfo()
+        }
+      },
       setSessionToken(token: string): void {
         this.sessionToken = token
         // 双写到本地存储，便于非 Pinia 场景也能读取同一 token key。
@@ -94,6 +107,7 @@ export const useGameStore = defineStore(
         this.loginNickname = ''
         this.loginUserId = ''
         this.syncedProfileToken = ''
+        this.setGuestAccount(false)
         // 登录态清空时，同步清理全局共享缓存。
         const userInfoStore = useUserInfoStore()
         userInfoStore.clearInfo()
@@ -123,6 +137,7 @@ export const useGameStore = defineStore(
       storage: dzpkPersistStorage,
       pick: [
         'sessionToken',
+        'isGuestAccount',
         'websocketPort',
         'loginAccount',
         'loginNickname',

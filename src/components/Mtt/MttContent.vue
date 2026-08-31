@@ -69,9 +69,12 @@ const mttListStore = useMttListStore()
 const userInfoStore = useUserInfoStore()
 
 const expandedGroupMap = ref<Record<string, boolean>>({})
-const selectedClubId = computed(() => toSafeInt(userInfoStore.currentClub?.club_id))
+const selectedClub = computed(
+  () => userInfoStore.currentClub ?? userInfoStore.channelDefaultClub,
+)
+const selectedClubId = computed(() => toSafeInt(selectedClub.value?.club_id))
 const selectedTribeId = computed(() =>
-  toSafeInt((userInfoStore.currentClub as Record<string, unknown> | null)?.tribe_id),
+  toSafeInt((selectedClub.value as Record<string, unknown> | null)?.tribe_id),
 )
 
 const nowMs = ref(Date.now())
@@ -532,6 +535,8 @@ function getDefaultGameIcon(category: MttCategory): string {
   z-index: 1;
   max-height: calc(100dvh - 2rem);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   padding: 0.1rem 0.38rem 0.5rem;
   backdrop-filter: blur(0.3533rem) saturate(1.04);
 }

@@ -32,6 +32,8 @@ export default class StorageKey {
   static LOGIN_AREA_LIST_CACHE = 'LOGIN_AREA_LIST_CACHE'
   // token 有效期。
   static TOKEN_EXPIREAT = 'TOKEN_EXPIREAT'
+  // 浏览器安装级体验账号设备标识；不包含定位或硬件隐私信息。
+  static EXPERIENCE_DEVICE_ID = 'EXPERIENCE_DEVICE_ID'
   // 电话区号（保持原拼写 AERA，与 Cocos 对齐）。
   static AERA_CODE = 'AERA_CODE'
   // 手机号。

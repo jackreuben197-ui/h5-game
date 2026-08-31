@@ -284,6 +284,13 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       channelDefaultClubLoaded = false
       channelDefaultClubInFlight = null
     },
+    clearPrivateInfo(): void {
+      // 游客预览仍需保留渠道俱乐部的公开资料，只清真实账号维度的数据。
+      this.userInfo = null
+      this.clubList = []
+      this.currentClubId = ''
+      this.clubAgentInvitations = {}
+    },
     setClubAgentInvitation(clubRandomId: number | string | null | undefined, link: string): void {
       const cacheKey = normalizeClubId(clubRandomId)
       if (!cacheKey) {

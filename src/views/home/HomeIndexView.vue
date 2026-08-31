@@ -22,6 +22,7 @@ import { useGameStore } from '@/stores/game'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import PokerGameList from '@/views/home/gameList.vue'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
+import { requireRealUser } from '@/session/realUserGate'
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
@@ -130,17 +131,16 @@ function persistHomeRoomStatsCache(stats: HomeZoneStats): void {
 }
 
 const homeRoomStats = ref<HomeZoneStats>(restoreHomeRoomStatsCache() || createEmptyZoneStats())
-const selectedClubId = computed(() => toSafeInt(userInfoStore.currentClub?.club_id))
-const selectedTribeId = computed(() =>
-  toSafeInt((userInfoStore.currentClub as Record<string, unknown> | null)?.tribe_id),
-)
-
 const currentClub = computed<ClubInfo | null>(() => {
   if (userInfoStore.currentClub) {
     return userInfoStore.currentClub
   }
-  return userInfoStore.clubList[0] || null
+  return userInfoStore.clubList[0] || (isChannelPackage ? userInfoStore.channelDefaultClub : null)
 })
+const selectedClubId = computed(() => toSafeInt(currentClub.value?.club_id))
+const selectedTribeId = computed(() =>
+  toSafeInt((currentClub.value as Record<string, unknown> | null)?.tribe_id),
+)
 
 const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages()
 const { noticeText, ensureHomeAnnouncementConfig } = useHomeAnnouncement()
@@ -153,7 +153,9 @@ const clubNameText = computed(
   () => toSafeString(currentClub.value?.club_name) || t('UILobby_Menu_menu_btn_club'),
 )
 
-const clubGoldText = computed(() => toSafeNumber(currentClub.value?.user_gold) / 100)
+const clubGoldText = computed(() =>
+  gameStore.isRealUser ? toSafeNumber(currentClub.value?.user_gold) / 100 : 0,
+)
 const pokerTablesText = computed(() => `${homeRoomStats.value.poker.tables}`)
 const pokerPlayersText = computed(() => `${homeRoomStats.value.poker.players}`)
 // const miniGamePlayersText = computed(() => `${homeRoomStats.value.miniGame.players}`)
@@ -192,12 +194,12 @@ const channelUserLevel = computed(() => toSafeInt(currentJoinedClub.value?.user_
 const canCreateChannelTable = computed(
   () =>
     isChannelPackage &&
-    Boolean(gameStore.sessionToken && currentJoinedClub.value) &&
+    Boolean(gameStore.isRealUser && currentJoinedClub.value) &&
     channelUserLevel.value >= 1 &&
     channelUserLevel.value <= 3,
 )
 const canManageChannelClub = computed(
-  () => isChannelPackage && Boolean(gameStore.sessionToken && currentJoinedClub.value),
+  () => isChannelPackage && Boolean(gameStore.isRealUser && currentJoinedClub.value),
 )
 const showChannelFloatingActions = computed(
   () => canCreateChannelTable.value || canManageChannelClub.value,
@@ -234,11 +236,17 @@ function goToMttList(): void {
   void router.push('/mttList')
 }
 
+function openGuestAuth(mode: 'login' | 'register'): void {
+  requireRealUser(undefined, { mode })
+}
+
 function goToClubDetail(): void {
+  if (!requireRealUser(goToClubDetail)) return
   void router.push('/club/detail')
 }
 
 function goToCreateTable(): void {
+  if (!requireRealUser(goToCreateTable)) return
   void router.push({
     path: '/club/table/create',
     query: { origin_type: 5, return_to: 'home' },
@@ -246,10 +254,12 @@ function goToCreateTable(): void {
 }
 
 function toggleBalance(): void {
+  if (!requireRealUser(toggleBalance)) return
   balanceVisible.value = !balanceVisible.value
 }
 
 async function refreshBalance(): Promise<void> {
+  if (!requireRealUser(refreshBalance)) return
   try {
     loading.value = true
     await getUserClubApi()
@@ -262,6 +272,7 @@ async function refreshBalance(): Promise<void> {
 }
 
 function goToRecharge(): void {
+  if (!requireRealUser(goToRecharge)) return
   void router.push('/wallet')
 }
 function handleOpenEmail(): void {
@@ -282,6 +293,7 @@ function handleOpenTelegram(): void {
 }
 
 function handleOpenCustomerService(): void {
+  if (!requireRealUser(handleOpenCustomerService)) return
   const clubId = selectedClubId.value
   if (clubId <= 0) {
     showGameToast(t('UIClub_CurrentClubNo'))
@@ -296,6 +308,7 @@ function handleOpenCustomerService(): void {
 }
 
 function openMiniGamePanel(): void {
+  if (!requireRealUser(openMiniGamePanel)) return
   showGameToast(t('UIClub_InDeve'))
   // openBridgePanel({
   //   panelType: 'notification',
@@ -423,6 +436,9 @@ function extractCowboyOnlineCount(raw: unknown): number {
 
 // 首页小游戏统计：使用 /api/gc/cowboy/room/list，仅取 online 字段。
 async function fetchHomeMiniGameStats(): Promise<void> {
+  if (!gameStore.sessionToken.trim()) {
+    return
+  }
   const response = await getCowboyRoomListApi({
     limit: 100,
     offset: 0,
@@ -501,6 +517,17 @@ watch(noticeText, () => {
 })
 
 watch(
+  () => gameStore.sessionToken,
+  (token, previousToken) => {
+    if (token && token !== previousToken) {
+      void fetchHomeMiniGameStats().catch((error) => {
+        console.warn('[home] fetch mini game stats failed:', error)
+      })
+    }
+  },
+)
+
+watch(
   [() => roomListStore.records, selectedClubId, selectedTribeId],
   () => {
     refreshHomePokerMahjongStatsFromStore()
@@ -528,6 +555,9 @@ watch(
 )
 
 onMounted(() => {
+  if (!gameStore.isRealUser) {
+    void appConfigStore.ensureGuestGlobalConfig()
+  }
   void ensureClubDataReady()
   void ensureHomeAnnouncementConfig().catch((error) => {
     console.warn('[home] fetch announcement config failed:', error)
@@ -572,9 +602,25 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="home-page">
-    <!-- 0. 首页顶部保留 POKER 品牌 -->
+    <!-- 0. 正式首页统一承载游客/真实账号；游客仅额外显示注册、登录入口。 -->
     <div class="top-bar">
       <span class="top-bar__logo">POKER</span>
+      <div v-if="!gameStore.isRealUser" class="top-bar__actions">
+        <button
+          class="top-bar__btn top-bar__btn--register"
+          type="button"
+          @click="openGuestAuth('register')"
+        >
+          {{ t('UILogin_TitleRegister') }}
+        </button>
+        <button
+          class="top-bar__btn top-bar__btn--login"
+          type="button"
+          @click="openGuestAuth('login')"
+        >
+          {{ t('UIGuild_MemberManagerSortByLastLoginTime') }}
+        </button>
+      </div>
     </div>
 
     <!-- 1. 顶部俱乐部介绍轮播图 -->
@@ -901,6 +947,9 @@ onBeforeUnmount(() => {
   &::-webkit-scrollbar {
     display: none;
   }
+  :deep(.group-item) {
+    padding: 0.2667rem 0.2rem 0.45rem;
+  }
 }
 
 .top-bar {
@@ -922,6 +971,50 @@ onBeforeUnmount(() => {
     0 -0.5px 0 currentColor;
   letter-spacing: 0.05rem;
   font-family: 'HONOR Sans CN', sans-serif;
+}
+
+.top-bar__actions {
+  display: flex;
+  gap: 0.1rem;
+}
+
+.top-bar__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.18rem 0.75rem;
+  border: 0;
+  border-radius: 0.56rem;
+  font-family: 'PingFang SC', sans-serif;
+  font-size: 0.34rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:active {
+    opacity: 0.85;
+  }
+}
+
+.top-bar__btn--register {
+  color: rgba(0, 0, 0, 0.82);
+  background: rgba(174, 174, 174, 0.52);
+  box-shadow: 0.01rem 0.01rem 0.03rem rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(0.14rem);
+
+  @include theme-light {
+    color: #fff;
+  }
+}
+
+.top-bar__btn--login {
+  color: #fff;
+  background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
+  backdrop-filter: blur(0.55rem);
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .home-header {

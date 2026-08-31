@@ -4,9 +4,9 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-// /login 路由现在仅作为兼容入口：守卫已会拦截到 guest-home，这里再兜底一次。
+// /login 路由仅作为兼容入口：统一回到正式首页并使用全局登录弹窗。
 onMounted(() => {
-  void router.replace({ name: 'guest-home' })
+  void router.replace({ name: 'lobby' })
 })
 </script>
 

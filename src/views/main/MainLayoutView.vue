@@ -4,10 +4,11 @@ import { RouterView, useRoute } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
-import LoginModal from '@/views/login/LoginModal.vue'
+import { useGameStore } from '@/stores/game'
 
 const route = useRoute()
 const tabsStore = useMainTabsStore()
+const gameStore = useGameStore()
 
 // 背景素材由 CSS 根据 data-theme 选择，切换主题时无需重建页面。
 const backgroundStyle = computed(() => ({
@@ -15,9 +16,9 @@ const backgroundStyle = computed(() => ({
   '--main-bg-light': `url(${mainBgLightUrl})`,
 }))
 
-const isHomeRoute = computed(() => route.name === 'lobby' || route.name === 'guest-home')
+const isHomeRoute = computed(() => route.name === 'lobby')
 const isPrimaryLayout = computed(() => route.meta.desktopLayout === 'primary')
-const isGuestRoute = computed(() => String(route.name ?? '').startsWith('guest-'))
+const isGuestPreview = computed(() => !gameStore.isRealUser)
 
 // 路由变化时同步底部 Tab 共享状态，确保子页面也能维持正确高亮。
 watch(
@@ -37,8 +38,8 @@ watch(
     :class="{
       'main-layout--home': isHomeRoute,
       'main-layout--primary': isPrimaryLayout,
-      'main-layout--guest': isGuestRoute,
-      'main-layout--authenticated': isPrimaryLayout && !isGuestRoute,
+      'main-layout--guest': isGuestPreview,
+      'main-layout--authenticated': isPrimaryLayout && !isGuestPreview,
     }"
     :style="backgroundStyle"
   >
@@ -50,7 +51,6 @@ watch(
     </div>
     <!-- 公共底部导航：跨模块复用。 -->
     <MainBottomTab />
-    <LoginModal />
   </div>
 </template>
 

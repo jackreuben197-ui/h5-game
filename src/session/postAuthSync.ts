@@ -23,7 +23,7 @@ let inFlightPromise: Promise<void> | null = null
 export function syncPostAuthData(): void {
   const gameStore = useGameStore(pinia)
   const token = gameStore.sessionToken.trim()
-  if (!token) {
+  if (!token || gameStore.isGuestAccount) {
     return
   }
 

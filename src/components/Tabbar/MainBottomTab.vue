@@ -2,8 +2,6 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
-import { useGameStore } from '@/stores/game'
-import { useLoginModalStore } from '@/stores/loginModal'
 import { t } from '@/i18n'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
@@ -21,10 +19,7 @@ type TabIconKey =
 interface TabItem {
   key: MainTabKey
   label: string
-  // 登录态路径
   path: string
-  // 未登录态路径（指向 guest mock 页）
-  guestPath: string
   icon: TabIconKey
 }
 
@@ -39,14 +34,12 @@ const tabs = computed<TabItem[]>(() => {
         key: 'wallet',
         label: t('UIGuildFund_RechargeText'),
         path: '/wallet',
-        guestPath: '/guest/friendsTable',
         icon: 'wallet',
       }
     : {
         key: 'friendsTable',
         label: t('UIMessage_Default'),
         path: '/friendsTable',
-        guestPath: '/guest/friendsTable',
         icon: 'friendsTable',
       }
 
@@ -54,14 +47,12 @@ const tabs = computed<TabItem[]>(() => {
     key: 'home',
     label: t('UITabbarHome'),
     path: '/home',
-    guestPath: '/guest/home',
     icon: 'home',
   }
   const clubTab: TabItem = {
     key: 'club',
     label: t('UIClub_Info'),
     path: '/club',
-    guestPath: '/guest/club',
     icon: 'club',
   }
 
@@ -71,7 +62,6 @@ const tabs = computed<TabItem[]>(() => {
         key: 'poker',
         label: t('UITabbarHome'),
         path: '/home',
-        guestPath: '/guest/home',
         icon: 'home',
       },
       ...(hasMtt.value
@@ -80,7 +70,6 @@ const tabs = computed<TabItem[]>(() => {
               key: 'mtt' as const,
               label: t('UIClub_Text14'),
               path: '/mttList',
-              guestPath: '/guest/home',
               icon: 'mtt' as const,
             },
           ]
@@ -92,7 +81,6 @@ const tabs = computed<TabItem[]>(() => {
               key: 'miniGame' as const,
               label: t('UIHomeMinigameArea'),
               path: '/home',
-              guestPath: '/guest/home',
               icon: 'miniGame' as const,
             },
           ]
@@ -102,7 +90,6 @@ const tabs = computed<TabItem[]>(() => {
         key: 'mine',
         label: t('UIMine_title'),
         path: '/mine',
-        guestPath: '/guest/mine',
         icon: 'mine',
       },
     ]
@@ -116,14 +103,12 @@ const tabs = computed<TabItem[]>(() => {
       key: 'message',
       label: t('UIMine_MsgSystemContent'),
       path: '/message',
-      guestPath: '/guest/message',
       icon: 'message',
     },
     {
       key: 'mine',
       label: t('UIMine_title'),
       path: '/mine',
-      guestPath: '/guest/mine',
       icon: 'mine',
     },
   ]
@@ -132,16 +117,9 @@ const tabs = computed<TabItem[]>(() => {
 const router = useRouter()
 const route = useRoute()
 const tabsStore = useMainTabsStore()
-const gameStore = useGameStore()
-const loginModalStore = useLoginModalStore()
-
-function resolveTabPath(tab: TabItem): string {
-  return gameStore.sessionToken ? tab.path : tab.guestPath
-}
-
 // 当前激活项索引：用于驱动顶部凸起在当前 tab 数量间平滑移动。
 const activeTabKey = computed<MainTabKey>(() => {
-  if (isVersionB.value && (route.name === 'lobby' || route.name === 'guest-home')) {
+  if (isVersionB.value && route.name === 'lobby') {
     return 'poker'
   }
   const routeTabKey = route.meta.tabKey
@@ -295,13 +273,8 @@ function refreshPathByCurrentTab(): void {
 }
 
 function onTabClick(tab: TabItem): void {
-  // 渠道包未登录态点击钱包：原地弹出登录框，登录成功后再跳转到钱包
-  if (tab.key === 'wallet' && !gameStore.sessionToken) {
-    loginModalStore.open(tab.path)
-    return
-  }
   tabsStore.setActiveTab(tab.key)
-  void router.push(resolveTabPath(tab))
+  void router.push(tab.path)
 }
 
 function handleWindowResize(): void {

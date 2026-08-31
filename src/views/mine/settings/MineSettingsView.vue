@@ -7,15 +7,15 @@ import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { GameDialog } from '@/components/Dialog'
 import { getLocale, SUPPORTED_LOCALES_OPTIONS, t } from '@/i18n'
-import LoginSession from '@/session/loginSession'
-import { useGameStore } from '@/stores/game'
 import SettingSvgIcon from '@/views/mine/components/SettingSvgIcon.vue'
+import { requireRealUser } from '@/session/realUserGate'
+import { logoutCurrentSession } from '@/session/experienceSession'
+import { useGameStore } from '@/stores/game'
 
 const title = computed(() => t('UIMine_btn_setting'))
 
 const router = useRouter()
 const gameStore = useGameStore()
-
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   '--settings-bg-dark': `url(${mainBgUrl})`,
@@ -23,6 +23,7 @@ const backgroundStyle = computed(() => ({
 }))
 const soundEnabled = ref(true)
 const showLogoutDialog = ref(false)
+const logoutSubmitting = ref(false)
 
 interface SettingItem {
   key: string
@@ -46,15 +47,17 @@ type SettingIconName =
   | 'privacy'
   | 'version'
 
-const sectionTop: SettingItem[] = [
-  { key: 'logout', labelKey: 'UIMine_Setting114', icon: 'logout' },
+const sectionTop = computed<SettingItem[]>(() => [
+  ...(gameStore.isRealUser
+    ? [{ key: 'logout', labelKey: 'UIMine_Setting114', icon: 'logout' as const }]
+    : []),
   {
     key: 'language',
     labelKey: 'tc_PpNL8LVJ',
     icon: 'language',
   },
   { key: 'account', labelKey: 'UISettingPassword001', icon: 'account' },
-]
+])
 
 const sectionMiddle: SettingItem[] = [
   { key: 'sound', labelKey: 'tc_TsALrril', icon: 'sound', toggle: true },
@@ -86,6 +89,7 @@ function onRowClick(item: SettingItem): void {
   }
 
   if (item.key === 'logout') {
+    if (!requireRealUser(() => onRowClick(item))) return
     showLogoutDialog.value = true
     return
   }
@@ -96,11 +100,13 @@ function onRowClick(item: SettingItem): void {
   }
 
   if (item.key === 'account') {
+    if (!requireRealUser(() => onRowClick(item))) return
     void router.push('/mine/settings/account')
     return
   }
 
   if (item.key === 'cancel') {
+    if (!requireRealUser(() => onRowClick(item))) return
     void router.push('/mine/settings/cancel-account')
     return
   }
@@ -125,12 +131,21 @@ function onRowClick(item: SettingItem): void {
   }
 }
 
-function onLogoutConfirm(): void {
+async function onLogoutConfirm(): Promise<void> {
+  if (logoutSubmitting.value) return
   showLogoutDialog.value = false
-  gameStore.clearLogin()
-  LoginSession.ClearWS()
-  showSuccessToast(t('UIClub_DoneExit'))
-  void router.replace('/guest/home')
+  logoutSubmitting.value = true
+  try {
+    // 服务端登出成功后再清本地，并立即恢复为可预览的体验账号。
+    await logoutCurrentSession({ restoreExperience: true })
+    showSuccessToast(t('UIClub_DoneExit'))
+    await router.replace('/home')
+  } catch (error) {
+    const message = error instanceof Error ? error.message : t('UIClub_Fail')
+    showFailToast(message)
+  } finally {
+    logoutSubmitting.value = false
+  }
 }
 
 function onLogoutCancel(): void {

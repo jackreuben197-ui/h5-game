@@ -71,7 +71,8 @@ function tick(): void {
     return
   }
   const gameStore = useGameStore(pinia)
-  if (!gameStore.sessionToken.trim()) {
+  // 体验账号是短生命周期租用账号，不调用真实用户 token 续期接口。
+  if (!gameStore.sessionToken.trim() || gameStore.isGuestAccount) {
     return
   }
   const expireAt = readExpireAt()

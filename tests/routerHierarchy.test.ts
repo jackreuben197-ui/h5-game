@@ -46,3 +46,9 @@ test('first-level tabs and content pages keep their desktop layouts', () => {
   // These pages intentionally had no explicit desktop layout before the refactor.
   assert.equal(router.resolve('/mine/career/club/cowboy/hand').meta.desktopLayout, undefined)
 })
+
+test('club, message and mine reuse their formal first-level pages for guest preview', () => {
+  assert.equal(router.resolve('/club').meta.guestPreview, true)
+  assert.equal(router.resolve('/message').meta.guestPreview, true)
+  assert.equal(router.resolve('/mine').meta.guestPreview, true)
+})

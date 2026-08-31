@@ -1,10 +1,10 @@
-import http from '@/api/http'
-import type { AxiosRequestConfig } from 'axios'
+import http, { type HttpRequestOptionsExt } from '@/api/http'
 import type { ApiResponse } from '@/api/models/common'
 import type {
   LoginRequest,
   LoginResponse,
   LoginV2Request,
+  ExperienceLoginRequest,
   OtherUserInfoData,
   OtherUserInfoRequest,
   UserCheckEmailData,
@@ -80,11 +80,9 @@ import { useGameStore } from '@/stores/game'
 import { pinia } from '@/stores/pinia'
 import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
 import { writeClubListCache } from '@/utils/userClubListCache'
+import { isExperienceUserInfo } from '@/session/experienceIdentity'
 
-interface ApiRequestExtOptions extends AxiosRequestConfig {
-  suppressBusinessToast?: boolean
-  suppressBusinessCodes?: number[]
-}
+type ApiRequestExtOptions = HttpRequestOptionsExt
 
 function isClubInfo(raw: unknown): raw is ClubInfo {
   if (!raw || typeof raw !== 'object') {
@@ -165,6 +163,41 @@ function extractH5Menu(raw: unknown, depth = 0): number | undefined {
   return undefined
 }
 
+// 体验账号登录：服务端按设备分配独立体验账号，H5 不传经纬度。
+export async function postUserExperienceLoginApi(
+  payload: ExperienceLoginRequest,
+): Promise<LoginResponse> {
+  const response = await http.post<ApiResponse<LoginResponse>>('/user/experience/login', payload, {
+    authToken: false,
+    suppressBusinessToast: true,
+  } satisfies HttpRequestOptionsExt)
+  const body = response.data
+  const token = String(body.data?.token || '').trim()
+  if (body.code !== 0) {
+    throw new Error(body.message || `体验账号登录失败: ${body.code}`)
+  }
+  if (!token) {
+    throw new Error('体验账号登录接口返回缺少 token')
+  }
+  return { ...body.data, token }
+}
+
+// 真实账号与体验账号共用同一登出接口。必须先确认服务端登出，再清本地 token。
+export async function postUserLogoutApi(token: string): Promise<ApiResponse<unknown>> {
+  const response = await http.post<ApiResponse<unknown>>(
+    '/user/logout',
+    {},
+    {
+      authToken: token,
+      allowGuestAccount: true,
+      suppressAuthRedirect: true,
+      suppressBusinessToast: true,
+      suppressBusinessCodes: [90010],
+    } satisfies HttpRequestOptionsExt,
+  )
+  return response.data
+}
+
 // 登录：返回 token 等登录态信息。
 export async function loginApi(payload: LoginRequest): Promise<LoginResponse> {
   const res = await http.post<{ data?: LoginResponse; token?: string }>('/user/login', payload)
@@ -202,7 +235,11 @@ export async function loginV2Api(payload: LoginV2Request): Promise<LoginResponse
 
 // 用户信息：用于大厅初始化与用户态同步。
 export async function getUserInfoApi(): Promise<UserInfoData> {
-  const res = await http.post<UserInfoResponse>('/user/info')
+  const res = await http.post<UserInfoResponse>(
+    '/user/info',
+    {},
+    { allowGuestAccount: true } satisfies HttpRequestOptionsExt,
+  )
 
   const body = res.data
   if (body.code !== 0) {
@@ -213,11 +250,19 @@ export async function getUserInfoApi(): Promise<UserInfoData> {
     throw new Error('用户信息为空')
   }
 
-  // 与 Cocos 同步登录用户信息（msgtype=1）。
+  const gameStore = useGameStore(pinia)
+  const experienceAccount = isExperienceUserInfo(body.data)
+  gameStore.setGuestAccount(experienceAccount)
+
+  // 与 Cocos 同步登录用户信息（msgtype=1），体验账号观战也需要这份身份数据。
   forwardUserInfoToCocos(body.data)
-  // 每次请求都更新 userInfo 全局缓存。
+  // 体验账号不写入真实用户资料缓存，防止“我的/消息”误展示体验账号数据。
   const userInfoStore = useUserInfoStore(pinia)
-  userInfoStore.setUserInfo(body.data)
+  if (experienceAccount) {
+    userInfoStore.clearPrivateInfo()
+  } else {
+    userInfoStore.setUserInfo(body.data)
+  }
   return body.data
 }
 

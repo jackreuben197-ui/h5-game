@@ -90,7 +90,7 @@ function normalizeNavigateTarget(payload: unknown): {
   const routeObject: Record<string, unknown> = hasPath
     ? { path }
     : {
-        name: shouldOpenLoginModal ? 'guest-home' : name,
+        name: shouldOpenLoginModal ? 'lobby' : name,
       }
   if (isRecord(raw.params)) {
     routeObject.params = raw.params

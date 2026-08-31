@@ -66,6 +66,13 @@ export const useWalletStore = defineStore('wallet', () => {
     return promise
   }
 
+  function clearPriceList() {
+    priceListRequestVersion += 1
+    priceListRequest = null
+    goldPriceClubId = undefined
+    goldPriceData.value = null
+  }
+
   function calculateUsdtPrice(goldCount: number, rate: number, feeRate: number, feeType = 0, discount = 0) {
     const base = (goldCount / 100) * rate
     let priceAfterDiscount = base * (1 - discount)
@@ -204,6 +211,7 @@ export const useWalletStore = defineStore('wallet', () => {
   return {
     goldPriceData,
     loadPriceList,
+    clearPriceList,
     calculateUsdtPrice,
     calculateRechargeUsdtPrice,
     formatUsdtPrice,

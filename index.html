@@ -75,6 +75,37 @@
     </script>
     <!-- @silenthill/h5-cc-i18n runtime: 必须先于 Vue 入口加载，挂 window.__H5_CC_I18N__ -->
     <script src="./h5-cc-i18n.min.js"></script>
+    <!-- 语言首帧对齐：Vue 入口与 Cocos 启动都读取该实例，先按持久化语言设好 locale -->
+    <script>
+      ;(function () {
+        var raw = window.localStorage.getItem('dzpk_h5_Language') || ''
+        var saved = raw
+        try {
+          saved = JSON.parse(raw)
+        } catch (error) {}
+        var LOCALE_MAP = {
+          cn: 'zh-CN',
+          zh: 'zh-TW',
+          en: 'en',
+          pt: 'pt',
+          de: 'de',
+          es: 'es',
+          fr: 'fr',
+          hi: 'hi',
+          it: 'it',
+          ja: 'ja',
+          ko: 'ko',
+          ru: 'ru',
+          th: 'th',
+          vi: 'vi',
+        }
+        var target = LOCALE_MAP[saved]
+        var runtime = window.__H5_CC_I18N__
+        if (target && runtime && typeof runtime.setLocale === 'function') {
+          runtime.setLocale(target)
+        }
+      })()
+    </script>
     <script>
       ;(function () {
         var root = document.documentElement

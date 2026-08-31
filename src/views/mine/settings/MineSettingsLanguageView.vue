@@ -5,7 +5,7 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import icCheckbox from '@/assets/icons/ic_checkbox.png'
 import icUncheckbox from '@/assets/icons/ic_uncheckbox.png'
-import { getLocale, setLocale, t, type LocaleCode } from '@/i18n'
+import { getLocale, setLocaleAndReload, t, type LocaleCode } from '@/i18n'
 
 const title = computed(() => t('UISettings_Language'))
 
@@ -60,10 +60,10 @@ function selectLanguage(key: string): void {
   }
 
   activeLanguage.value = key
-  if (SUPPORTED.includes(key)) {
-    setLocale(key as LocaleCode)
-  }
   showSuccessToast(t('UIClub_Success5'))
+  if (SUPPORTED.includes(key)) {
+    setLocaleAndReload(key as LocaleCode)
+  }
 }
 </script>
 

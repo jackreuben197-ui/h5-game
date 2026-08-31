@@ -12,9 +12,10 @@ import { pinia } from '@/stores/pinia'
 import { useGameStore } from '@/stores/game'
 import { useMttListStore } from '@/stores/mttList'
 import { useRoomListStore } from '@/stores/roomList'
+import { useUserInfoStore } from '@/stores/userInfo'
 import { localStore } from '@/utils/localStore'
 import { isTelegramMiniAppEnv } from '@/utils/environment'
-import { resolveInviteCode } from '@/utils/channelPackage'
+import { isChannelPackageHost, resolveInviteCode } from '@/utils/channelPackage'
 import type { ExperienceLoginRequest, UserInfoData } from '@/api/models/user'
 
 let ensurePromise: Promise<boolean> | null = null
@@ -65,16 +66,29 @@ function hydrateSessionUser(userInfo: UserInfoData, account: string): void {
   gameStore.setLoginUser({ account, nickname, userId })
 }
 
-async function bootstrapListsForExperienceAccount(): Promise<void> {
+async function bootstrapResolvedSessionLists(): Promise<void> {
   await Promise.allSettled([
     useRoomListStore(pinia).bootstrapRoomList(),
     useMttListStore(pinia).bootstrapMttList(),
   ])
 }
 
+async function ensureChannelClubContext(): Promise<void> {
+  if (!isChannelPackageHost()) {
+    return
+  }
+
+  // 渠道俱乐部是游客列表、首页标题、公告和 h5_menu 的共同 scope。
+  // 必须先固定它，再用 user/info 判定身份；否则体验身份会先清空真实用户资料，
+  // 页面会短暂退回平台 scope，并抢跑一轮错误的房间/赛事请求。
+  await useUserInfoStore(pinia).ensureChannelDefaultClub()
+}
+
 async function runEnsureExperienceSession(): Promise<boolean> {
   const gameStore = useGameStore(pinia)
   const existingToken = gameStore.sessionToken.trim()
+
+  await ensureChannelClubContext()
 
   if (existingToken) {
     try {
@@ -82,10 +96,15 @@ async function runEnsureExperienceSession(): Promise<boolean> {
       hydrateSessionUser(userInfo, gameStore.loginAccount || 'experience')
       if (isExperienceUserInfo(userInfo)) {
         gameStore.setGuestAccount(true)
-        await bootstrapListsForExperienceAccount()
+        await bootstrapResolvedSessionLists()
       } else {
         gameStore.setGuestAccount(false)
-        syncPostAuthData()
+        await syncPostAuthData()
+        // 渠道版底部导航需要根据真实列表决定动态入口。身份未确认前不能由
+        // Tab 组件抢跑；确认是真实账号后在会话层统一预热。
+        if (isChannelPackageHost()) {
+          await bootstrapResolvedSessionLists()
+        }
       }
       return true
     } catch (error) {
@@ -126,7 +145,7 @@ async function runEnsureExperienceSession(): Promise<boolean> {
     gameStore.setGuestAccount(true)
   }
 
-  await bootstrapListsForExperienceAccount()
+  await bootstrapResolvedSessionLists()
   return true
 }
 

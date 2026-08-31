@@ -185,9 +185,9 @@ const homeContentModeRaw = computed<HomeContentMode>(() => {
   }
   return 'zones'
 })
-// 首次进入时先按缓存渲染，等 room/mtt 两个 bootstrap 都完成再确定最终模式，
-// 避免列表与专区入口在初始化中来回切换；初始化完成后跟随实时数据变化。
-const initialized = ref(false)
+// 首次进入时先按缓存渲染，等 room/mtt 两个 bootstrap 都完成后最多校正一次。
+// 当前页面生命周期内只更新列表与数量，不再因 WS 增量反复重挂载首页结构；
+// 下次重新进入首页时会按最新缓存重新选择模式。
 const homeContentMode = ref<HomeContentMode>(homeContentModeRaw.value)
 
 const currentJoinedClub = computed(() => userInfoStore.currentJoinedClub)
@@ -506,13 +506,6 @@ async function updateNoticeMarquee(): Promise<void> {
   shouldScrollNotice.value = true
 }
 
-watch(homeContentModeRaw, (val) => {
-  // 初始化阶段忽略中间态；两个 bootstrap 完成后再让实时数据自由驱动展示。
-  if (initialized.value) {
-    homeContentMode.value = val
-  }
-})
-
 watch(noticeText, () => {
   void updateNoticeMarquee()
 })
@@ -555,31 +548,35 @@ watch(
   },
 )
 
-async function bootstrapHomeLists(): Promise<void> {
-  // 首屏必须先确认当前 token 是真实账号还是 user_type=6 体验账号，
-  // 否则两个列表会在身份未定时分别命中不同接口，造成只显示 MTT 的竞态。
+async function bootstrapHomeContent(): Promise<void> {
+  // 全局配置可以并行加载；渠道俱乐部必须先于身份识别完成，因为它同时决定
+  // 游客列表 scope、俱乐部标题/公告和 h5_menu 展示版本。
+  const configReady = ensureHomeAnnouncementConfig().catch((error) => {
+    console.warn('[home] fetch announcement config failed:', error)
+  })
+  if (isChannelPackage) {
+    await userInfoStore.ensureChannelDefaultClub()
+  }
+
   await ensureExperienceSession().catch((error) => {
     console.warn('[home] resolve session identity failed:', error)
   })
+  await configReady
+  ensureClubDataReady()
+
   const roomListReady = roomListStore.bootstrapRoomList()
   const mttListReady = mttListStore.bootstrapMttList()
   await Promise.allSettled([roomListReady, mttListReady])
+
+  // 两份列表及其共同过滤上下文全部稳定后，一次提交统计和页面模式。
+  refreshHomePokerMahjongStatsFromStore()
+  refreshHomeMttStatsFromStore()
   homeContentMode.value = homeContentModeRaw.value
-  initialized.value = true
 }
 
 onMounted(() => {
-  if (!gameStore.isRealUser) {
-    void appConfigStore.ensureGuestGlobalConfig()
-  }
-  void ensureClubDataReady()
-  void ensureHomeAnnouncementConfig().catch((error) => {
-    console.warn('[home] fetch announcement config failed:', error)
-  })
-  // 首页和两个列表页共用 store；身份确认后一次性启动，防止游客/真实接口交叉覆盖。
-  void bootstrapHomeLists()
-  refreshHomePokerMahjongStatsFromStore()
-  refreshHomeMttStatsFromStore()
+  // 首页和两个列表页共用 store；俱乐部、身份和配置就绪后一次性提交首屏。
+  void bootstrapHomeContent()
   void fetchHomeMiniGameStats().catch((error) => {
     console.warn('[home] fetch mini game stats failed:', error)
   })

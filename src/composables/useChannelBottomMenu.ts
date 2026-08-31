@@ -1,4 +1,4 @@
-import { computed, onMounted, watch } from 'vue'
+import { computed } from 'vue'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { useMttListStore } from '@/stores/mttList'
 import { useRoomListStore } from '@/stores/roomList'
@@ -60,20 +60,6 @@ export function useChannelBottomMenu() {
 
   // 小游戏尚未接入：保留开关和菜单能力，暂时固定隐藏。
   const hasMiniGame = computed(() => false)
-
-  function bootstrapVersionBData(): void {
-    if (!isVersionB.value) return
-    void roomListStore.bootstrapRoomList()
-    void mttListStore.bootstrapMttList()
-  }
-
-  watch(isVersionB, bootstrapVersionBData, { immediate: true })
-
-  onMounted(() => {
-    if (!isChannelPackage) return
-    void userInfoStore.ensureChannelDefaultClub()
-    bootstrapVersionBData()
-  })
 
   return {
     isChannelPackage,

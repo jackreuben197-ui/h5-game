@@ -71,10 +71,12 @@ function handleTableClick(room: RoomRecord): void {
           </p>
           <p class="count-text">
             <span>
-              <img class="count-icon" :src="iconTable" alt="table" />{{ group.tableCount }}{{ t('UIClub_Table2') }}
+              <img class="count-icon" :src="iconTable" alt="table" />{{ group.tableCount
+              }}{{ t('UIClub_Table2') }}
             </span>
             <span>
-              <img class="count-icon" :src="iconPeople" alt="people" />{{ group.playerCount }}{{ t('Common_People') }}
+              <img class="count-icon" :src="iconPeople" alt="people" />{{ group.playerCount
+              }}{{ t('Common_People') }}
             </span>
           </p>
         </div>
@@ -319,7 +321,6 @@ function handleTableClick(room: RoomRecord): void {
 }
 
 .group-item--force-light .count-icon {
-  filter: invert(69%) sepia(77%) saturate(1273%) hue-rotate(180deg) brightness(103%)
-    contrast(101%);
+  filter: invert(69%) sepia(77%) saturate(1273%) hue-rotate(180deg) brightness(103%) contrast(101%);
 }
 </style>

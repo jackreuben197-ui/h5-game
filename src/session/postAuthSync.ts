@@ -17,27 +17,56 @@ import { ensureMultiLanguageTemplateLoaded } from '@/utils/multiLanguageTemplate
 import { readClubListCache } from '@/utils/userClubListCache'
 
 let inFlightToken = ''
-let inFlightPromise: Promise<void> | null = null
+let inFlightPromise: Promise<PostAuthProfileSyncResult> | null = null
+
+interface PostAuthProfileSyncResult {
+  userInfoSynced: boolean
+  userClubSynced: boolean
+}
+
+export interface PostAuthSyncResult extends PostAuthProfileSyncResult {
+  websocketSynced: boolean
+}
+
+function combinePostAuthSync(
+  websocketSync: Promise<boolean>,
+  profileSync: Promise<PostAuthProfileSyncResult>,
+): Promise<PostAuthSyncResult> {
+  return Promise.all([websocketSync, profileSync]).then(([websocketSynced, profile]) => ({
+    websocketSynced,
+    ...profile,
+  }))
+}
 
 // 登录成功 / 启动时持有有效 token 都走这里：把首页无关的拉取/同步集中起来，避免必须切到首页才触发。
-export function syncPostAuthData(): void {
+export function syncPostAuthData(): Promise<PostAuthSyncResult> {
   const gameStore = useGameStore(pinia)
   const token = gameStore.sessionToken.trim()
   if (!token || gameStore.isGuestAccount) {
-    return
+    return Promise.resolve({
+      websocketSynced: false,
+      userInfoSynced: false,
+      userClubSynced: false,
+    })
   }
 
   // WS 保活独立于资料同步：同一 token 已同步过时，仍允许刷新/路由切换兜底恢复 WS。
-  void LoginSession.EnsureWS().catch((error) => {
-    console.warn('[post-auth-sync] ensure ws failed:', error)
-  })
+  const wsReady = LoginSession.EnsureWS()
+    .then(() => true)
+    .catch((error) => {
+      console.warn('[post-auth-sync] ensure ws failed:', error)
+      return false
+    })
 
   if (!gameStore.shouldSyncProfile(token)) {
-    return
+    return combinePostAuthSync(
+      wsReady,
+      Promise.resolve({ userInfoSynced: true, userClubSynced: true }),
+    )
   }
 
   if (inFlightPromise && inFlightToken === token) {
-    return
+    return combinePostAuthSync(wsReady, inFlightPromise)
   }
 
   inFlightToken = token
@@ -47,9 +76,10 @@ export function syncPostAuthData(): void {
       inFlightPromise = null
     }
   })
+  return combinePostAuthSync(wsReady, inFlightPromise)
 }
 
-async function runPostAuthSync(token: string): Promise<void> {
+async function runPostAuthSync(token: string): Promise<PostAuthProfileSyncResult> {
   const gameStore = useGameStore(pinia)
   const appConfigStore = useAppConfigStore(pinia)
   const userInfoStore = useUserInfoStore(pinia)
@@ -80,34 +110,37 @@ async function runPostAuthSync(token: string): Promise<void> {
     }
   }
 
-  await Promise.allSettled([
-    getUserInfoApi()
-      .then((userInfo) => {
-        const user = userInfo.user as Record<string, unknown>
-        const userId = String(user.p_u_id ?? user.pUid ?? user.userid ?? user.un_id ?? '')
-        const userName = String(user.nickname ?? gameStore.loginAccount ?? '')
+  const userInfoSync = getUserInfoApi()
+    .then((userInfo) => {
+      const user = userInfo.user as Record<string, unknown>
+      const userId = String(user.p_u_id ?? user.pUid ?? user.userid ?? user.un_id ?? '')
+      const userName = String(user.nickname ?? gameStore.loginAccount ?? '')
 
-        gameStore.setLoginUser({
-          account: gameStore.loginAccount || userName,
-          nickname: userName,
-          userId,
-        })
-        gameStore.markProfileSynced(token)
-
-        const languageCode = resolveLanguageCode(user)
-        const localSavedLanguage = localStore.getItem<string>(StorageKey.Language, '')
-        if (!localSavedLanguage && languageCode) {
-          setLocale(languageCode as LocaleCode)
-        }
+      gameStore.setLoginUser({
+        account: gameStore.loginAccount || userName,
+        nickname: userName,
+        userId,
       })
-      .catch((error) => {
-        console.warn('[post-auth-sync] sync user info failed:', error)
-      }),
+      const languageCode = resolveLanguageCode(user)
+      const localSavedLanguage = localStore.getItem<string>(StorageKey.Language, '')
+      if (!localSavedLanguage && languageCode) {
+        setLocale(languageCode as LocaleCode)
+      }
+      return true
+    })
+    .catch((error) => {
+      console.warn('[post-auth-sync] sync user info failed:', error)
+      return false
+    })
 
-    getUserClubApi().catch((error) => {
+  const userClubSync = getUserClubApi()
+    .then(() => true)
+    .catch((error) => {
       console.warn('[post-auth-sync] sync user club failed:', error)
-    }),
+      return false
+    })
 
+  const auxiliarySync = Promise.allSettled([
     postGlobalConfigApi({})
       .then((res) => {
         if (res.code === 0 && res.data) {
@@ -134,6 +167,13 @@ async function runPostAuthSync(token: string): Promise<void> {
       console.warn('[post-auth-sync] sync multi-language template failed:', error)
     }),
   ])
+
+  const [userInfoSynced, userClubSynced] = await Promise.all([userInfoSync, userClubSync])
+  await auxiliarySync
+  if (userInfoSynced && userClubSynced) {
+    gameStore.markProfileSynced(token)
+  }
+  return { userInfoSynced, userClubSynced }
 }
 
 function resolveLanguageCode(user: Record<string, unknown>): string {

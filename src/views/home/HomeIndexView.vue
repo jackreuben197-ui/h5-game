@@ -23,6 +23,7 @@ import { isChannelPackageHost } from '@/utils/channelPackage'
 import PokerGameList from '@/views/home/gameList.vue'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 import { requireRealUser } from '@/session/realUserGate'
+import { ensureExperienceSession } from '@/session/experienceSession'
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
@@ -554,6 +555,19 @@ watch(
   },
 )
 
+async function bootstrapHomeLists(): Promise<void> {
+  // 首屏必须先确认当前 token 是真实账号还是 user_type=6 体验账号，
+  // 否则两个列表会在身份未定时分别命中不同接口，造成只显示 MTT 的竞态。
+  await ensureExperienceSession().catch((error) => {
+    console.warn('[home] resolve session identity failed:', error)
+  })
+  const roomListReady = roomListStore.bootstrapRoomList()
+  const mttListReady = mttListStore.bootstrapMttList()
+  await Promise.allSettled([roomListReady, mttListReady])
+  homeContentMode.value = homeContentModeRaw.value
+  initialized.value = true
+}
+
 onMounted(() => {
   if (!gameStore.isRealUser) {
     void appConfigStore.ensureGuestGlobalConfig()
@@ -562,10 +576,8 @@ onMounted(() => {
   void ensureHomeAnnouncementConfig().catch((error) => {
     console.warn('[home] fetch announcement config failed:', error)
   })
-  // 首页和列表页共用同一个 room store，进入首页时启动共享数据流。
-  const roomListReady = roomListStore.bootstrapRoomList()
-  // 首页和 MTT 列表页共用同一个 mtt store，避免重复请求。
-  const mttListReady = mttListStore.bootstrapMttList()
+  // 首页和两个列表页共用 store；身份确认后一次性启动，防止游客/真实接口交叉覆盖。
+  void bootstrapHomeLists()
   refreshHomePokerMahjongStatsFromStore()
   refreshHomeMttStatsFromStore()
   void fetchHomeMiniGameStats().catch((error) => {
@@ -575,12 +587,6 @@ onMounted(() => {
     console.warn('[home] fetch lobby banner failed:', error)
   })
   void updateNoticeMarquee()
-
-  // 等 room + mtt 都返回后再敲定最终布局，避免初始化阶段来回闪。
-  void Promise.allSettled([roomListReady, mttListReady]).then(() => {
-    homeContentMode.value = homeContentModeRaw.value
-    initialized.value = true
-  })
 
   if (typeof ResizeObserver !== 'undefined') {
     noticeResizeObserver = new ResizeObserver(() => {

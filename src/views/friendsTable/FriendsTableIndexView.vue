@@ -382,10 +382,8 @@ async function onEnterRoom(room: FriendRoomListItem): Promise<void> {
 async function enterFriendRoom(roomInfo: unknown, roomId: number): Promise<void> {
   if (!requireRealUser(() => enterFriendRoom(roomInfo, roomId))) return
 
-  let wsPort = Number(gameStore.websocketPort) || 0
-  if (!wsPort) {
-    wsPort = await LoginSession.EnsureWS()
-  }
+  // 端口已缓存不等于连接已建立；等待 OPEN 后再向 Cocos 下发进桌消息。
+  const wsPort = await LoginSession.EnsureWS()
 
   const payload: EnterTablePayload = {
     userName: gameStore.loginNickname || gameStore.loginAccount || 'guest',

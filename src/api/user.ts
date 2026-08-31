@@ -295,7 +295,12 @@ export async function getUserClubApi(): Promise<ApiResponse<unknown>> {
 
 // 同步 websocket 端口：对应 Cocos LoginSession.SyncWS。
 export async function getUserWsApi(): Promise<UserWsData> {
-  const res = await http.post<UserWsResponse>('/user/ws')
+  // 体验账号进入牌桌观战同样需要 WS 端口；坐下/买入仍由真实身份入口单独拦截。
+  const res = await http.post<UserWsResponse>(
+    '/user/ws',
+    {},
+    { allowGuestAccount: true } satisfies HttpRequestOptionsExt,
+  )
   const body = res.data
   if (body.code !== 0) {
     throw new Error(body.message || '获取 websocket 端口失败')

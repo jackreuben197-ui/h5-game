@@ -114,10 +114,36 @@ export interface EnterMttPayload {
 // 用户信息变化后的同步负载。
 export interface SyncUserPayload {
   uid: string
+  randomId: string
   nickname: string
   avatar?: string
+  sex: number
+  isExperience: boolean
   // 保留原始 user/info data，方便 Cocos 做兼容字段读取。
   raw?: unknown
+}
+
+export const TABLE_SITDOWN_AUTH_STATE = {
+  SWITCHING: 'switching',
+  CANCELLED: 'cancelled',
+} as const
+
+export type TableSitdownAuthState =
+  (typeof TABLE_SITDOWN_AUTH_STATE)[keyof typeof TABLE_SITDOWN_AUTH_STATE]
+
+export const TABLE_SITDOWN_AUTH_CANCEL_REASON = {
+  LOGIN_CANCELLED: 'login-cancelled',
+  USER_NOT_IN_CHANNEL_CLUB: 'real-user-not-in-channel-club',
+} as const
+
+export type TableSitdownAuthCancelReason =
+  (typeof TABLE_SITDOWN_AUTH_CANCEL_REASON)[keyof typeof TABLE_SITDOWN_AUTH_CANCEL_REASON]
+
+export interface TableSitdownAuthPayload {
+  state: TableSitdownAuthState
+  roomId?: string
+  clubId?: number
+  reason?: TableSitdownAuthCancelReason
 }
 
 // H5 转发 club 接口响应（通过 action=syncUserClub 区分）。

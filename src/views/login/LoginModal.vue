@@ -3,6 +3,13 @@ import { md5 } from 'js-md5'
 import { computed, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
+  BRIDGE_ACTION,
+  BRIDGE_MSG_TYPE,
+  H5_LOGIN_CONTEXT,
+  TABLE_SITDOWN_AUTH_CANCEL_REASON,
+  TABLE_SITDOWN_AUTH_STATE,
+} from '@bridge-protocol'
+import {
   loginV2Api,
   postUserCheckEmailApi,
   postUserCheckPhoneApi,
@@ -18,6 +25,9 @@ import { useLoginModalStore } from '@/stores/loginModal'
 import { syncPostAuthData } from '@/session/postAuthSync'
 import LoginSession from '@/session/loginSession'
 import { ensureExperienceSession, logoutCurrentSession } from '@/session/experienceSession'
+import { completeCocosTableSitdownAuth } from '@/session/cocosTableSitdownAuth'
+import { sendBridgeMessage } from '@/bridge/core'
+import { setH5TableAuthOverlay, setH5Visible } from '@/bridge/channels/uiChannel'
 import {
   clearPendingRealUserAction,
   takePendingRealUserAction,
@@ -79,6 +89,8 @@ const showProtocolPanel = ref(false)
 const showPhoneAreaPanel = ref(false)
 const pendingAgreementSubmit = ref(false)
 const loading = ref(false)
+const tableAuthCompleted = ref(false)
+const tableAuthDestination = ref<'table' | 'official-home' | ''>('')
 const inviteCodeFromChannel = ref('')
 const traceHashFromChannel = ref('')
 
@@ -105,6 +117,7 @@ watch(
   () => loginModalStore.visible,
   (visible) => {
     if (!visible) {
+      const closingContext = loginModalStore.context
       showProtocolPanel.value = false
       showPhoneAreaPanel.value = false
       showLanguageModal.value = false
@@ -115,7 +128,30 @@ watch(
       loginModalStore.mode = ''
       loginModalStore.pendingRedirect = ''
       clearPendingRealUserAction()
+      if (closingContext === H5_LOGIN_CONTEXT.TABLE_SITDOWN) {
+        if (!tableAuthCompleted.value) {
+          sendBridgeMessage(
+            BRIDGE_ACTION.TABLE_SITDOWN_AUTH,
+            {
+              state: TABLE_SITDOWN_AUTH_STATE.CANCELLED,
+              reason: TABLE_SITDOWN_AUTH_CANCEL_REASON.LOGIN_CANCELLED,
+            },
+            { msgtype: BRIDGE_MSG_TYPE.H5 },
+          )
+        }
+        // 原桌恢复时隐藏 H5 显示 Cocos Loading；俱乐部不匹配时保留 H5，
+        // 由既有渠道逻辑跳转到官方包首页。
+        setH5TableAuthOverlay(false)
+        setH5Visible(tableAuthDestination.value === 'official-home')
+      }
+      loginModalStore.resetContext()
+      tableAuthCompleted.value = false
+      tableAuthDestination.value = ''
       return
+    }
+    if (loginModalStore.context === H5_LOGIN_CONTEXT.TABLE_SITDOWN) {
+      tableAuthCompleted.value = false
+      tableAuthDestination.value = ''
     }
     // 每次打开同步一次最新缓存（避免外部修改导致状态过期）。
     currentLang.value = getLocale()
@@ -302,6 +338,7 @@ async function runSubmitFlow() {
     }
   } catch (error) {
     console.log('[login-modal] handleSubmit error:', error)
+    showGameToast(error instanceof Error ? error.message : t('UILogin_Text'))
   } finally {
     loading.value = false
     pendingAgreementSubmit.value = false
@@ -376,9 +413,9 @@ function applyDebugAccount(account: DebugAccount): void {
 async function handleLogin(target: string) {
   const effectiveInviteCode = resolveAgentInviteCode() || inviteCodeFromChannel.value
   const replacingExperienceAccount = gameStore.isGuestAccount && Boolean(gameStore.sessionToken)
+  const isCocosTableSitdownAuth =
+    loginModalStore.context === H5_LOGIN_CONTEXT.TABLE_SITDOWN
 
-  // 体验账号必须先调用服务端 /user/logout 释放，再获取真实账号 token。
-  // 若真实登录失败，重新领取体验账号，页面仍可继续预览。
   if (replacingExperienceAccount) {
     await logoutCurrentSession()
   }
@@ -395,7 +432,7 @@ async function handleLogin(target: string) {
     })
   } catch (error) {
     if (replacingExperienceAccount) {
-      void ensureExperienceSession()
+      await ensureExperienceSession()
     }
     throw error
   }
@@ -409,6 +446,21 @@ async function handleLogin(target: string) {
   if (Number.isFinite(expireAt) && expireAt > 0) {
     localStore.setItem(StorageKey.TOKEN_EXPIREAT, expireAt)
   }
+
+  if (isCocosTableSitdownAuth) {
+    const authResult = await completeCocosTableSitdownAuth({
+      realToken: token,
+      account: target,
+      expireAt,
+    })
+    persistLoginDraft()
+    tableAuthDestination.value = authResult.destination
+    tableAuthCompleted.value = true
+    loginModalStore.close()
+    clearAgentInviteCodeCache()
+    return
+  }
+
   // 游客 token → 真实 token 时必须断开旧 WS，避免复用游客会话的端口/连接。
   if (gameStore.sessionToken && gameStore.sessionToken !== token) {
     LoginSession.ClearWS()
@@ -603,6 +655,7 @@ function applyChannelInviteContext(): void {
     :show-footer="false"
     :show-confirm-button="false"
     :close-on-click-overlay="true"
+    :before-close="() => !loading"
     dialog-width="9rem"
     body-max-height="14rem"
   >

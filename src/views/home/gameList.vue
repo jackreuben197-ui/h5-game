@@ -25,6 +25,7 @@ import ClubZoneQuickActions from '@/components/Club/ClubZoneQuickActions.vue'
 import MainBottomTab from '@/components/Tabbar/MainBottomTab.vue'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 import { requireRealUser } from '@/session/realUserGate'
+import { ensureExperienceSession } from '@/session/experienceSession'
 
 interface Props {
   embedded?: boolean
@@ -142,7 +143,11 @@ const groupedRecords = computed<RoomGroupViewModel[]>(() => {
 })
 
 onMounted(() => {
-  bootstrapRoomList()
+  void ensureExperienceSession()
+    .catch((error) => {
+      console.warn('[poker-list] resolve session identity failed:', error)
+    })
+    .finally(() => bootstrapRoomList())
 })
 
 // 进入页面先用缓存秒开，再静默刷新最新数据。
@@ -228,19 +233,17 @@ async function handleTableClick(room: RoomRecord): Promise<void> {
     return
   }
 
-  let wsPort = Number(gameStore.websocketPort) || 0
-  if (!wsPort) {
-    try {
-      // 对齐 Cocos ProcedureEnterLobby：进入大厅阶段同步 websocket 端口。
-      wsPort = await LoginSession.EnsureWS()
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : t('UIClub_Fetch') + ' websocket ' + t('UIClub_Fail3')
-      showFailToast(message)
-      return
-    }
+  let wsPort = 0
+  try {
+    // 即使已有端口缓存也必须等待连接真正 OPEN，不能在 CONNECTING 阶段通知 Cocos 进桌。
+    wsPort = await LoginSession.EnsureWS()
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : t('UIClub_Fetch') + ' websocket ' + t('UIClub_Fail3')
+    showFailToast(message)
+    return
   }
 
   // 进入牌桌参数固定：名称 + 用户ID + token；附带房间信息用于切桌定位。

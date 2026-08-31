@@ -118,6 +118,12 @@ export interface SetHeartbeatModePayload {
   mode: 'normal' | 'in-gameplay'
 }
 
+export const H5_LOGIN_CONTEXT = {
+  TABLE_SITDOWN: 'table-sitdown',
+} as const
+
+export type H5LoginContext = (typeof H5_LOGIN_CONTEXT)[keyof typeof H5_LOGIN_CONTEXT]
+
 // Cocos -> H5：路由跳转控制。
 export interface H5NavigatePayload {
   // 二选一：path 或 name 至少传一个。
@@ -133,6 +139,7 @@ export interface H5NavigatePayload {
   ensureVisible?: boolean
   // 可选：跳转完成后打开登录弹窗；用于替代旧登录页。
   openLoginModal?: boolean
+  loginContext?: H5LoginContext
 }
 
 // ─── CC → H5 Payload 映射表 ────────────────────────────────────────────────

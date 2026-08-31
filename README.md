@@ -982,6 +982,92 @@ sendMessage(
 - `h5Ready`：H5 宣告“我可接收消息”
 - `h5Ack` / `ccAck`：对方 ready 消息回执
 
+### 9.8 游客预览与体验账号会话
+
+游客不是“无 token 用户”，而是服务端分配的独立体验账号。H5 负责体验账号的领取、释放、真实身份
+拦截和登录后的会话切换；Cocos 只消费 H5 同步后的标准化身份，不解析服务端原始用户字段。
+
+#### 9.8.1 体验账号生命周期
+
+1. `ensureExperienceSession()` 优先使用已有 token 调用 `user/info` 校验身份；只有确认本地没有可用 token
+   时，才调用 `/api/user/experience/login` 领取体验账号。并发初始化共享同一个 Promise，禁止重复领取。
+2. 体验登录请求携带设备标识、语言和渠道邀请码，但不传经纬度，避免游客预览阶段触发定位授权。
+3. `user/info` 返回的 `user_type=6` 只在 `experienceIdentity.ts` 中转换为 `isGuestAccount`。同步给
+   Cocos 的 `syncUser` 使用语义字段 `isExperience`，Cocos 不得读取 `raw.user_type`、`ut` 或数字 `6`。
+4. 体验账号和真实账号共用 `/api/user/logout`。只有服务端确认退出后才能清理本地 token；真实账号
+   登录/注册前必须先退出当前体验账号，避免体验账号一直占用、服务端不断创建新账号。
+5. 真实登录失败时重新调用 `ensureExperienceSession()` 恢复游客态。页面退出时对体验账号发送
+   `keepalive` 登出请求；本地 token 暂时保留到下次启动校验，避免登出请求尚未到达服务端就重复领取。
+6. 游客设置页不展示“退出登录”。真实账号主动退出后可通过 `restoreExperience` 重新进入游客预览态。
+
+本地渠道包调试不得在源码中固定邀请码。仅在被 Git 忽略的 `.env.local` 配置：
+
+```bash
+VITE_CHANNEL_DEV_INVITE_CODE=your-invite-code
+```
+
+该变量在本地 `pnpm dev` 和 `pnpm build` 都生效，因此 Cocos 的 `sync:h5-game:local` 也能构建出渠道包
+预览。CI/正式发布环境不得配置该变量；未配置时统一通过当前域名和渠道参数解析真实邀请码。修改本地
+环境文件后必须重启 Vite 或重新执行 H5 同步构建。
+
+#### 9.8.2 页面预览和真实身份拦截
+
+一级页面只维护一套，不再为游客复制独立页面。路由 `meta` 只决定页面是否允许预览；涉及真实身份的
+按钮必须在发出 HTTP/WS 请求前调用 `requireRealUser(pendingAction)`。服务端鉴权错误是兜底，不是游客
+交互的主拦截方式。
+
+| 场景 | 游客可预览 | 必须调用 `requireRealUser` 的操作 |
+| --- | --- | --- |
+| 主页/俱乐部 | 首页内容、俱乐部页、普通桌和比赛列表滚动 | 充值、客服、创建牌桌、加入/管理俱乐部等身份操作 |
+| 普通牌桌 | 进入牌桌观战 | 点击空座入座 |
+| 比赛 | 比赛列表、比赛详情 | 报名、买入、余额不足后的充值 |
+| 朋友桌 | 加入页、创建游戏界面 | 输入邀请码加入、最终创建牌桌、模板增删改 |
+| 小游戏 | 游戏入口和内容 | 实际参与或报名 |
+| 充值/提现 | 页面和说明内容 | 提交充值、提现及订单操作 |
+| 消息/我的 | 一级入口和无账号依赖内容 | 消息详情、个人资料、商城及其他账号数据 |
+
+`requireRealUser` 会记录 `pendingAction` 并打开全局登录弹窗；普通 H5 场景登录成功后继续原操作。新增
+真实身份功能时，拦截必须放在最靠近用户动作的入口，不能依赖接口报错后再补弹窗。
+
+#### 9.8.3 牌桌内登录并继续入座
+
+牌桌内登录不能热替换 Cocos 的用户和 WS 数据。真实登录成功后必须把 Cocos 当作一次全新启动，重新
+执行初始化和进桌流程，再继续原有入座逻辑：
+
+```text
+游客观战
+  → 点击空座
+  → Cocos 发送 h5Navigate(loginContext='table-sitdown')
+  → H5 在牌桌上方覆盖登录弹窗
+  ├─ 取消：关闭覆盖层，保持游客观战
+  └─ 登录/注册：先调用 /user/logout 释放体验账号
+       → 获取真实 token
+       → tableSitdownAuth(state='switching')
+       → 暂停 Cocos WS 写入，清理旧 WS 和 H5 游客会话数据
+       → 用真实 token 重新同步 WS 端口、user/info 和俱乐部列表
+       ├─ 未加入当前渠道俱乐部：取消待入座并跳转官方首页
+       └─ 已加入：重新发送原牌桌 enterTable
+            → Cocos 完整初始化并重新进入同一牌桌
+            → 房间快照就绪后校验原座位仍为空
+            → 调用原有 Sitdown，继续买入/余额不足充值流程
+```
+
+H5 事务入口是 `src/session/cocosTableSitdownAuth.ts`。`syncPostAuthData()` 必须同时确认 WS、用户信息和
+俱乐部列表同步成功，不能在俱乐部请求失败时误判为“用户未加入俱乐部”。事务期间无论成功或异常都要
+恢复 Cocos WS 写入。
+
+相关跨端协议：
+
+| 方向 | action | 作用 |
+| --- | --- | --- |
+| Cocos → H5 | `h5Navigate` + `loginContext='table-sitdown'` | 在当前牌桌上打开登录覆盖层 |
+| H5 → Cocos | `tableSitdownAuth` | 通知 `switching` 或 `cancelled`，控制待入座事务 |
+| H5 → Cocos | `syncUser` | 同步标准化真实身份和 `isExperience` |
+| H5 → Cocos | `enterTable` | 使用真实 token 和新 WS 端口重新进原牌桌 |
+
+新增或修改这些字段时，先更新并构建 `h5-cc-bridge`，再同步 H5 的冻结协议副本，最后刷新 H5/Cocos
+依赖锁文件。不能只修改某一端的本地类型。
+
 ## 10. 多语言用法
 
 当前多语言使用 `@silenthill/h5-cc-i18n` 共享包，不依赖 `vue-i18n`：

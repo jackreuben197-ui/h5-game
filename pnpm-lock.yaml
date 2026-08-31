@@ -13,7 +13,7 @@ importers:
         version: git+https://git@github.com:kingofake/agreement-web.git#96cdc35fd8d6588b66b7a141230abd521b61d403
       '@silenthill/h5-cc-bridge':
         specifier: github:soolary/h5-cc-bridge#main
-        version: git+ssh://git@github.com/soolary/h5-cc-bridge.git#219bae83f7fb3dfd80e3b4b3b03ccecfdc5555c3
+        version: git+ssh://git@github.com/soolary/h5-cc-bridge.git#361ee2c80c2e6fcf46dd5a5bdc038ed97eedb62d
       '@silenthill/h5-cc-i18n':
         specifier: github:guysoup027/h5-cc-i18n#main
         version: git+ssh://git@github.com/guysoup027/h5-cc-i18n.git#ae14b4dc92fb8b759059b1bc277eeffc5107a1d1
@@ -1046,8 +1046,8 @@ packages:
     resolution: {commit: 96cdc35fd8d6588b66b7a141230abd521b61d403, repo: git@github.com:kingofake/agreement-web.git, type: git}
     version: 1.0.0
 
-  '@silenthill/h5-cc-bridge@git+ssh://git@github.com/soolary/h5-cc-bridge.git#219bae83f7fb3dfd80e3b4b3b03ccecfdc5555c3':
-    resolution: {commit: 219bae83f7fb3dfd80e3b4b3b03ccecfdc5555c3, repo: git@github.com:soolary/h5-cc-bridge.git, type: git}
+  '@silenthill/h5-cc-bridge@git+ssh://git@github.com/soolary/h5-cc-bridge.git#361ee2c80c2e6fcf46dd5a5bdc038ed97eedb62d':
+    resolution: {commit: 361ee2c80c2e6fcf46dd5a5bdc038ed97eedb62d, repo: git@github.com:soolary/h5-cc-bridge.git, type: git}
     version: 0.1.0
 
   '@silenthill/h5-cc-i18n@git+ssh://git@github.com/guysoup027/h5-cc-i18n.git#ae14b4dc92fb8b759059b1bc277eeffc5107a1d1':
@@ -3462,7 +3462,7 @@ snapshots:
     dependencies:
       google-protobuf: 3.21.4
 
-  '@silenthill/h5-cc-bridge@git+ssh://git@github.com/soolary/h5-cc-bridge.git#219bae83f7fb3dfd80e3b4b3b03ccecfdc5555c3': {}
+  '@silenthill/h5-cc-bridge@git+ssh://git@github.com/soolary/h5-cc-bridge.git#361ee2c80c2e6fcf46dd5a5bdc038ed97eedb62d': {}
 
   '@silenthill/h5-cc-i18n@git+ssh://git@github.com/guysoup027/h5-cc-i18n.git#ae14b4dc92fb8b759059b1bc277eeffc5107a1d1': {}
 

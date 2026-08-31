@@ -14,6 +14,7 @@ import ClubZoneQuickActions from '@/components/Club/ClubZoneQuickActions.vue'
 import MainBottomTab from '@/components/Tabbar/MainBottomTab.vue'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 import { requireRealUser } from '@/session/realUserGate'
+import { ensureExperienceSession } from '@/session/experienceSession'
 
 type MttTabName = 'all' | 'poker' | 'mahjong'
 
@@ -42,7 +43,11 @@ const mttTabs = computed<FilterTabOption[]>(() => [
 
 onMounted(() => {
   // 与首页共用同一个 MTT 数据源：先读缓存秒开，再静默刷新。
-  mttListStore.bootstrapMttList()
+  void ensureExperienceSession()
+    .catch((error) => {
+      console.warn('[mtt-list] resolve session identity failed:', error)
+    })
+    .finally(() => mttListStore.bootstrapMttList())
 })
 
 function toSafeInt(value: unknown): number {

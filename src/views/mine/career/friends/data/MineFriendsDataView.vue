@@ -362,7 +362,7 @@ onBeforeUnmount(() => {
               </div>
               <img src="@/assets/icons/wallet/ic_arrow_left.svg" class="icon-arrow" />
             </div>
-            <span v-else>{{ tab.label }}</span>
+            <span v-else v-fit-text="{ maxLines: 1 }" class="tab-label">{{ tab.label }}</span>
           </button>
         </div>
 
@@ -485,8 +485,7 @@ onBeforeUnmount(() => {
 }
 
 .filter-tabs {
-  width: 7.55067rem;
-  max-width: 100%;
+  width: 100%;
   height: 1.35979rem;
   border-radius: 0.76013rem;
   background: rgba(255, 255, 255, 0.2);
@@ -510,7 +509,7 @@ onBeforeUnmount(() => {
   color: #f9f9f9;
   font-size: 0.40541rem;
   line-height: 0.44299rem;
-  padding: 0.11075rem 0.24rem;
+  padding: 0.11075rem 0.08rem;
 
   @include theme-light {
     color: var(--c-text);
@@ -549,6 +548,13 @@ onBeforeUnmount(() => {
       background: #cfcfcf;
     }
   }
+}
+
+.tab-label {
+  display: block;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .metrics-row {

@@ -499,7 +499,7 @@ onBeforeUnmount(() => {
             :class="{ active: selectedTime === item.key }"
             @click="selectTime(item.key)"
           >
-            {{ item.label }}
+            <span v-fit-text="{ maxLines: 1 }" class="tab-label">{{ item.label }}</span>
           </button>
         </div>
 
@@ -529,14 +529,18 @@ onBeforeUnmount(() => {
         <div class="detail-grid">
           <div class="detail-row">
             <div v-for="item in detailRowsOne" :key="item.label" class="detail-cell">
-              <span class="label">{{ item.label }}</span>
+              <span class="label">
+                <span v-fit-text="{ maxLines: 2 }" class="label-text">{{ item.label }}</span>
+              </span>
               <span class="value">{{ item.value }}</span>
             </div>
           </div>
           <div class="line"></div>
           <div class="detail-row">
             <div v-for="item in detailRowsTwo" :key="item.label" class="detail-cell">
-              <span class="label">{{ item.label }}</span>
+              <span class="label">
+                <span v-fit-text="{ maxLines: 2 }" class="label-text">{{ item.label }}</span>
+              </span>
               <span class="value">{{ item.value }}</span>
             </div>
           </div>
@@ -688,6 +692,7 @@ onBeforeUnmount(() => {
 
 .time-tab {
   border: 0;
+  white-space: nowrap;
   border-radius: 0.62rem;
   background: transparent;
   color: rgba(255, 255, 255, 0.9);
@@ -706,6 +711,13 @@ onBeforeUnmount(() => {
       background: #cfcfcf;
     }
   }
+}
+
+.tab-label {
+  display: block;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .main-metrics {
@@ -802,12 +814,22 @@ onBeforeUnmount(() => {
   flex-direction: column;
 
   .label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0.65rem;
     font-size: 0.27027rem;
+    line-height: 1.2;
     color: rgba(255, 255, 255, 0.7);
 
     @include theme-light {
       color: rgba(0, 0, 0, 0.7);
     }
+  }
+
+  .label-text {
+    display: block;
+    width: 100%;
   }
 
   .value {

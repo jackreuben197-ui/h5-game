@@ -462,7 +462,7 @@ onMounted(() => {
             :class="{ active: selectedDateTab === tab.key }"
             @click="selectDateTab(tab.key)"
           >
-            {{ tab.label }}
+            <span v-fit-text="{ maxLines: 1 }" class="tab-label">{{ tab.label }}</span>
           </button>
         </div>
 
@@ -731,7 +731,7 @@ onMounted(() => {
 
 .date-tabs {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.1rem;
   padding: 0;
   border-radius: 0.68rem;
@@ -744,6 +744,7 @@ onMounted(() => {
 
 .date-tab {
   border: 0;
+  white-space: nowrap;
   border-radius: 0.62rem;
   background: transparent;
   color: #f9f9f9;
@@ -764,6 +765,13 @@ onMounted(() => {
       background: #cfcfcf;
     }
   }
+}
+
+.tab-label {
+  display: block;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .metric-row {

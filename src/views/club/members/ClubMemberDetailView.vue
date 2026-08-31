@@ -812,29 +812,33 @@ onMounted(() => {
         </div>
         <div class="pill-tabs">
           <button :class="{ active: gameType === 'all' }" @click="switchGameType('all')">
-            {{ t('UIMatch_GtO8YEdb') }}
+            <span v-fit-text="{ maxLines: 1 }" class="tab-label">{{ t('UIMatch_GtO8YEdb') }}</span>
           </button>
           <button :class="{ active: gameType === 'texas' }" @click="switchGameType('texas')">
-            {{ t('adaptation10022') }}
+            <span v-fit-text="{ maxLines: 1 }" class="tab-label">{{ t('adaptation10022') }}</span>
           </button>
           <button :class="{ active: gameType === 'mahjong' }" @click="switchGameType('mahjong')">
-            {{ t('Mahjong_Name') }}
+            <span v-fit-text="{ maxLines: 1 }" class="tab-label">{{ t('Mahjong_Name') }}</span>
           </button>
           <button :class="{ active: gameType === 'mini' }" @click="switchGameType('mini')">
-            {{ t('UIClub_Text24') }}
+            <span v-fit-text="{ maxLines: 1 }" class="tab-label">{{ t('UIClub_Text24') }}</span>
           </button>
         </div>
       </section>
 
       <section class="pill-tabs range-tabs">
         <button :class="{ active: rangeType === 'today' }" @click="switchRangeType('today')">
-          {{ t('UIData_Today') }}
+          <span v-fit-text="{ maxLines: 1 }" class="tab-label">{{ t('UIData_Today') }}</span>
         </button>
         <button :class="{ active: rangeType === 'week' }" @click="switchRangeType('week')">
-          {{ tJoin(7, t('UIHappyShop_ActivityShopDay')) }}
+          <span v-fit-text="{ maxLines: 1 }" class="tab-label">
+            {{ tJoin(7, t('UIHappyShop_ActivityShopDay')) }}
+          </span>
         </button>
         <button :class="{ active: rangeType === 'month' }" @click="switchRangeType('month')">
-          {{ tJoin(30, t('UIHappyShop_ActivityShopDay')) }}
+          <span v-fit-text="{ maxLines: 1 }" class="tab-label">
+            {{ tJoin(30, t('UIHappyShop_ActivityShopDay')) }}
+          </span>
         </button>
       </section>
 
@@ -1270,7 +1274,7 @@ onMounted(() => {
 
 .pill-tabs {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: center;
   gap: 0.1rem;
   background: rgba(0, 0, 0, 0.2);
@@ -1279,12 +1283,13 @@ onMounted(() => {
 }
 
 .range-tabs {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   min-height: figma-rem(50);
 }
 
 .pill-tabs button {
   border: 0;
+  white-space: nowrap;
   background: transparent;
   color: #f9f9f9;
   opacity: 0.86;
@@ -1294,6 +1299,13 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.tab-label {
+  display: block;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .pill-tabs button.active {

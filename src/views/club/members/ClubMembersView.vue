@@ -1651,7 +1651,7 @@ onMounted(() => {
               :class="{ 'range-tab--active': activeRange === item.key }"
               @click="switchRange(item.key)"
             >
-              {{ item.label }}
+              <span v-fit-text="{ maxLines: 1 }" class="tab-label">{{ item.label }}</span>
             </button>
           </div>
 
@@ -2211,6 +2211,7 @@ onMounted(() => {
 
 .range-tab {
   border: 0;
+  white-space: nowrap;
   border-radius: 0.62rem;
   background: transparent;
   color: #f9f9f9;
@@ -2221,6 +2222,13 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.tab-label {
+  display: block;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .range-tab--active {

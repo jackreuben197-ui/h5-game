@@ -125,6 +125,23 @@ export const useWalletStore = defineStore('wallet', () => {
   const optimisticCsOrders = ref<{ order: ClubFundOrderListOrderInfo; orderType: 'recharge' | 'withdraw'; addedAt: number }[]>([])
   const OPTIMISTIC_TTL = 30_000
 
+  // 记录已审核完成但处于配置延迟关闭时间（CMS配置）内的客服订单，保持浮窗可见
+  const completedCsOrdersWithDelay = ref<{
+    order: ClubFundOrderListOrderInfo
+    orderType: 'recharge' | 'withdraw'
+    expireAt: number
+  }[]>([])
+
+  // 每5秒清理一次过期的延迟订单
+  if (typeof window !== 'undefined') {
+    window.setInterval(() => {
+      const now = Date.now()
+      completedCsOrdersWithDelay.value = completedCsOrdersWithDelay.value.filter(
+        (item) => item.expireAt > now,
+      )
+    }, 5000)
+  }
+
   function addOptimisticCsOrder(
     order: ClubFundOrderListOrderInfo,
     orderType: 'recharge' | 'withdraw',
@@ -134,13 +151,26 @@ export const useWalletStore = defineStore('wallet', () => {
     optimisticCsOrders.value = [...optimisticCsOrders.value, { order, orderType, addedAt: Date.now() }]
   }
 
-  const pendingCsRechargeOrder = computed(() => pendingCsRechargeOrders.value[0] || null)
+  const pendingCsRechargeOrder = computed(() => {
+    return pendingCsRechargeOrders.value[0] ||
+           completedCsOrdersWithDelay.value.find((item) => item.orderType === 'recharge')?.order ||
+           null
+  })
   const pendingCsRechargeCount = computed(() => pendingCsRechargeOrders.value.length)
 
-  const pendingCsWithdrawOrder = computed(() => pendingCsWithdrawOrders.value[0] || null)
+  const pendingCsWithdrawOrder = computed(() => {
+    return pendingCsWithdrawOrders.value[0] ||
+           completedCsOrdersWithDelay.value.find((item) => item.orderType === 'withdraw')?.order ||
+           null
+  })
   const pendingCsWithdrawCount = computed(() => pendingCsWithdrawOrders.value.length)
 
-  const pendingCsOrderCount = computed(() => csChatOrders.value.length)
+  // 红色气泡角标仅显示真实的待处理中及乐观处理中订单数
+  const pendingCsOrderCount = computed(() => {
+    return pendingCsRechargeOrders.value.length +
+           pendingCsWithdrawOrders.value.length +
+           optimisticCsOrders.value.length
+  })
 
   function buildCsOrderData(order: ClubFundOrderListOrderInfo, orderType: 'recharge' | 'withdraw') {
     const qrCode =
@@ -179,6 +209,7 @@ export const useWalletStore = defineStore('wallet', () => {
     }
     pendingCsRechargeOrders.value.forEach((o) => push(o, 'recharge'))
     pendingCsWithdrawOrders.value.forEach((o) => push(o, 'withdraw'))
+    completedCsOrdersWithDelay.value.forEach((item) => push(item.order, item.orderType))
     // 乐观订单放最后：若服务端已返回同 order_no，真实订单已先入 map，这里自动跳过
     optimisticCsOrders.value.forEach((e) => push(e.order, e.orderType))
     return [...byNo.values()]
@@ -293,12 +324,54 @@ export const useWalletStore = defineStore('wallet', () => {
   }
 
   /**
-   * External hook to hide the bell.
+   * 接收 TCP MSG_S_USER_ORDER_AUDIT 广播，如果已完成且配置了延迟关闭，将其移入延迟保留队列
    */
+  function handleOrderAuditNotification(payload: {
+    orderNo: string
+    status: number
+    delay: number // 分钟
+  }) {
+    const { orderNo, status, delay } = payload
+    if (status === 1) return // 申请中不处理
+
+    let foundOrder: ClubFundOrderListOrderInfo | undefined
+    let orderType: 'recharge' | 'withdraw' = 'recharge'
+
+    // 从充值挂起队列里移除
+    const rechargeIdx = pendingCsRechargeOrders.value.findIndex((o) => o.order_no === orderNo)
+    if (rechargeIdx > -1) {
+      foundOrder = pendingCsRechargeOrders.value[rechargeIdx]
+      orderType = 'recharge'
+      pendingCsRechargeOrders.value.splice(rechargeIdx, 1)
+    } else {
+      // 从提现挂起队列里移除
+      const withdrawIdx = pendingCsWithdrawOrders.value.findIndex((o) => o.order_no === orderNo)
+      if (withdrawIdx > -1) {
+        foundOrder = pendingCsWithdrawOrders.value[withdrawIdx]
+        orderType = 'withdraw'
+        pendingCsWithdrawOrders.value.splice(withdrawIdx, 1)
+      }
+    }
+
+    if (delay > 0) {
+      // 如果本地挂起队列已经没有了（例如刷新过），采用最小默认信息
+      const order = foundOrder || { order_no: orderNo, status }
+      const expireAt = Date.now() + delay * 60 * 1000
+
+      const existingIdx = completedCsOrdersWithDelay.value.findIndex((item) => item.order.order_no === orderNo)
+      if (existingIdx > -1) {
+        completedCsOrdersWithDelay.value[existingIdx] = { order, orderType, expireAt }
+      } else {
+        completedCsOrdersWithDelay.value.push({ order, orderType, expireAt })
+      }
+    }
+  }
+
   function clearCsOrders() {
     pendingCsRechargeOrders.value = []
     pendingCsWithdrawOrders.value = []
     optimisticCsOrders.value = []
+    completedCsOrdersWithDelay.value = []
   }
 
   return {
@@ -320,6 +393,8 @@ export const useWalletStore = defineStore('wallet', () => {
     addOptimisticCsOrder,
     refreshPendingCsOrder,
     updateCsOrders,
-    clearCsOrders
+    clearCsOrders,
+    completedCsOrdersWithDelay,
+    handleOrderAuditNotification
   }
 })

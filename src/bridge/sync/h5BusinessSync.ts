@@ -18,6 +18,8 @@ import { watch } from 'vue'
 import { Code, subscribeH5WsCode } from '../ws/messageCenter'
 import { decodeUserDiamondChange, decodeUserGoldChange } from '../ws/userBalanceNotify'
 import { decodeUserTraderOrderNotify } from '../ws/traderOrderNotify'
+import { decodeUserOrderAudit } from '../ws/orderAuditNotify'
+import { useWalletStore } from '@/stores/wallet'
 import type { UserInfoData } from '@/api/models/user'
 import type { DiamondConfigMap, GlobalConfigData } from '@/api/models/config'
 import type { ApiResponse } from '@/api/models/common'
@@ -217,9 +219,26 @@ export function initUserBalanceSync(): () => void {
     void import('@/api/user').then(({ getUserInfoApi }) => getUserInfoApi()).catch(() => undefined)
   })
 
+  // 监听客服订单审核结果推送（Code: 133）
+  const unsubOrderAudit = subscribeH5WsCode(Code.MSG_S_USER_ORDER_AUDIT, (msg) => {
+    const payload = decodeUserOrderAudit(msg.rawBuffer)
+    if (!payload) return
+
+    // 打印 TCP 消息详情以供调试查看
+    console.log('[ws] Received MSG_S_USER_ORDER_AUDIT:', payload)
+
+    const walletStore = useWalletStore(pinia)
+    walletStore.handleOrderAuditNotification({
+      orderNo: payload.orderNo,
+      status: payload.status,
+      delay: payload.delay,
+    })
+  })
+
   return () => {
     unsubDiamond()
     unsubGold()
     unsubTraderOrder()
+    unsubOrderAudit()
   }
 }

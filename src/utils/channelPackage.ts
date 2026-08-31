@@ -3,9 +3,9 @@ import { localStore } from '@/utils/localStore'
 export const CHANNEL_MAIN_DOMAIN = (import.meta.env.VITE_CHANNEL_MAIN_DOMAIN || '')
   .trim()
   .toLowerCase()
-const CHANNEL_DEV_INVITE_CODE = String(
-  import.meta.env.VITE_CHANNEL_DEV_INVITE_CODE || '',
-).trim()
+// 渠道包联调时可临时启用：
+// const TEST_CHANNEL_INVITE_CODE = 'ksGuBmMk'
+// const TEST_CHANNEL_INVITE_CODE = 'rhswehjy'
 
 interface ParsedQueryParams {
   inviteCode: string
@@ -39,9 +39,9 @@ function readParam(
 }
 
 export function isChannelPackageHost(hostname: string = window.location.hostname): boolean {
-  if (CHANNEL_DEV_INVITE_CODE) {
-    return true
-  }
+  // 渠道包联调：取消下面两行注释可强制按渠道域名处理。
+  // void hostname
+  // return true
   const normalizedHost = readString(hostname).toLowerCase()
   if (!normalizedHost || !CHANNEL_MAIN_DOMAIN) {
     return false
@@ -137,9 +137,9 @@ export function restoreStorageFromUrl(): void {
 export function extractInviteCodeFromSubdomain(
   hostname: string = window.location.hostname,
 ): string {
-  if (CHANNEL_DEV_INVITE_CODE) {
-    return CHANNEL_DEV_INVITE_CODE
-  }
+  // 渠道邀请码联调：先启用文件顶部的 TEST_CHANNEL_INVITE_CODE，再取消下面两行注释。
+  // void hostname
+  // return TEST_CHANNEL_INVITE_CODE
   const normalizedHost = readString(hostname).toLowerCase()
   if (!isChannelPackageHost(normalizedHost)) {
     return ''
@@ -167,6 +167,9 @@ export function parseInviteParamsFromLocation(
 }
 
 export function resolveInviteCode(hostname: string = window.location.hostname): string {
+  // 渠道邀请码联调：先启用文件顶部的 TEST_CHANNEL_INVITE_CODE，再取消下面两行注释。
+  // void hostname
+  // return TEST_CHANNEL_INVITE_CODE
   const parsed = parseInviteParamsFromLocation()
   if (parsed.inviteCode) {
     return parsed.inviteCode

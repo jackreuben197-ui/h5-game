@@ -25,7 +25,10 @@ import ClubZoneQuickActions from '@/components/Club/ClubZoneQuickActions.vue'
 import MainBottomTab from '@/components/Tabbar/MainBottomTab.vue'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 import { requireRealUser } from '@/session/realUserGate'
-import { ensureExperienceSession } from '@/session/experienceSession'
+import {
+  ensureExperienceSession,
+  ensureExperienceSessionReady,
+} from '@/session/experienceSession'
 
 interface Props {
   embedded?: boolean
@@ -228,8 +231,12 @@ function buildGroupKey(room: RoomRecord): string {
 }
 
 async function handleTableClick(room: RoomRecord): Promise<void> {
-  if (!gameStore.sessionToken) {
-    showFailToast(t('tokenFail'))
+  try {
+    if (!(await ensureExperienceSessionReady())) {
+      throw new Error(t('UIClub_Fetch') + ' token ' + t('UIClub_Fail3'))
+    }
+  } catch (error) {
+    showFailToast(error instanceof Error ? error.message : t('UIClub_Fail3'))
     return
   }
 

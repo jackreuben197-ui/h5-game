@@ -61,6 +61,7 @@ import {
 } from '@/utils/multiLanguageTemplate'
 import { formatDateTime, formatTodayAwareTimeLabel, toTimestampMs } from '@/utils/time'
 import { requireRealUser } from '@/session/realUserGate'
+import { ensureExperienceSessionReady } from '@/session/experienceSession'
 
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.png'
@@ -520,12 +521,12 @@ function buildGroupKey(room: RoomRecord): string {
 }
 
 async function handleTableClick(room: RoomRecord): Promise<void> {
-  if (isChannelPackage && !gameStore.sessionToken) {
-    requireRealUser()
-    return
-  }
-  if (!gameStore.sessionToken) {
-    showFailToast(t('UIClub_Done') + '，' + t('UIClub_Text16'))
+  try {
+    if (!(await ensureExperienceSessionReady())) {
+      throw new Error(t('UIClub_Fetch') + ' token ' + t('UIClub_Fail3'))
+    }
+  } catch (error) {
+    showFailToast(error instanceof Error ? error.message : t('UIClub_Fail3'))
     return
   }
 

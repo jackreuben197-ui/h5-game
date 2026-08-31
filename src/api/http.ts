@@ -5,7 +5,6 @@ import axios, {
 } from 'axios'
 import { closeToast, showFailToast, showLoadingToast } from 'vant'
 import { useGameStore } from '@/stores/game'
-import { useLoginModalStore } from '@/stores/loginModal'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { pinia } from '@/stores/pinia'
 import router from '@/router'
@@ -141,14 +140,14 @@ function resolveXClub(config: HttpRequestConfigExt): string {
   return String(userInfoStore.currentClubId || '').trim()
 }
 
-// 统一处理登录失效：清理登录态并打开登录弹窗。
+// 统一处理登录失效：清理旧会话并静默恢复游客态。
 async function forceToLogin(): Promise<void> {
   const currentStore = useGameStore(pinia)
   if (currentStore.isGuestAccount) {
     currentStore.clearLogin()
     LoginSession.ClearWS()
     void import('@/session/experienceSession')
-      .then(({ ensureExperienceSession }) => ensureExperienceSession())
+      .then(({ ensureExperienceSessionReady }) => ensureExperienceSessionReady())
       .catch((error) => console.warn('[http] restore experience session failed:', error))
     return
   }
@@ -167,11 +166,14 @@ async function forceToLogin(): Promise<void> {
   const gameStore = useGameStore(pinia)
   gameStore.clearLogin()
   LoginSession.ClearWS()
-
-  // 登录态失效时原地弹出登录弹窗，不强制跳转页面。
-  useLoginModalStore(pinia).open()
-
-  authRedirecting = false
+  try {
+    const { ensureExperienceSessionReady } = await import('@/session/experienceSession')
+    await ensureExperienceSessionReady()
+  } catch (error) {
+    console.warn('[http] restore experience session failed:', error)
+  } finally {
+    authRedirecting = false
+  }
 }
 
 http.interceptors.request.use(async (config) => {
@@ -198,7 +200,6 @@ http.interceptors.request.use(async (config) => {
     !isGuestPreviewRequest(normalizedUrl) &&
     !extConfig.allowGuestAccount
   ) {
-    useLoginModalStore(pinia).open()
     const error = new Error('该功能需要注册或登录') as Error & { code?: string }
     error.code = REAL_USER_REQUIRED_ERROR
     return Promise.reject(error)
@@ -219,7 +220,7 @@ http.interceptors.request.use(async (config) => {
     return Promise.reject(new Error('未登录或登录已过期'))
   }
 
-  // 登录前接口默认不携带当前会话 token；体验账号退出走独立 /user/logout。
+  // 登录前接口默认不携带当前会话 token；体验账号和真实账号共用 /user/logout。
   if (token && (!isPreLoginRequest || typeof configuredToken === 'string')) {
     // 与服务端约定：使用 Md5at 请求头传 token。
     config.headers.Md5at = token
@@ -248,7 +249,7 @@ http.interceptors.response.use(
       requestConfig.suppressBusinessToast === true ||
       (businessCode !== undefined && suppressCodes.includes(Number(businessCode)))
 
-    // 服务端返回 90010：token 失效，打开登录弹窗。
+    // 服务端返回 90010：清理失效 token 并静默恢复游客态。
     if (businessCode === 90010 && !requestConfig.suppressAuthRedirect) {
       void forceToLogin()
       return Promise.reject(new Error('登录已失效，请重新登录'))

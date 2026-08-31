@@ -157,9 +157,9 @@ router.beforeEach((to, from) => {
     if (isChannelPackage && to.name === 'club-index') {
       return true
     }
-    // 需要真实账号的页面统一在前端拦截并记录目标地址，登录后继续原流程。
-    useLoginModalStore(pinia).open(to.fullPath)
     if (from.name) {
+      // 应用内由用户发起的受限页面导航才弹登录；首次打开深链只回到可预览首页。
+      useLoginModalStore(pinia).open(to.fullPath)
       log.warn('cancel nav: token missing', {
         from: from.fullPath || '<init>',
         to: to.fullPath,
@@ -183,10 +183,10 @@ router.beforeEach((to, from) => {
     }
     if (from.name) {
       log.warn('cancel nav to /login', { from: from.fullPath })
+      useLoginModalStore(pinia).open()
       return false
     }
     log.warn('initial nav to /login fallback to home')
-    useLoginModalStore(pinia).open()
     return { name: 'lobby' }
   }
 

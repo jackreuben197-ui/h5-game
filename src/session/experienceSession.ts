@@ -142,6 +142,18 @@ export function ensureExperienceSession(): Promise<boolean> {
   return ensurePromise
 }
 
+/**
+ * 需要立即使用 token 的用户操作入口。首次校验若正好遇到旧 token 被清理，等待一次新的游客会话。
+ */
+export async function ensureExperienceSessionReady(): Promise<boolean> {
+  const firstReady = await ensureExperienceSession()
+  if (firstReady && useGameStore(pinia).sessionToken.trim()) {
+    return true
+  }
+  const secondReady = await ensureExperienceSession()
+  return secondReady && Boolean(useGameStore(pinia).sessionToken.trim())
+}
+
 interface LogoutCurrentSessionOptions {
   restoreExperience?: boolean
 }

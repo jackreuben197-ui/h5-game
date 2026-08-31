@@ -16,10 +16,7 @@ import {
 } from '@bridge-protocol'
 import { sendBridgeMessage, subscribeCocosMessages } from '../core/cocosBridgeChannel'
 import StorageKey from '@/constants/storageKey'
-import { t } from '@/i18n'
-import { showFailToast } from 'vant'
 import { useGameStore } from '@/stores/game'
-import { useLoginModalStore } from '@/stores/loginModal'
 import { pinia } from '@/stores/pinia'
 import { localStore } from '@/utils/localStore'
 import { createLogger } from '@/utils/logger'
@@ -236,7 +233,7 @@ function hasSessionToken(): boolean {
   return Boolean(getSessionToken())
 }
 
-// websocket 链路统一鉴权兜底：发现 token 缺失时，清理状态并打开登录弹窗。
+// websocket 链路统一鉴权兜底：发现 token 缺失时，清理状态并恢复游客会话。
 async function forceToLoginFromWs(reason: string): Promise<void> {
   if (authRedirecting) {
     return
@@ -265,19 +262,14 @@ async function forceToLoginFromWs(reason: string): Promise<void> {
   const wasGuestAccount = gameStore.isGuestAccount
   gameStore.clearLogin()
 
-  if (wasGuestAccount) {
-    void import('@/session/experienceSession')
-      .then(({ ensureExperienceSession }) => ensureExperienceSession())
-      .catch((error) => log.warn('restore experience session failed:', error))
+  try {
+    const { ensureExperienceSessionReady } = await import('@/session/experienceSession')
+    await ensureExperienceSessionReady()
+  } catch (error) {
+    log.warn('restore experience session failed:', { error, wasGuestAccount })
+  } finally {
     authRedirecting = false
-    return
   }
-
-  // 登录态失效时原地弹出登录弹窗 + 文案提示，不强制跳页。
-  showFailToast(t('tokenFail'))
-  useLoginModalStore(pinia).open()
-
-  authRedirecting = false
 }
 
 // 统一的放弃重连出口：emit wsReconnectFailed + 重置状态。

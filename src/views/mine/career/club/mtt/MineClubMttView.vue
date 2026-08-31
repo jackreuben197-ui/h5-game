@@ -473,7 +473,7 @@ onBeforeUnmount(() => {
             :class="{ active: selectedTime === item.key }"
             @click="selectTime(item.key)"
           >
-            {{ item.label }}
+            <span v-fit-text="{ maxLines: 1 }" class="tab-label">{{ item.label }}</span>
           </button>
         </div>
         <div class="summary-row">
@@ -628,18 +628,18 @@ onBeforeUnmount(() => {
 
 .time-tabs {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: center;
   gap: 0.1rem;
   height: 1.33rem;
   padding: 0.06rem;
   border-radius: 0.68rem;
   background: rgba(0, 0, 0, 0.2);
-  margin: 0 0.53rem;
 }
 
 .time-tab {
   border: 0;
+  white-space: nowrap;
   border-radius: 0.62rem;
   background: transparent;
   color: #f9f9f9;
@@ -655,6 +655,13 @@ onBeforeUnmount(() => {
     font-weight: 700;
     opacity: 1;
   }
+}
+
+.tab-label {
+  display: block;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .summary-row {

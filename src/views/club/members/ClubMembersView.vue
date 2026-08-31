@@ -1538,7 +1538,6 @@ onMounted(() => {
               </p>
             </div>
           </div>
-
           <div class="summary-grid summary-grid--bottom">
             <div v-for="item in summaryBottom" :key="item.label" class="summary-item">
               <p class="summary-label">{{ item.label }}</p>
@@ -1549,10 +1548,10 @@ onMounted(() => {
               </p>
             </div>
 
-            <button type="button" class="income-btn" @click="onIncomeQuery">
+            <!-- <button type="button" class="income-btn" @click="onIncomeQuery">
               <span>{{ t('UIClub_Income5') }}</span>
               <span class="income-icon" aria-hidden="true"></span>
-            </button>
+            </button> -->
           </div>
         </section>
 

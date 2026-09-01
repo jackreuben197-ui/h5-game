@@ -1328,7 +1328,9 @@ onMounted(() => {
   z-index: 4;
   left: 50%;
   transform: translateX(-50%);
-  width: 5.69rem;
+  min-width: 5.69rem;
+  max-width: calc(100% - 0.4rem);
+  width: max-content;
   height: 0.917rem;
   border-radius: 0.4rem 0.4rem 0 0;
   background: rgba(0, 0, 0, 0.28);
@@ -1376,11 +1378,11 @@ onMounted(() => {
   z-index: 1;
   width: 100%;
   height: 100%;
-  padding: 0 0.26rem;
+  padding: 0 0.24rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.43rem;
+  gap: 0.32rem;
 }
 
 .stat-item {
@@ -1400,6 +1402,7 @@ onMounted(() => {
     width: 0.367rem;
     height: 0.367rem;
     object-fit: contain;
+    flex-shrink: 0;
   }
 
   @include theme-light-own {

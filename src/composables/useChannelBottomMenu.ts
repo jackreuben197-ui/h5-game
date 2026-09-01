@@ -43,7 +43,8 @@ export function useChannelBottomMenu() {
       isChannelPackage &&
       channelClub.value !== null &&
       channelClub.value !== undefined &&
-      Number(channelClub.value.h5_menu) !== 2,
+      // Number(channelClub.value.h5_menu) !== 2,
+      Number(channelClub.value.h5_menu) == 1,
   )
 
   const hasPoker = computed(() =>

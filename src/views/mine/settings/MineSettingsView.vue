@@ -41,41 +41,6 @@ interface SettingItem {
   clickable?: boolean
 }
 
-const sectionTop: SettingItem[] = [
-  { key: 'logout', label: t('UIMine_Setting114'), icon: icLogout },
-  {
-    key: 'language',
-    label: t('tc_PpNL8LVJ'),
-    icon: icChangeLanguage,
-    rightText: languageLabel(),
-  },
-  { key: 'account', label: t('UISettingPassword001'), icon: icAccountCenter },
-]
-
-const sectionMiddle: SettingItem[] = [
-  { key: 'sound', label: t('tc_TsALrril'), icon: icGameSound, toggle: true },
-  {
-    key: 'line',
-    label: t('tc_FKurKJYR'),
-    icon: icCurrentLine,
-    rightText: t('UIClub_Text73'),
-  },
-  { key: 'cancel', label: t('UIMine_DeleteUser'), icon: icDeleteAccount },
-  { key: 'about', label: t('tc_YQAGnw3p'), icon: icAboutUs },
-  // { key: 'agreement', label: t('tc_5E0V3qlb'), icon: icPolicePrivacy },
-]
-
-const sectionBottom: SettingItem[] = [
-  // { key: 'privacy', label: t('UIMine_Setting_UserSecret'), icon: icUserAgreement },
-  {
-    key: 'version',
-    label: t('tc_NO5NT6aa'),
-    icon: icAppVersion,
-    rightText: 'v1.0.0',
-    clickable: false,
-  },
-]
-
 function languageLabel(): string {
   const locale = getLocale()
   if (locale === 'cn') {
@@ -86,6 +51,41 @@ function languageLabel(): string {
   }
   return SUPPORTED_LOCALES_OPTIONS.find((item) => item.value === locale)?.label ?? 'English'
 }
+
+const sectionTop = computed<SettingItem[]>(() => [
+  { key: 'logout', label: t('UIMine_Setting114'), icon: icLogout },
+  {
+    key: 'language',
+    label: t('tc_PpNL8LVJ'),
+    icon: icChangeLanguage,
+    rightText: languageLabel(),
+  },
+  { key: 'account', label: t('UISettingPassword001'), icon: icAccountCenter },
+])
+
+const sectionMiddle = computed<SettingItem[]>(() => [
+  { key: 'sound', label: t('tc_TsALrril'), icon: icGameSound, toggle: true },
+  {
+    key: 'line',
+    label: t('tc_FKurKJYR'),
+    icon: icCurrentLine,
+    rightText: t('UIClub_Text73'),
+  },
+  { key: 'cancel', label: t('UIMine_DeleteUser'), icon: icDeleteAccount },
+  { key: 'about', label: t('tc_YQAGnw3p'), icon: icAboutUs },
+  // { key: 'agreement', label: t('tc_5E0V3qlb'), icon: icPolicePrivacy },
+])
+
+const sectionBottom = computed<SettingItem[]>(() => [
+  // { key: 'privacy', label: t('UIMine_Setting_UserSecret'), icon: icUserAgreement },
+  {
+    key: 'version',
+    label: t('tc_NO5NT6aa'),
+    icon: icAppVersion,
+    rightText: 'v1.0.0',
+    clickable: false,
+  },
+])
 
 async function onRowClick(item: SettingItem): Promise<void> {
   if (item.clickable === false) {

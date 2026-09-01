@@ -30,11 +30,11 @@ if (route.query.security === 'on') {
   securityPasswordEnabled.value = true
 }
 
-const rows: AccountActionItem[] = [
+const rows = computed<AccountActionItem[]>(() => [
   { key: 'reset-password', label: t('UIClub_Code7'), icon: icReset, arrow: true },
   { key: 'security-password', label: '6' + t('UIClub_Code8'), icon: icSecurity },
   { key: 'reset-security-password', label: t('UICommon_Edit') + '6' + t('UIClub_Code8'), icon: icReset, arrow: true },
-]
+])
 
 function onRowClick(item: AccountActionItem): void {
   if (item.key === 'reset-password') {

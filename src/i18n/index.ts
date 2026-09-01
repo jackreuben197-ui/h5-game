@@ -97,22 +97,11 @@ export function setLocale(locale: string): void {
   }
 }
 
-// Cocos 侧文案在节点创建时一次性写入，切换语言无法重绘已生成的界面（牌桌会停留在旧语言），
-// 因此用户主动切换语言后整页重载，让两端都按新语言重新构建。
-const LOCALE_RELOAD_DELAY_MS = 320
-
+// 切换语言直接更新响应式词典与持久化状态，保持平滑无刷新的单页交互。
 export function setLocaleAndReload(locale: string): void {
-  const previousLocale = currentLocale.value
   setLocale(locale)
-
-  if (currentLocale.value === previousLocale || typeof window === 'undefined') {
-    return
-  }
-
-  window.setTimeout(() => {
-    window.location.reload()
-  }, LOCALE_RELOAD_DELAY_MS)
 }
+
 
 // 对外 LocaleCode -> 服务端 lang 字符串（zh_CN / en_US / ru_RU ...）。
 const LOCALE_TO_SERVER_LANG: Record<LocaleCode, string> = {

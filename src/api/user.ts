@@ -235,10 +235,14 @@ export async function loginV2Api(payload: LoginV2Request): Promise<LoginResponse
 
 // 用户信息：用于大厅初始化与用户态同步。
 export async function getUserInfoApi(): Promise<UserInfoData> {
+  const requestToken = useGameStore(pinia).sessionToken.trim()
   const res = await http.post<UserInfoResponse>(
     '/user/info',
     {},
-    { allowGuestAccount: true } satisfies HttpRequestOptionsExt,
+    {
+      allowGuestAccount: true,
+      ...(requestToken ? { authToken: requestToken } : {}),
+    } satisfies HttpRequestOptionsExt,
   )
 
   const body = res.data
@@ -251,6 +255,11 @@ export async function getUserInfoApi(): Promise<UserInfoData> {
   }
 
   const gameStore = useGameStore(pinia)
+  // 请求期间发生游客 → 真实用户或真实用户换号时，旧响应只能返回给调用方，
+  // 不得再修改全局身份、用户资料或同步给 Cocos。
+  if (requestToken && gameStore.sessionToken.trim() !== requestToken) {
+    return body.data
+  }
   const experienceAccount = isExperienceUserInfo(body.data)
   gameStore.setGuestAccount(experienceAccount)
 
@@ -258,9 +267,8 @@ export async function getUserInfoApi(): Promise<UserInfoData> {
   forwardUserInfoToCocos(body.data)
   // 体验账号不写入真实用户资料缓存，防止“我的/消息”误展示体验账号数据。
   const userInfoStore = useUserInfoStore(pinia)
-  if (experienceAccount) {
-    userInfoStore.clearPrivateInfo()
-  } else {
+  // setGuestAccount(true) 已统一清理游客不应保留的私有资料，这里不重复执行。
+  if (!experienceAccount) {
     userInfoStore.setUserInfo(body.data)
   }
   return body.data
@@ -268,10 +276,22 @@ export async function getUserInfoApi(): Promise<UserInfoData> {
 
 // 俱乐部信息：供 H5/CC 对齐用户俱乐部状态。
 export async function getUserClubApi(): Promise<ApiResponse<unknown>> {
-  const res = await http.post<ApiResponse<unknown>>('/org/club/user_club')
+  const requestToken = useGameStore(pinia).sessionToken.trim()
+  const res = await http.post<ApiResponse<unknown>>(
+    '/org/club/user_club',
+    {},
+    requestToken
+      ? ({ authToken: requestToken } satisfies HttpRequestOptionsExt)
+      : undefined,
+  )
   const body = res.data
   if (body.code !== 0) {
     throw new Error(body.message || '获取俱乐部信息失败')
+  }
+
+  // 换号期间旧账号的俱乐部响应不得覆盖新账号数据。
+  if (requestToken && useGameStore(pinia).sessionToken.trim() !== requestToken) {
+    return body
   }
 
   // 每次请求都更新 clubList 全局缓存；currentClub 默认取第一条，可手动切换。

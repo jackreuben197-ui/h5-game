@@ -14,7 +14,7 @@ interface GameState {
   loginAccount: string
   loginNickname: string
   loginUserId: string
-  syncedProfileToken: string
+  syncedIdentityToken: string
   lastEnterTable: EnterTablePayload | null
   lastEnterAt: number
   lastBridgeAck: string
@@ -34,7 +34,7 @@ export const useGameStore = defineStore(
       loginAccount: '',
       loginNickname: '',
       loginUserId: '',
-      syncedProfileToken: '',
+      syncedIdentityToken: '',
       lastEnterTable: null,
       lastEnterAt: 0,
       lastBridgeAck: '',
@@ -84,18 +84,18 @@ export const useGameStore = defineStore(
           useRoomListStore().bootstrapRoomList()
         }
       },
-      // 同一 token 在当前应用会话内只允许同步一次用户/俱乐部资料。
-      shouldSyncProfile(token: string): boolean {
+      // 身份确认结果只在当前 SPA 会话内有效；token 变化或刷新页面后必须重新确认。
+      shouldSyncIdentity(token: string): boolean {
         const safeToken = token.trim()
         if (!safeToken) {
           return false
         }
-        return this.syncedProfileToken !== safeToken
+        return this.syncedIdentityToken !== safeToken
       },
-      markProfileSynced(token: string): void {
+      markIdentitySynced(token: string): void {
         const safeToken = token.trim()
         if (safeToken) {
-          this.syncedProfileToken = safeToken
+          this.syncedIdentityToken = safeToken
         }
       },
       clearLogin(): void {
@@ -106,7 +106,7 @@ export const useGameStore = defineStore(
         this.loginAccount = ''
         this.loginNickname = ''
         this.loginUserId = ''
-        this.syncedProfileToken = ''
+        this.syncedIdentityToken = ''
         this.setGuestAccount(false)
         // 登录态清空时，同步清理全局共享缓存。
         const userInfoStore = useUserInfoStore()

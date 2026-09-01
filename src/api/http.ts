@@ -37,6 +37,7 @@ export interface HttpRequestConfigExt extends InternalAxiosRequestConfig {
   allowGuestAccount?: boolean
   authToken?: string | false
   xClub?: string | number | false
+  sessionTokenSnapshot?: string
 }
 
 const REAL_USER_REQUIRED_ERROR = 'H5_REAL_USER_REQUIRED'
@@ -55,7 +56,6 @@ const PRE_LOGIN_PATHS = [
   '/user/modify/password',
   '/misc/article/info',
   '/misc/h5/display',
-  '/misc/banner/list',
   '/config/register/area',
   '/org/club/default',
   '/roomcenter/guest/all/rooms',
@@ -68,7 +68,6 @@ const PRE_LOGIN_PATHS = [
 ]
 
 const GUEST_PREVIEW_PATHS = [
-  '/misc/banner/list',
   '/gc/cowboy/room/list',
   '/roomcenter/mtt/list',
   '/roomcenter/user/all/rooms',
@@ -141,8 +140,11 @@ function resolveXClub(config: HttpRequestConfigExt): string {
 }
 
 // 统一处理登录失效：清理旧会话并静默恢复游客态。
-async function forceToLogin(): Promise<void> {
+async function forceToLogin(expectedToken = ''): Promise<void> {
   const currentStore = useGameStore(pinia)
+  if (expectedToken && currentStore.sessionToken.trim() !== expectedToken) {
+    return
+  }
   if (currentStore.isGuestAccount) {
     currentStore.clearLogin()
     LoginSession.ClearWS()
@@ -164,6 +166,10 @@ async function forceToLogin(): Promise<void> {
   authRedirecting = true
 
   const gameStore = useGameStore(pinia)
+  if (expectedToken && gameStore.sessionToken.trim() !== expectedToken) {
+    authRedirecting = false
+    return
+  }
   gameStore.clearLogin()
   LoginSession.ClearWS()
   try {
@@ -220,6 +226,10 @@ http.interceptors.request.use(async (config) => {
     return Promise.reject(new Error('未登录或登录已过期'))
   }
 
+  // 响应拦截器用它判断返回值是否仍属于当前会话，避免旧 token 的 90010
+  // 或用户资料响应在换号后清掉/覆盖新登录态。
+  extConfig.sessionTokenSnapshot = token
+
   // 登录前接口默认不携带当前会话 token；体验账号和真实账号共用 /user/logout。
   if (token && (!isPreLoginRequest || typeof configuredToken === 'string')) {
     // 与服务端约定：使用 Md5at 请求头传 token。
@@ -251,7 +261,7 @@ http.interceptors.response.use(
 
     // 服务端返回 90010：清理失效 token 并静默恢复游客态。
     if (businessCode === 90010 && !requestConfig.suppressAuthRedirect) {
-      void forceToLogin()
+      void forceToLogin(requestConfig.sessionTokenSnapshot)
       return Promise.reject(new Error('登录已失效，请重新登录'))
     }
     // 业务码非 0：弹出多语言错误提示。
@@ -268,7 +278,7 @@ http.interceptors.response.use(
     const businessCode = error.response?.data?.code
     const requestConfig = error.config as HttpRequestConfigExt | undefined
     if (businessCode === 90010 && !requestConfig?.suppressAuthRedirect) {
-      void forceToLogin()
+      void forceToLogin(requestConfig?.sessionTokenSnapshot)
       return Promise.reject(error)
     }
 
@@ -403,7 +413,7 @@ async function doTelegramAutoLogin(): Promise<boolean> {
         nickname,
         userId,
       })
-      gameStore.markProfileSynced(token)
+      gameStore.markIdentitySynced(token)
     } catch (error) {
       LoginSession.ClearWS()
       gameStore.clearLogin()

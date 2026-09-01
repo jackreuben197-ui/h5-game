@@ -24,7 +24,11 @@ import { useGameStore } from '@/stores/game'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { syncPostAuthData } from '@/session/postAuthSync'
 import LoginSession from '@/session/loginSession'
-import { ensureExperienceSession, logoutCurrentSession } from '@/session/experienceSession'
+import {
+  ensureExperienceSession,
+  logoutCurrentSession,
+  suspendExperienceSessionInitialization,
+} from '@/session/experienceSession'
 import { completeCocosTableSitdownAuth } from '@/session/cocosTableSitdownAuth'
 import { sendBridgeMessage } from '@/bridge/core'
 import { setH5TableAuthOverlay, setH5Visible } from '@/bridge/channels/uiChannel'
@@ -411,31 +415,36 @@ function applyDebugAccount(account: DebugAccount): void {
 }
 
 async function handleLogin(target: string) {
-  const effectiveInviteCode = resolveAgentInviteCode() || inviteCodeFromChannel.value
-  const replacingExperienceAccount = gameStore.isGuestAccount && Boolean(gameStore.sessionToken)
-  const isCocosTableSitdownAuth =
-    loginModalStore.context === H5_LOGIN_CONTEXT.TABLE_SITDOWN
+  const restoreGuestOnFailure = gameStore.isGuestAccount && Boolean(gameStore.sessionToken)
+  const resumeExperienceSession = suspendExperienceSessionInitialization()
 
+  try {
+    await runLoginTransaction(target, restoreGuestOnFailure)
+  } catch (error) {
+    resumeExperienceSession()
+    if (restoreGuestOnFailure && !gameStore.sessionToken.trim()) {
+      await ensureExperienceSession()
+    }
+    throw error
+  } finally {
+    resumeExperienceSession()
+  }
+}
+
+async function runLoginTransaction(target: string, replacingExperienceAccount: boolean) {
   if (replacingExperienceAccount) {
     await logoutCurrentSession()
   }
 
-  let res: Awaited<ReturnType<typeof loginV2Api>>
-  try {
-    res = await loginV2Api({
-      phone: contactType.value === 'phone' ? target : undefined,
-      email: contactType.value === 'email' ? target : undefined,
-      password: md5(form.password.trim()),
-      area: contactType.value === 'phone' ? normalizeArea() : undefined,
-      invite_code: effectiveInviteCode || undefined,
-      trace_hash: traceHashFromChannel.value || undefined,
-    })
-  } catch (error) {
-    if (replacingExperienceAccount) {
-      await ensureExperienceSession()
-    }
-    throw error
-  }
+  const effectiveInviteCode = resolveAgentInviteCode() || inviteCodeFromChannel.value
+  const res = await loginV2Api({
+    phone: contactType.value === 'phone' ? target : undefined,
+    email: contactType.value === 'email' ? target : undefined,
+    password: md5(form.password.trim()),
+    area: contactType.value === 'phone' ? normalizeArea() : undefined,
+    invite_code: effectiveInviteCode || undefined,
+    trace_hash: traceHashFromChannel.value || undefined,
+  })
   const token = String(res.token || '').trim()
   if (!token) {
     throw new Error(t('UILogin_Text') + " token")
@@ -447,7 +456,7 @@ async function handleLogin(target: string) {
     localStore.setItem(StorageKey.TOKEN_EXPIREAT, expireAt)
   }
 
-  if (isCocosTableSitdownAuth) {
+  if (loginModalStore.context === H5_LOGIN_CONTEXT.TABLE_SITDOWN) {
     const authResult = await completeCocosTableSitdownAuth({
       realToken: token,
       account: target,
@@ -465,20 +474,24 @@ async function handleLogin(target: string) {
   if (gameStore.sessionToken && gameStore.sessionToken !== token) {
     LoginSession.ClearWS()
   }
-  // 登录/注册成功后，当前 token 已经属于真实账号。
   gameStore.setGuestAccount(false)
   gameStore.setSessionToken(token)
-  gameStore.setLoginUser({
-    account: target,
-    nickname: target,
-    userId: '',
-  })
+  gameStore.setLoginUser({ account: target, nickname: target, userId: '' })
   persistLoginDraft()
 
-  // 把首页无关的拉取（userInfo/club/全局配置/收费配置/多语言模板/WS）统一收口到登录后处理。
-  syncPostAuthData()
+  // 弹窗以完整身份切换为成功边界，避免先关闭后再由页面补齐用户态。
+  const syncResult = await syncPostAuthData()
+  if (
+    !syncResult.websocketSynced ||
+    !syncResult.userInfoSynced ||
+    !syncResult.userClubSynced ||
+    gameStore.sessionToken.trim() !== token ||
+    gameStore.isGuestAccount ||
+    !gameStore.loginUserId.trim()
+  ) {
+    throw new Error(t('UIClub_Text71'))
+  }
 
-  // 优先跳转到登录前记录的目标路径（如点击钱包 tab 触发登录的场景）。
   const pendingRedirect = loginModalStore.consumePendingRedirect()
   if (pendingRedirect) {
     await router.replace(pendingRedirect)
@@ -486,7 +499,6 @@ async function handleLogin(target: string) {
   // 先取出待续接动作，避免关闭弹窗的 watcher 把它当作用户取消而清掉。
   const pendingAction = takePendingRealUserAction()
   loginModalStore.close()
-  // 登录成功后清除本地缓存的代理邀请码
   clearAgentInviteCodeCache()
   if (pendingAction) {
     void Promise.resolve(pendingAction()).catch((error) => {

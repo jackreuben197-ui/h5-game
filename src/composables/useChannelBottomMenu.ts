@@ -2,6 +2,7 @@ import { computed } from 'vue'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { useMttListStore } from '@/stores/mttList'
 import { useRoomListStore } from '@/stores/roomList'
+import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import { filterVisibleMttRecords } from '@/utils/mttVisibility'
@@ -14,19 +15,25 @@ function toSafeInt(value: unknown): number {
 
 /** 渠道包底部导航的版本与动态玩法入口。 */
 export function useChannelBottomMenu() {
+  const gameStore = useGameStore()
   const userInfoStore = useUserInfoStore()
   const roomListStore = useRoomListStore()
   const mttListStore = useMttListStore()
   const appConfigStore = useAppConfigStore()
   const isChannelPackage = isChannelPackageHost()
 
-  const channelClub = computed(
-    () =>
+  const channelClub = computed(() => {
+    // 游客只能使用渠道公开俱乐部配置，不能让残留的真实用户 clubList 改变菜单版本。
+    if (gameStore.isGuestAccount) {
+      return userInfoStore.channelDefaultClub
+    }
+    return (
       userInfoStore.currentJoinedClub ||
       userInfoStore.currentClub ||
       userInfoStore.clubList[0] ||
-      userInfoStore.channelDefaultClub,
-  )
+      userInfoStore.channelDefaultClub
+    )
+  })
   const selectedClubId = computed(() => toSafeInt(channelClub.value?.club_id))
   const selectedTribeId = computed(() => toSafeInt(channelClub.value?.tribe_id))
 

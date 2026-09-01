@@ -19,6 +19,8 @@ import { isChannelPackageHost, resolveInviteCode } from '@/utils/channelPackage'
 import type { ExperienceLoginRequest, UserInfoData } from '@/api/models/user'
 
 let ensurePromise: Promise<boolean> | null = null
+let experienceLoginRevision = 0
+let realAuthenticationDepth = 0
 let logoutPromise: Promise<void> | null = null
 let logoutPromiseToken = ''
 let exitReleaseToken = ''
@@ -84,21 +86,34 @@ async function ensureChannelClubContext(): Promise<void> {
   await useUserInfoStore(pinia).ensureChannelDefaultClub()
 }
 
-async function runEnsureExperienceSession(): Promise<boolean> {
+async function releaseSupersededExperienceToken(token: string): Promise<void> {
+  if (!token) return
+  try {
+    await postUserLogoutApi(token)
+  } catch (error) {
+    console.warn('[experience-session] release superseded experience token failed:', error)
+  }
+}
+
+async function runEnsureExperienceSession(revision: number): Promise<boolean> {
   const gameStore = useGameStore(pinia)
-  const existingToken = gameStore.sessionToken.trim()
 
   await ensureChannelClubContext()
+
+  // 渠道俱乐部请求可能等待较久，token 必须在等待后重新读取，不能使用旧快照。
+  const existingToken = gameStore.sessionToken.trim()
 
   if (existingToken) {
     try {
       const userInfo = await getUserInfoApi()
+      if (gameStore.sessionToken.trim() !== existingToken) {
+        return false
+      }
       hydrateSessionUser(userInfo, gameStore.loginAccount || 'experience')
       if (isExperienceUserInfo(userInfo)) {
-        gameStore.setGuestAccount(true)
+        gameStore.markIdentitySynced(existingToken)
         await bootstrapResolvedSessionLists()
       } else {
-        gameStore.setGuestAccount(false)
         await syncPostAuthData()
         // 渠道版底部导航需要根据真实列表决定动态入口。身份未确认前不能由
         // Tab 组件抢跑；确认是真实账号后在会话层统一预热。
@@ -121,9 +136,22 @@ async function runEnsureExperienceSession(): Promise<boolean> {
   if (isTelegramMiniAppEnv()) {
     return false
   }
+  if (revision !== experienceLoginRevision) {
+    return false
+  }
 
+  const tokenBeforeExperienceLogin = gameStore.sessionToken.trim()
   const login = await postUserExperienceLoginApi(buildExperienceLoginPayload())
   const token = String(login.token || '').trim()
+  if (
+    revision !== experienceLoginRevision ||
+    gameStore.sessionToken.trim() !== tokenBeforeExperienceLogin
+  ) {
+    // 登录/注册已在并发流程中接管会话。刚领取的体验账号必须立即登出释放，
+    // 但绝不能写入本地或覆盖新的真实 token。
+    await releaseSupersededExperienceToken(token)
+    return false
+  }
   const expireAt = Number(login.expire_at || 0)
   if (Number.isFinite(expireAt) && expireAt > 0) {
     localStore.setItem(StorageKey.TOKEN_EXPIREAT, expireAt)
@@ -136,27 +164,67 @@ async function runEnsureExperienceSession(): Promise<boolean> {
 
   try {
     const userInfo = await getUserInfoApi()
+    if (gameStore.sessionToken.trim() !== token) {
+      return false
+    }
     hydrateSessionUser(userInfo, 'experience')
-    // 体验登录接口本身是权威来源；兼容尚未发布 user_type=6 的环境。
-    gameStore.setGuestAccount(true)
+    gameStore.markIdentitySynced(token)
   } catch (error) {
+    if (gameStore.sessionToken.trim() !== token) {
+      return false
+    }
     // token 已成功领取时不能因 user/info 短暂失败而再次领取，只保留游客态等待重试。
     console.warn('[experience-session] sync experience user info failed:', error)
-    gameStore.setGuestAccount(true)
   }
 
+  if (gameStore.sessionToken.trim() !== token) {
+    return false
+  }
   await bootstrapResolvedSessionLists()
   return true
+}
+
+/** 真实登录/注册开始时调用，使所有尚未完成的游客初始化结果立即失效。 */
+export function invalidateExperienceSessionInitialization(): void {
+  experienceLoginRevision += 1
+  ensurePromise = null
+}
+
+/** 真实登录事务期间暂停领取体验账号；返回函数用于结束暂停。 */
+export function suspendExperienceSessionInitialization(): () => void {
+  realAuthenticationDepth += 1
+  invalidateExperienceSessionInitialization()
+  let resumed = false
+  return () => {
+    if (resumed) return
+    resumed = true
+    realAuthenticationDepth = Math.max(0, realAuthenticationDepth - 1)
+  }
 }
 
 /**
  * 启动或体验 token 失效后的统一入口。并发调用只会发起一次体验登录请求。
  */
 export function ensureExperienceSession(): Promise<boolean> {
+  if (realAuthenticationDepth > 0) {
+    return Promise.resolve(false)
+  }
+  const gameStore = useGameStore(pinia)
+  const currentToken = gameStore.sessionToken.trim()
+  // 身份确认结果与 token 绑定；同一会话内切换路由只复用结果，不再重复请求 user/info。
+  if (currentToken && !gameStore.shouldSyncIdentity(currentToken)) {
+    return Promise.resolve(true)
+  }
   if (!ensurePromise) {
-    ensurePromise = runEnsureExperienceSession().finally(() => {
-      ensurePromise = null
+    const revision = experienceLoginRevision
+    let currentPromise: Promise<boolean>
+    currentPromise = runEnsureExperienceSession(revision).finally(() => {
+      // 旧任务完成时不能清掉换号后新建的 ensure Promise。
+      if (ensurePromise === currentPromise) {
+        ensurePromise = null
+      }
     })
+    ensurePromise = currentPromise
   }
   return ensurePromise
 }
@@ -183,6 +251,7 @@ interface LogoutCurrentSessionOptions {
 export async function logoutCurrentSession(
   options: LogoutCurrentSessionOptions = {},
 ): Promise<void> {
+  invalidateExperienceSessionInitialization()
   const gameStore = useGameStore(pinia)
   const token = gameStore.sessionToken.trim()
   if (!token) {

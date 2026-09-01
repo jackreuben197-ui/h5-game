@@ -437,7 +437,8 @@ function extractCowboyOnlineCount(raw: unknown): number {
 
 // 首页小游戏统计：使用 /api/gc/cowboy/room/list，仅取 online 字段。
 async function fetchHomeMiniGameStats(): Promise<void> {
-  if (!gameStore.sessionToken.trim()) {
+  // 牛仔列表接口暂不支持体验账号；小游戏入口启用前，游客保持公开占位数据。
+  if (!gameStore.isRealUser) {
     return
   }
   const response = await getCowboyRoomListApi({
@@ -511,9 +512,9 @@ watch(noticeText, () => {
 })
 
 watch(
-  () => gameStore.sessionToken,
-  (token, previousToken) => {
-    if (token && token !== previousToken) {
+  () => gameStore.isRealUser,
+  (isRealUser) => {
+    if (isRealUser) {
       void fetchHomeMiniGameStats().catch((error) => {
         console.warn('[home] fetch mini game stats failed:', error)
       })
@@ -561,6 +562,11 @@ async function bootstrapHomeContent(): Promise<void> {
   await ensureExperienceSession().catch((error) => {
     console.warn('[home] resolve session identity failed:', error)
   })
+  if (gameStore.isRealUser) {
+    void fetchHomeMiniGameStats().catch((error) => {
+      console.warn('[home] fetch mini game stats failed:', error)
+    })
+  }
   await configReady
   ensureClubDataReady()
 
@@ -577,9 +583,6 @@ async function bootstrapHomeContent(): Promise<void> {
 onMounted(() => {
   // 首页和两个列表页共用 store；俱乐部、身份和配置就绪后一次性提交首屏。
   void bootstrapHomeContent()
-  void fetchHomeMiniGameStats().catch((error) => {
-    console.warn('[home] fetch mini game stats failed:', error)
-  })
   void fetchLobbyBannerImages().catch((error) => {
     console.warn('[home] fetch lobby banner failed:', error)
   })

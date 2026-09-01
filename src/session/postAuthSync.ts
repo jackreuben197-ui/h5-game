@@ -58,7 +58,7 @@ export function syncPostAuthData(): Promise<PostAuthSyncResult> {
       return false
     })
 
-  if (!gameStore.shouldSyncProfile(token)) {
+  if (!gameStore.shouldSyncIdentity(token)) {
     return combinePostAuthSync(
       wsReady,
       Promise.resolve({ userInfoSynced: true, userClubSynced: true }),
@@ -112,6 +112,9 @@ async function runPostAuthSync(token: string): Promise<PostAuthProfileSyncResult
 
   const userInfoSync = getUserInfoApi()
     .then((userInfo) => {
+      if (gameStore.sessionToken.trim() !== token) {
+        return false
+      }
       const user = userInfo.user as Record<string, unknown>
       const userId = String(user.p_u_id ?? user.pUid ?? user.userid ?? user.un_id ?? '')
       const userName = String(user.nickname ?? gameStore.loginAccount ?? '')
@@ -134,13 +137,14 @@ async function runPostAuthSync(token: string): Promise<PostAuthProfileSyncResult
     })
 
   const userClubSync = getUserClubApi()
-    .then(() => true)
+    .then(() => gameStore.sessionToken.trim() === token)
     .catch((error) => {
       console.warn('[post-auth-sync] sync user club failed:', error)
       return false
     })
 
-  const auxiliarySync = Promise.allSettled([
+  // 配置和多语言不参与身份确认，后台刷新即可；登录弹窗只等待用户、俱乐部和 WS。
+  void Promise.allSettled([
     postGlobalConfigApi({})
       .then((res) => {
         if (res.code === 0 && res.data) {
@@ -169,9 +173,8 @@ async function runPostAuthSync(token: string): Promise<PostAuthProfileSyncResult
   ])
 
   const [userInfoSynced, userClubSynced] = await Promise.all([userInfoSync, userClubSync])
-  await auxiliarySync
-  if (userInfoSynced && userClubSynced) {
-    gameStore.markProfileSynced(token)
+  if (userInfoSynced && userClubSynced && gameStore.sessionToken.trim() === token) {
+    gameStore.markIdentitySynced(token)
   }
   return { userInfoSynced, userClubSynced }
 }

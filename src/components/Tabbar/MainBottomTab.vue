@@ -68,7 +68,7 @@ const tabs = computed<TabItem[]>(() => {
         ? [
             {
               key: 'mtt' as const,
-              label: t('UIClub_Text14'),
+              label: t('UITabbarMatch'),
               path: '/mttList',
               icon: 'mtt' as const,
             },

@@ -206,7 +206,7 @@ async function loadInvitationLink() {
       return
     }
 
-    const link = extractInvitationLink(response.data)
+    const link = extractInvitationLink(response.data, currentClub.invitation_code)
     let finalLink = link
 
     invitationLink.value = finalLink

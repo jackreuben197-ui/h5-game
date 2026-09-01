@@ -281,7 +281,11 @@ export function resolveInviteCode(hostname: string = window.location.hostname): 
 }
 
 export function resolveTraceHash(): string {
-  return parseInviteParamsFromLocation().traceHash
+  const parsed = parseInviteParamsFromLocation()
+  if (parsed.traceHash) {
+    return parsed.traceHash
+  }
+  return resolveAgentInviteCode()
 }
 
 export function resolveAgentInviteCode(): string {

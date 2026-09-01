@@ -40,7 +40,9 @@ import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 import GameDialog from '@/components/Dialog/GameDialog.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
 import {
+  buildChannelAgentInviteUrl,
   buildChannelClubInviteUrl,
+  buildChannelRegisterUrl,
   isPrivateDomainMode,
 } from '@/utils/channelPackage'
 import { generateQrCodeUrl } from '@/utils/qrcode'
@@ -673,7 +675,7 @@ function onQuickAction(actionId: number): void {
   }
 }
 
-function onSettingClick(item: SettingItem): void {
+async function onSettingClick(item: SettingItem): Promise<void> {
   if (item.kind === 'switch' || item.kind === 'text' || item.kind === 'founder') {
     return
   }
@@ -685,6 +687,10 @@ function onSettingClick(item: SettingItem): void {
 
   if (item.label === t('UIClub_Invite')) {
     inviteShareImage.value = ''
+    if (isAgent.value && !agentInviteCode.value) {
+      await fetchAgentInviteCode()
+      await generateInviteQrCode()
+    }
     showInvitePopup.value = true
     return
   }
@@ -1032,7 +1038,7 @@ async function prefetchAgentInvitationLink(): Promise<void> {
       return
     }
 
-    const invitationLink = extractInvitationLink(response.data)
+    const invitationLink = extractInvitationLink(response.data, currentClub.invitation_code)
     if (!invitationLink && !isChannelPackage) {
       return
     }
@@ -1073,11 +1079,14 @@ async function generateInviteQrCode(): Promise<void> {
     }
   }
 
-  // 始终用「邀请码 + 当前访问网站域名」生成子域名分享链接：
-  // https://<邀请码>.<当前域名>/#/guest/home（域名每天可能变化，故取 window.location.hostname）。
-  const finalLink = buildChannelClubInviteUrl(clubInviteCode)
+  const isChannelPackage = isPrivateDomainMode()
+  const finalLink = isAgent.value
+    ? buildChannelAgentInviteUrl(agentInviteCode.value, clubInviteCode)
+    : isChannelPackage
+      ? buildChannelClubInviteUrl(clubInviteCode)
+      : buildChannelRegisterUrl({ inviteCode: clubInviteCode })
 
-  if (!finalLink || !clubInviteCode) {
+  if (!finalLink || !clubInviteCode || (isAgent.value && !agentInviteCode.value)) {
     imgInviteQr.value = ''
     return
   }
@@ -1127,6 +1136,7 @@ async function fetchAgentInviteCode(): Promise<void> {
 
 onMounted(async () => {
   await refreshClubDetail()
+  await fetchAgentInviteCode()
   await prefetchAgentInvitationLink()
   await generateInviteQrCode()
 })

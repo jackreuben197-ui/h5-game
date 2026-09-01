@@ -34,6 +34,12 @@ import { ApiBusinessError } from '@/utils/apiError'
 import { LOGIN_FAILED_CODE, resolveLoginErrorText } from './loginErrorText'
 import { Loading } from 'vant'
 import { DEBUG_ACCOUNTS, type DebugAccount } from '@/constants/debugAccounts'
+import {
+  clearAgentInviteCodeCache,
+  resolveAgentInviteCode,
+  resolveInviteCode,
+  resolveTraceHash,
+} from '@/utils/channelPackage'
 
 type PageMode = 'login' | 'register' | 'forgot'
 type ContactType = 'account' | 'email'
@@ -344,6 +350,10 @@ function applyDebugAccount(account: DebugAccount): void {
 }
 
 async function handleLogin(target: string) {
+  const agentCode = resolveAgentInviteCode()
+  const effectiveInviteCode = agentCode || resolveInviteCode()
+  const effectiveTraceHash = resolveTraceHash() || agentCode
+
   let res
   if (contactType.value === 'account') {
     res = await loginApi({
@@ -352,11 +362,15 @@ async function handleLogin(target: string) {
       device_id: 'ios',
       platform: 5,
       system_language: 'en-US',
+      ...(effectiveInviteCode ? { invite_code: effectiveInviteCode } : {}),
+      ...(effectiveTraceHash ? { trace_hash: effectiveTraceHash } : {}),
     })
   } else {
     res = await loginV2Api({
       email: target,
       password: md5(form.password.trim()),
+      invite_code: effectiveInviteCode || undefined,
+      trace_hash: effectiveTraceHash || undefined,
     })
   }
   const token = String(res.token || '').trim()
@@ -396,20 +410,28 @@ async function handleLogin(target: string) {
     gameStore.clearLogin()
     throw error
   }
+  clearAgentInviteCodeCache()
   await router.replace({ name: 'lobby' })
 }
 
 async function handleRegister(target: string) {
+  const agentCode = resolveAgentInviteCode()
+  const effectiveInviteCode = agentCode || resolveInviteCode()
+  const effectiveTraceHash = resolveTraceHash() || agentCode
   const password = md5(form.password.trim())
+  const baseExtra: Record<string, string | number> = {}
+  if (effectiveInviteCode) baseExtra.invite_code = effectiveInviteCode
+  if (effectiveTraceHash) baseExtra.trace_hash = effectiveTraceHash
+
   let res
   if (contactType.value === 'account') {
     res = await postUserQuickRegisterApi(
-      { qk_account: target, password, code: '1111', system_language: 'en-US', device_id: 'ios', platform: 5 },
+      { qk_account: target, password, code: '1111', system_language: 'en-US', device_id: 'ios', platform: 5, ...baseExtra },
       { suppressBusinessToast: true },
     )
   } else {
     res = await postUserRegisterApi(
-      { email: target, password, code: form.code.trim(), platform: 5 },
+      { email: target, password, code: form.code.trim(), platform: 5, ...baseExtra },
       { suppressBusinessToast: true },
     )
   }

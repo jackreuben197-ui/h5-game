@@ -7,13 +7,16 @@ const INVITATION_CODE_KEYS = ['invitation_code'] as const
 const TRACE_HASH_KEYS = ['trace_hash'] as const
 
 function readString(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : ''
+  if (typeof value === 'string') return value.trim()
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
+  return ''
 }
 
-export function extractInvitationLink(payload: unknown): string {
+export function extractInvitationLink(payload: unknown, clubInviteCode?: unknown): string {
+  const code = readString(clubInviteCode)
   const inviteCode = extractTraceHash(payload) || extractInvitationCode(payload)
   if (inviteCode) {
-    return buildChannelAgentInviteUrl(inviteCode)
+    return buildChannelAgentInviteUrl(inviteCode, code || undefined)
   }
   return extractInvitationValue(payload, INVITATION_KEYS)
 }

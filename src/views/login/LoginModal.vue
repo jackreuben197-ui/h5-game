@@ -142,6 +142,7 @@ watch(
     // 每次打开同步一次最新缓存（避免外部修改导致状态过期）。
     currentLang.value = getLocale()
     hydrateFormFromLocal()
+    applyChannelInviteContext()
     if (loginModalStore.mode) {
       goMode(loginModalStore.mode)
     } else if (shouldOpenRegisterMode() && pageMode.value === 'login') {
@@ -361,7 +362,9 @@ function applyDebugAccount(account: DebugAccount): void {
 }
 
 async function handleLogin(target: string) {
-  const effectiveInviteCode = resolveAgentInviteCode() || inviteCodeFromChannel.value
+  const agentCode = resolveAgentInviteCode()
+  const effectiveInviteCode = agentCode || inviteCodeFromChannel.value || resolveInviteCode()
+  const effectiveTraceHash = traceHashFromChannel.value || resolveTraceHash() || agentCode
 
   let res
   if (contactType.value === 'account') {
@@ -371,13 +374,16 @@ async function handleLogin(target: string) {
       device_id: 'ios',
       platform: 5,
       system_language: 'en-US',
+      ...(effectiveInviteCode ? { invite_code: effectiveInviteCode } : {}),
+      ...(effectiveTraceHash ? { trace_hash: effectiveTraceHash } : {}),
     })
   } else {
     res = await loginV2Api({
       email: target,
       password: md5(form.password.trim()),
       invite_code: effectiveInviteCode || undefined,
-      trace_hash: traceHashFromChannel.value || undefined,
+      trace_hash: effectiveTraceHash || undefined,
+      system_language: localeToServerLang(currentLang.value),
     })
   }
   const token = String(res.token || '').trim()
@@ -420,11 +426,13 @@ async function handleLogin(target: string) {
 }
 
 async function handleRegister(target: string) {
-  const effectiveInviteCode = resolveAgentInviteCode() || inviteCodeFromChannel.value
+  const agentCode = resolveAgentInviteCode()
+  const effectiveInviteCode = agentCode || inviteCodeFromChannel.value || resolveInviteCode()
+  const effectiveTraceHash = traceHashFromChannel.value || resolveTraceHash() || agentCode
   const password = md5(form.password.trim())
   const baseExtra: Record<string, string | number> = {}
   if (effectiveInviteCode) baseExtra.invite_code = effectiveInviteCode
-  if (traceHashFromChannel.value) baseExtra.trace_hash = traceHashFromChannel.value
+  if (effectiveTraceHash) baseExtra.trace_hash = effectiveTraceHash
 
   let res
   if (contactType.value === 'account') {
@@ -551,10 +559,15 @@ function localeToServerLang(locale: string): number {
 
 function applyChannelInviteContext(): void {
   inviteCodeFromChannel.value = resolveInviteCode()
-  traceHashFromChannel.value = resolveTraceHash()
+  traceHashFromChannel.value = resolveTraceHash() || resolveAgentInviteCode()
 
-  if (shouldOpenRegisterMode() && pageMode.value === 'login') {
-    pageMode.value = 'register'
+  if (shouldOpenRegisterMode()) {
+    if (pageMode.value === 'login') {
+      pageMode.value = 'register'
+    }
+    if (!loginModalStore.visible) {
+      loginModalStore.open({ mode: 'register' })
+    }
   }
 }
 </script>

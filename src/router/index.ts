@@ -180,7 +180,7 @@ router.beforeEach((to, from) => {
         to: to.fullPath,
         guest: guestName,
       })
-      return { name: guestName }
+      return { name: guestName, query: to.query }
     }
 
     // 非 5tab 的鉴权页面拦截：仅取消导航/兜底 guest-home，不自动弹窗。
@@ -195,7 +195,7 @@ router.beforeEach((to, from) => {
     log.warn('initial nav fallback to guest-home: token missing', {
       to: to.fullPath,
     })
-    return { name: 'guest-home' }
+    return { name: 'guest-home', query: to.query }
   }
   if (isChannelPackage && to.name === 'friendsTable') {
     return { name: 'wallet' }
@@ -212,7 +212,7 @@ router.beforeEach((to, from) => {
       return false
     }
     log.warn('initial nav to /login fallback to guest-home')
-    return { name: 'guest-home' }
+    return { name: 'guest-home', query: to.query }
   }
 
   return true

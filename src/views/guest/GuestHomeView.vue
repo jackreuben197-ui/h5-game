@@ -18,6 +18,7 @@ import iconService2Light from '@/assets/icons/icon_service_2_light.svg'
 import iconService3Dark from '@/assets/icons/icon_service_3.svg'
 import iconService3Light from '@/assets/icons/icon_service_3_light.svg'
 import { theme } from '@/utils/theme'
+import { shouldOpenRegisterMode } from '@/utils/channelPackage'
 
 import imgPa from '@/assets/images/minigame-newui/pa.svg'
 import imgMahjong from '@/assets/images/minigame-newui/ma.svg'
@@ -129,6 +130,9 @@ function notifyNotLoginRegister(): void {
 const homeRootRef = ref<HTMLElement | null>(null)
 
 onMounted(() => {
+  if (shouldOpenRegisterMode()) {
+    loginModalStore.open({ mode: 'register' })
+  }
   void userInfoStore.ensureChannelDefaultClub()
   void ensureHomeAnnouncementConfig().catch((error) => {
     console.warn('[guest-home] fetch announcement config failed:', error)

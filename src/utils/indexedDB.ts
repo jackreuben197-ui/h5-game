@@ -132,7 +132,8 @@ export const USER_STORE_BILL_DATA = 'bill_data'
 export const USER_STORE_H5_REPLAY = 'h5_replay'
 // 俱乐部管理（基金管理 / 牌局记录 / 牌局详情）共用 store，key 首段区分业务：
 //   `${clubId}_fund_summary` / `${clubId}_fund_members` / `${clubId}_fund_records_${range}_${type}`
-//   `${clubId}_roomhistory_summary_${currency}` / `${clubId}_roomhistory_list_${currency}`
+//   `${clubId}_roomhistory_summary_v2_${currency}_${dateRange}_${timezone}` /
+//   `${clubId}_roomhistory_list_v2_${currency}_${dateRange}_${timezone}`
 //   `${clubId}_roomdetail_${roomId}_${matchId}`
 // 列表类 value 连同 offset/hasMore 一起存，触底加载后回写累计结果（更新而非覆盖）。
 export const USER_STORE_CLUB_MANAGE = 'club_manage'

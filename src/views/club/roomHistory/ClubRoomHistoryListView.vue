@@ -9,11 +9,24 @@ import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import DateRangePicker from '@/components/DateRangePicker/DateRangePicker.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useGameStore } from '@/stores/game'
+import { useAppConfigStore } from '@/stores/appConfig'
 import { USER_STORE_CLUB_MANAGE } from '@/utils/indexedDB'
 import { toPlain, userCache } from '@/utils/userCache'
 import imgClock from '@/assets/icons/icon_time.png'
-import { t } from '@/i18n'
-import { formatDateTime } from '@/utils/time'
+import { getLocale, t } from '@/i18n'
+import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
+import StorageKey from '@/constants/storageKey'
+import { localStore } from '@/utils/localStore'
+import {
+  addMonths,
+  dateBoundaryTimestamp,
+  dateInTimeZone,
+  endOfDay,
+  formatDateTimeInTimeZone,
+  startOfDay,
+} from '@/utils/time'
+import { formatUC } from '@/utils/roomVisibility'
+import { resolveBlindText, resolveGameTypeText } from '@/utils/transText'
 
 interface IncomeItem {
   label: string
@@ -56,8 +69,27 @@ interface StatsSummary {
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
+const appConfigStore = useAppConfigStore()
 
-const activeCurrency = ref<CurrencyTab>(1)
+function toSafeNumber(value: unknown): number {
+  const numberValue = Number(value)
+  return Number.isFinite(numberValue) ? numberValue : 0
+}
+
+function resolveInitialCurrency(): CurrencyTab {
+  const stored = Number(
+    localStore.getItem<number | string>(StorageKey.GUILD_RECORD_FILTER, 3),
+  )
+  const savedCurrency: CurrencyTab = stored === 1 ? 1 : 3
+  const club = userInfoStore.currentClub
+
+  // 对齐 Unity UIClubGameRecordComponent.OnShow：非联盟俱乐部固定记分牌，代理固定 UC。
+  if (toSafeNumber(club?.tribe_id) === 0) return 3
+  if (toSafeNumber(club?.user_level) === 4) return 1
+  return savedCurrency
+}
+
+const activeCurrency = ref<CurrencyTab>(resolveInitialCurrency())
 
 const loading = ref(false)
 const loadingMore = ref(false)
@@ -86,6 +118,7 @@ interface CachedHistoryList {
 
 // 静默刷新在飞标记：期间列表展示的是缓存、listOffset 还未重算，须挡住触底加载防止重复拼页。
 let silentListRefreshing = false
+let historyRequestSequence = 0
 
 function clubManageCache() {
   return userCache(gameStore.loginUserId)
@@ -93,26 +126,40 @@ function clubManageCache() {
 
 function summaryCacheKey(): string {
   const clubId = toSafeNumber(userInfoStore.currentClub?.club_id)
-  return `${clubId}_roomhistory_summary_${activeCurrency.value}`
+  return `${clubId}_roomhistory_summary_v2_${queryCacheSuffix()}`
 }
 
 function listCacheKey(): string {
   const clubId = toSafeNumber(userInfoStore.currentClub?.club_id)
-  return `${clubId}_roomhistory_list_${activeCurrency.value}`
+  return `${clubId}_roomhistory_list_v2_${queryCacheSuffix()}`
 }
 
-const now = new Date()
+function platformTimeZone(): number {
+  return toSafeNumber(appConfigStore.globalConfig?.platform_role_time_zone)
+}
+
+function queryCacheSuffix(): string {
+  return [
+    activeCurrency.value,
+    formatDate(startDate.value),
+    formatDate(endDate.value),
+    `utc${platformTimeZone()}`,
+  ].join('_')
+}
+
+const now = dateInTimeZone(Date.now(), platformTimeZone())
 const maxSelectableDate = endOfDay(now)
 const minSelectableDate = startOfDay(addMonths(now, -3))
 
-const startDate = ref(startOfDay(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000)))
+// 对齐 Unity 默认筛选：首次进入展示平台时区的今天。
+const startDate = ref(startOfDay(now))
 const endDate = ref(startOfDay(now))
 
 const isDatePickerVisible = ref(false)
 const datePickerTarget = ref<PickTarget>('start')
 
 const timezoneText = computed(() => {
-  const tz = Number(userInfoStore.currentClub?.time_zone ?? 0)
+  const tz = platformTimeZone()
   return `UTC${tz >= 0 ? '+' : ''}${tz}`
 })
 
@@ -126,115 +173,99 @@ function formatDate(date: Date): string {
   return `${y}/${m}/${d}`
 }
 
-function toSafeNumber(value: unknown): number {
-  const numberValue = Number(value)
-  return Number.isFinite(numberValue) ? numberValue : 0
-}
-
 function formatAmount(value: unknown): string {
-  return toSafeNumber(value).toLocaleString('en-US')
+  return formatUC(toSafeNumber(value))
 }
 
 function formatSigned(value: unknown): string {
   const amount = toSafeNumber(value)
-  if (amount === 0) {
-    return '0'
-  }
-
-  const abs = Math.abs(amount).toLocaleString('en-US')
-  return amount > 0 ? `+${abs}` : `-${abs}`
+  if (amount === 0) return '0'
+  const formatted = formatAmount(Math.abs(amount))
+  return amount > 0 ? `+${formatted}` : `-${formatted}`
 }
 
-function startOfDay(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
-}
-
-function endOfDay(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999)
-}
-
-function addMonths(date: Date, months: number): Date {
-  const value = new Date(date)
-  value.setMonth(value.getMonth() + months)
-  return value
+function formatCount(value: unknown): string {
+  return toSafeNumber(value).toLocaleString('en-US', { maximumFractionDigits: 0 })
 }
 
 function parseTimestampMillSeconds(date: Date, end: boolean): number {
-  const normalized = new Date(date)
-  if (end) {
-    normalized.setHours(23, 59, 59, 999)
-  } else {
-    normalized.setHours(0, 0, 0, 0)
-  }
-  return normalized.getTime()
+  return dateBoundaryTimestamp(date, end, platformTimeZone())
 }
 
 function resolveModeLabel(record: ClubDataStatsDataRecord): string {
-  if (toSafeNumber(record.is_match) === 1) {
-    return 'MTT'
-  }
+  const label = resolveGameTypeText(
+    toSafeNumber(record.game_type),
+    toSafeNumber(record.poker_type ?? record.poker_types),
+  )
 
-  const gameType = toSafeNumber(record.game_type)
-  if (gameType === 0) return 'NLH'
-  if (gameType === 1 || gameType === 2 || gameType === 3) return 'PLO'
-  if (gameType === 0 && record.poker_types == 2) return '6+'
-  if (gameType === 5) return 'Mahjong'
-
-  return t('UIGameplayRule_GamblingParty')
+  if (toSafeNumber(record.is_match) > 0) return `MTT\n${label}`
+  if (toSafeNumber(record.sng_id) > 0) return `SNG-${label}`
+  return label
 }
 
 function resolveDetailA(record: ClubDataStatsDataRecord): string {
-  const playerCount = toSafeNumber(record.match_player_num)
-  if (playerCount > 0) {
-    return t('UIMine_RecordDetailForMatchPariticipants') + ': ' + playerCount
-  }
-
-  const sb = toSafeNumber(record.sb)
-  if (sb > 0) {
-    return t('adaptation20006') + ': ' + sb + '/' + sb * 2
-  }
-
-  const buyIn = toSafeNumber(record.buy_in)
-  if (buyIn > 0) {
-    return t('UIClub_BuyIn') + ': ' + buyIn
-  }
-
-  return t('UICareerRecordDetailForNiuZai')
+  const blind = resolveBlindText({
+    gameType: toSafeNumber(record.game_type),
+    pokerType: toSafeNumber(record.poker_type ?? record.poker_types),
+    sb: toSafeNumber(record.sb) / 100,
+    ante: toSafeNumber(record.ante) / 100,
+    bombpot: toSafeNumber(record.bombpot),
+    isMatch: toSafeNumber(record.is_match) > 0,
+    matchPlayerNum: toSafeNumber(record.match_player_num),
+  })
+  return blind.value ? `${blind.label}: ${blind.value}` : blind.label
 }
 
 function resolveStartAt(record: ClubDataStatsDataRecord): string {
-  const raw = record.start_time_str || record.game_start_time || record.date
+  // Unity 的牌局列表展示结束时间；老数据缺失时再回退开始时间。
+  const raw = record.end_time_str || record.start_time_str || record.game_start_time || record.date
   if (!raw) {
     return '--'
   }
+  return formatDateTimeInTimeZone(raw, platformTimeZone(), 'DD/MM/YYYY HH:mm')
+}
 
-  const formatted = formatDateTime(raw, 'DD/MM/YYYY HH:mm')
-  return formatted === '--:--' ? String(raw).trim() || '--' : formatted
+function resolveRecordName(record: ClubDataStatsDataRecord, roomId: number, index: number): string {
+  const rawName = String(record.name || '').trim()
+  const multiLanguage = record.multi_lang_names_obj
+  const localeKey = {
+    cn: 'zh_CN',
+    zh: 'zh_TW',
+    en: 'en_US',
+    pt: 'pt_BR',
+  }[getLocale()]
+  const localizedName =
+    multiLanguage && typeof multiLanguage[localeKey] === 'string'
+      ? String(multiLanguage[localeKey]).trim()
+      : ''
+
+  if (toSafeNumber(record.is_match) > 0 || toSafeNumber(record.sng_id) > 0) {
+    return resolveTemplateTextByKey(rawName, getLocale()) || rawName || `${t('UIClub_RoundData')}-${roomId || index}`
+  }
+  return localizedName || rawName || `${t('UIClub_RoundData')}-${roomId || index}`
 }
 
 function buildIncomeList(record: ClubDataStatsDataRecord): IncomeItem[] {
-  const incomes: IncomeItem[] = []
-
   const fee = toSafeNumber(record.fee)
-  if (fee !== 0) {
-    incomes.push({
-      label: t('UIMine_WalletPlatform_fee_f'),
-      value: formatSigned(fee),
-      positive: fee > 0,
-    })
-  }
+  const incomes: IncomeItem[] = [{
+    label: t('UIData_ServiceFee'),
+    value: formatSigned(fee),
+    positive: fee > 0,
+  }]
 
   const insurance = toSafeNumber(record.insurance)
-  if (insurance !== 0) {
+  const gameType = toSafeNumber(record.game_type)
+  const shouldShowInsurance =
+    toSafeNumber(record.is_match) <= 0 &&
+    toSafeNumber(record.sng_id) <= 0 &&
+    gameType !== 6 &&
+    gameType !== 7
+  if (shouldShowInsurance) {
     incomes.push({
       label: t('adaptation10179'),
       value: formatSigned(insurance),
       positive: insurance > 0,
     })
-  }
-
-  if (!incomes.length) {
-    incomes.push({ label: t('UIMine_WalletPlatform_fee_f'), value: '0', positive: false })
   }
 
   return incomes
@@ -243,20 +274,27 @@ function buildIncomeList(record: ClubDataStatsDataRecord): IncomeItem[] {
 function mapHistoryItem(record: ClubDataStatsDataRecord, index: number): RoomHistoryItem {
   const roomId = toSafeNumber(record.room_id)
   const matchId = toSafeNumber(record.match_id)
-  const jackpot = toSafeNumber(record.ante)
+  const showJackpot =
+    toSafeNumber(record.is_match) <= 0 &&
+    toSafeNumber(record.game_type) !== 5 &&
+    toSafeNumber(record.jackpot_switch) === 1
 
   return {
     id: index,
     roomId,
     matchId,
     mode: resolveModeLabel(record),
-    title: t('UIClub_RoundData') + '-' + (roomId || index),
+    title: resolveRecordName(record, roomId, index),
     detailA: resolveDetailA(record),
-    detailB: jackpot > 0 ? `Jackpot: ${jackpot}` : undefined,
+    detailB: showJackpot ? `Jackpot: ${formatSigned(record.jackpot_profit)}` : undefined,
     startedAt: resolveStartAt(record),
-    hasSquidLogo: toSafeNumber(record.is_match) === 1,
+    hasSquidLogo: toSafeNumber(record.squid_on) === 1,
     incomes: buildIncomeList(record),
   }
+}
+
+function currentUtcTimeString(): string {
+  return new Date().toISOString().slice(0, 19).replace('T', ' ')
 }
 
 async function fetchSummary(silent = false): Promise<void> {
@@ -270,6 +308,10 @@ async function fetchSummary(silent = false): Promise<void> {
       filter_type: activeCurrency.value,
       start_time: startTime,
       end_time: endTime,
+      current_time_str: currentUtcTimeString(),
+      user_id: 0,
+      slave_club_id: 0,
+      only_master: false,
       club_id: clubId || undefined,
     })
 
@@ -314,7 +356,7 @@ async function fetchSummary(silent = false): Promise<void> {
 }
 
 async function fetchHistory(reset = false, silent = false): Promise<void> {
-  if (loading.value || loadingMore.value || silentListRefreshing) {
+  if (!reset && (loading.value || loadingMore.value || silentListRefreshing)) {
     return
   }
 
@@ -324,10 +366,10 @@ async function fetchHistory(reset = false, silent = false): Promise<void> {
 
   if (reset) {
     // 静默刷新期间缓存仍在展示，offset/hasMore 等成功后一并重算。
-    if (silent) {
-      silentListRefreshing = true
-    } else {
-      loading.value = true
+    loadingMore.value = false
+    silentListRefreshing = silent
+    loading.value = !silent
+    if (!silent) {
       hasMore.value = true
       listOffset.value = 0
     }
@@ -337,7 +379,9 @@ async function fetchHistory(reset = false, silent = false): Promise<void> {
 
   const startTime = parseTimestampMillSeconds(startDate.value, false)
   const endTime = parseTimestampMillSeconds(endDate.value, true)
+  const clubId = toSafeNumber(userInfoStore.currentClub?.club_id)
   const cacheKey = listCacheKey()
+  const requestSequence = ++historyRequestSequence
 
   try {
     const currentOffset = reset ? 0 : listOffset.value
@@ -347,6 +391,12 @@ async function fetchHistory(reset = false, silent = false): Promise<void> {
       offset: currentOffset,
       start_time: startTime,
       end_time: endTime,
+      user_id: 0,
+      slave_club_id: 0,
+      only_master: false,
+      // 对齐当前 Unity UIClubGameRecordComponent：列表由 UTC 字符串返回，展示时再转平台时区。
+      time_zone: 0,
+      club_id: clubId || undefined,
     })
 
     if (response.code !== 0) {
@@ -377,7 +427,7 @@ async function fetchHistory(reset = false, silent = false): Promise<void> {
       } satisfies CachedHistoryList),
     )
   } catch (error) {
-    if (silent) {
+    if (silent || cacheKey !== listCacheKey()) {
       return
     }
     if (reset) {
@@ -387,14 +437,17 @@ async function fetchHistory(reset = false, silent = false): Promise<void> {
     const message = error instanceof Error ? error.message : t('UIClub_LoadTableGameRecordFail')
     showFailToast(message)
   } finally {
-    if (reset) {
-      if (silent) {
-        silentListRefreshing = false
+    // 旧筛选条件的请求结束时不能清掉新请求的 loading 状态。
+    if (requestSequence === historyRequestSequence) {
+      if (reset) {
+        if (silent) {
+          silentListRefreshing = false
+        } else {
+          loading.value = false
+        }
       } else {
-        loading.value = false
+        loadingMore.value = false
       }
-    } else {
-      loadingMore.value = false
     }
   }
 }
@@ -411,14 +464,28 @@ async function restoreFromCache(): Promise<boolean> {
 
   if (cachedSummary) {
     summary.value = cachedSummary
+  } else {
+    summary.value = {
+      totalProfit: 0,
+      gameCount: 0,
+      handCount: 0,
+      fee: 0,
+      jackpot: 0,
+      insurance: 0,
+      miniGame: 0,
+    }
   }
-  if (cachedList?.items?.length) {
-    historyList.value = cachedList.items
-    listOffset.value = cachedList.offset
+  if (cachedList) {
+    historyList.value = Array.isArray(cachedList.items) ? cachedList.items : []
+    listOffset.value = cachedList.offset || 0
     hasMore.value = cachedList.hasMore
+  } else {
+    historyList.value = []
+    listOffset.value = 0
+    hasMore.value = true
   }
 
-  return Boolean(cachedSummary || cachedList?.items?.length)
+  return Boolean(cachedSummary || cachedList)
 }
 
 // 命中缓存 → 先渲染再静默刷新；未命中 → 正常 loading 拉取。
@@ -449,6 +516,7 @@ function selectCurrency(tab: CurrencyTab): void {
   }
 
   activeCurrency.value = tab
+  localStore.setItem(StorageKey.GUILD_RECORD_FILTER, tab)
   void loadWithCache()
 }
 
@@ -462,7 +530,7 @@ function closeDatePicker(): void {
 }
 
 function onDateConfirm(): void {
-  void refreshData()
+  void loadWithCache()
 }
 
 function toDetail(item: RoomHistoryItem): void {
@@ -528,7 +596,9 @@ onMounted(() => {
             <span class="stats-label">
               {{ t('UIMine_RecordItemsNormal_3RCUa3w8') }}/{{ t('UIData_YGvXd5iXr_003') }}
             </span>
-            <strong class="stats-value">{{ summary.handCount }}/{{ summary.gameCount }}</strong>
+            <strong class="stats-value">
+              {{ formatCount(summary.handCount) }}/{{ formatCount(summary.gameCount) }}
+            </strong>
           </div>
         </div>
 

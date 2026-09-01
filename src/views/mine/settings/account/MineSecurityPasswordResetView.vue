@@ -175,6 +175,22 @@ function closeOverlay(): void {
   background-repeat: no-repeat;
 }
 
+html:not([data-main-layout='content']) {
+  #app > .security-password-page {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .password-panel {
+    margin-top: auto;
+    margin-bottom: auto;
+  }
+
+  .keyboard-wrap {
+    position: static;
+  }
+}
+
 .close-btn {
   margin-left: 0.4rem;
   margin-top: 0.5rem;

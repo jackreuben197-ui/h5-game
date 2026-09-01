@@ -264,11 +264,11 @@ async function onConfirmGender(): Promise<void> {
       <section class="gender-select">
         <button class="gender-option" type="button" @click="selectGender('male')">
           <img class="radio-icon" :src="selectedGender === 'male' ? icCheckbox : icUncheckbox" alt="" />
-          <span>Male</span>
+          <span>{{ t('UIMine_UserInfoSetting_Male') }}</span>
         </button>
         <button class="gender-option" type="button" @click="selectGender('female')">
           <img class="radio-icon" :src="selectedGender === 'female' ? icCheckbox : icUncheckbox" alt="" />
-          <span>Female</span>
+          <span>{{ t('UIMine_UserInfoSetting_Female') }}</span>
         </button>
       </section>
 

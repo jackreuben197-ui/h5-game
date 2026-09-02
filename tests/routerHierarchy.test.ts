@@ -7,7 +7,6 @@ import { mineRoutes, mineTabRoute } from '../src/router/routes/mine.ts'
 
 const homeRoute: RouteRecordRaw = {
   path: 'home',
-  alias: ['guest/home'],
   name: 'lobby',
   component: {},
   meta: {
@@ -25,15 +24,21 @@ const mainRoute: RouteRecordRaw = {
   children: [homeRoute, clubTabRoute, messageTabRoute, mineTabRoute],
 }
 
+const legacyGuestRedirects: RouteRecordRaw[] = [
+  {
+    path: '/guest/home',
+    redirect: (to) => ({ name: 'lobby', query: to.query, hash: to.hash }),
+  },
+]
+
 const router = createRouter({
   history: createMemoryHistory(),
-  routes: [mainRoute, ...clubRoutes, ...messageRoutes, ...mineRoutes],
+  routes: [...legacyGuestRedirects, mainRoute, ...clubRoutes, ...messageRoutes, ...mineRoutes],
 })
 
 test('module route hierarchy keeps public paths and names stable', () => {
   const cases = [
     ['/home', 'lobby'],
-    ['/guest/home', 'lobby'],
     ['/club', 'club'],
     ['/club/member/42/agent-profit', 'club-member-agent-profit'],
     ['/club/jackpot/pool-reward/reward-records', 'club-jackpot-pool-reward-reward-records'],
@@ -49,6 +54,12 @@ test('module route hierarchy keeps public paths and names stable', () => {
     assert.equal(resolved.name, name, path)
     assert.equal(resolved.meta.requiresAuth, true, `${path} should remain authenticated`)
   }
+})
+
+test('legacy guest home path still lands on the lobby', async () => {
+  await router.push('/guest/home?invite_code=abc')
+  assert.equal(router.currentRoute.value.name, 'lobby')
+  assert.equal(router.currentRoute.value.query.invite_code, 'abc')
 })
 
 test('first-level tabs and content pages keep their desktop layouts', () => {

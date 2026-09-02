@@ -1078,7 +1078,7 @@ async function generateInviteQrCode(): Promise<void> {
   }
 
   // 始终用「邀请码 + 当前访问网站域名」生成子域名分享链接：
-  // https://<邀请码>.<当前域名>/#/guest/home（域名每天可能变化，故取 window.location.hostname）。
+  // https://<邀请码>.<当前域名>/#/home（域名每天可能变化，故取 window.location.hostname）。
   const finalLink = buildChannelClubInviteUrl(clubInviteCode)
 
   if (!finalLink || !clubInviteCode) {

@@ -341,6 +341,8 @@ export function clearAgentInviteCodeCache(): void {
   }
 }
 
+const INVITE_LANDING_HASH = '/#/home'
+
 export function shouldOpenRegisterMode(): boolean {
   return parseInviteParamsFromLocation().mode === 'register'
 }
@@ -349,7 +351,7 @@ export function buildChannelClubInviteUrl(inviteCode?: string): string {
   const currentUrl = new URL(window.location.href)
   const code = readString(inviteCode)
   if (!code) {
-    return `${currentUrl.origin}/#/guest/home`
+    return `${currentUrl.origin}${INVITE_LANDING_HASH}`
   }
 
   let baseHost = currentUrl.hostname
@@ -358,7 +360,7 @@ export function buildChannelClubInviteUrl(inviteCode?: string): string {
     baseHost = mainDomain
   }
   const portSuffix = currentUrl.port ? `:${currentUrl.port}` : ''
-  return `${currentUrl.protocol}//${code}.${baseHost}${portSuffix}/#/guest/home`
+  return `${currentUrl.protocol}//${code}.${baseHost}${portSuffix}${INVITE_LANDING_HASH}`
 }
 
 
@@ -376,7 +378,7 @@ export function buildChannelAgentInviteUrl(
     mode: 'register',
     i: normalizedCode,
   })
-  return `${clubInviteUrl}/#/?${params.toString()}`
+  return `${clubInviteUrl}?${params.toString()}`
 }
 
 export function buildChannelRegisterUrl(options?: {

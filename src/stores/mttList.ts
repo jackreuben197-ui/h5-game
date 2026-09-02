@@ -50,7 +50,6 @@ const CHANNEL_GUEST_SESSION_KEY = `user_${CHANNEL_GUEST_UID}`
 
 // 同一 token 会话内只拉一次：mtt/list + all/mtt/sng/ids。
 let mttListLoadedToken = ''
-let mttListLoadingToken = ''
 let mttListLoadingPromise: Promise<void> | null = null
 let stopMttNotifyListeners: (() => void) | null = null
 let mttRepairSyncPromise: Promise<void> | null = null
@@ -59,6 +58,10 @@ let pendingRepairNeedIds = false
 
 function resolveMttSessionKey(): string {
   const gameStore = useGameStore()
+  // 体验账号有独立 uid，但仍必须使用游客赛事接口和渠道俱乐部范围。
+  if (isPrivateDomainMode() && gameStore.isGuestAccount) {
+    return CHANNEL_GUEST_SESSION_KEY
+  }
   const uid = String(gameStore.loginUserId || '').trim()
   if (uid) {
     return `user_${uid}`
@@ -289,7 +292,6 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
       this.sngIdList = []
       this.seriesList = []
       mttListLoadedToken = ''
-      mttListLoadingToken = ''
       mttListLoadingPromise = null
       localStore.removeItem(StorageKey.MTT_LIST_CACHE)
     },
@@ -305,41 +307,56 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
         return
       }
 
-      if (mttListLoadingToken === sessionKey && mttListLoadingPromise) {
+      // user/info 尚未返回时可能先以临时 token scope 启动。列表状态是全局单份，
+      // 不允许不同身份的请求并发写入；先等旧任务退出，再按最新身份重试。
+      if (mttListLoadingPromise) {
         await mttListLoadingPromise
+        const latestSessionKey = resolveMttSessionKey()
+        if (mttListLoadedToken === latestSessionKey) return
+        if (latestSessionKey) {
+          await this.fetchMttListOncePerSession(options)
+        }
         return
       }
 
-      mttListLoadingToken = sessionKey
       // 对齐 Unity：列表详情和可见性/系列索引都在启动阶段一次拉齐。
       // 整个序列包在同一个 promise 里，避免并发 bootstrap（首页 + 列表页）重复拉取。
-      mttListLoadingPromise = (async () => {
-        const idsLoaded = await this.fetchAllMttSngIds(options)
+      const currentTask = (async () => {
+        const idsLoaded = await this.fetchAllMttSngIds(options, sessionKey)
+        if (resolveMttSessionKey() !== sessionKey) return
         // ids 拉取失败时跳过列表请求，保留缓存数据展示，避免把旧列表覆盖成空。
-        const listLoaded = idsLoaded ? await this.fetchMttList(options) : false
+        const listLoaded = idsLoaded ? await this.fetchMttList(options, sessionKey) : false
         // 任一请求失败都不落「本会话已加载」标记，下次进入页面可重试；
         // 否则首启时机不巧（token/网络未就绪）会把空列表锁死到大退。
-        if (idsLoaded && listLoaded) {
+        if (idsLoaded && listLoaded && resolveMttSessionKey() === sessionKey) {
           mttListLoadedToken = sessionKey
         }
-      })().finally(() => {
-        mttListLoadingPromise = null
-        mttListLoadingToken = ''
-      })
+      })()
 
-      await mttListLoadingPromise
+      mttListLoadingPromise = currentTask
+      try {
+        await currentTask
+      } finally {
+        if (mttListLoadingPromise === currentTask) {
+          mttListLoadingPromise = null
+        }
+      }
     },
 
     // 全量拉取：按分页聚合 records，默认状态只取 CREATED/RUNNING（0/1）。
     // 返回是否拉取成功；失败时保留旧数据，由调用方决定是否重试。
-    async fetchMttList(options: { silent?: boolean } = {}): Promise<boolean> {
-      const sessionKey = resolveMttSessionKey()
+    async fetchMttList(
+      options: { silent?: boolean } = {},
+      expectedSessionKey?: string,
+    ): Promise<boolean> {
+      const sessionKey = expectedSessionKey || resolveMttSessionKey()
       if (!sessionKey) {
         return false
       }
 
       const channelGuest = isChannelGuestSession(sessionKey)
       const guestClubRid = channelGuest ? await resolveGuestClubRid() : 0
+      if (resolveMttSessionKey() !== sessionKey) return false
       if (channelGuest && guestClubRid <= 0) {
         this.records = []
         this.persistMttListCache()
@@ -385,6 +402,8 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
               room_type: 0,
             })
 
+          if (resolveMttSessionKey() !== sessionKey) return false
+
           // 任一分页返回异常码都视为失败，不落地部分数据，保留旧列表等下次重试。
           if (Number(response.code) !== 0) {
             log.warn('fetch list failed, code:', response.code)
@@ -397,6 +416,7 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
           }
         }
 
+        if (resolveMttSessionKey() !== sessionKey) return false
         this.records = nextRecords
         this.persistMttListCache()
         return true
@@ -411,15 +431,19 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
 
     // 可见赛事 ID + 系列信息：用于列表按“赛事系列”分组，并按 club/tribe 做可见性过滤。
     // 返回是否拉取成功；失败时保留旧索引，由调用方决定是否重试。
-    async fetchAllMttSngIds(options: { silent?: boolean } = {}): Promise<boolean> {
+    async fetchAllMttSngIds(
+      options: { silent?: boolean } = {},
+      expectedSessionKey?: string,
+    ): Promise<boolean> {
       try {
-        const sessionKey = resolveMttSessionKey()
+        const sessionKey = expectedSessionKey || resolveMttSessionKey()
         if (!sessionKey) {
           return false
         }
 
         const channelGuest = isChannelGuestSession(sessionKey)
         const guestClubRid = channelGuest ? await resolveGuestClubRid() : 0
+        if (resolveMttSessionKey() !== sessionKey) return false
         if (channelGuest && guestClubRid <= 0) {
           this.mttIdList = []
           this.sngIdList = []
@@ -431,6 +455,7 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
         const response = channelGuest
           ? await getGuestAllMttSngIdsApi({ club_rid: guestClubRid })
           : await getAllMttSngIdsApi()
+        if (resolveMttSessionKey() !== sessionKey) return false
         // 异常码不再把索引覆盖成空（否则会连带清空列表并被会话标记锁死），保留旧数据等重试。
         if (Number(response.code) !== 0) {
           log.warn('fetch all mtt/sng ids failed, code:', response.code)

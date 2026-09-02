@@ -8,6 +8,7 @@ export const mineTabRoute: RouteRecordRaw = {
   component: () => import('@/views/mine/MineIndexView.vue'),
   meta: {
     requiresAuth: true,
+    guestPreview: true,
     tabKey: 'mine',
     moduleTitle: '我的',
     desktopLayout: 'primary',
@@ -30,16 +31,17 @@ export const mineRoutes: RouteRecordRaw[] = [
             path: '',
             name: 'mine-settings',
             component: () => import('@/views/mine/settings/MineSettingsView.vue'),
-            meta: contentMeta,
+            meta: { ...contentMeta, guestPreview: true },
           },
           {
             path: 'language',
             name: 'mine-settings-language',
             component: () => import('@/views/mine/settings/MineSettingsLanguageView.vue'),
-            meta: contentMeta,
+            meta: { ...contentMeta, guestPreview: true },
           },
           {
             path: 'account',
+            meta: { guestPreview: false },
             children: [
               {
                 path: '',
@@ -76,13 +78,13 @@ export const mineRoutes: RouteRecordRaw[] = [
             name: 'mine-settings-cancel-account',
             component: () =>
               import('@/views/mine/settings/account/MineSettingsCancelAccountView.vue'),
-            meta: contentMeta,
+            meta: { ...contentMeta, guestPreview: false },
           },
           {
             path: 'doc/:type',
             name: 'mine-settings-doc',
             component: () => import('@/views/mine/settings/MineSettingsDocView.vue'),
-            meta: contentMeta,
+            meta: { ...contentMeta, guestPreview: true },
           },
         ],
       },

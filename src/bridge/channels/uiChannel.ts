@@ -1,5 +1,11 @@
 import { subscribeCocosMessages } from '../core/cocosBridgeChannel'
-import { BRIDGE_ACTION, BRIDGE_MSG_TYPE, type BridgeMessage, type H5NavigatePayload } from '@bridge-protocol'
+import {
+  BRIDGE_ACTION,
+  BRIDGE_MSG_TYPE,
+  H5_LOGIN_CONTEXT,
+  type BridgeMessage,
+  type H5NavigatePayload,
+} from '@bridge-protocol'
 import router from '@/router'
 import type { RouteLocationRaw } from 'vue-router'
 import { useLoginModalStore } from '@/stores/loginModal'
@@ -11,6 +17,7 @@ const log = createLogger('[bridge]')
 let stopH5VisibilityListener: (() => void) | null = null
 
 const COCOS_ACTIVE_ATTRIBUTE = 'data-cocos-active'
+const COCOS_TABLE_AUTH_OVERLAY_ATTRIBUTE = 'data-cocos-table-auth-overlay'
 
 function getH5Root(): HTMLElement | null {
   if (typeof document === 'undefined') {
@@ -63,6 +70,7 @@ function normalizeNavigateTarget(payload: unknown): {
   replace: boolean
   ensureVisible: boolean
   openLoginModal: boolean
+  tableAuthOverlay: boolean
 } | null {
   if (typeof payload === 'string' && payload.trim()) {
     return {
@@ -70,6 +78,7 @@ function normalizeNavigateTarget(payload: unknown): {
       replace: false,
       ensureVisible: false,
       openLoginModal: false,
+      tableAuthOverlay: false,
     }
   }
 
@@ -87,10 +96,12 @@ function normalizeNavigateTarget(payload: unknown): {
   }
 
   const shouldOpenLoginModal = raw.openLoginModal === true || name === 'login' || name === 'login1'
+  const tableAuthOverlay =
+    shouldOpenLoginModal && raw.loginContext === H5_LOGIN_CONTEXT.TABLE_SITDOWN
   const routeObject: Record<string, unknown> = hasPath
     ? { path }
     : {
-        name: shouldOpenLoginModal ? 'guest-home' : name,
+        name: shouldOpenLoginModal ? 'lobby' : name,
       }
   if (isRecord(raw.params)) {
     routeObject.params = raw.params
@@ -107,6 +118,20 @@ function normalizeNavigateTarget(payload: unknown): {
     replace: raw.replace === true,
     ensureVisible: raw.ensureVisible === true,
     openLoginModal: shouldOpenLoginModal,
+    tableAuthOverlay,
+  }
+}
+
+export function setH5TableAuthOverlay(visible: boolean): void {
+  const root = getH5Root()
+  if (!root) return
+  root.toggleAttribute(COCOS_TABLE_AUTH_OVERLAY_ATTRIBUTE, visible)
+  if (visible) {
+    root.style.display = ''
+  }
+  if (visible && typeof window !== 'undefined') {
+    window.__H5_VISIBLE__ = visible
+    document.documentElement.setAttribute(COCOS_ACTIVE_ATTRIBUTE, '1')
   }
 }
 
@@ -114,6 +139,13 @@ async function navigateH5(payload: unknown): Promise<void> {
   const normalized = normalizeNavigateTarget(payload)
   if (!normalized) {
     log.warn('[h5-navigate] invalid payload:', payload)
+    return
+  }
+
+  if (normalized.tableAuthOverlay) {
+    setH5TableAuthOverlay(true)
+    useLoginModalStore(pinia).open({ context: H5_LOGIN_CONTEXT.TABLE_SITDOWN })
+    log.info('[h5-navigate] opened cocos table auth overlay')
     return
   }
 
@@ -128,6 +160,11 @@ async function navigateH5(payload: unknown): Promise<void> {
       : await router.push(normalized.route)
     if (failure) {
       log.warn('[h5-navigate] navigation failed:', failure)
+      // 牌桌内请求登录时，H5 路由通常仍停留在大厅，只是根节点被隐藏。
+      // 重复导航会返回 failure，但登录弹窗仍应在当前页面打开。
+      if (normalized.openLoginModal) {
+        useLoginModalStore(pinia).open()
+      }
       return
     }
     if (normalized.openLoginModal) {

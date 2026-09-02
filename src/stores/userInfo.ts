@@ -8,6 +8,7 @@ import {
   CHANNEL_MAIN_DOMAIN,
   copyStorageToMainDomain,
   extractInviteCodeFromSubdomain,
+  isChannelPackageHost,
   isPrivateDomainMode,
   resolveInviteCode,
 } from '@/utils/channelPackage'
@@ -171,7 +172,9 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
     async ensureChannelDefaultClub(): Promise<ClubInfo | null> {
       const hostname =
         typeof window === 'undefined' ? '' : window.location.hostname.trim().toLowerCase()
-      if (hostname === 'localhost') {
+      // 普通本地开发无需请求渠道俱乐部；但渠道包模拟同样运行在 localhost
+      // （Cocos 预览通常是 :7456），此时必须按测试邀请码正常初始化。
+      if (hostname === 'localhost' && !isChannelPackageHost(hostname)) {
         this.channelDefaultClub = null
         channelDefaultClubLoaded = false
         return null
@@ -212,6 +215,10 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
             throw new Error(String(response.msg || '渠道俱乐部加载失败'))
           }
           const club = normalizeDefaultClub(response.data?.club)
+          const responseH5Menu = Number(response.data?.h5_menu)
+          if (club && club.h5_menu === undefined && Number.isFinite(responseH5Menu)) {
+            club.h5_menu = responseH5Menu
+          }
           this.channelDefaultClub = club
           channelDefaultClubLoaded = true
           return club
@@ -300,6 +307,13 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       this.clubAgentInvitations = {}
       channelDefaultClubLoaded = false
       channelDefaultClubInFlight = null
+    },
+    clearPrivateInfo(): void {
+      // 游客预览仍需保留渠道俱乐部的公开资料，只清真实账号维度的数据。
+      this.userInfo = null
+      this.clubList = []
+      this.currentClubId = ''
+      this.clubAgentInvitations = {}
     },
     setClubAgentInvitation(clubRandomId: number | string | null | undefined, link: string): void {
       const cacheKey = normalizeClubId(clubRandomId)

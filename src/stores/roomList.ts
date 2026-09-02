@@ -55,9 +55,9 @@ const CHANNEL_GUEST_SCOPE = scopeForUser(CHANNEL_GUEST_UID)
 let activeScope: RoomListScope = ''
 let bootstrappedScope: RoomListScope = ''
 let bootstrappingPromise: Promise<void> | null = null
+let bootstrappingScope: RoomListScope = ''
 // 当前 scope 的 ws 最后时间戳，热启动 contrast/rooms 的 last_time 参数。
 let lastNotifyTs = 0
-let bootstrapRoomListTryTimes = 0
 
 const roomDetailLoadingRidSet = new Set<string>()
 
@@ -122,6 +122,12 @@ function isChannelGuestScope(scope: RoomListScope): boolean {
 // userId 就绪后 game.ts 的 setLoginUser 会主动再触发一次 bootstrap，自然切换到 user scope。
 function resolveScope(): RoomListScope {
   const gameStore = useGameStore()
+  // 体验账号虽然拥有服务端分配的独立 uid，但列表权限仍属于游客。
+  // 必须优先落到渠道游客 scope，否则首启 user/info 返回 uid 后会错误切到
+  // /user/rooms 数据流，出现普通桌为空而 MTT 仍有数据的错位。
+  if (isPrivateDomainMode() && gameStore.isGuestAccount) {
+    return CHANNEL_GUEST_SCOPE
+  }
   const uid = String(gameStore.loginUserId || '').trim()
   if (uid) return scopeForUser(uid)
   if (!gameStore.sessionToken.trim() && isPrivateDomainMode()) {
@@ -204,6 +210,7 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
         activeScope = ''
         bootstrappedScope = ''
         bootstrappingPromise = null
+        bootstrappingScope = ''
         lastNotifyTs = 0
         return Promise.resolve()
       }
@@ -217,14 +224,16 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
         // scope 切换：清掉内存与同步状态，让新 scope 重新从 IndexedDB 恢复。
         activeScope = scope
         bootstrappedScope = ''
-        bootstrappingPromise = null
         lastNotifyTs = 0
         this.records = []
       }
       if (bootstrappedScope === scope) return Promise.resolve()
-      if (bootstrappingPromise) return bootstrappingPromise
+      if (bootstrappingPromise && bootstrappingScope === scope) return bootstrappingPromise
 
-      bootstrappingPromise = this.runInitialSync(scope)
+      // 身份识别期间可能从临时 scope 切到渠道游客 scope。允许新 scope 立即启动，
+      // 但旧任务完成时只能清理自己，不能把新任务的 promise/状态覆盖掉。
+      let currentTask: Promise<void>
+      currentTask = this.runInitialSync(scope)
         .then(() => {
           if (scope === activeScope) {
             bootstrappedScope = scope
@@ -234,20 +243,18 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
           log.warn('initial sync failed:', error)
         })
         .finally(() => {
+          if (bootstrappingPromise !== currentTask) return
           bootstrappingPromise = null
-          // 兜底：如果 sync 期间 setLoginUser 又切了 scope（guest → user），
-          // 本次 sync 已经按旧 scope 做完早退、不会再写入；这里主动重启一次同步。
+          bootstrappingScope = ''
+          // 同步期间身份发生切换时，按当前 scope 再补一次，旧结果已由各阶段的
+          // scope 校验丢弃。
           if (activeScope && activeScope !== bootstrappedScope) {
-            bootstrapRoomListTryTimes++
-            // 最多重试 1 次
-            if (bootstrapRoomListTryTimes > 1){
-              return
-            }
-            this.bootstrapRoomList()
+            void this.bootstrapRoomList()
           }
-          bootstrapRoomListTryTimes = 0
         })
-      return bootstrappingPromise
+      bootstrappingPromise = currentTask
+      bootstrappingScope = scope
+      return currentTask
     },
 
     async runInitialSync(scope: RoomListScope): Promise<void> {
@@ -503,6 +510,7 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
       this.records = []
       bootstrappedScope = ''
       bootstrappingPromise = null
+      bootstrappingScope = ''
       lastNotifyTs = 0
       activeScope = ''
       if (pendingPersistTimer) {

@@ -21,6 +21,7 @@ import defaultAvatar from '@/assets/images/default_avatar.png'
 import ProfileCard from '@/components/ProfileCard/ProfileCard.vue'
 import { isPrivateDomainMode } from '@/utils/channelPackage'
 import { formatUC } from '@/utils/roomVisibility'
+import { requireRealUser } from '@/session/realUserGate'
 
 const router = useRouter()
 const gameStore = useGameStore()
@@ -82,18 +83,34 @@ const boxList = ref<BoxItem[]>([
 const iconAdd = computed(() => (theme.value === 'light' ? iconAddLight : iconAddDark))
 
 function goToNextPage(path: string): void {
+  if (path === '/mine/settings') {
+    void router.push(path)
+    return
+  }
+  if (!requireRealUser(() => goToNextPage(path))) return
   void router.push(path)
 }
 
 function goToProfileEdit(): void {
+  if (!requireRealUser(goToProfileEdit)) return
   void router.push('/mine/profile/edit')
 }
 
 function goToMineShop(): void {
+  if (!requireRealUser(goToMineShop)) return
   void router.push('/mine/shop')
 }
 
 const displayUser = computed(() => {
+  if (!gameStore.isRealUser) {
+    return {
+      nickname: t('UIGuest_Text8'),
+      userID: '-',
+      avatar: defaultAvatar,
+      diamond: 0,
+      gold: 0,
+    }
+  }
   let totalGold = 0
   for (const club of userInfoStore.clubList || []) {
     totalGold += club.user_gold ?? 0

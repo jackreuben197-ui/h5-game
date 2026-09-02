@@ -34,14 +34,19 @@ export interface StatsClientClickLogData {
 
 // /api/stats/club_data_stats/data (ClubDataStatsData)
 export interface ClubDataStatsDataRequest {
+  start_time?: number // 开始时间戳
   end_time?: number // 结束时间戳
   current_time_str?: string // 当前时间
   limit?: number // 数据数量
   offset?: number // 当前偏移值
   user_id?: number // 传0 个人数据。传值 俱乐部数据
   game_types?: number[] // 游戏类型
+  poker_types?: number[] // 牌型
   time_zone?: number // 时区
   filter_type?: number // 筛选类型 1 UC币（UC） 2 USDT（GC） 3 记分牌（chip）
+  slave_club_id?: number // 从俱乐部id
+  only_master?: boolean // 只查询主俱乐部数据
+  club_id?: number // 俱乐部id
 
   [key: string]: unknown
 }
@@ -1869,8 +1874,9 @@ export interface ClubDataStatsDataRecord {
   match_id?: number // 比赛ID
   game_start_time?: string // 牌局开始时间
   date?: string // 牌局日期
-  game_type?: number // 游戏类型 1-NLH，2-PLO，3-6
-  poker_types?: number // 德州详细牌型
+  game_type?: number // 游戏类型 0-NLH，1/2/3-PLO，4-Fantasy，5-Cowboy，6-麻将，7-掼蛋
+  poker_type?: number // 德州详细牌型 0-普通，2-短牌
+  poker_types?: number // 兼容旧生成字段，接口实际字段为 poker_type
   sb?: number // 小盲注
   buy_in?: number // 买入记分牌
   buy_in_times?: number // mtt:买入次数
@@ -1880,8 +1886,21 @@ export interface ClubDataStatsDataRecord {
   is_match?: number // 0 牌局 1 mtt
   start_time?: number // 服务器判断时区的时间戳（秒）
   start_time_str?: string // 牌局日期带时区
+  end_time_str?: string // 牌局结束时间带时区
   insurance?: number // 保险
+  profit?: number // 收益
   ante?: number // 前注
+  jackpot_switch?: number // jackpot开关
+  jackpot_profit?: number // jackpot收益
+  name?: string // 牌局名称
+  multi_lang_names_obj?: Record<string, unknown> // 牌局名称多语言
+  bombpot?: number // 1是开启bombpot
+  club_name?: string // 俱乐部名称
+  club_remark_name?: string // 俱乐部备注名称
+  club_remark_color?: string // 俱乐部备注颜色
+  mushroom_mode?: number
+  squid_on?: number
+  sng_id?: number
 
   [key: string]: unknown
 }

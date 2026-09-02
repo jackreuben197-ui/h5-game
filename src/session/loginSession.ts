@@ -48,9 +48,12 @@ export default class LoginSession {
 
     this.WSPort = port
     // 对齐最新流程：登录阶段拿到端口后，H5 直接主动建连，不再等待 Cocos 下发 wsConnect。
-    ensureWsProxyConnected({ port: this.WSPort })
+    await ensureWsProxyConnected({ port: this.WSPort })
     this._stopBalanceSync?.()
-    this._stopBalanceSync = initUserBalanceSync()
+    this._stopBalanceSync = null
+    if (useGameStore(pinia).isRealUser) {
+      this._stopBalanceSync = initUserBalanceSync()
+    }
     return this.WSPort
   }
 
@@ -59,8 +62,8 @@ export default class LoginSession {
     const cached = this.WSPort
     if (cached > 0) {
       // 命中缓存时也主动建连，避免刷新后 Cocos/H5 侧连接状态不一致。
-      ensureWsProxyConnected({ port: cached })
-      if (!this._stopBalanceSync) {
+      await ensureWsProxyConnected({ port: cached })
+      if (!this._stopBalanceSync && useGameStore(pinia).isRealUser) {
         this._stopBalanceSync = initUserBalanceSync()
       }
       return cached

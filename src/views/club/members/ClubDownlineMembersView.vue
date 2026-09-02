@@ -469,14 +469,10 @@ onMounted(async () => {
     <HeaderBack :title="t('UIGuild_MemberDetails_VipOffLine')" />
 
     <div v-loading="loading" class="content">
-      <div class="invite-row">
+      <div v-if="false" class="invite-row">
         <div class="invite-title-wrap">
           <span>{{ t('UIClub_InviteLink') }}</span>
-          <VanPopover
-            trigger="click"
-            placement="bottom-start"
-            :theme="isDark ? 'dark' : 'light'"
-          >
+          <VanPopover trigger="click" placement="bottom-start" :theme="isDark ? 'dark' : 'light'">
             <template #reference>
               <button
                 type="button"
@@ -489,10 +485,12 @@ onMounted(async () => {
             <div class="invite-info-content">{{ t('UIClub_DownlineInviteLinkTip') }}</div>
           </VanPopover>
         </div>
-        <button type="button" class="qr-btn" @click="onSaveQrCode">{{ t('UIMine_PromotersBecome_rTPhmznj') }}</button>
+        <button type="button" class="qr-btn" @click="onSaveQrCode">
+          {{ t('UIMine_PromotersBecome_rTPhmznj') }}
+        </button>
       </div>
 
-      <p class="invite-link" :title="invitationLink">{{ invitationPreview }}</p>
+      <!-- <p class="invite-link" :title="invitationLink">{{ invitationPreview }}</p> -->
 
       <div class="search-box">
         <img class="search-icon" :src="imgSearch" alt="" aria-hidden="true" />
@@ -513,7 +511,11 @@ onMounted(async () => {
       <div class="members-wrap">
         <div v-for="member in members" :key="member.id" class="member-card">
           <div class="member-head">
-            <img class="member-avatar" :src="member.avatar" :alt="(member.name) + t('UIMine_UserInfoSetting_btn_head')" />
+            <img
+              class="member-avatar"
+              :src="member.avatar"
+              :alt="member.name + t('UIMine_UserInfoSetting_btn_head')"
+            />
             <div class="member-head-main">
               <p class="member-name">{{ member.name }}</p>
               <div class="member-id-row">
@@ -703,7 +705,9 @@ onMounted(async () => {
         <FundKeypad @press="onKeypadPress" />
 
         <div class="sheet-footer-actions">
-          <button type="button" class="sheet-footer-btn" @click="closeFundSheet">{{ t('adaptation10013') }}</button>
+          <button type="button" class="sheet-footer-btn" @click="closeFundSheet">
+            {{ t('adaptation10013') }}
+          </button>
           <button
             type="button"
             class="sheet-footer-btn sheet-footer-btn--confirm"
@@ -940,7 +944,8 @@ onMounted(async () => {
 
 .member-assets {
   border-radius: 1.44rem;
-  background: linear-gradient(
+  background:
+    linear-gradient(
       112deg,
       rgba(160, 40, 76, 0.58) 1%,
       rgba(86, 87, 128, 0.28) 42%,

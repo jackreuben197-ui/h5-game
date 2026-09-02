@@ -17,20 +17,21 @@ import icAppVersion from '@/assets/icons/ic_app_version.svg'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import GameDialog from '@/components/Dialog/GameDialog.vue'
 import { SUPPORTED_LOCALES_OPTIONS, getLocale, t } from '@/i18n'
-import LoginSession from '@/session/loginSession'
+import { requireRealUser } from '@/session/realUserGate'
+import { logoutCurrentSession } from '@/session/experienceSession'
 import { useGameStore } from '@/stores/game'
 
 const title = computed(() => t('UIMine_btn_setting'))
 
 const router = useRouter()
 const gameStore = useGameStore()
-const showLogoutDialog = ref(false)
-
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
 }))
 const soundEnabled = ref(true)
+const showLogoutDialog = ref(false)
+const logoutSubmitting = ref(false)
 
 interface SettingItem {
   key: string
@@ -53,7 +54,9 @@ function languageLabel(): string {
 }
 
 const sectionTop = computed<SettingItem[]>(() => [
-  { key: 'logout', label: t('UIMine_Setting114'), icon: icLogout },
+  ...(gameStore.isRealUser
+    ? [{ key: 'logout', label: t('UIMine_Setting114'), icon: icLogout }]
+    : []),
   {
     key: 'language',
     label: t('tc_PpNL8LVJ'),
@@ -93,6 +96,7 @@ async function onRowClick(item: SettingItem): Promise<void> {
   }
 
   if (item.key === 'logout') {
+    if (!requireRealUser(() => onRowClick(item))) return
     showLogoutDialog.value = true
     return
   }
@@ -103,11 +107,13 @@ async function onRowClick(item: SettingItem): Promise<void> {
   }
 
   if (item.key === 'account') {
+    if (!requireRealUser(() => onRowClick(item))) return
     void router.push('/mine/settings/account')
     return
   }
 
   if (item.key === 'cancel') {
+    if (!requireRealUser(() => onRowClick(item))) return
     void router.push('/mine/settings/cancel-account')
     return
   }
@@ -132,12 +138,21 @@ async function onRowClick(item: SettingItem): Promise<void> {
   }
 }
 
-function onLogoutConfirm(): void {
+async function onLogoutConfirm(): Promise<void> {
+  if (logoutSubmitting.value) return
   showLogoutDialog.value = false
-  gameStore.clearLogin()
-  LoginSession.ClearWS()
-  showSuccessToast(t('UIClub_DoneExit'))
-  void router.replace('/guest/home')
+  logoutSubmitting.value = true
+  try {
+    // 服务端登出成功后再清本地，并立即恢复为可预览的体验账号。
+    await logoutCurrentSession({ restoreExperience: true })
+    showSuccessToast(t('UIClub_DoneExit'))
+    await router.replace('/home')
+  } catch (error) {
+    const message = error instanceof Error ? error.message : t('UIClub_Fail')
+    showFailToast(message)
+  } finally {
+    logoutSubmitting.value = false
+  }
 }
 
 function onLogoutCancel(): void {

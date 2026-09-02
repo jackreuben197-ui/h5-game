@@ -333,6 +333,21 @@ export interface LoginV2Request {
 // 登录接口返回结构（重点字段 token）。
 export interface LoginResponse {
   token: string
+  expire_at?: number
+  [key: string]: unknown
+}
+
+// /user/experience/login 请求参数。H5 不传经纬度，避免触发定位授权。
+export interface ExperienceLoginRequest {
+  invite_code?: string
+  platform?: number
+  user_device_no?: string
+  device_id?: string
+  client_language?: string
+  system_language?: string
+  system_version?: string
+  mac_addr?: string
+  is_simulator?: boolean
   [key: string]: unknown
 }
 
@@ -700,7 +715,9 @@ export interface UserInfoUser {
   province?: string // 省会
   mnt?: number // 修改用户[名称]次数
   mat?: number // 修改用户[头像]次数
-  ut?: number // 1 普通用户; 2 支桌号; 3 牌局机器人; 4 牛仔机器人； 5 游客
+  // 体验账号：新接口约定 user_type=6；测试环境当前实际返回 ut=6、user_type=0。
+  user_type?: number
+  ut?: number // 1 普通用户; 2 支桌号; 3 牌局机器人; 4 牛仔机器人；6 体验账号
   limit?: number // 用户限制 1 不限制, 2 限制
   club_id?: number // 俱乐部ID
   save_face?: number // 是否保存人脸验证，1 是，2否

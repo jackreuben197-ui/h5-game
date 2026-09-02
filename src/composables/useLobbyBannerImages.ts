@@ -249,7 +249,7 @@ export function useLobbyBannerImages(): {
 
   async function fetchLobbyBannerImages(): Promise<void> {
     const lang = toServerLang(getLocale())
-    const loggedIn = !!useGameStore().sessionToken.trim()
+    const hasRealUser = useGameStore().isRealUser
     const displayScene = isTelegramMiniAppEnv() ? DISPLAY_SCENE_TELEGRAM : DISPLAY_SCENE_H5
 
     const userInfoStore = useUserInfoStore()
@@ -278,14 +278,14 @@ export function useLobbyBannerImages(): {
     // 渠道包调用 before-login CMS 时传渠道 club_id；官方包不传，只取平台配置。
     const cmsScope: CmsBannerScope = hasChannelClub
       ? { type: 'channel-club', clubId: channelClubId }
-      : !loggedIn && !isChannelPackage && OFFICIAL_GUEST_BANNER_MODE === 'default-club'
+      : !hasRealUser && !isChannelPackage && OFFICIAL_GUEST_BANNER_MODE === 'default-club'
         ? { type: 'default-club' }
         : { type: 'platform' }
     const platformCacheKey = `${lang}_scene_${displayScene}_platform`
     // 只有渠道链接按渠道俱乐部分桶；平台链接不再按登录账号当前俱乐部分桶。
     const cacheKey = hasChannelClub
       ? `${lang}_scene_${displayScene}_channel_club_${channelClubId}`
-      : !loggedIn && !isChannelPackage && OFFICIAL_GUEST_BANNER_MODE === 'default-club'
+      : !hasRealUser && !isChannelPackage && OFFICIAL_GUEST_BANNER_MODE === 'default-club'
         ? `${lang}_scene_${displayScene}_default-club`
         : platformCacheKey
     const cached = await readLobbyBannerListCache(cacheKey)
@@ -294,7 +294,7 @@ export function useLobbyBannerImages(): {
     }
 
     // 只有渠道链接才请求俱乐部 banner。平台链接即使账号是俱乐部创始人，也只展示平台 banner。
-    const shouldFetchClubBanner = loggedIn && hasChannelClub
+    const shouldFetchClubBanner = hasRealUser && hasChannelClub
     if (shouldFetchClubBanner) {
       const sceneUrls = await fetchSceneBannerUrls(lang, displayScene, channelClubId)
 

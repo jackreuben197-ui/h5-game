@@ -1078,6 +1078,7 @@ export interface SngIdInfoRecord {
 export interface MttSeriesInfoRecord {
   id?: number
   name?: string
+  more_name?: string
   create_time?: number
   tribe_id?: number
   type?: number

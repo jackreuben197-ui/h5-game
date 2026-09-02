@@ -1,10 +1,9 @@
 // H5 桥接模式下的 token 续期循环。
 // 对齐老 Cocos 直连模式的 TokenRefreshComponent：每 5s 检查一次，
-// 距离过期 < 7200s（2h）时调 /user/refresh 续期；失败则清登录并弹登录窗。
+// 距离过期 < 7200s（2h）时调 /user/refresh 续期；失败则清理旧会话并恢复游客态。
 import { postUserRefreshApi } from '@/api/user'
 import StorageKey from '@/constants/storageKey'
 import { useGameStore } from '@/stores/game'
-import { useLoginModalStore } from '@/stores/loginModal'
 import { pinia } from '@/stores/pinia'
 import { closeWsProxy } from '@/bridge/ws'
 import { localStore } from '@/utils/localStore'
@@ -28,14 +27,15 @@ function readExpireAt(): number {
   return Number.isFinite(value) && value > 0 ? value : 0
 }
 
-function clearLoginAndPromptRelogin(reason: string): void {
+function clearLoginAndRestoreExperience(reason: string): void {
   log.warn('token invalid, clear login', { reason })
-  stopTokenRefreshLoop()
   // 主动关 WS，避免 wsProxy 继续用旧 token 重连。
   closeWsProxy({ code: 1000, reason: 'token refresh failed' })
   useGameStore(pinia).clearLogin()
   localStore.removeItem(StorageKey.TOKEN_EXPIREAT)
-  useLoginModalStore(pinia).open()
+  void import('@/session/experienceSession')
+    .then(({ ensureExperienceSessionReady }) => ensureExperienceSessionReady())
+    .catch((error) => log.warn('restore experience session failed', error))
 }
 
 async function refreshNow(): Promise<void> {
@@ -60,7 +60,7 @@ async function refreshNow(): Promise<void> {
     log.info('token refreshed', { expireAt })
   } catch (error) {
     log.warn('token refresh failed', error)
-    clearLoginAndPromptRelogin('refresh-failed')
+    clearLoginAndRestoreExperience('refresh-failed')
   } finally {
     refreshing = false
   }
@@ -71,7 +71,8 @@ function tick(): void {
     return
   }
   const gameStore = useGameStore(pinia)
-  if (!gameStore.sessionToken.trim()) {
+  // 体验账号是短生命周期租用账号，不调用真实用户 token 续期接口。
+  if (!gameStore.sessionToken.trim() || gameStore.isGuestAccount) {
     return
   }
   const expireAt = readExpireAt()
@@ -81,7 +82,7 @@ function tick(): void {
   }
   const remaining = expireAt - nowSeconds()
   if (remaining <= 0) {
-    clearLoginAndPromptRelogin('expired')
+    clearLoginAndRestoreExperience('expired')
     return
   }
   if (remaining < REFRESH_THRESHOLD_SECONDS) {
@@ -111,7 +112,7 @@ export function stopTokenRefreshLoop(): void {
   log.info('stop token refresh loop')
 }
 
-// 启动时调用：本地 token 已过期就直接清登录 + 弹登录窗，避免后续 wsConnect 用旧 token 触发服务端拒绝。
+// 启动时调用：本地 token 已过期就清理旧会话并恢复游客态，避免首次进入主动弹登录窗。
 // 返回值：true 表示 token 看起来有效，调用方可以启动 refresh loop。
 export function checkLocalTokenAtBootstrap(): boolean {
   const gameStore = useGameStore(pinia)
@@ -120,7 +121,7 @@ export function checkLocalTokenAtBootstrap(): boolean {
   }
   const expireAt = readExpireAt()
   if (expireAt > 0 && expireAt <= nowSeconds()) {
-    clearLoginAndPromptRelogin('bootstrap-expired')
+    clearLoginAndRestoreExperience('bootstrap-expired')
     return false
   }
   return true

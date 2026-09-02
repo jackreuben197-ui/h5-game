@@ -44,13 +44,18 @@ import { generateQrCodeUrl } from '@/utils/qrcode'
 import { showToast } from 'vant'
 import { postClubUserWalletApi } from '@/api/org'
 import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
+import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
+import { useGameStore } from '@/stores/game'
+import { requireRealUser, type PendingRealUserAction } from '@/session/realUserGate'
 
 const router = useRouter()
 const route = useRoute()
 const walletStore = useWalletStore()
 const userInfoStore = useUserInfoStore()
 const tabsStore = useMainTabsStore()
+const gameStore = useGameStore()
 const isChannelPackage = isPrivateDomainMode()
+const { isVersionB: isChannelMenuVersionB } = useChannelBottomMenu()
 
 if (isChannelPackage) {
   tabsStore.setActiveTab('wallet')
@@ -72,14 +77,34 @@ const walletClub = computed(() => {
 const walletClubId = computed(
   () => directedClubId.value ?? (Number(walletClub.value?.club_id) || undefined),
 )
+const walletBalance = computed(() => {
+  if (!gameStore.isRealUser) return 0
+  if (directedClubId.value) {
+    return Number(walletClub.value?.user_gold ?? 0)
+  }
+  return Number(walletClub.value?.user_gold ?? userInfoStore.userInfo?.user?.gold ?? 0)
+})
 const hasConfiguredPayTypes = computed(
   () => (walletStore.goldPriceData?.pay_types?.length ?? 0) > 0,
 )
 const isFixedDeposit = computed(() => {
+  if (!gameStore.isRealUser) {
+    return false
+  }
   if (walletClub.value?.deposit_switch === 2) {
     return !hasConfiguredPayTypes.value
   }
   return false
+})
+const walletUserName = computed(() => {
+  if (!gameStore.isRealUser) return '--'
+  const user = userInfoStore.userInfo?.user as Record<string, unknown> | undefined
+  return String(user?.nickname || gameStore.loginNickname || gameStore.loginAccount || '--')
+})
+const walletUserId = computed(() => {
+  if (!gameStore.isRealUser) return '--'
+  const user = userInfoStore.userInfo?.user as Record<string, unknown> | undefined
+  return String(user?.userid || user?.un_id || gameStore.loginUserId || '--')
 })
 const isFromCocosTable = computed(() => {
   const raw = Array.isArray(route.query.from) ? route.query.from[0] : route.query.from
@@ -273,6 +298,7 @@ function handleWalletBack(): void {
 }
 
 function openWalletChild(path: string): void {
+  if (!requireRealUser(() => openWalletChild(path))) return
   void router.push({ path, query: route.query })
 }
 
@@ -309,6 +335,7 @@ watch(
 )
 
 async function refreshPendingCsOrder() {
+  if (!gameStore.isRealUser) return
   // We keep this method for manual refreshes within this view (e.g. after cancel/submit)
   // but we will no longer run it on a 10s interval here as requested.
   await walletStore.refreshPendingCsOrder(walletClubId.value)
@@ -331,6 +358,7 @@ function resolveOrderPayType(order: ClubFundOrderListOrderInfo): number | undefi
 }
 
 async function checkUnfinishedOrders(showPopup = true) {
+  if (!requireRealUser(() => checkUnfinishedOrders(showPopup))) return
   const clubId = walletClubId.value
 
   try {
@@ -362,6 +390,7 @@ async function checkUnfinishedOrders(showPopup = true) {
 }
 
 async function handleCancelOrder(orderNo: string) {
+  if (!requireRealUser(() => handleCancelOrder(orderNo))) return
   try {
     const res = await postOrderUserClubOrderCancelApi({
       order_no: orderNo,
@@ -384,6 +413,7 @@ async function handleCancelOrder(orderNo: string) {
 }
 
 async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
+  if (!requireRealUser(() => handleUnfinishedContinue(order))) return
   showUnfinishedPopup.value = false
 
   let qrCode =
@@ -467,8 +497,14 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
 }
 
 watch(
-  walletClubId,
-  (clubId) => {
+  [walletClubId, () => gameStore.isRealUser],
+  ([clubId, isRealUser]) => {
+    walletStore.clearCsOrders()
+    if (!isRealUser) {
+      walletStore.clearPriceList()
+      unfinishedOrder.value = null
+      return
+    }
     void walletStore.loadPriceList(clubId)
     void refreshPendingCsOrder()
   },
@@ -618,6 +654,7 @@ const displayPayAmount = computed(() => {
 const tabLabels = computed(() => [t('Wallet_Deposit'), t('Wallet_Withdraw')])
 
 async function onPayClick() {
+  if (!requireRealUser(resumeWalletPayAfterLogin)) return
   const payTypes = filteredPayTypes.value
   const selectedPayType = payTypes[activeMethod.value]
 
@@ -691,7 +728,13 @@ async function onPayClick() {
   }
 }
 
+async function resumeWalletPayAfterLogin(): Promise<void> {
+  await walletStore.loadPriceList(walletClubId.value)
+  await onPayClick()
+}
+
 async function onWithdrawCsChat(orderData: Record<string, unknown>) {
+  if (!requireRealUser(() => onWithdrawCsChat(orderData))) return
   const opened = await openMatchOrderChat(orderData, 2)
   if (!opened) {
     try {
@@ -724,6 +767,7 @@ async function onWithdrawCsChat(orderData: Record<string, unknown>) {
 }
 
 async function onCsSubmit() {
+  if (!requireRealUser(onCsSubmit)) return
   csPopupOpen.value = false
 
   const payTypes = filteredPayTypes.value
@@ -823,6 +867,7 @@ async function onCsSubmit() {
 }
 
 async function onUsdtSubmit(type: number) {
+  if (!requireRealUser(() => onUsdtSubmit(type))) return
   usdtPopupOpen.value = false
 
   const payTypes = filteredPayTypes.value
@@ -894,6 +939,10 @@ async function onUsdtSubmit(type: number) {
     alert('Failed to submit recharge')
   }
 }
+
+function requestWalletAuth(action?: PendingRealUserAction): void {
+  requireRealUser(action)
+}
 </script>
 
 <template>
@@ -902,7 +951,11 @@ async function onUsdtSubmit(type: number) {
     class="wallet-fixed-deposit-shell"
     :class="{ 'wallet-fixed-deposit-shell--channel': isChannelPackage }"
   >
-    <FixedDepositPanel :club="walletClub" @back="handleWalletBack" />
+    <FixedDepositPanel
+      :club="walletClub"
+      :show-back="!isChannelMenuVersionB"
+      @back="handleWalletBack"
+    />
   </div>
 
   <div
@@ -913,7 +966,7 @@ async function onUsdtSubmit(type: number) {
   >
     <HeaderBack
       :title="t('Wallet_Title')"
-      :show-back="!isChannelPackage"
+      :show-back="!isChannelMenuVersionB"
       extra-padding
       @back="handleWalletBack"
     />
@@ -929,8 +982,8 @@ async function onUsdtSubmit(type: number) {
         <UserCard
           class="wallet-banner"
           :avatar="ava1"
-          name="Cooper&#10;Korsgaard"
-          user-id="8677650585"
+          :name="walletUserName"
+          :user-id="walletUserId"
         >
           <template #actions>
             <GlassButton
@@ -988,7 +1041,10 @@ async function onUsdtSubmit(type: number) {
           <WithdrawForm
             :club-id="walletClubId"
             :available-uc="clubGold"
+            :balance="walletBalance"
+            :preview="!gameStore.isRealUser"
             @open-cs-chat="onWithdrawCsChat"
+            @require-auth="requestWalletAuth"
             @withdrawn="fetchClubBalance"
           />
         </template>
@@ -1118,6 +1174,7 @@ async function onUsdtSubmit(type: number) {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   overscroll-behavior: contain;
   padding-bottom: calc(env(safe-area-inset-bottom) + 0.64rem);
 }

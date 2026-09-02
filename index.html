@@ -725,6 +725,19 @@
         padding-top: var(--app-tg-guard-top);
       }
 
+      /* 0901 起 App.vue 用 .h5-route-host 包住 RouterView：guard 必须继续落在页面
+         根节点上，否则包裹层的 padding 会和页面自身的整屏高度叠加出一屏滚动。 */
+      html[data-tg-mini-app='1'] #app > .h5-route-host {
+        padding-top: 0;
+        min-height: 0;
+      }
+
+      html[data-tg-mini-app='1'] #app > .h5-route-host > * {
+        box-sizing: border-box;
+        min-height: 100%;
+        padding-top: var(--app-tg-guard-top);
+      }
+
       #drawCanvas {
         display: none;
       }

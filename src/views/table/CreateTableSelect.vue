@@ -12,6 +12,8 @@ import { postOrgClubGoldApi } from '@/api/org'
 import { useUserInfoStore } from '@/stores/userInfo'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { t } from '@/i18n'
+import { useGameStore } from '@/stores/game'
+import { requireRealUser } from '@/session/realUserGate'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -27,6 +29,7 @@ interface GameTypeItem {
 const router = useRouter()
 const route = useRoute()
 const userInfoStore = useUserInfoStore()
+const gameStore = useGameStore()
 const selectedKey = ref('')
 const originType = computed(() => {
   const v = Number(route.query.origin_type)
@@ -88,6 +91,7 @@ function onSelect(item: GameTypeItem): void {
 }
 
 async function prefetchClubDiamondBalance(): Promise<void> {
+  if (!gameStore.isRealUser) return
   const clubRandomId = userInfoStore.currentClub?.random_id
   if (!clubRandomId) {
     return
@@ -112,6 +116,11 @@ const handleBack = () => {
   router.replace({ name: originType.value === 4 ? 'friendsTable' : 'club-index' })
 }
 
+function openJackpot(): void {
+  if (!requireRealUser(openJackpot)) return
+  void router.push('/club/jackpot')
+}
+
 onMounted(() => {
   void prefetchClubDiamondBalance()
 })
@@ -130,7 +139,7 @@ onMounted(() => {
             name="Jackpot"
             icon-alt="wallet"
             large
-            @click="router.push('/club/jackpot')"
+            @click="openJackpot"
           />
         </template>
       </HeaderBack>

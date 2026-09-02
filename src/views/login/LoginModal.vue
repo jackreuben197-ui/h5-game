@@ -3,6 +3,13 @@ import { md5 } from 'js-md5'
 import { computed, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
+  BRIDGE_ACTION,
+  BRIDGE_MSG_TYPE,
+  H5_LOGIN_CONTEXT,
+  TABLE_SITDOWN_AUTH_CANCEL_REASON,
+  TABLE_SITDOWN_AUTH_STATE,
+} from '@bridge-protocol'
+import {
   loginApi,
   loginV2Api,
   postUserCheckEmailApi,
@@ -16,6 +23,19 @@ import { localStore } from '@/utils/localStore'
 import { useGameStore } from '@/stores/game'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { syncPostAuthData } from '@/session/postAuthSync'
+import LoginSession from '@/session/loginSession'
+import {
+  ensureExperienceSession,
+  logoutCurrentSession,
+  suspendExperienceSessionInitialization,
+} from '@/session/experienceSession'
+import { completeCocosTableSitdownAuth } from '@/session/cocosTableSitdownAuth'
+import { sendBridgeMessage } from '@/bridge/core'
+import { setH5TableAuthOverlay, setH5Visible } from '@/bridge/channels/uiChannel'
+import {
+  clearPendingRealUserAction,
+  takePendingRealUserAction,
+} from '@/session/realUserGate'
 import { SUPPORTED_LOCALES_OPTIONS, getLocale, setLocale, t, type LocaleCode } from '@/i18n'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import loginModalBg from '@/assets/images/main_bg2.png'
@@ -51,15 +71,6 @@ const LOGIN_TYPE_EMAIL = 2
 
 const PROTOCOL_TYPE_AGREEMENT = 3
 
-// 登录成功后：当前在 guest 假页时切到对应真页；在真页时原地不动。
-const GUEST_TO_REAL_ROUTE: Record<string, string> = {
-  'guest-home': 'lobby',
-  'guest-club': 'club',
-  'guest-friendsTable': 'friendsTable',
-  'guest-message': 'message',
-  'guest-mine': 'mine',
-}
-
 const router = useRouter()
 const gameStore = useGameStore()
 const loginModalStore = useLoginModalStore()
@@ -84,6 +95,8 @@ const loading = ref(false)
 const errorText = ref('')
 const errorVisible = ref(false)
 let errorTimer: ReturnType<typeof setTimeout> | null = null
+const tableAuthCompleted = ref(false)
+const tableAuthDestination = ref<'table' | 'official-home' | ''>('')
 const inviteCodeFromChannel = ref('')
 const traceHashFromChannel = ref('')
 
@@ -128,6 +141,7 @@ watch(
   () => loginModalStore.visible,
   (visible) => {
     if (!visible) {
+      const closingContext = loginModalStore.context
       // showProtocolPanel.value = false
       showLanguageModal.value = false
       // showProtocolConfifm.value = false
@@ -137,7 +151,31 @@ watch(
       // 关闭未登录态弹窗（含点击遮罩关闭）时清空残留的跳转目标，避免下次登录被错误带跳。
       loginModalStore.mode = ''
       loginModalStore.pendingRedirect = ''
+      clearPendingRealUserAction()
+      if (closingContext === H5_LOGIN_CONTEXT.TABLE_SITDOWN) {
+        if (!tableAuthCompleted.value) {
+          sendBridgeMessage(
+            BRIDGE_ACTION.TABLE_SITDOWN_AUTH,
+            {
+              state: TABLE_SITDOWN_AUTH_STATE.CANCELLED,
+              reason: TABLE_SITDOWN_AUTH_CANCEL_REASON.LOGIN_CANCELLED,
+            },
+            { msgtype: BRIDGE_MSG_TYPE.H5 },
+          )
+        }
+        // 原桌恢复时隐藏 H5 显示 Cocos Loading；俱乐部不匹配时保留 H5，
+        // 由既有渠道逻辑跳转到官方包首页。
+        setH5TableAuthOverlay(false)
+        setH5Visible(tableAuthDestination.value === 'official-home')
+      }
+      loginModalStore.resetContext()
+      tableAuthCompleted.value = false
+      tableAuthDestination.value = ''
       return
+    }
+    if (loginModalStore.context === H5_LOGIN_CONTEXT.TABLE_SITDOWN) {
+      tableAuthCompleted.value = false
+      tableAuthDestination.value = ''
     }
     // 每次打开同步一次最新缓存（避免外部修改导致状态过期）。
     currentLang.value = getLocale()
@@ -362,6 +400,27 @@ function applyDebugAccount(account: DebugAccount): void {
 }
 
 async function handleLogin(target: string) {
+  const restoreGuestOnFailure = gameStore.isGuestAccount && Boolean(gameStore.sessionToken)
+  const resumeExperienceSession = suspendExperienceSessionInitialization()
+
+  try {
+    await runLoginTransaction(target, restoreGuestOnFailure)
+  } catch (error) {
+    resumeExperienceSession()
+    if (restoreGuestOnFailure && !gameStore.sessionToken.trim()) {
+      await ensureExperienceSession()
+    }
+    throw error
+  } finally {
+    resumeExperienceSession()
+  }
+}
+
+async function runLoginTransaction(target: string, replacingExperienceAccount: boolean) {
+  if (replacingExperienceAccount) {
+    await logoutCurrentSession()
+  }
+
   const agentCode = resolveAgentInviteCode()
   const effectiveInviteCode = agentCode || inviteCodeFromChannel.value || resolveInviteCode()
   const effectiveTraceHash = traceHashFromChannel.value || resolveTraceHash() || agentCode
@@ -396,33 +455,56 @@ async function handleLogin(target: string) {
   if (Number.isFinite(expireAt) && expireAt > 0) {
     localStore.setItem(StorageKey.TOKEN_EXPIREAT, expireAt)
   }
+
+  if (loginModalStore.context === H5_LOGIN_CONTEXT.TABLE_SITDOWN) {
+    const authResult = await completeCocosTableSitdownAuth({
+      realToken: token,
+      account: target,
+      expireAt,
+    })
+    persistLoginDraft()
+    tableAuthDestination.value = authResult.destination
+    tableAuthCompleted.value = true
+    loginModalStore.close()
+    clearAgentInviteCodeCache()
+    return
+  }
+
+  // 游客 token → 真实 token 时必须断开旧 WS，避免复用游客会话的端口/连接。
+  if (gameStore.sessionToken && gameStore.sessionToken !== token) {
+    LoginSession.ClearWS()
+  }
+  gameStore.setGuestAccount(false)
   gameStore.setSessionToken(token)
-  gameStore.setLoginUser({
-    account: target,
-    nickname: target,
-    userId: '',
-  })
+  gameStore.setLoginUser({ account: target, nickname: target, userId: '' })
   persistLoginDraft()
 
-  // 把首页无关的拉取（userInfo/club/全局配置/收费配置/多语言模板/WS）统一收口到登录后处理。
-  syncPostAuthData()
+  // 弹窗以完整身份切换为成功边界，避免先关闭后再由页面补齐用户态。
+  const syncResult = await syncPostAuthData()
+  if (
+    !syncResult.websocketSynced ||
+    !syncResult.userInfoSynced ||
+    !syncResult.userClubSynced ||
+    gameStore.sessionToken.trim() !== token ||
+    gameStore.isGuestAccount ||
+    !gameStore.loginUserId.trim()
+  ) {
+    throw new Error(t('UIClub_Text71'))
+  }
 
-  // 优先跳转到登录前记录的目标路径（如点击钱包 tab 触发登录的场景）。
   const pendingRedirect = loginModalStore.consumePendingRedirect()
   if (pendingRedirect) {
     await router.replace(pendingRedirect)
-  } else {
-    // 假页 → 真页切换；非 guest 路由（如 /wallet）保持原页。
-    const currentName = router.currentRoute.value.name
-    const realRouteName =
-      typeof currentName === 'string' ? GUEST_TO_REAL_ROUTE[currentName] : undefined
-    if (realRouteName) {
-      await router.replace({ name: realRouteName })
-    }
   }
+  // 先取出待续接动作，避免关闭弹窗的 watcher 把它当作用户取消而清掉。
+  const pendingAction = takePendingRealUserAction()
   loginModalStore.close()
-  // 登录成功后清除本地缓存的代理邀请码
   clearAgentInviteCodeCache()
+  if (pendingAction) {
+    void Promise.resolve(pendingAction()).catch((error) => {
+      console.warn('[login] resume pending action failed:', error)
+    })
+  }
 }
 
 async function handleRegister(target: string) {
@@ -530,7 +612,10 @@ function hydrateFormFromLocal() {
     localStore.getItem<number | string>(LOGIN_ACCOUNT_TYPE_KEY, LOGIN_TYPE_PHONE),
   )
   contactType.value = storedType === LOGIN_TYPE_EMAIL ? 'email' : 'account'
-  form.account = readLocalString(StorageKey.KEY_PHONE, gameStore.loginAccount || '')
+  form.account = readLocalString(
+    StorageKey.KEY_PHONE,
+    gameStore.isRealUser ? gameStore.loginAccount || '' : '',
+  )
   form.email = readLocalString(LOGIN_EMAIL_KEY)
   form.password = readSavedPassword(contactType.value)
 }
@@ -579,6 +664,7 @@ function applyChannelInviteContext(): void {
     :show-footer="false"
     :show-confirm-button="false"
     :close-on-click-overlay="true"
+    :before-close="() => !loading"
     dialog-width="9rem"
     body-max-height="14rem"
     :bg-image="loginModalBg"

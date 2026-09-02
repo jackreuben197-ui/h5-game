@@ -1,27 +1,26 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
-import { useGameStore } from '@/stores/game'
-import { useLoginModalStore } from '@/stores/loginModal'
-import { useRoomListStore } from '@/stores/roomList'
-import { useMttListStore } from '@/stores/mttList'
 import { useCasinoStore } from '@/stores/casino'
-import { useAppConfigStore } from '@/stores/appConfig'
 import { t } from '@/i18n'
-import { useChannelMenuVersion } from '@/composables/useChannelMenuVersion'
-import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
-import { filterVisibleMttRecords } from '@/utils/mttVisibility'
+import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 
-type TabIconKey = 'home' | 'club' | 'wallet' | 'friendsTable' | 'message' | 'mine' | 'mtt' | 'casino'
+type TabIconKey =
+  | 'home'
+  | 'mtt'
+  | 'miniGame'
+  | 'casino'
+  | 'club'
+  | 'wallet'
+  | 'friendsTable'
+  | 'message'
+  | 'mine'
 
 interface TabItem {
   key: MainTabKey
   label: string
-  // 登录态路径
   path: string
-  // 未登录态路径（指向 guest mock 页）
-  guestPath: string
   icon: TabIconKey
 }
 
@@ -33,136 +32,38 @@ function toSafeInt(value: unknown): number {
 const router = useRouter()
 const route = useRoute()
 const tabsStore = useMainTabsStore()
-const gameStore = useGameStore()
-const loginModalStore = useLoginModalStore()
-const { isChannelPackage, channelClub, isVersionB } = useChannelMenuVersion()
-
-const roomListStore = useRoomListStore()
-const mttListStore = useMttListStore()
 const casinoStore = useCasinoStore()
-const appConfigStore = useAppConfigStore()
+const { isChannelPackage, channelClub, isVersionB, hasMtt, hasMiniGame } = useChannelBottomMenu()
 
-
-const hasMttData = computed(() => {
-  const clubId = toSafeInt(channelClub.value?.club_id)
-  const tribeId = toSafeInt(channelClub.value?.tribe_id)
-  const visibleRecords = filterVisibleMttRecords(
-    mttListStore.records,
-    mttListStore.mttIdMetaMap,
-    clubId,
-    tribeId,
-    appConfigStore.clubDisplayPlatformMtt,
-  )
-  return visibleRecords.length > 0
-})
-
-const hasCasinoData = computed(() => {
-  const clubId = toSafeInt(channelClub.value?.club_id)
-  return clubId > 0 && casinoStore.gameRecords.length > 0
-})
-
-async function loadVersionBTabsData() {
-  if (!isChannelPackage.value || !isVersionB.value) return
-  const clubId = toSafeInt(channelClub.value?.club_id)
-  if (clubId <= 0) return
-
-  if (!roomListStore.records.length) {
-    void roomListStore.bootstrapRoomList().catch(console.warn)
-  }
-  if (!mttListStore.records.length) {
-    void mttListStore.bootstrapMttList().catch(console.warn)
-  }
-  if (!casinoStore.gameRecords.length) {
-    void casinoStore.preloadCasinoData(clubId, false).catch(console.warn)
-  }
-}
-
-watch(
-  channelClub,
-  (newClub) => {
-    if (newClub) {
-      void loadVersionBTabsData()
-    }
-  },
-  { immediate: true }
+// 娱乐场入口只在该俱乐部真的有游戏时出现；房间 / 赛事列表由会话层预热，这里只补娱乐场。
+const hasCasinoData = computed(
+  () => toSafeInt(channelClub.value?.club_id) > 0 && casinoStore.gameRecords.length > 0,
 )
 
 watch(
-  () => [route.meta.tabKey, route.query.tab],
-  ([tabKey, queryTab]) => {
-    if (route.name === 'guest-home' && isVersionB.value && queryTab) {
-      tabsStore.setActiveTab(queryTab as MainTabKey)
-    } else if (typeof tabKey === 'string') {
-      tabsStore.setActiveTab(tabKey as MainTabKey)
-    }
+  () => [isVersionB.value, toSafeInt(channelClub.value?.club_id)] as const,
+  ([versionB, clubId]) => {
+    if (!isChannelPackage || !versionB || clubId <= 0) return
+    if (casinoStore.gameRecords.length) return
+    void casinoStore.preloadCasinoData(clubId, false).catch(console.warn)
   },
   { immediate: true },
 )
 
-// 官方包保留 5 个入口；渠道包将俱乐部能力合并到首页，仅保留 4 个入口。
+// 版本 A：首页、充值、消息、我的。
+// 版本 B：首页、充值、我的始终展示，赛事 / 小游戏按可见数据动态展示。
 const tabs = computed<TabItem[]>(() => {
-  const isChannel = isChannelPackage.value
-  const rechargeTab: TabItem = {
-    key: 'wallet',
-    label: t('UIGuildFund_RechargeText'),
-    path: '/wallet',
-    guestPath: '/guest/friendsTable',
-    icon: 'wallet',
-  }
-  const mineTab: TabItem = {
-    key: 'mine',
-    label: t('UIMine_title'),
-    path: '/mine',
-    guestPath: '/guest/mine',
-    icon: 'mine',
-  }
-
-  if (isChannel && isVersionB.value) {
-    const list: TabItem[] = []
-    
-    // Poker (Home)
-    list.push({
-      key: 'home',
-      label: t('UITabbarHome'),
-      path: '/home',
-      guestPath: '/guest/home',
-      icon: 'home',
-    })
-
-    // Tournaments (mtt)
-    if (hasMttData.value) {
-      list.push({
-        key: 'mtt',
-        label: t('UITabbarEvents'),
-        path: '/mttList',
-        guestPath: '/guest/home',
-        icon: 'mtt',
-      })
-    }
-
-    // Casino (casino)
-    if (hasCasinoData.value) {
-      list.push({
-        key: 'casino',
-        label: t('UICasino_Title'),
-        path: '/casino',
-        guestPath: '/guest/home',
-        icon: 'casino',
-      })
-    }
-
-    list.push(rechargeTab)
-    list.push(mineTab)
-    return list
-  }
-
-  const middleTab: TabItem = isChannel
-    ? rechargeTab
+  const middleTab: TabItem = isChannelPackage
+    ? {
+        key: 'wallet',
+        label: t('UIGuildFund_RechargeText'),
+        path: '/wallet',
+        icon: 'wallet',
+      }
     : {
         key: 'friendsTable',
         label: t('UITabbarGames'),
         path: '/friendsTable',
-        guestPath: '/guest/friendsTable',
         icon: 'friendsTable',
       }
 
@@ -170,52 +71,94 @@ const tabs = computed<TabItem[]>(() => {
     key: 'home',
     label: t('UITabbarHome'),
     path: '/home',
-    guestPath: '/guest/home',
     icon: 'home',
   }
   const clubTab: TabItem = {
     key: 'club',
     label: t('UIClub_Info'),
     path: '/club',
-    guestPath: '/guest/club',
     icon: 'club',
+  }
+
+  if (isChannelPackage && isVersionB.value) {
+    return [
+      {
+        key: 'poker',
+        label: t('UITabbarHome'),
+        path: '/home',
+        icon: 'home',
+      },
+      ...(hasMtt.value
+        ? [
+            {
+              key: 'mtt' as const,
+              label: t('UITabbarEvents'),
+              path: '/mttList',
+              icon: 'mtt' as const,
+            },
+          ]
+        : []),
+      ...(hasCasinoData.value
+        ? [
+            {
+              key: 'casino' as const,
+              label: t('UICasino_Title'),
+              path: '/casino',
+              icon: 'casino' as const,
+            },
+          ]
+        : []),
+      // 小游戏尚未接入，hasMiniGame 当前固定为 false。
+      ...(hasMiniGame.value
+        ? [
+            {
+              key: 'miniGame' as const,
+              label: t('UIHomeMinigameArea'),
+              path: '/home',
+              icon: 'miniGame' as const,
+            },
+          ]
+        : []),
+      middleTab,
+      {
+        key: 'mine',
+        label: t('UIMine_title'),
+        path: '/mine',
+        icon: 'mine',
+      },
+    ]
   }
 
   return [
     homeTab,
-    ...(!isChannel ? [clubTab] : []),
+    ...(!isChannelPackage ? [clubTab] : []),
     middleTab,
     {
       key: 'message',
       label: t('UIMine_MsgSystemContent'),
       path: '/message',
-      guestPath: '/guest/message',
       icon: 'message',
     },
-    mineTab,
+    {
+      key: 'mine',
+      label: t('UIMine_title'),
+      path: '/mine',
+      icon: 'mine',
+    },
   ]
 })
 
-
-
-function resolveTabPath(tab: TabItem): string {
-  if (gameStore.sessionToken) {
-    return tab.path
-  }
-  if (isVersionB.value) {
-    if (tab.key === 'mtt') {
-      return '/guest/home?tab=mtt'
-    }
-    if (tab.key === 'casino') {
-      return '/guest/home?tab=casino'
-    }
-  }
-  return tab.guestPath
-}
-
 // 当前激活项索引：用于驱动顶部凸起在当前 tab 数量间平滑移动。
+const activeTabKey = computed<MainTabKey>(() => {
+  if (isVersionB.value && route.name === 'lobby') {
+    return 'poker'
+  }
+  const routeTabKey = route.meta.tabKey
+  return typeof routeTabKey === 'string' ? (routeTabKey as MainTabKey) : tabsStore.activeTab
+})
+
 const activeIndex = computed(() => {
-  const index = tabs.value.findIndex((item) => item.key === tabsStore.activeTab)
+  const index = tabs.value.findIndex((item) => item.key === activeTabKey.value)
   return index >= 0 ? index : 0
 })
 
@@ -363,13 +306,8 @@ function refreshPathByCurrentTab(): void {
 }
 
 function onTabClick(tab: TabItem): void {
-  // 渠道包未登录态点击钱包：原地弹出登录框，登录成功后再跳转到钱包
-  if (tab.key === 'wallet' && !gameStore.sessionToken) {
-    loginModalStore.open(tab.path)
-    return
-  }
   tabsStore.setActiveTab(tab.key)
-  void router.push(resolveTabPath(tab))
+  void router.push(tab.path)
 }
 
 function handleWindowResize(): void {
@@ -377,7 +315,7 @@ function handleWindowResize(): void {
   refreshPathByCurrentTab()
 }
 
-watch(activeIndex, (newIndex) => {
+watch([activeIndex, () => tabs.value.length], ([newIndex]) => {
   if (!svgRef.value) return
   startPathAnimation(newIndex)
 })
@@ -430,7 +368,7 @@ onBeforeUnmount(() => {
         :key="tab.key"
         type="button"
         class="tab-button"
-        :class="{ 'is-active': tabsStore.activeTab === tab.key }"
+        :class="{ 'is-active': activeTabKey === tab.key }"
         @click="onTabClick(tab)"
       >
         <span class="tab-icon" aria-hidden="true">
@@ -446,6 +384,14 @@ onBeforeUnmount(() => {
               fill="currentColor"
             />
           </svg>
+          <span
+            v-else-if="tab.icon === 'mtt'"
+            class="tab-icon-svg tab-icon-mask tab-icon-mask--mtt"
+          ></span>
+          <span
+            v-else-if="tab.icon === 'miniGame'"
+            class="tab-icon-svg tab-icon-mask tab-icon-mask--mini-game"
+          ></span>
           <svg
             v-else-if="tab.icon === 'club'"
             class="tab-icon-svg"
@@ -510,15 +456,6 @@ onBeforeUnmount(() => {
               d="M14.2285 14.8052C15.2538 15.4983 16.5082 15.7665 17.7273 15.5533L19.4532 15.2538L19.8487 17.5337C19.8487 17.5337 26.0996 15.2752 25.0824 9.41287C24.8651 8.16043 24.1592 7.04561 23.12 6.31358C22.0808 5.58159 20.7934 5.29231 19.5409 5.50947L18.2454 5.73426C18.4135 6.10123 18.5375 6.4958 18.6098 6.91259C19.1992 10.3092 17.2998 13.5627 14.2285 14.8052Z"
               fill="currentColor"
             />
-          </svg>
-          <svg
-            v-else-if="tab.icon === 'mtt'"
-            class="tab-icon-svg"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="none"
-          >
-            <path d="M5.61134 0.00390543H14.3882C15.4266 0.00390543 16.2729 0.855302 16.2337 1.88635C16.2259 2.09334 16.218 2.30033 16.2063 2.50342H18.1497C19.1724 2.50342 20.0736 3.347 19.9952 4.44835C19.7014 8.49834 17.6247 10.7245 15.3717 11.8883C14.7526 12.2086 14.1218 12.4468 13.5223 12.6225C12.7308 13.7395 11.908 14.3292 11.2536 14.6456V17.5005H13.7613C14.4548 17.5005 15.0151 18.059 15.0151 18.7502C15.0151 19.4415 14.4548 20 13.7613 20H6.23826C5.54473 20 4.98442 19.4415 4.98442 18.7502C4.98442 18.059 5.54473 17.5005 6.23826 17.5005H8.74594V14.6456C8.11902 14.3449 7.33929 13.7864 6.57915 12.7592C5.85819 12.5718 5.07454 12.2867 4.31048 11.8571C2.19071 10.6737 0.278604 8.44366 0.00432649 4.44054C-0.0701203 3.3431 0.827159 2.49951 1.84982 2.49951H3.79327C3.78152 2.29643 3.77368 2.09334 3.76585 1.88244C3.72666 0.847491 4.57301 0 5.61134 0V0.00390543ZM3.93433 4.37805H1.88117C2.1241 7.686 3.6483 9.34193 5.21952 10.2207C4.65529 8.76391 4.18902 6.86194 3.93433 4.37805ZM14.8467 10.0332C16.4336 9.10369 17.8676 7.45167 18.1106 4.37805H16.0613C15.8184 6.75649 15.3795 8.60379 14.8467 10.0332Z" fill="currentColor" />
           </svg>
           <svg
             v-else-if="tab.icon === 'casino'"
@@ -655,6 +592,20 @@ onBeforeUnmount(() => {
   height: 100%;
   display: block;
   color: inherit;
+}
+
+.tab-icon-mask {
+  background-color: currentColor;
+}
+
+.tab-icon-mask--mtt {
+  -webkit-mask: url('@/assets/icons/game_zone_mtt_mini.svg') center / contain no-repeat;
+  mask: url('@/assets/icons/game_zone_mtt_mini.svg') center / contain no-repeat;
+}
+
+.tab-icon-mask--mini-game {
+  -webkit-mask: url('@/assets/icons/game_zone_minigame_mini.svg') center / contain no-repeat;
+  mask: url('@/assets/icons/game_zone_minigame_mini.svg') center / contain no-repeat;
 }
 
 .tab-label {

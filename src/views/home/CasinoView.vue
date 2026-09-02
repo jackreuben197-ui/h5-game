@@ -12,8 +12,8 @@ import { showGameToast } from '@/components/Toast'
 import { useCasinoStore } from '@/stores/casino'
 import { useGameStore } from '@/stores/game'
 import { useLoginModalStore } from '@/stores/loginModal'
+import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 import { useGameLaunchStore } from '@/stores/gameLaunch'
-import { useChannelMenuVersion } from '@/composables/useChannelMenuVersion'
 import {
   reserveGameWindow,
   launchGameUrl,
@@ -103,7 +103,7 @@ const casinoStore = useCasinoStore()
 const gameStore = useGameStore()
 const loginModalStore = useLoginModalStore()
 const gameLaunchStore = useGameLaunchStore()
-const { isVersionB } = useChannelMenuVersion()
+const { isVersionB } = useChannelBottomMenu()
 
 const isGuest = computed(() => !gameStore.sessionToken)
 

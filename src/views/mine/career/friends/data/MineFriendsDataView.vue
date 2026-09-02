@@ -170,10 +170,12 @@ function mapRecordItem(row: Record<string, unknown>, index: number): RecordItem 
   const matchPlayers = toSafeNumber(row.match_player_num)
   const buyIn = toSafeNumber(row.buy_in) / 100
   const sb = toSafeNumber(row.sb) / 100
+  const ante = toSafeNumber(row.ante) / 100
   const blind = resolveBlindText({
     gameType: toSafeNumber(row.game_type),
     pokerType: toSafeNumber(row.poker_type),
     sb,
+    ante,
     bombpot: toSafeNumber(row.bombpot),
   })
 

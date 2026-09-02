@@ -42,6 +42,8 @@ export interface GlobalConfigData {
   home_announcement_config?: string | HomeAnnouncementConfig
   // 赛事列表是否展示平台创建的 MTT/SNG（1 展示，对齐 Unity club_display_platform_mtt）
   club_display_platform_mtt?: number | string
+  // 平台数据统计使用的时区，对齐 Unity GameCache._platformTimeZone。
+  platform_role_time_zone?: number | string
   [key: string]: unknown
 }
 

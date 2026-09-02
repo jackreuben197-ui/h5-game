@@ -59,6 +59,53 @@ export function formatMonthLabel(value: unknown): string {
   }
 }
 
+function toSafeTimeZoneHours(value: unknown): number {
+  const hours = Number(value)
+  return Number.isFinite(hours) ? hours : 0
+}
+
+// 生成一个仅承载目标时区年月日的本地 Date，方便日期选择器按平台自然日工作。
+export function dateInTimeZone(value: unknown, timeZoneHours: number): Date {
+  const timestampMs = toTimestampMs(value) || Date.now()
+  const shifted = new Date(timestampMs + toSafeTimeZoneHours(timeZoneHours) * 60 * 60 * 1000)
+  return new Date(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate())
+}
+
+// 日期选择器用本地 Date 保存年月日；请求时按指定时区换算为 UTC 毫秒。
+export function dateBoundaryTimestamp(date: Date, end: boolean, timeZoneHours: number): number {
+  const timestampMs = Date.UTC(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    end ? 23 : 0,
+    end ? 59 : 0,
+    end ? 59 : 0,
+    end ? 999 : 0,
+  )
+  return timestampMs - toSafeTimeZoneHours(timeZoneHours) * 60 * 60 * 1000
+}
+
+// 按固定 UTC 偏移格式化时间，避免浏览器本地时区影响平台时间展示。
+export function formatDateTimeInTimeZone(
+  value: unknown,
+  timeZoneHours: number,
+  pattern = 'MM-DD HH:mm',
+): string {
+  const timestampMs = toTimestampMs(value)
+  if (timestampMs <= 0) return '--:--'
+
+  const shifted = new Date(timestampMs + toSafeTimeZoneHours(timeZoneHours) * 60 * 60 * 1000)
+  const tokens: Record<string, string> = {
+    YYYY: String(shifted.getUTCFullYear()),
+    MM: pad2(shifted.getUTCMonth() + 1),
+    DD: pad2(shifted.getUTCDate()),
+    HH: pad2(shifted.getUTCHours()),
+    mm: pad2(shifted.getUTCMinutes()),
+    ss: pad2(shifted.getUTCSeconds()),
+  }
+  return pattern.replace(/YYYY|MM|DD|HH|mm|ss/g, (token) => tokens[token])
+}
+
 // 秒数转倒计时文案：优先 HH:mm:ss，不足 1 小时时 mm:ss。
 export function formatDurationBySeconds(totalSeconds: number): string {
   const safeSeconds = Number.isFinite(totalSeconds) ? Math.max(0, Math.floor(totalSeconds)) : 0

@@ -45,6 +45,7 @@ interface MttViewItem extends MttItem {
 interface MttGroup {
   groupId: string
   title: string
+  moreName: string
   layout: MttLayout
   items: MttViewItem[]
   defaultVisibleCount: number
@@ -74,9 +75,12 @@ const loginModalStore = useLoginModalStore()
 const gameStore = useGameStore()
 
 const expandedGroupMap = ref<Record<string, boolean>>({})
-const selectedClubId = computed(() => toSafeInt(userInfoStore.currentClub?.club_id))
+const selectedClub = computed(
+  () => userInfoStore.currentClub ?? userInfoStore.channelDefaultClub,
+)
+const selectedClubId = computed(() => toSafeInt(selectedClub.value?.club_id))
 const selectedTribeId = computed(() =>
-  toSafeInt((userInfoStore.currentClub as Record<string, unknown> | null)?.tribe_id),
+  toSafeInt((selectedClub.value as Record<string, unknown> | null)?.tribe_id),
 )
 
 const nowMs = ref(Date.now())
@@ -206,9 +210,10 @@ function buildGroupsBySeries(
   seriesIds.forEach((seriesId) => {
     const seriesInfo = seriesMap[seriesId]
     const seriesName = resolveNameByUnityRule(toSafeString(seriesInfo?.name)) || t('UIClub_Text18') + " #" + (seriesId)
+    const moreName = resolveNameByUnityRule(toSafeString(seriesInfo?.more_name))
     const seriesItems = [...seriesBucketMap[seriesId]].sort(compareSeriesRoom)
     const seriesLayout = resolveSeriesLayoutByType(toSafeInt(seriesInfo?.type), seriesItems.length)
-    groups.push(buildGroup(`series-${seriesId}`, seriesName, seriesItems, seriesLayout))
+    groups.push(buildGroup(`series-${seriesId}`, seriesName, seriesItems, seriesLayout, moreName))
   })
 
   if (noSeriesItems.length) {
@@ -223,11 +228,13 @@ function buildGroup(
   title: string,
   items: MttViewItem[],
   layoutOverride?: MttLayout,
+  moreName = '',
 ): MttGroup {
   const layout = layoutOverride || (items.length <= 1 ? 'lg' : items.length <= 4 ? 'md' : 'sm')
   return {
     groupId,
     title,
+    moreName,
     layout,
     items,
     defaultVisibleCount: layout === 'lg' ? 1 : layout === 'md' ? 2 : 3,
@@ -478,9 +485,18 @@ function getDefaultGameIcon(category: MttCategory): string {
         <div v-if="group.title || group.showViewAll" class="mtt-group__header">
           <span v-if="group.title" class="mtt-group__title">{{ group.title }}</span>
           <span v-else class="mtt-group__title mtt-group__title--empty"></span>
-          <span v-if="group.showViewAll" class="mtt-group__toggle" @click="handleViewAll(group)">
-            {{ group.expanded ? t('UIMinePutAway') : t('UIHappyShop_ShowAll') }}
-          </span>
+          <button
+            v-if="group.showViewAll"
+            type="button"
+            class="mtt-group__toggle"
+            :aria-expanded="group.expanded"
+            @click="handleViewAll(group)"
+          >
+            <span class="mtt-group__toggle-text">
+              {{ group.expanded ? t('UIMinePutAway') : group.moreName || t('UIHappyShop_ShowAll') }}
+            </span>
+            <VanIcon :name="group.expanded ? 'arrow-up' : 'arrow-down'" />
+          </button>
         </div>
 
         <div v-if="group.layout === 'sm'" class="mtt-grid mtt-grid--sm">
@@ -533,6 +549,8 @@ function getDefaultGameIcon(category: MttCategory): string {
   z-index: 1;
   max-height: calc(100dvh - 2rem);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   padding: 0.1rem 0.38rem 0.5rem;
 }
 
@@ -553,6 +571,7 @@ function getDefaultGameIcon(category: MttCategory): string {
 }
 
 .mtt-group__title {
+  min-width: 0;
   font-size: 0.4893rem;
   font-weight: 700;
   color: #fff;
@@ -569,18 +588,46 @@ function getDefaultGameIcon(category: MttCategory): string {
 
 .mtt-group__toggle {
   display: inline-flex;
-  justify-content: flex-end;
-  width: 4em;
+  flex: 0 1 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0.08rem;
+  max-width: 50%;
+  min-height: 0.64rem;
+  padding: 0.08rem 0.24rem;
+  border: 0.0133rem solid rgba(255, 255, 255, 0.28);
+  border-radius: 0.32rem;
+  appearance: none;
   font-size: 0.32rem;
-  font-weight: 500;
-  color: #ececec;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
   cursor: pointer;
-  text-align: right;
-  line-height: 0.6rem;
+  line-height: 1.2;
+  transition:
+    background-color 0.15s ease,
+    transform 0.15s ease;
+
+  &:active {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(0.97);
+  }
 
   @include theme-light {
-    color: rgba(34, 34, 34, 0.72);
+    border-color: rgba(34, 34, 34, 0.14);
+    color: var(--c-brand);
+    background: rgba(34, 34, 34, 0.06);
+
+    &:active {
+      background: rgba(34, 34, 34, 0.11);
+    }
   }
+}
+
+.mtt-group__toggle-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mtt-grid {

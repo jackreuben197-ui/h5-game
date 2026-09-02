@@ -1,7 +1,10 @@
-import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
+import axios, {
+  type AxiosError,
+  type AxiosRequestConfig,
+  type InternalAxiosRequestConfig,
+} from 'axios'
 import { closeToast, showFailToast, showLoadingToast } from 'vant'
 import { useGameStore } from '@/stores/game'
-import { useLoginModalStore } from '@/stores/loginModal'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { pinia } from '@/stores/pinia'
 import router from '@/router'
@@ -18,16 +21,32 @@ const http = axios.create({
   timeout: 60000,
 })
 
+export interface HttpRequestOptionsExt extends AxiosRequestConfig {
+  suppressBusinessToast?: boolean
+  suppressBusinessCodes?: number[]
+  suppressAuthRedirect?: boolean
+  allowGuestAccount?: boolean
+  authToken?: string | false
+  xClub?: string | number | false
+}
+
 export interface HttpRequestConfigExt extends InternalAxiosRequestConfig {
   suppressBusinessToast?: boolean
   suppressBusinessCodes?: number[]
+  suppressAuthRedirect?: boolean
+  allowGuestAccount?: boolean
+  authToken?: string | false
   xClub?: string | number | false
+  sessionTokenSnapshot?: string
 }
+
+const REAL_USER_REQUIRED_ERROR = 'H5_REAL_USER_REQUIRED'
 
 let authRedirecting = false
 const PRE_LOGIN_PATHS = [
   '/user/login',
   '/user/login2',
+  '/user/experience/login',
   '/user/login_third_party',
   '/user/register',
   '/user/quick/register',
@@ -48,25 +67,37 @@ const PRE_LOGIN_PATHS = [
   '/roomcenter/guest/all/mtt/sng/ids',
   '/roomcenter/guest/mtt/sng/rooms/list',
   '/config/before/login/config',
+]
+
+const GUEST_PREVIEW_PATHS = [
+  // 娱乐场 / 小游戏目录游客可预览，进入具体游戏时才要求真实账号。
   '/extend/extend/game/record/list/popular/home',
   '/extend/extend/game/record/list/popular',
   '/extend/extend/game/record/list/popular/main/home',
   '/extend/extend/game/record/list/popular/main',
   '/extend/extend/game/record/list/home',
   '/extend/extend/game/record/list',
+  '/gc/cowboy/room/list',
+  '/roomcenter/mtt/list',
+  '/roomcenter/user/all/rooms',
+  '/roomcenter/user/all/room/ids',
+  '/roomcenter/user/contrast/rooms',
+  '/roomcenter/user/rooms/list',
+  '/roomcenter/user/all/mtt/sng/ids',
+  '/roomcenter/user/mtt/sng/rooms/list',
 ]
+
+function isGuestPreviewRequest(url: string): boolean {
+  if (GUEST_PREVIEW_PATHS.some((path) => url.includes(path))) {
+    return true
+  }
+  // 比赛详情、公开排名、牌桌和奖励信息允许预览；myrank/user_wallet/buyin 等不在此白名单。
+  return /^\/roomcenter\/mtt\/[^/]+\/(?:detail|ranks|hranks|rooms|real_prize)$/.test(url)
+}
 
 const TELEGRAM_LOGIN_LOADING_MESSAGE = '正在通过 Telegram 自动登录...'
 let telegramAutoLoginPromise: Promise<boolean> | null = null
 let telegramLoadingVisible = false
-
-const REAL_ROUTE_BY_GUEST_NAME: Record<string, string> = {
-  'guest-home': 'lobby',
-  'guest-club': 'club',
-  'guest-friendsTable': 'friendsTable',
-  'guest-message': 'message',
-  'guest-mine': 'mine',
-}
 
 function shouldAttachXClub(url: string): boolean {
   if (/^\/?(?:(?:org|cmsext)\/club|cmsext\/room|order\/club)\//.test(url)) {
@@ -120,39 +151,76 @@ function resolveXClub(config: HttpRequestConfigExt): string {
   return String(userInfoStore.currentClubId || '').trim()
 }
 
-// 统一处理登录失效：清理登录态并打开登录弹窗。
-async function forceToLogin(): Promise<void> {
+// 统一处理登录失效：清理旧会话并静默恢复游客态。
+async function forceToLogin(expectedToken = ''): Promise<void> {
+  const currentStore = useGameStore(pinia)
+  if (expectedToken && currentStore.sessionToken.trim() !== expectedToken) {
+    return
+  }
+  if (currentStore.isGuestAccount) {
+    currentStore.clearLogin()
+    LoginSession.ClearWS()
+    void import('@/session/experienceSession')
+      .then(({ ensureExperienceSessionReady }) => ensureExperienceSessionReady())
+      .catch((error) => console.warn('[http] restore experience session failed:', error))
+    return
+  }
+
+  const autoLoginSucceeded = await ensureTelegramAutoLogin()
+  if (autoLoginSucceeded) {
+    return
+  }
+
   if (authRedirecting) {
     return
   }
   authRedirecting = true
 
   const gameStore = useGameStore(pinia)
-  gameStore.clearLogin()
-  LoginSession.ClearWS()
-
-  // 先清空 token，再尝试 Telegram 自动重登（clearLogin 之后 token 为空，
-  // ensureTelegramAutoLogin 才会真正发起新的登录请求而不是复用过期 token）。
-  const autoLoginSucceeded = await ensureTelegramAutoLogin()
-  authRedirecting = false
-
-  if (autoLoginSucceeded) {
+  if (expectedToken && gameStore.sessionToken.trim() !== expectedToken) {
+    authRedirecting = false
     return
   }
-
-  // 登录态失效时原地弹出登录弹窗，不强制跳转页面。
-  useLoginModalStore(pinia).open()
+  gameStore.clearLogin()
+  LoginSession.ClearWS()
+  try {
+    const { ensureExperienceSessionReady } = await import('@/session/experienceSession')
+    await ensureExperienceSessionReady()
+  } catch (error) {
+    console.warn('[http] restore experience session failed:', error)
+  } finally {
+    authRedirecting = false
+  }
 }
 
 http.interceptors.request.use(async (config) => {
   const extConfig = config as HttpRequestConfigExt
   const gameStore = useGameStore(pinia)
-  let token = gameStore.sessionToken
+  const configuredToken = extConfig.authToken
+  let token =
+    configuredToken === false
+      ? ''
+      : typeof configuredToken === 'string'
+        ? configuredToken.trim()
+        : gameStore.sessionToken
   const requestUrl = config.url || ''
   const normalizedUrl = requestUrl.startsWith('/') ? requestUrl : `/${requestUrl}`
   // 登录前接口不要求 token。
   const isPreLoginRequest = PRE_LOGIN_PATHS.some((path) => normalizedUrl.includes(path))
   resolveContentType(config)
+
+  // 体验账号也持有有效 token。除公开接口和显式允许的身份接口外，所有真实账号
+  // 数据请求都在 H5 发出前拦截，避免依赖服务端业务错误来判断游客身份。
+  if (
+    gameStore.isGuestAccount &&
+    !isPreLoginRequest &&
+    !isGuestPreviewRequest(normalizedUrl) &&
+    !extConfig.allowGuestAccount
+  ) {
+    const error = new Error('该功能需要注册或登录') as Error & { code?: string }
+    error.code = REAL_USER_REQUIRED_ERROR
+    return Promise.reject(error)
+  }
 
   // Telegram Mini App 场景优先自动登录，登录期间串行等待并阻断后续业务请求。
   if (!token && !isPreLoginRequest && isTelegramMiniAppEnv()) {
@@ -169,7 +237,12 @@ http.interceptors.request.use(async (config) => {
     return Promise.reject(new Error('未登录或登录已过期'))
   }
 
-  if (token) {
+  // 响应拦截器用它判断返回值是否仍属于当前会话，避免旧 token 的 90010
+  // 或用户资料响应在换号后清掉/覆盖新登录态。
+  extConfig.sessionTokenSnapshot = token
+
+  // 登录前接口默认不携带当前会话 token；体验账号和真实账号共用 /user/logout。
+  if (token && (!isPreLoginRequest || typeof configuredToken === 'string')) {
     // 与服务端约定：使用 Md5at 请求头传 token。
     config.headers.Md5at = token
   }
@@ -197,12 +270,9 @@ http.interceptors.response.use(
       requestConfig.suppressBusinessToast === true ||
       (businessCode !== undefined && suppressCodes.includes(Number(businessCode)))
 
-    // 服务端返回 90010：token 失效，打开登录弹窗。
-    if (businessCode === 90010) {
-      if (!useGameStore(pinia).sessionToken.trim()) {
-        return Promise.reject(new Error('该接口需要登录'))
-      }
-      void forceToLogin()
+    // 服务端返回 90010：清理失效 token 并静默恢复游客态。
+    if (businessCode === 90010 && !requestConfig.suppressAuthRedirect) {
+      void forceToLogin(requestConfig.sessionTokenSnapshot)
       return Promise.reject(new Error('登录已失效，请重新登录'))
     }
     // 业务码非 0：弹出多语言错误提示。
@@ -212,12 +282,13 @@ http.interceptors.response.use(
     return response
   },
   (error: AxiosError<{ message?: string; code?: number }>) => {
+    if ((error as AxiosError & { code?: string }).code === REAL_USER_REQUIRED_ERROR) {
+      return Promise.reject(error)
+    }
     const businessCode = error.response?.data?.code
-    if (businessCode === 90010) {
-      if (!useGameStore(pinia).sessionToken.trim()) {
-        return Promise.reject(error)
-      }
-      void forceToLogin()
+    const requestConfig = error.config as HttpRequestConfigExt | undefined
+    if (businessCode === 90010 && !requestConfig?.suppressAuthRedirect) {
+      void forceToLogin(requestConfig?.sessionTokenSnapshot)
       return Promise.reject(error)
     }
 
@@ -336,6 +407,7 @@ async function doTelegramAutoLogin(): Promise<boolean> {
       localStore.setItem(StorageKey.TOKEN_EXPIREAT, expireAt)
     }
     const gameStore = useGameStore(pinia)
+    gameStore.setGuestAccount(false)
     gameStore.setSessionToken(token)
     gameStore.setLoginUser({
       account: 'telegram',
@@ -358,26 +430,19 @@ async function doTelegramAutoLogin(): Promise<boolean> {
         nickname,
         userId,
       })
-      gameStore.markProfileSynced(token)
+      gameStore.markIdentitySynced(token)
     } catch (error) {
       LoginSession.ClearWS()
       gameStore.clearLogin()
       throw error
     }
 
-    const { hasPendingTelegramDeepLink, runTelegramDeepLinkAfterLogin } =
-      await import('@/session/telegramDeepLink')
+    const { hasPendingTelegramDeepLink, runTelegramDeepLinkAfterLogin } = await import(
+      '@/session/telegramDeepLink'
+    )
 
-    if (!hasPendingTelegramDeepLink()) {
-      const currentRoute = router.currentRoute.value
-      if (currentRoute.name === 'login') {
-        await router.replace({ name: 'lobby' })
-      } else if (typeof currentRoute.name === 'string') {
-        const realRouteName = REAL_ROUTE_BY_GUEST_NAME[currentRoute.name]
-        if (realRouteName) {
-          await router.replace({ name: realRouteName })
-        }
-      }
+    if (!hasPendingTelegramDeepLink() && router.currentRoute.value.name === 'login') {
+      await router.replace({ name: 'lobby' })
     }
 
     // 登录成功后分发 Telegram 深链动作（进桌 / 战绩详情），无意图时为空操作。

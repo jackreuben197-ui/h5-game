@@ -37,6 +37,7 @@ export const BRIDGE_ACTION = {
   SYNC_LANGUAGE: 'syncLanguage',
   SYNC_GLOBAL_CONFIG: 'syncGlobalConfig',
   SYNC_DIAMOND_CONFIG: 'syncDiamondConfig',
+  TABLE_SITDOWN_AUTH: 'tableSitdownAuth',
   // H5 -> Cocos：token 变更（登录/续期/登出）同步给 Cocos，保证 LoginSession.Token 与 dzpk_cc_TOKEN 始终一致。
   SYNC_TOKEN: 'syncToken',
   ENTER_TABLE: 'enterTable',

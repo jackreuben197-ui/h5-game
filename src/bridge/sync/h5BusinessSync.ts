@@ -24,6 +24,7 @@ import type { UserInfoData } from '@/api/models/user'
 import type { DiamondConfigMap, GlobalConfigData } from '@/api/models/config'
 import type { ApiResponse } from '@/api/models/common'
 import type { RoomDetailData, RoomDetailRequest } from '@/api/models/roomcenter'
+import { isExperienceUserInfo } from '@/session/experienceIdentity'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { pinia } from '@/stores/pinia'
 
@@ -91,9 +92,12 @@ function resolveUserId(user: Record<string, unknown>): number {
 export function forwardUserInfoToCocos(data: UserInfoData): void {
   const user = (data.user || {}) as Record<string, unknown>
   const payload: SyncUserPayload = {
-    uid: resolveUserField(user, ['p_u_id', 'pUid', 'userid', 'id', 'wUid', 'unid']),
+    uid: resolveUserField(user, ['p_u_id', 'pUid', 'userid', 'id', 'wUid']),
+    randomId: resolveUserField(user, ['un_id', 'unid']),
     nickname: resolveUserField(user, ['nickname', 'name']),
     avatar: resolveUserField(user, ['avatar', 'headimg']) || undefined,
+    sex: Number(user.sex || 0),
+    isExperience: isExperienceUserInfo(data),
     raw: data,
   }
   queueSyncUntilHandshake(BRIDGE_ACTION.SYNC_USER, payload)

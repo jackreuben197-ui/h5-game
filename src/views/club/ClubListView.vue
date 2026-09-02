@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { showFailToast, showSuccessToast } from 'vant'
 import { useRouter } from 'vue-router'
 import { postOrgClubGetApi, postOrgClubJoinApi, postOrgClubSearchByIdApi } from '@/api/org'
@@ -38,6 +38,7 @@ import { checkIsShowForClubAndTribe, formatUC } from '@/utils/roomVisibility'
 import { isPrivateDomainMode } from '@/utils/channelPackage'
 import { readClubListCache, writeClubListCache } from '@/utils/userClubListCache'
 import { t, getLocale } from '@/i18n'
+import { requireRealUser } from '@/session/realUserGate'
 
 type QuickActionKind = 'create-club' | 'club-panel' | 'create-union' | 'club-career'
 
@@ -125,6 +126,11 @@ const clubList = computed<ClubCardItem[]>(() => {
 })
 
 const displayClubList = computed<ClubCardItem[]>(() => {
+  // 官网俱乐部首页允许游客预览，但不能展示或请求个人俱乐部数据。
+  if (!gameStore.isRealUser) {
+    return []
+  }
+
   if (!isChannelPackage) {
     return clubList.value
   }
@@ -222,6 +228,7 @@ function getMemberRoleText(value: unknown): string {
 }
 
 function goToClubDetail(club?: ClubInfo): void {
+  if (!requireRealUser(() => goToClubDetail(club))) return
   if (club) {
     userInfoStore.setCurrentClub(club)
   }
@@ -233,6 +240,8 @@ function onQuickAction(itemId: number): void {
     return
   }
 
+  if (!requireRealUser(() => onQuickAction(itemId))) return
+
   if (itemId === 2) {
     void router.push('/mine/career/club')
     return
@@ -241,6 +250,7 @@ function onQuickAction(itemId: number): void {
 }
 
 function openSearchKeypad(): void {
+  if (!requireRealUser(openSearchKeypad)) return
   searchKeypadOpen.value = true
 }
 
@@ -328,6 +338,7 @@ async function onSearchClub(): Promise<void> {
   if (isChannelPackage) {
     return
   }
+  if (!requireRealUser(onSearchClub)) return
 
   const keyword = searchKeyword.value.trim()
   if (!keyword) {
@@ -374,6 +385,8 @@ function closeJoinModal(): void {
 }
 
 async function onJoinClub(): Promise<void> {
+  if (!requireRealUser(onJoinClub)) return
+
   if (!searchedClub.value || joinLoading.value) {
     return
   }
@@ -412,9 +425,21 @@ async function onJoinClub(): Promise<void> {
 }
 
 onMounted(() => {
-  void loadMyClubList(true)
+  if (gameStore.isRealUser) {
+    void loadMyClubList(true)
+  }
+  // 与首页/俱乐部详情共用同一份牌桌列表，进入此页时启动共享数据流。
   roomListStore.bootstrapRoomList()
 })
+
+watch(
+  () => gameStore.isRealUser,
+  (isRealUser, wasRealUser) => {
+    if (isRealUser && !wasRealUser) {
+      void loadMyClubList(true)
+    }
+  },
+)
 </script>
 
 <template>

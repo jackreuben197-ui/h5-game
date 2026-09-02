@@ -29,10 +29,10 @@ import { enterTable } from '@/bridge/core'
 import type { EnterTablePayload } from '@bridge-protocol'
 import LoginSession from '@/session/loginSession'
 import { useGameStore } from '@/stores/game'
-import { useLoginModalStore } from '@/stores/loginModal'
 import { useRoomListStore } from '@/stores/roomList'
 import { ROOM_ORIGIN_TYPE } from '@/utils/roomVisibility'
 import { formatRoomLeftAndTotalByUnity } from '@/utils/time'
+import { requireRealUser } from '@/session/realUserGate'
 
 const isLightTheme = computed(() => theme.value === 'light')
 const iconAdd = computed(() => (isLightTheme.value ? iconAddLight : iconAddDark))
@@ -44,7 +44,6 @@ const iconTime = computed(() => (isLightTheme.value ? iconTimeLight : iconTimeDa
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
-const loginModalStore = useLoginModalStore()
 const roomListStore = useRoomListStore()
 
 const INVITE_CODE_LENGTH = 7
@@ -110,11 +109,12 @@ type RoomStatus = 0 | 1 | 2 | 3 | 4 | 5
 
 const displayUser = computed(() => {
   return {
-    diamond: userInfoStore.userInfo?.user.diamonds ?? 0,
+    diamond: gameStore.isRealUser ? (userInfoStore.userInfo?.user.diamonds ?? 0) : 0,
   }
 })
 
 function onInputCode(): void {
+  if (!requireRealUser(onInputCode)) return
   keypadOpen.value = true
 }
 
@@ -263,6 +263,7 @@ function mergeFriendRooms(
 }
 
 const friendRooms = computed<FriendRoomListItem[]>(() => {
+  if (!gameStore.isRealUser) return []
   return mergeFriendRooms(apiFriendRooms.value, getStoreFriendRooms(roomListStore.records))
 })
 
@@ -284,17 +285,13 @@ function syncInviteCode(raw: string): void {
 }
 
 async function joinByInvitationCode(code: string): Promise<void> {
+  if (!requireRealUser(() => joinByInvitationCode(code))) return
   if (joinLoading.value) {
     return
   }
 
   if (code.length !== INVITE_CODE_LENGTH) {
     showGameToast(t('UIFriendsTable_JoinRoomNumberWrong', code))
-    return
-  }
-
-  if (!gameStore.sessionToken) {
-    loginModalStore.open()
     return
   }
 
@@ -345,6 +342,7 @@ async function joinByInvitationCode(code: string): Promise<void> {
 }
 
 async function handleJoinTable(): Promise<void> {
+  if (!requireRealUser(handleJoinTable)) return
   keypadOpen.value = false
   const code = inviteCodeValue.value
   await joinByInvitationCode(code)
@@ -355,6 +353,7 @@ function onCreateRoom(): void {
 }
 
 async function onEnterRoom(room: FriendRoomListItem): Promise<void> {
+  if (!requireRealUser(() => onEnterRoom(room))) return
   if (joinLoading.value) {
     return
   }
@@ -394,15 +393,10 @@ async function onEnterRoom(room: FriendRoomListItem): Promise<void> {
 }
 
 async function enterFriendRoom(roomInfo: unknown, roomId: number): Promise<void> {
-  if (!gameStore.sessionToken) {
-    loginModalStore.open()
-    return
-  }
+  if (!requireRealUser(() => enterFriendRoom(roomInfo, roomId))) return
 
-  let wsPort = Number(gameStore.websocketPort) || 0
-  if (!wsPort) {
-    wsPort = await LoginSession.EnsureWS()
-  }
+  // 端口已缓存不等于连接已建立；等待 OPEN 后再向 Cocos 下发进桌消息。
+  const wsPort = await LoginSession.EnsureWS()
 
   const payload: EnterTablePayload = {
     userName: gameStore.loginNickname || gameStore.loginAccount || 'guest',
@@ -513,6 +507,10 @@ function getRoomSeatRatio(room: FriendRoomListItem): string {
 }
 
 async function fetchFriendRooms(): Promise<void> {
+  if (!gameStore.isRealUser) {
+    apiFriendRooms.value = []
+    return
+  }
   loading.value = true
   try {
     const res = await postRoomcenterFriendRoomsApi({
@@ -529,13 +527,28 @@ async function fetchFriendRooms(): Promise<void> {
   }
 }
 function goToMineShop(): void {
+  if (!requireRealUser(goToMineShop)) return
   void router.push('/mine/shop')
 }
 
 onMounted(() => {
-  roomListStore.bootstrapRoomList()
-  void fetchFriendRooms()
+  if (gameStore.isRealUser) {
+    roomListStore.bootstrapRoomList()
+    void fetchFriendRooms()
+  }
 })
+
+watch(
+  () => gameStore.isRealUser,
+  (isReal) => {
+    if (!isReal) {
+      apiFriendRooms.value = []
+      return
+    }
+    roomListStore.bootstrapRoomList()
+    void fetchFriendRooms()
+  },
+)
 
 watch(
   () => keypadOpen.value,
@@ -793,6 +806,8 @@ watch(
   width: 100%;
   min-height: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   padding: 0 0 1.5rem;
   scrollbar-width: none;
   -ms-overflow-style: none;

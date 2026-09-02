@@ -29,6 +29,7 @@ import {
   postOrgRoomConfigCreateApi,
 } from '@/api/cmsext'
 import { GameDialog } from '@/components/Dialog'
+import { requireRealUser } from '@/session/realUserGate'
 
 const formState = reactive<NlhFormState>({ ...defaultNlhFormState })
 const route = useRoute()
@@ -481,12 +482,14 @@ const templateDialog = reactive({
 })
 
 function onSaveTemplate() {
+  if (!requireRealUser(onSaveTemplate)) return
   if (isSubmitting.value) return
   templateDialog.name = ''
   templateDialog.show = true
 }
 
 async function onConfirmSaveTemplate() {
+  if (!requireRealUser(onConfirmSaveTemplate)) return
   if (isSubmitting.value) return
   isSubmitting.value = true
   templateDialog.show = false
@@ -513,6 +516,7 @@ function onCancelSaveTemplate() {
 }
 
 async function onCreateTable() {
+  if (!requireRealUser(onCreateTable)) return
   if (isSubmitting.value) return
   isSubmitting.value = true
   const isFriendsTable = currentOriginType.value === 4

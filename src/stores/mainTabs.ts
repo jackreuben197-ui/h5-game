@@ -1,6 +1,16 @@
 import { defineStore } from 'pinia'
 
-export type MainTabKey = 'home' | 'club' | 'friendsTable' | 'wallet' | 'message' | 'mine' | 'mtt' | 'casino'
+export type MainTabKey =
+  | 'home'
+  | 'poker'
+  | 'mtt'
+  | 'miniGame'
+  | 'casino'
+  | 'club'
+  | 'friendsTable'
+  | 'wallet'
+  | 'message'
+  | 'mine'
 
 // 底部 Tab 的共享状态仓库：用于跨页面保持当前激活模块。
 export const useMainTabsStore = defineStore('main-tabs-store', {

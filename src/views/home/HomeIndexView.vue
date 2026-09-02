@@ -41,9 +41,11 @@ import HomeBannerSwiper from '@/components/HomeBannerSwiper.vue'
 import { openBridgePanel } from '@/bridge/channels'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 import { useGameStore } from '@/stores/game'
-import { useChannelMenuVersion } from '@/composables/useChannelMenuVersion'
 import PokerGameList from '@/views/home/gameList.vue'
 import CasinoView from '@/views/home/CasinoView.vue'
+import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
+import { requireRealUser } from '@/session/realUserGate'
+import { ensureExperienceSession } from '@/session/experienceSession'
 
 import imgPa from '@/assets/images/minigame-newui/pa.svg'
 import imgMahjong from '@/assets/images/minigame-newui/ma.svg'
@@ -105,7 +107,7 @@ const casinoStore = useCasinoStore()
 const appConfigStore = useAppConfigStore()
 const gameStore = useGameStore()
 const gameLaunchStore = useGameLaunchStore()
-const { isChannelPackage, isVersionB } = useChannelMenuVersion()
+const { isChannelPackage, isVersionB } = useChannelBottomMenu()
 
 const loading = ref(false)
 const balanceVisible = ref(true)
@@ -359,17 +361,16 @@ function persistHomeRoomStatsCache(stats: HomeZoneStats): void {
 }
 
 const homeRoomStats = ref<HomeZoneStats>(restoreHomeRoomStatsCache() || createEmptyZoneStats())
-const selectedClubId = computed(() => toSafeInt(userInfoStore.currentClub?.club_id))
-const selectedTribeId = computed(() =>
-  toSafeInt((userInfoStore.currentClub as Record<string, unknown> | null)?.tribe_id),
-)
-
 const currentClub = computed<ClubInfo | null>(() => {
   if (userInfoStore.currentClub) {
     return userInfoStore.currentClub
   }
-  return userInfoStore.clubList[0] || null
+  return userInfoStore.clubList[0] || (isChannelPackage ? userInfoStore.channelDefaultClub : null)
 })
+const selectedClubId = computed(() => toSafeInt(currentClub.value?.club_id))
+const selectedTribeId = computed(() =>
+  toSafeInt((currentClub.value as Record<string, unknown> | null)?.tribe_id),
+)
 
 const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages()
 // 无后台配置时回落到内置单图，并叠加 hero 文案。
@@ -390,7 +391,9 @@ const clubNameText = computed(
       .trim() || t('UILobby_Menu_menu_btn_club'),
 )
 
-const clubGoldText = computed(() => toSafeNumber(currentClub.value?.user_gold) / 100)
+const clubGoldText = computed(() =>
+  gameStore.isRealUser ? toSafeNumber(currentClub.value?.user_gold) / 100 : 0,
+)
 const pokerTablesText = computed(() => `${homeRoomStats.value.poker.tables}`)
 const pokerPlayersText = computed(() => `${homeRoomStats.value.poker.players}`)
 // const mahjongPlayersText = computed(() => `${homeRoomStats.value.mahjong.players}`)
@@ -398,7 +401,7 @@ const mahjongPlayersText = 788
 const mttTablesText = computed(() => `${homeRoomStats.value.mtt.tables}`)
 const mttPlayersText = computed(() => `${homeRoomStats.value.mtt.players}`)
 const channelCasinoClubId = computed(() =>
-  isChannelPackage.value
+  isChannelPackage
     ? toSafeInt(currentClub.value?.club_id || userInfoStore.channelDefaultClub?.club_id)
     : 0,
 )
@@ -410,7 +413,7 @@ const hasChannelCasinoGames = computed(
 
 // 热门游戏三个入口都是娱乐场（第三方）游戏：俱乐部没开通时游戏列表为空。
 // popularBannerGames 带本地缓存，可能是上一次全局数据的残留，故只认实时拉取的 gameRecords。
-const hasCasinoAccess = computed(() => !initialized.value || casinoStore.gameRecords.length > 0)
+const hasCasinoAccess = computed(() => casinoStore.gameRecords.length > 0)
 
 // 私域版首页三块内容：赛事 / 扑克 / 娱乐场。赛事、扑克按「是否创建了内容」判断，
 // 娱乐场按俱乐部维度的游戏列表是否非空判断（没开权限时后台返回空）。
@@ -431,7 +434,7 @@ type HomeContentMode = 'zones' | 'mtt' | 'poker' | 'casino'
 const homeContentModeRaw = computed<HomeContentMode>(() => {
   const pokerTables = homeRoomStats.value.poker.tables
   const mttTables = homeRoomStats.value.mtt.tables
-  if (isChannelPackage.value) {
+  if (isChannelPackage) {
     if (isVersionB.value) {
       // In Version B, /home always directly displays poker.
       return 'poker'
@@ -452,28 +455,28 @@ const homeContentModeRaw = computed<HomeContentMode>(() => {
   }
   return 'zones'
 })
-// 首次进入时先按缓存渲染，等 room/mtt 两个 bootstrap 都完成再确定最终模式，
-// 避免列表与专区入口 in 初始化中来回切换；初始化完成后跟随实时数据变化。
-const initialized = ref(false)
+// 首次进入时先按缓存渲染，等 room/mtt 两个 bootstrap 都完成后最多校正一次。
+// 当前页面生命周期内只更新列表与数量，不再因 WS 增量反复重挂载首页结构；
+// 下次重新进入首页时会按最新缓存重新选择模式。
 const homeContentMode = ref<HomeContentMode>(homeContentModeRaw.value)
 
 // 专区入口只在 zones 模式渲染：赛事 / 扑克常驻（没内容也保留入口，点进去是空态），
 // 娱乐场没给俱乐部开通时隐藏——那里点进去只会报错。
-const showCasinoZoneCard = computed(() => !isChannelPackage.value || channelSections.value.casino)
+const showCasinoZoneCard = computed(() => !isChannelPackage || channelSections.value.casino)
 // 热门游戏整条都是娱乐场的游戏，没开娱乐场的俱乐部不该看到。
-const showHotGamesSection = computed(() => !isChannelPackage.value || channelSections.value.casino)
+const showHotGamesSection = computed(() => !isChannelPackage || channelSections.value.casino)
 
 const currentJoinedClub = computed(() => userInfoStore.currentJoinedClub)
 const channelUserLevel = computed(() => toSafeInt(currentJoinedClub.value?.user_level))
 const canCreateChannelTable = computed(
   () =>
-    isChannelPackage.value &&
-    Boolean(gameStore.sessionToken && currentJoinedClub.value) &&
+    isChannelPackage &&
+    Boolean(gameStore.isRealUser && currentJoinedClub.value) &&
     channelUserLevel.value >= 1 &&
     channelUserLevel.value <= 3,
 )
 const canManageChannelClub = computed(
-  () => isChannelPackage.value && Boolean(gameStore.sessionToken && currentJoinedClub.value),
+  () => isChannelPackage && Boolean(gameStore.isRealUser && currentJoinedClub.value),
 )
 const showChannelFloatingActions = computed(
   () => canCreateChannelTable.value || canManageChannelClub.value,
@@ -511,18 +514,24 @@ function goToMttList(): void {
 }
 function goToCasino(): void {
   // 渠道包只有一个俱乐部：娱乐场（含小游戏）按俱乐部维度取数，跟随后台的俱乐部开关。
-  if (isChannelPackage.value && channelCasinoClubId.value > 0) {
+  if (isChannelPackage && channelCasinoClubId.value > 0) {
     void router.push({ path: '/casino', query: { clubId: String(channelCasinoClubId.value) } })
     return
   }
   void router.push('/casino')
 }
 
+function openGuestAuth(mode: 'login' | 'register'): void {
+  requireRealUser(undefined, { mode })
+}
+
 function goToClubDetail(): void {
+  if (!requireRealUser(goToClubDetail)) return
   void router.push('/club/detail')
 }
 
 function goToCreateTable(): void {
+  if (!requireRealUser(goToCreateTable)) return
   void router.push({
     path: '/club/table/create',
     query: { origin_type: 5, return_to: 'home' },
@@ -530,10 +539,12 @@ function goToCreateTable(): void {
 }
 
 function toggleBalance(): void {
+  if (!requireRealUser(toggleBalance)) return
   balanceVisible.value = !balanceVisible.value
 }
 
 async function refreshBalance(): Promise<void> {
+  if (!requireRealUser(refreshBalance)) return
   try {
     loading.value = true
     await getUserClubApi()
@@ -546,6 +557,7 @@ async function refreshBalance(): Promise<void> {
 }
 
 function goToRecharge(): void {
+  if (!requireRealUser(goToRecharge)) return
   void router.push('/wallet')
 }
 function handleOpenEmail(): void {
@@ -566,6 +578,7 @@ function handleOpenTelegram(): void {
 }
 
 function handleOpenCustomerService(): void {
+  if (!requireRealUser(handleOpenCustomerService)) return
   const clubId = selectedClubId.value
   if (clubId <= 0) {
     showGameToast(t('UIClub_CurrentClubNo'))
@@ -580,6 +593,7 @@ function handleOpenCustomerService(): void {
 }
 
 function openMiniGamePanel(): void {
+  if (!requireRealUser(openMiniGamePanel)) return
   showGameToast(t('UIClub_InDeve'))
 }
 
@@ -674,13 +688,6 @@ async function updateNoticeMarquee(): Promise<void> {
   shouldScrollNotice.value = true
 }
 
-watch(homeContentModeRaw, (val) => {
-  // 初始化阶段忽略中间态；两个 bootstrap 完成后再让实时数据自由驱动展示。
-  if (initialized.value) {
-    homeContentMode.value = val
-  }
-})
-
 watch(noticeText, () => {
   void updateNoticeMarquee()
 })
@@ -712,34 +719,47 @@ watch(
   },
 )
 
-onMounted(() => {
-  void ensureClubDataReady()
-  void ensureHomeAnnouncementConfig().catch((error) => {
+async function bootstrapHomeContent(): Promise<void> {
+  // 全局配置可以并行加载；渠道俱乐部必须先于身份识别完成，因为它同时决定
+  // 游客列表 scope、俱乐部标题/公告和 h5_menu 展示版本。
+  const configReady = ensureHomeAnnouncementConfig().catch((error) => {
     console.warn('[home] fetch announcement config failed:', error)
   })
-  // 首页和列表页共用同一个 room store，进入首页时启动共享数据流。
+  if (isChannelPackage) {
+    await userInfoStore.ensureChannelDefaultClub()
+  }
+
+  await ensureExperienceSession().catch((error) => {
+    console.warn('[home] resolve session identity failed:', error)
+  })
+  await configReady
+  ensureClubDataReady()
+
   const roomListReady = roomListStore.bootstrapRoomList()
-  // 首页和 MTT 列表页共用同一个 mtt store，避免重复请求。
   const mttListReady = mttListStore.bootstrapMttList()
+  await Promise.allSettled([roomListReady, mttListReady])
+
+  // 两份列表及其共同过滤上下文全部稳定后，一次提交统计和页面模式。
   refreshHomePokerMahjongStatsFromStore()
   refreshHomeMttStatsFromStore()
-  void fetchLobbyBannerImages().catch((error) => {
-    console.warn('[home] fetch lobby banner failed:', error)
-  })
-  void updateNoticeMarquee()
 
   const casinoClubId = channelCasinoClubId.value
-  const casinoReady = casinoStore
+  await casinoStore
     .preloadCasinoData(casinoClubId || undefined, casinoClubId <= 0)
     .catch((e) => {
       console.warn('[home] preload casino data failed:', e)
     })
 
-  // 等 room + mtt + 娱乐场 都返回后再敲定最终布局，避免初始化阶段来回闪。
-  void Promise.allSettled([roomListReady, mttListReady, casinoReady]).then(() => {
-    homeContentMode.value = homeContentModeRaw.value
-    initialized.value = true
+  homeContentMode.value = homeContentModeRaw.value
+}
+
+onMounted(() => {
+  // 首页和两个列表页共用 store；俱乐部、身份和配置就绪后一次性提交首屏。
+  void bootstrapHomeContent()
+  void fetchLobbyBannerImages().catch((error) => {
+    console.warn('[home] fetch lobby banner failed:', error)
   })
+  void updateNoticeMarquee()
 
   if (typeof ResizeObserver !== 'undefined') {
     noticeResizeObserver = new ResizeObserver(() => {
@@ -767,9 +787,25 @@ onBeforeUnmount(() => {
       'is-version-b': isVersionB
     }"
   >
-    <!-- 0. 顶部栏：登录态仅保留 POKER 品牌 -->
+    <!-- 0. 正式首页统一承载游客/真实账号；游客仅额外显示注册、登录入口。 -->
     <div class="top-bar">
       <div></div>
+      <div v-if="!gameStore.isRealUser" class="top-bar__actions">
+        <button
+          class="top-bar__btn top-bar__btn--register"
+          type="button"
+          @click="openGuestAuth('register')"
+        >
+          {{ t('UILogin_TitleRegister') }}
+        </button>
+        <button
+          class="top-bar__btn top-bar__btn--login"
+          type="button"
+          @click="openGuestAuth('login')"
+        >
+          {{ t('UIGuild_MemberManagerSortByLastLoginTime') }}
+        </button>
+      </div>
     </div>
 
     <!-- 1. 顶部俱乐部介绍轮播图 -->
@@ -1071,6 +1107,10 @@ onBeforeUnmount(() => {
   &.is-version-b {
     padding-bottom: calc(3.0rem + env(safe-area-inset-bottom));
   }
+
+  :deep(.group-item) {
+    padding: 0.2667rem 0.2rem 0.45rem;
+  }
 }
 
 .home-page--fit {
@@ -1112,6 +1152,50 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   padding: 0.2rem 0 0;
   flex-shrink: 0;
+}
+
+.top-bar__actions {
+  display: flex;
+  gap: 0.1rem;
+}
+
+.top-bar__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.18rem 0.75rem;
+  border: 0;
+  border-radius: 0.56rem;
+  font-family: 'PingFang SC', sans-serif;
+  font-size: 0.34rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:active {
+    opacity: 0.85;
+  }
+}
+
+.top-bar__btn--register {
+  color: rgba(0, 0, 0, 0.82);
+  background: rgba(174, 174, 174, 0.52);
+  box-shadow: 0.01rem 0.01rem 0.03rem rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(0.14rem);
+
+  @include theme-light {
+    color: #fff;
+  }
+}
+
+.top-bar__btn--login {
+  color: #fff;
+  background: linear-gradient(157deg, #05c297 0%, #027a5c 100%);
+  backdrop-filter: blur(0.55rem);
+
+  @include theme-light {
+    background: var(--c-brand);
+  }
 }
 
 .home-header {

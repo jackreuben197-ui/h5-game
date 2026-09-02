@@ -19,10 +19,9 @@ import { useAppConfigStore } from '@/stores/appConfig'
 import { useTextI18n } from '@/i18n/useTextI18n'
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
-import LoginModal from '@/views/login/LoginModal.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { isPrivateDomainMode } from '@/utils/channelPackage'
-import { useChannelMenuVersion } from '@/composables/useChannelMenuVersion'
+import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 
 const route = useRoute()
 const gameStore = useGameStore()
@@ -30,7 +29,7 @@ const tabsStore = useMainTabsStore()
 const appConfigStore = useAppConfigStore()
 const userInfoStore = useUserInfoStore()
 const { setLocale } = useTextI18n()
-const { isVersionB } = useChannelMenuVersion()
+const { isVersionB } = useChannelBottomMenu()
 
 // 主容器背景图：全页面共用一张底图，首页使用 main_bg2.png。
 const LIGHT_THEME_TABS: ReadonlyArray<MainTabKey> = [
@@ -47,48 +46,30 @@ const backgroundStyle = computed(() => {
     return { backgroundImage: `url(${mainBgLightUrl})` }
   }
 
-  if (route.name === 'guest-home' && isVersionB.value) {
-    const queryTab = route.query.tab
-    if (queryTab === 'mtt' || queryTab === 'casino') {
-      return { backgroundImage: `url(${mainBgUrl})` }
-    }
-  }
-
   return {
     backgroundImage: route.meta.tabKey === 'home' ? `url(${mainBg2Url})` : `url(${mainBgUrl})`,
   }
 })
 
 const isHome = computed(() => route.meta.tabKey === 'home')
-const isGuestHome = computed(() => route.name === 'guest-home')
 const isClub = computed(() => route.meta.tabKey === 'club')
 const isMessage = computed(() => route.meta.tabKey === 'message')
 const isMine = computed(() => route.meta.tabKey === 'mine')
 const isFriendsTable = computed(() => route.meta.tabKey === 'friendsTable')
-const isHomeRoute = computed(() => route.name === 'lobby' || route.name === 'guest-home')
-const isHomeMenu = computed(() => {
-  if (route.name !== 'lobby' && route.name !== 'guest-home') {
-    return false
-  }
-  if (route.name === 'guest-home' && isVersionB.value) {
-    const queryTab = route.query.tab
-    if (queryTab === 'mtt' || queryTab === 'casino') {
-      return false
-    }
-  }
-  return true
-})
+const isHomeRoute = computed(() => route.name === 'lobby')
+const isHomeMenu = computed(() => route.name === 'lobby')
 const isPrimaryLayout = computed(() => route.meta.desktopLayout === 'primary')
-const isGuestRoute = computed(() => String(route.name ?? '').startsWith('guest-'))
+const isGuestPreview = computed(() => !gameStore.isRealUser)
 
 async function fetchUserInfoOnEnter(): Promise<void> {
   const token = gameStore.sessionToken.trim()
-  if (!token) {
+  // 体验账号只做预览，真实账号资料由会话层统一同步。
+  if (!token || !gameStore.isRealUser) {
     return
   }
 
   // 同一 token 在当前应用会话内只同步一次 userinfo / club。
-  if (gameStore.shouldSyncProfile(token)) {
+  if (gameStore.shouldSyncIdentity(token)) {
     // 后台静默同步：不阻塞首页渲染，不打断用户操作。
     void getUserInfoApi()
       .then((userInfo) => {
@@ -166,18 +147,16 @@ function resolveLanguageCode(user: Record<string, unknown>): string {
 
 onMounted(() => {
   void fetchUserInfoOnEnter()
-  if (isPrivateDomainMode() && !gameStore.sessionToken) {
+  if (isPrivateDomainMode() && !gameStore.isRealUser) {
     void userInfoStore.ensureChannelDefaultClub()
   }
 })
 
 // 路由变化时同步底部 Tab 共享状态，确保子页面也能维持正确高亮。
 watch(
-  () => [route.meta.tabKey, route.query.tab],
-  ([tabKey, queryTab]) => {
-    if (route.name === 'guest-home' && isVersionB.value && queryTab) {
-      tabsStore.setActiveTab(queryTab as MainTabKey)
-    } else if (typeof tabKey === 'string') {
+  () => route.meta.tabKey,
+  (tabKey) => {
+    if (typeof tabKey === 'string') {
       tabsStore.setActiveTab(tabKey as MainTabKey)
     }
   },
@@ -190,7 +169,6 @@ watch(
     class="main-layout"
     :class="{
       'is-home': isHome,
-      'is-guest-home': isGuestHome,
       'is-club': isClub,
       'is-message': isMessage,
       'is-mine': isMine,
@@ -198,8 +176,8 @@ watch(
       'main-layout--home': isHomeRoute,
       'main-layout--pure-black': isHomeMenu,
       'main-layout--primary': isPrimaryLayout,
-      'main-layout--guest': isGuestRoute,
-      'main-layout--authenticated': isPrimaryLayout && !isGuestRoute,
+      'main-layout--guest': isGuestPreview,
+      'main-layout--authenticated': isPrimaryLayout && !isGuestPreview,
       'is-version-b': isVersionB,
     }"
     :style="backgroundStyle"
@@ -212,7 +190,6 @@ watch(
     </div>
     <!-- 公共底部导航：跨模块复用。 -->
     <MainBottomTab />
-    <LoginModal />
   </div>
 </template>
 

@@ -8,7 +8,6 @@ import StorageKey from '@/constants/storageKey'
 import LoginSession from '@/session/loginSession'
 import type { RoomRecord } from '@/api/models/roomcenter'
 import { useGameStore } from '@/stores/game'
-import { useLoginModalStore } from '@/stores/loginModal'
 import { useRoomListStore } from '@/stores/roomList'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { localStore } from '@/utils/localStore'
@@ -23,6 +22,13 @@ import { t } from '@/i18n'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 import { isPrivateDomainMode } from '@/utils/channelPackage'
 import ClubZoneQuickActions from '@/components/Club/ClubZoneQuickActions.vue'
+import MainBottomTab from '@/components/Tabbar/MainBottomTab.vue'
+import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
+import { requireRealUser } from '@/session/realUserGate'
+import {
+  ensureExperienceSession,
+  ensureExperienceSessionReady,
+} from '@/session/experienceSession'
 
 interface Props {
   embedded?: boolean
@@ -59,10 +65,10 @@ const ROOM_GROUP_EXPANDED_CACHE_VERSION = 1
 
 const router = useRouter()
 const gameStore = useGameStore()
-const loginModalStore = useLoginModalStore()
 const roomListStore = useRoomListStore()
 const userInfoStore = useUserInfoStore()
 const isChannelPackage = computed(() => isPrivateDomainMode())
+const { isVersionB: isChannelMenuVersionB } = useChannelBottomMenu()
 
 // 顶部右侧切换风格开关：和旧版保持一致。
 const activeTab = ref<GameTypeTabName>('all')
@@ -70,10 +76,13 @@ const expandedMap = reactive<Record<string, boolean>>({})
 const pageStyle = computed<CSSProperties>(() => ({
   '--tab-bg': `url(${tabBg})`,
 }))
-const selectedClubId = computed(() => toSafeInt(userInfoStore.currentClub?.club_id))
-const selectedClubRandomId = computed(() => toSafeInt(userInfoStore.currentClub?.random_id))
+const selectedClub = computed(
+  () => userInfoStore.currentClub ?? userInfoStore.channelDefaultClub,
+)
+const selectedClubId = computed(() => toSafeInt(selectedClub.value?.club_id))
+const selectedClubRandomId = computed(() => toSafeInt(selectedClub.value?.random_id))
 const selectedTribeId = computed(() =>
-  toSafeInt((userInfoStore.currentClub as Record<string, unknown> | null)?.tribe_id),
+  toSafeInt((selectedClub.value as Record<string, unknown> | null)?.tribe_id),
 )
 
 const filteredRecords = computed(() => {
@@ -137,7 +146,11 @@ const groupedRecords = computed<RoomGroupViewModel[]>(() => {
 })
 
 onMounted(() => {
-  bootstrapRoomList()
+  void ensureExperienceSession()
+    .catch((error) => {
+      console.warn('[poker-list] resolve session identity failed:', error)
+    })
+    .finally(() => bootstrapRoomList())
 })
 
 // 进入页面先用缓存秒开，再静默刷新最新数据。
@@ -218,21 +231,26 @@ function buildGroupKey(room: RoomRecord): string {
 }
 
 async function handleTableClick(room: RoomRecord): Promise<void> {
-  if (!gameStore.sessionToken) {
-    loginModalStore.open()
+  try {
+    if (!(await ensureExperienceSessionReady())) {
+      throw new Error(t('UIClub_Fetch') + ' token ' + t('UIClub_Fail3'))
+    }
+  } catch (error) {
+    showFailToast(error instanceof Error ? error.message : t('UIClub_Fail3'))
     return
   }
 
-  let wsPort = Number(gameStore.websocketPort) || 0
-  if (!wsPort) {
-    try {
-      // 对齐 Cocos ProcedureEnterLobby：进入大厅阶段同步 websocket 端口。
-      wsPort = await LoginSession.EnsureWS()
-    } catch (error) {
-      const message = error instanceof Error ? error.message : t('UIClub_Fetch') + " websocket " + t('UIClub_Fail3')
-      showFailToast(message)
-      return
-    }
+  let wsPort = 0
+  try {
+    // 即使已有端口缓存也必须等待连接真正 OPEN，不能在 CONNECTING 阶段通知 Cocos 进桌。
+    wsPort = await LoginSession.EnsureWS()
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : t('UIClub_Fetch') + ' websocket ' + t('UIClub_Fail3')
+    showFailToast(message)
+    return
   }
 
   // 进入牌桌参数固定：名称 + 用户ID + token；附带房间信息用于切桌定位。
@@ -321,7 +339,12 @@ function toSafeInt(value: unknown): number {
 function handleBack() {
   router.push('/home')
 }
+function handleRecharge(): void {
+  if (!requireRealUser(handleRecharge)) return
+  void router.push('/wallet')
+}
 function handleOpenCustomerService(): void {
+  if (!requireRealUser(handleOpenCustomerService)) return
   const clubId = selectedClubId.value
   if (clubId <= 0) {
     showFailToast(t('UIClub_CurrentClubNo'))
@@ -339,7 +362,10 @@ function handleOpenCustomerService(): void {
 <template>
   <div
     class="room-list-page poker-zone-page themeType2"
-    :class="{ 'room-list-page--embedded': props.embedded }"
+    :class="{
+      'room-list-page--embedded': props.embedded,
+      'room-list-page--channel-menu-b': isChannelMenuVersionB && !props.embedded,
+    }"
     :style="pageStyle"
   >
     <div v-if="!props.embedded" class="bg-overlay"></div>
@@ -347,7 +373,8 @@ function handleOpenCustomerService(): void {
     <div class="room-list-stage">
       <HeaderBack
         v-if="!props.embedded"
-        :title="t('UIHomePokerArea')"
+        :title="isChannelMenuVersionB ? 'POKER' : t('UIHomePokerArea')"
+        :show-back="!isChannelMenuVersionB"
         extra-padding
         @back="handleBack"
       >
@@ -357,10 +384,10 @@ function handleOpenCustomerService(): void {
               :name="t('UIGuildFund_RechargeText')"
               :icon="walletIcon"
               icon-alt="wallet"
-              @click="router.push('/wallet')"
+              @click="handleRecharge"
             />
             <TopActionButton
-              v-if="userInfoStore.currentClub?.support_im_rid"
+              v-if="selectedClub?.support_im_rid"
               :name="t('UIMineMain01')"
               :icon="serviceIcon"
               icon-alt="service"
@@ -401,6 +428,7 @@ function handleOpenCustomerService(): void {
       </section>
     </div>
   </div>
+  <MainBottomTab v-if="isChannelMenuVersionB && !props.embedded" />
 </template>
 
 <style scoped lang="scss">
@@ -444,6 +472,8 @@ function handleOpenCustomerService(): void {
   margin-top: -0.03rem;
   max-height: calc(100dvh - 2rem);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -461,6 +491,10 @@ function handleOpenCustomerService(): void {
   padding-right: 0;
   padding-bottom: 0.2rem;
   padding-left: 0;
+}
+
+.room-list-page--channel-menu-b .group-list {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 2.8rem);
 }
 
 .room-list-page--embedded :deep(.home-embedded-tabs),

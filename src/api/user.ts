@@ -1,10 +1,11 @@
-import http, { type HttpRequestConfigExt } from '@/api/http'
-import type { AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios'
+import http, { type HttpRequestConfigExt, type HttpRequestOptionsExt } from '@/api/http'
+import type { InternalAxiosRequestConfig } from 'axios'
 import type { ApiResponse } from '@/api/models/common'
 import type {
   LoginRequest,
   LoginResponse,
   LoginV2Request,
+  ExperienceLoginRequest,
   OtherUserInfoData,
   OtherUserInfoRequest,
   UserCheckEmailData,
@@ -81,13 +82,11 @@ import { pinia } from '@/stores/pinia'
 import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
 import { writeClubListCache } from '@/utils/userClubListCache'
 import { ApiBusinessError } from '@/utils/apiError'
+import { isExperienceUserInfo } from '@/session/experienceIdentity'
 
 const LOGIN_FAILED_CODE = 20020
 
-interface ApiRequestExtOptions extends AxiosRequestConfig {
-  suppressBusinessToast?: boolean
-  suppressBusinessCodes?: number[]
-}
+type ApiRequestExtOptions = HttpRequestOptionsExt
 
 function isClubInfo(raw: unknown): raw is ClubInfo {
   if (!raw || typeof raw !== 'object') {
@@ -147,6 +146,62 @@ function extractClubList(raw: unknown, depth = 0): ClubInfo[] {
   return []
 }
 
+function extractH5Menu(raw: unknown, depth = 0): number | undefined {
+  if (depth > 4 || !raw || typeof raw !== 'object') {
+    return undefined
+  }
+
+  const obj = raw as Record<string, unknown>
+  const menu = Number(obj.h5_menu)
+  if (Number.isFinite(menu)) {
+    return menu
+  }
+
+  const nestedValues = Array.isArray(raw) ? raw : Object.values(obj)
+  for (const value of nestedValues) {
+    const nested = extractH5Menu(value, depth + 1)
+    if (nested !== undefined) {
+      return nested
+    }
+  }
+  return undefined
+}
+
+// 体验账号登录：服务端按设备分配独立体验账号，H5 不传经纬度。
+export async function postUserExperienceLoginApi(
+  payload: ExperienceLoginRequest,
+): Promise<LoginResponse> {
+  const response = await http.post<ApiResponse<LoginResponse>>('/user/experience/login', payload, {
+    authToken: false,
+    suppressBusinessToast: true,
+  } satisfies HttpRequestOptionsExt)
+  const body = response.data
+  const token = String(body.data?.token || '').trim()
+  if (body.code !== 0) {
+    throw new Error(body.message || `体验账号登录失败: ${body.code}`)
+  }
+  if (!token) {
+    throw new Error('体验账号登录接口返回缺少 token')
+  }
+  return { ...body.data, token }
+}
+
+// 真实账号与体验账号共用同一登出接口。必须先确认服务端登出，再清本地 token。
+export async function postUserLogoutApi(token: string): Promise<ApiResponse<unknown>> {
+  const response = await http.post<ApiResponse<unknown>>(
+    '/user/logout',
+    {},
+    {
+      authToken: token,
+      allowGuestAccount: true,
+      suppressAuthRedirect: true,
+      suppressBusinessToast: true,
+      suppressBusinessCodes: [90010],
+    } satisfies HttpRequestOptionsExt,
+  )
+  return response.data
+}
+
 // 登录：返回 token 等登录态信息。
 export async function loginApi(payload: LoginRequest): Promise<LoginResponse> {
   const res = await http.post<{ code?: number; message?: string; data?: LoginResponse; token?: string }>(
@@ -189,7 +244,15 @@ export async function loginV2Api(
 
 // 用户信息：用于大厅初始化与用户态同步。
 export async function getUserInfoApi(): Promise<UserInfoData> {
-  const res = await http.post<UserInfoResponse>('/user/info')
+  const requestToken = useGameStore(pinia).sessionToken.trim()
+  const res = await http.post<UserInfoResponse>(
+    '/user/info',
+    {},
+    {
+      allowGuestAccount: true,
+      ...(requestToken ? { authToken: requestToken } : {}),
+    } satisfies HttpRequestOptionsExt,
+  )
 
   const body = res.data
   if (body.code !== 0) {
@@ -200,25 +263,54 @@ export async function getUserInfoApi(): Promise<UserInfoData> {
     throw new Error('用户信息为空')
   }
 
-  // 与 Cocos 同步登录用户信息（msgtype=1）。
+  const gameStore = useGameStore(pinia)
+  // 请求期间发生游客 → 真实用户或真实用户换号时，旧响应只能返回给调用方，
+  // 不得再修改全局身份、用户资料或同步给 Cocos。
+  if (requestToken && gameStore.sessionToken.trim() !== requestToken) {
+    return body.data
+  }
+  const experienceAccount = isExperienceUserInfo(body.data)
+  gameStore.setGuestAccount(experienceAccount)
+
+  // 与 Cocos 同步登录用户信息（msgtype=1），体验账号观战也需要这份身份数据。
   forwardUserInfoToCocos(body.data)
-  // 每次请求都更新 userInfo 全局缓存。
+  // 体验账号不写入真实用户资料缓存，防止“我的/消息”误展示体验账号数据。
   const userInfoStore = useUserInfoStore(pinia)
-  userInfoStore.setUserInfo(body.data)
+  // setGuestAccount(true) 已统一清理游客不应保留的私有资料，这里不重复执行。
+  if (!experienceAccount) {
+    userInfoStore.setUserInfo(body.data)
+  }
   return body.data
 }
 
 // 俱乐部信息：供 H5/CC 对齐用户俱乐部状态。
 export async function getUserClubApi(): Promise<ApiResponse<unknown>> {
-  const res = await http.post<ApiResponse<unknown>>('/org/club/user_club')
+  const requestToken = useGameStore(pinia).sessionToken.trim()
+  const res = await http.post<ApiResponse<unknown>>(
+    '/org/club/user_club',
+    {},
+    requestToken
+      ? ({ authToken: requestToken } satisfies HttpRequestOptionsExt)
+      : undefined,
+  )
   const body = res.data
   if (body.code !== 0) {
     throw new Error(body.message || '获取俱乐部信息失败')
   }
 
+  // 换号期间旧账号的俱乐部响应不得覆盖新账号数据。
+  if (requestToken && useGameStore(pinia).sessionToken.trim() !== requestToken) {
+    return body
+  }
+
   // 每次请求都更新 clubList 全局缓存；currentClub 默认取第一条，可手动切换。
   const userInfoStore = useUserInfoStore(pinia)
-  const clubList = extractClubList(body.data)
+  const responseH5Menu = extractH5Menu(body.data)
+  const clubList = extractClubList(body.data).map((club) =>
+    club.h5_menu === undefined && responseH5Menu !== undefined
+      ? { ...club, h5_menu: responseH5Menu }
+      : club,
+  )
   userInfoStore.setClubList(clubList)
   // 落地到当前用户级 IndexedDB（user_cache_${userId}，H5/Cocos 共用），供下次启动秒开。
   const gameStore = useGameStore(pinia)
@@ -232,7 +324,12 @@ export async function getUserClubApi(): Promise<ApiResponse<unknown>> {
 
 // 同步 websocket 端口：对应 Cocos LoginSession.SyncWS。
 export async function getUserWsApi(): Promise<UserWsData> {
-  const res = await http.post<UserWsResponse>('/user/ws')
+  // 体验账号进入牌桌观战同样需要 WS 端口；坐下/买入仍由真实身份入口单独拦截。
+  const res = await http.post<UserWsResponse>(
+    '/user/ws',
+    {},
+    { allowGuestAccount: true } satisfies HttpRequestOptionsExt,
+  )
   const body = res.data
   if (body.code !== 0) {
     throw new Error(body.message || '获取 websocket 端口失败')

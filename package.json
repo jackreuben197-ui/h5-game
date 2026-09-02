@@ -24,8 +24,8 @@
   "dependencies": {
     "@iconify/vue": "^5.0.0",
     "@silenthill/agreement-web": "git+ssh://git@github.com/jackreuben197-ui/agreement-web.git#dev_refactor_0827",
-    "@silenthill/h5-cc-bridge": "git+ssh://git@github.com/jackreuben197-ui/h5-cc-bridge.git#dev_merge_0827",
-    "@silenthill/h5-cc-i18n": "github:jackreuben197-ui/h5-cc-i18n#dev_merge_0827",
+    "@silenthill/h5-cc-bridge": "git+ssh://git@github.com/jackreuben197-ui/h5-cc-bridge.git#dev_merge_0901",
+    "@silenthill/h5-cc-i18n": "github:jackreuben197-ui/h5-cc-i18n#dev_merge_0901",
     "@vueuse/core": "^14.2.1",
     "axios": "^1.15.0",
     "dayjs": "^1.11.20",

@@ -22,6 +22,8 @@ export default class StorageKey {
   static MTT_LIST_CACHE = 'MTT_LIST_CACHE'
   // 全局配置缓存（global/config，登录后静默拉取）。
   static APP_CONFIG_CACHE = 'APP_CONFIG_CACHE'
+  // 俱乐部牌局记录币种筛选，对齐 Cocos PlayerPrefsKeys.GUILD_RECORD_FILTER。
+  static GUILD_RECORD_FILTER = 'GUILDRECORD_FILTER'
   // 收费配置缓存（diamond/config，独立 key 避免与游戏设置混用）。
   static DIAMOND_CONFIG_CACHE = 'DIAMOND_CONFIG_CACHE'
   // 通用多语言模板缓存（名称/道具/简介等模板文本都可复用）。
@@ -32,6 +34,8 @@ export default class StorageKey {
   static LOGIN_AREA_LIST_CACHE = 'LOGIN_AREA_LIST_CACHE'
   // token 有效期。
   static TOKEN_EXPIREAT = 'TOKEN_EXPIREAT'
+  // 浏览器安装级体验账号设备标识；不包含定位或硬件隐私信息。
+  static EXPERIENCE_DEVICE_ID = 'EXPERIENCE_DEVICE_ID'
   // 电话区号（保持原拼写 AERA，与 Cocos 对齐）。
   static AERA_CODE = 'AERA_CODE'
   // 手机号。

@@ -6,6 +6,7 @@ import { t } from '@/i18n'
 import quickSafetyBg from '@/assets/images/club_header_quick_safety.png'
 import quickRankingBg from '@/assets/images/club_header_quick_ranking.png'
 import SafetyGuardDialog from '@/components/Dialog/SafetyGuardDialog.vue'
+import { requireRealUser } from '@/session/realUserGate'
 
 const userInfoStore = useUserInfoStore()
 const showSafetyGuardPopup = ref(false)
@@ -20,6 +21,7 @@ function toSafeInt(value: unknown): number {
 }
 
 function handleQuickActionClick(action: 'safety' | 'ranking'): void {
+  if (!requireRealUser(() => handleQuickActionClick(action))) return
   if (action === 'safety') {
     if (selectedTribeId.value <= 0) {
       showFailToast(t('UIClub_CurrentClubOfNot'))

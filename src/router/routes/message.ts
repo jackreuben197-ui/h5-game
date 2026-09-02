@@ -6,6 +6,7 @@ export const messageTabRoute: RouteRecordRaw = {
   component: () => import('@/views/message/MessageIndexView.vue'),
   meta: {
     requiresAuth: true,
+    guestPreview: true,
     tabKey: 'message',
     moduleTitle: '消息',
     desktopLayout: 'primary',

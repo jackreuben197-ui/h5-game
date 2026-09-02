@@ -10,9 +10,16 @@ import { t } from '@/i18n'
 import { useUserInfoStore, type ClubInfo } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 
-const props = defineProps<{
-  club?: ClubInfo | null
-}>()
+const props = withDefaults(
+  defineProps<{
+    club?: ClubInfo | null
+    showBack?: boolean
+  }>(),
+  {
+    club: null,
+    showBack: true,
+  },
+)
 const emit = defineEmits<{
   back: []
 }>()
@@ -39,7 +46,12 @@ function goDetails(): void {
 
 <template>
   <div class="deposit-screen" :style="{ backgroundImage: `url(${mainBgUrl})` }">
-    <HeaderBack :title="t('UIGuildFund_RechargeText')" extra-padding @back="emit('back')">
+    <HeaderBack
+      :title="t('UIGuildFund_RechargeText')"
+      :show-back="props.showBack"
+      extra-padding
+      @back="emit('back')"
+    >
       <template #right>
         <button class="details-pill" @click="goDetails">
           <span class="wallet-t-button details-pill__label">{{ t('Wallet_Details') }}</span>

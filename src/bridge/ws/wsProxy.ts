@@ -16,10 +16,7 @@ import {
 } from '@bridge-protocol'
 import { sendBridgeMessage, subscribeCocosMessages } from '../core/cocosBridgeChannel'
 import StorageKey from '@/constants/storageKey'
-import { t } from '@/i18n'
-import { showFailToast } from 'vant'
 import { useGameStore } from '@/stores/game'
-import { useLoginModalStore } from '@/stores/loginModal'
 import { pinia } from '@/stores/pinia'
 import { localStore } from '@/utils/localStore'
 import { appConfig } from '@/utils/appConfig'
@@ -46,6 +43,8 @@ let reconnectTimer: number | null = null
 let reconnectAttempts = 0
 let shouldAutoReconnect = false
 let authRedirecting = false
+// 体验账号切换真实账号期间，暂时拒绝 Cocos 业务写包；REGISTER/心跳仍由 H5 自己维护。
+let bridgeWsWritesPaused = false
 // 重连状态机：idle=未启动 / open=已连接 / reconnecting=断开后进入重连流程 / failed=已放弃。
 type ReconnectState = 'idle' | 'open' | 'reconnecting' | 'failed'
 let reconnectState: ReconnectState = 'idle'
@@ -71,6 +70,9 @@ const WS_RECONNECT_MAX_DELAY_MS = 10000
 // 重连放弃阈值（对齐用户确认：10 次或 60s 整体超时）。
 const WS_RECONNECT_MAX_ATTEMPTS = 10
 const WS_RECONNECT_MAX_DURATION_MS = 60000
+// 进入牌桌前等待代理连接真正 OPEN 的最长时间。此前 ensure 只发起连接便返回，
+// Cocos 紧接着发送首个房间请求时会命中 CONNECTING，造成进桌后立即超时退出。
+const WS_READY_TIMEOUT_MS = 10000
 // 心跳无响应触发主动重连的阈值（对齐 Unity 的 5 次）。
 const HEARTBEAT_MAX_PENDING = 5
 // 页面在后台累计超过该时长后，回前台一律强制重连，避免 readyState 假阳性。
@@ -258,7 +260,7 @@ function hasSessionToken(): boolean {
   return Boolean(getSessionToken())
 }
 
-// websocket 链路统一鉴权兜底：发现 token 缺失时，清理状态并打开登录弹窗。
+// websocket 链路统一鉴权兜底：发现 token 缺失时，清理状态并恢复游客会话。
 async function forceToLoginFromWs(reason: string): Promise<void> {
   if (authRedirecting) {
     return
@@ -284,13 +286,17 @@ async function forceToLoginFromWs(reason: string): Promise<void> {
   giveUpReconnect('auth-invalid')
 
   const gameStore = useGameStore(pinia)
+  const wasGuestAccount = gameStore.isGuestAccount
   gameStore.clearLogin()
 
-  // 登录态失效时原地弹出登录弹窗 + 文案提示，不强制跳页。
-  showFailToast(t('tokenFail'))
-  useLoginModalStore(pinia).open()
-
-  authRedirecting = false
+  try {
+    const { ensureExperienceSessionReady } = await import('@/session/experienceSession')
+    await ensureExperienceSessionReady()
+  } catch (error) {
+    log.warn('restore experience session failed:', { error, wasGuestAccount })
+  } finally {
+    authRedirecting = false
+  }
 }
 
 // 统一的放弃重连出口：emit wsReconnectFailed + 重置状态。
@@ -957,8 +963,38 @@ function unbindPageLifecycleListeners(): void {
 }
 
 // 提供给 H5 业务层主动建连（当前登录流程会调用）。
-export function ensureWsProxyConnected(payload: WsConnectPayload): void {
+export function ensureWsProxyConnected(payload: WsConnectPayload): Promise<void> {
+  const targetUrl = resolveWsUrl(payload)
+  if (!targetUrl) {
+    connectWs(payload)
+    return Promise.reject(new Error('websocket url/port 无效'))
+  }
+
   connectWs(payload)
+
+  if (wsUrl === targetUrl && isWsOpen()) {
+    return Promise.resolve()
+  }
+
+  return new Promise((resolve, reject) => {
+    const startedAt = Date.now()
+
+    const checkReady = (): void => {
+      if (wsUrl === targetUrl && isWsOpen()) {
+        resolve()
+        return
+      }
+
+      if (Date.now() - startedAt >= WS_READY_TIMEOUT_MS) {
+        reject(new Error('websocket 连接超时，请重试'))
+        return
+      }
+
+      window.setTimeout(checkReady, 25)
+    }
+
+    checkReady()
+  })
 }
 
 // H5 业务层订阅 WS 入站消息（可用于战绩等查询模块独立解析）。
@@ -1016,6 +1052,10 @@ export function waitH5WsPacket(
 }
 
 function sendWs(payload: WsSendPayload): void {
+  if (bridgeWsWritesPaused) {
+    log.info('bridge wsSend paused during account switch')
+    return
+  }
   log.debug('bridge wsSend received', {
     dataType: payload.dataType,
   })
@@ -1076,6 +1116,14 @@ export function closeWsProxy(payload?: WsClosePayload): void {
   closeWs(payload)
 }
 
+export function pauseCocosWsWrites(): void {
+  bridgeWsWritesPaused = true
+}
+
+export function resumeCocosWsWrites(): void {
+  bridgeWsWritesPaused = false
+}
+
 // 启动 WS 代理桥接：监听 Cocos 指令并执行 websocket 透传。
 export function setupWsProxyBridgeChannel(): () => void {
   if (stopWsBridgeListener) {
@@ -1100,6 +1148,7 @@ export function setupWsProxyBridgeChannel(): () => void {
     reconnectAttempts = 0
     pendingHeartbeatCount = 0
     nextReconnectReason = 'close'
+    bridgeWsWritesPaused = false
     stopWsBridgeListener = null
   }
 

@@ -1417,20 +1417,30 @@ onMounted(async () => {
         </div>
         <button
           type="button"
-          class="modal-primary-btn"
+          class="modal-primary-btn invite-share-save-btn"
           data-invite-export-ignore
           :disabled="generatingInviteShare || savingInviteShare || !inviteShareImage"
-          @click="downloadInviteShareImage"
         >
+          <!-- 点击下载逻辑暂时停用，改为长按真实图片唤起浏览器原生保存菜单。 -->
+          <img
+            v-if="inviteShareImage"
+            class="invite-share-save-btn__target"
+            data-allow-native-menu="true"
+            :src="inviteShareImage"
+            :alt="t('UIClub_Text102')"
+            @touchstart="onInviteShareTouchStart"
+            @touchmove="onInviteShareTouchMove"
+            @touchend="clearInviteLongPressTimer"
+            @touchcancel="clearInviteLongPressTimer"
+          />
           {{
-            generatingInviteShare || savingInviteShare
-              ? t('UIClub_Save3') + '...'
-              : t('UIClub_Save4')
+            generatingInviteShare
+              ? '生成中...'
+              : savingInviteShare
+                ? t('UIClub_Save3') + '...'
+                : t('UIClub_LongPressSaveToAlbum')
           }}
         </button>
-        <p class="invite-modal__save-tip" data-invite-export-ignore>
-          {{ t('UIClub_LongPressSaveToAlbum') }}
-        </p>
       </section>
     </GameDialog>
 
@@ -2420,7 +2430,8 @@ onMounted(async () => {
   background: transparent;
 }
 
-.invite-share-save-target {
+.invite-share-save-target,
+.invite-share-save-btn__target {
   position: absolute;
   z-index: 3;
   inset: 0;
@@ -2433,16 +2444,9 @@ onMounted(async () => {
   -webkit-user-drag: auto;
 }
 
-.invite-modal__save-tip {
-  margin: 0.08rem 0 0;
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 0.3rem;
-  line-height: 1.4;
-  text-align: center;
-
-  @include theme-light {
-    color: rgba(255, 255, 255, 0.78);
-  }
+.invite-share-save-btn {
+  position: relative;
+  overflow: hidden;
 }
 
 :global(.invite-share-export) {

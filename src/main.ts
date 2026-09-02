@@ -16,12 +16,16 @@ import { setupWsProxyBridgeChannel } from './bridge/ws'
 import { installCcStorageProxy } from './bridge/sync/ccStorageProxy'
 import { initCurrentClubSync } from './bridge/sync/h5BusinessSync'
 import { setupDailyH5DisplayPanel } from './bridge/dailyH5DisplayPanel'
-import { syncPostAuthData } from './session/postAuthSync'
 import {
   checkLocalTokenAtBootstrap,
   startTokenRefreshLoop,
   stopTokenRefreshLoop,
 } from './session/tokenRefresh'
+import {
+  ensureExperienceSession,
+  releaseExperienceSessionOnPageExit,
+  setupExperienceSessionLifecycle,
+} from './session/experienceSession'
 import './styles/main.scss'
 import { setupRem } from './utils/rem'
 import { initTheme } from './utils/theme'
@@ -54,6 +58,7 @@ let stopCurrentClubSync: (() => void) | null = null
 let stopNativeMenuGuard: (() => void) | null = null
 let stopNativeDragGuard: (() => void) | null = null
 let stopDailyH5DisplayPanel: (() => void) | null = null
+let stopExperienceSessionLifecycle: (() => void) | null = null
 // 启动即接管主题：恢复持久化模式 + 监听系统明暗变化（首帧由 index.html 内联脚本防闪烁）。
 initTheme()
 // 启动时缓存 URL 中的代理邀请码，防止跨页面丢失
@@ -175,18 +180,16 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
     app.use(fitTextPlugin)
     app.use(router)
     const gameStore = useGameStore(pinia)
-    // 启动时若已有 token，则同步用户资料/配置/WS；任意路由刷新都不依赖首页布局。
-    if (gameStore.sessionToken.trim()) {
-      // 本地 token 已过期：先清登录并弹登录窗，避免 syncPostAuthData/wsConnect 用旧 token。
+    // 真实 token 先做本地过期检查；体验 token 由 user/info + 90010 流程校验，避免误弹登录。
+    if (gameStore.isRealUser) {
+      // 本地 token 已过期：先清登录并弹登录窗，避免 wsConnect 用旧 token。
       if (checkLocalTokenAtBootstrap()) {
-        syncPostAuthData()
-
         void import('@/session/telegramDeepLink').then(({ runTelegramDeepLinkAfterLogin }) => {
           runTelegramDeepLinkAfterLogin()
         })
       }
     } else {
-      // Telegram Mini App: trigger auto-login at startup before the user sees any guest page.
+      // Telegram Mini App: trigger auto-login at startup before the guest session takes over.
       void ensureTelegramAutoLogin()
     }
     // 无条件启动 token 续期循环：内部按 sessionToken 是否存在自动跳过，登录后无需额外触发。
@@ -205,6 +208,12 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
     // h5 与 cocos 共用 user_cache_${userId} 一个 IndexedDB；localStorage 用 dzpk_cc_ 前缀隔离。
     stopCcStorageProxy = installCcStorageProxy()
     app.mount(mountTarget)
+    // 新访客自动领取体验账号；已有 token 先用 user/info 判定真实/体验身份。
+    // pagehide 时体验账号必须调用服务端登出，真实账号保持正常持久登录。
+    stopExperienceSessionLifecycle = setupExperienceSessionLifecycle()
+    void ensureExperienceSession().catch((error) => {
+      console.warn('[experience-session] bootstrap failed:', error)
+    })
     // 每天首次进入 H5 自动弹一次大厅展示面板：挂载、可见性变化、Cocos h5Show 均会触发。
     stopDailyH5DisplayPanel = setupDailyH5DisplayPanel()
     recordDebugEvent('[h5]', 'mount success', {
@@ -223,6 +232,9 @@ export function unmountH5App(): void {
     return
   }
   recordDebugEvent('[h5]', 'unmount start')
+  releaseExperienceSessionOnPageExit()
+  stopExperienceSessionLifecycle?.()
+  stopExperienceSessionLifecycle = null
   // 卸载时释放桥接订阅，避免重复监听。
   stopBridgeDialogChannel?.()
   stopBridgeDialogChannel = null

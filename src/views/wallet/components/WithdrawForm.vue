@@ -21,10 +21,13 @@ const isChannelPackage = isPrivateDomainMode()
 const props = defineProps<{
   availableUc?: number
   clubId?: number
+  balance?: number
+  preview?: boolean
 }>()
 
 const emit = defineEmits<{
   'open-cs-chat': [orderData: Record<string, unknown>]
+  'require-auth': [action?: () => void | Promise<void>]
   withdrawn: []
 }>()
 
@@ -156,6 +159,10 @@ function assertClub(): { club_id: number } | null {
 
 // ─── API ─────────────────────────────────────────────────────────────────────
 async function fetchWithdrawTypes(): Promise<void> {
+  if (props.preview) {
+    withdrawTypes.value = []
+    return
+  }
   const club = assertClub()
   if (!club) return
   loadingWithdrawTypes.value = true
@@ -185,6 +192,9 @@ async function fetchWithdrawTypes(): Promise<void> {
 }
 
 async function fetchPaymentInfo(): Promise<void> {
+  if (props.preview) {
+    return
+  }
   loadingPaymentInfo.value = true
   paymentInfoList.value = []
   selectedPaymentAccount.value = null
@@ -235,6 +245,10 @@ function applyChannel(ch: ChannelId): void {
 }
 
 function handleWithdraw(): void {
+  if (props.preview) {
+    emit('require-auth', handleWithdraw)
+    return
+  }
   if (!canWithdraw.value) return
   withdrawConfirmAmount.value = parsedAmount.value
   showWithdrawConfirmModal.value = true
@@ -299,8 +313,12 @@ async function confirmWithdraw(): Promise<void> {
 }
 
 watch(
-  () => withdrawClubPayload().club_id,
-  (clubId) => {
+  [() => withdrawClubPayload().club_id, () => props.preview],
+  ([clubId, preview]) => {
+    if (preview) {
+      withdrawTypes.value = []
+      return
+    }
     if (Number(clubId) > 0) void fetchWithdrawTypes()
   },
   { immediate: true },

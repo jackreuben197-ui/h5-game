@@ -9,6 +9,7 @@ const GAME_TYPE_OMAHA4 = 1
 const GAME_TYPE_OMAHA5 = 2
 const GAME_TYPE_OMAHA6 = 3
 const GAME_TYPE_FANTASY = 4
+const GAME_TYPE_COWBOY = 5
 const GAME_TYPE_MAHJONG = 6
 const GAME_TYPE_EGG = 7
 
@@ -195,7 +196,10 @@ export interface BlindTextParams {
   gameType: number
   pokerType: number
   sb: number
+  ante?: number
   bombpot?: number
+  isMatch?: boolean
+  matchPlayerNum?: number
 }
 
 export interface BlindText {
@@ -203,9 +207,51 @@ export interface BlindText {
   value: string
 }
 
-// 判定优先级：bombpot/SixPlus → Fantasy → Mahjong/Egg → 默认（NLH/PLO 盲注 sb/sb*2）。
+// 统一牌局玩法名称，页面只负责追加 MTT/SNG 等业务前缀。
+export function resolveGameTypeText(gameType: number, pokerType: number): string {
+  const isHoldemFamily =
+    gameType === GAME_TYPE_HOLDEM ||
+    gameType === GAME_TYPE_OMAHA4 ||
+    gameType === GAME_TYPE_OMAHA5 ||
+    gameType === GAME_TYPE_OMAHA6
+
+  if (isHoldemFamily && pokerType === POKER_TYPE_SIX_PLUS) return '6+'
+  if (gameType === GAME_TYPE_HOLDEM) return 'NLH'
+  if (
+    gameType === GAME_TYPE_OMAHA4 ||
+    gameType === GAME_TYPE_OMAHA5 ||
+    gameType === GAME_TYPE_OMAHA6
+  ) {
+    return 'PLO'
+  }
+  if (gameType === GAME_TYPE_FANTASY) return 'ToroFlops'
+  if (gameType === GAME_TYPE_COWBOY) return 'Cowboy'
+  if (gameType === GAME_TYPE_MAHJONG) return t('Mahjong_Name')
+  if (gameType === GAME_TYPE_EGG) return t('UIEgg')
+  return t('UIGameplayRule_GamblingParty')
+}
+
+// 对齐客户端牌局记录：MTT 人数 → 牛仔 → bombpot/SixPlus 前注 → 特殊底分 → 默认盲注。
 export function resolveBlindText(params: BlindTextParams): BlindText {
-  const { gameType, pokerType, sb, bombpot = 0 } = params
+  const {
+    gameType,
+    pokerType,
+    sb,
+    ante = sb * 2,
+    bombpot = 0,
+    isMatch = false,
+    matchPlayerNum = 0,
+  } = params
+
+  if (isMatch) {
+    return {
+      label: t('UIMine_RecordDetailForMatchPariticipants'),
+      value: `${matchPlayerNum}`,
+    }
+  }
+  if (gameType === GAME_TYPE_COWBOY) {
+    return { label: t('UICareerRecordDetailForNiuZai'), value: '' }
+  }
 
   const isHoldemFamily =
     gameType === GAME_TYPE_HOLDEM ||
@@ -216,7 +262,7 @@ export function resolveBlindText(params: BlindTextParams): BlindText {
   const isSixPlus = isHoldemFamily && pokerType === POKER_TYPE_SIX_PLUS
 
   if (isBombpot || isSixPlus) {
-    return { label: t('UIClub_RoomCreat_gmo7laWj'), value: `${sb * 2}` }
+    return { label: t('UIClub_RoomCreat_gmo7laWj'), value: `${ante}` }
   }
   if (gameType === GAME_TYPE_FANTASY && pokerType === POKER_TYPE_NORMAL) {
     return { label: t('UIFantasy_Dizhu2'), value: `${sb}` }

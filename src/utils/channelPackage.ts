@@ -19,6 +19,10 @@ const TG_MINI_APP_PARAM = 'tg_mini_app'
 export const CHANNEL_MAIN_DOMAIN = (import.meta.env.VITE_CHANNEL_MAIN_DOMAIN || '')
   .trim()
   .toLowerCase()
+// 渠道包联调时可临时启用：
+const TEST_CHANNEL_INVITE_CODE = ''
+// const TEST_CHANNEL_INVITE_CODE = 'ksGuBmMk'
+// const TEST_CHANNEL_INVITE_CODE = 'rhswehjy'
 function getHostLabels(hostname: string): string[] {
   return readString(hostname).toLowerCase().split('.').filter(Boolean)
 }
@@ -64,6 +68,7 @@ function readParam(
 }
 
 export function isChannelPackageHost(hostname: string = window.location.hostname): boolean {
+  if (TEST_CHANNEL_INVITE_CODE) return true
   const labels = getHostLabels(hostname)
   // 裸主域名 / localhost / 单段 host 不是邀请子域名
   if (labels.length <= DEPLOY_APEX_LABEL_COUNT) {
@@ -240,6 +245,7 @@ export function restoreStorageFromUrl(): void {
 export function extractInviteCodeFromSubdomain(
   hostname: string = window.location.hostname,
 ): string {
+  if (TEST_CHANNEL_INVITE_CODE) return TEST_CHANNEL_INVITE_CODE
   if (!isChannelPackageHost(hostname)) {
     return ''
   }
@@ -263,6 +269,7 @@ export function parseInviteParamsFromLocation(
 }
 
 export function resolveInviteCode(hostname: string = window.location.hostname): string {
+  if (TEST_CHANNEL_INVITE_CODE) return TEST_CHANNEL_INVITE_CODE
   const parsed = parseInviteParamsFromLocation()
   if (parsed.inviteCode) {
     return parsed.inviteCode
@@ -342,7 +349,7 @@ export function buildChannelClubInviteUrl(inviteCode?: string): string {
   const currentUrl = new URL(window.location.href)
   const code = readString(inviteCode)
   if (!code) {
-    return `${currentUrl.origin}/#/guest/home`
+    return `${currentUrl.origin}/#/home`
   }
 
   let baseHost = currentUrl.hostname
@@ -351,7 +358,7 @@ export function buildChannelClubInviteUrl(inviteCode?: string): string {
     baseHost = mainDomain
   }
   const portSuffix = currentUrl.port ? `:${currentUrl.port}` : ''
-  return `${currentUrl.protocol}//${code}.${baseHost}${portSuffix}/#/guest/home`
+  return `${currentUrl.protocol}//${code}.${baseHost}${portSuffix}/#/home`
 }
 
 

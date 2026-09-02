@@ -12,32 +12,40 @@ import { theme } from '@/utils/theme'
 import { t } from '@/i18n'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 import { showFailToast } from 'vant'
-import { useChannelMenuVersion } from '@/composables/useChannelMenuVersion'
 import ClubZoneQuickActions from '@/components/Club/ClubZoneQuickActions.vue'
+import MainBottomTab from '@/components/Tabbar/MainBottomTab.vue'
+import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
+import { requireRealUser } from '@/session/realUserGate'
+import { ensureExperienceSession } from '@/session/experienceSession'
 
 const mttListStore = useMttListStore()
 const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
 const router = useRouter()
-const { isChannelPackage, isVersionB } = useChannelMenuVersion()
+const { isChannelPackage, isVersionB } = useChannelBottomMenu()
 
 const clubDetailButtonIcon = computed(() =>
   theme.value === 'light' ? clubDetailButtonIconLight : clubDetailButtonIconDark,
 )
 const canManageChannelClub = computed(
-  () =>
-    isChannelPackage.value &&
-    Boolean(gameStore.sessionToken && userInfoStore.currentJoinedClub),
+  () => isChannelPackage && Boolean(gameStore.isRealUser && userInfoStore.currentJoinedClub),
 )
 
-const selectedClubId = computed(() => toSafeInt(userInfoStore.currentClub?.club_id))
+const selectedClub = computed(
+  () => userInfoStore.currentClub ?? userInfoStore.channelDefaultClub,
+)
+const selectedClubId = computed(() => toSafeInt(selectedClub.value?.club_id))
 const selectedTribeId = computed(() =>
-  toSafeInt((userInfoStore.currentClub as Record<string, unknown> | null)?.tribe_id),
+  toSafeInt((selectedClub.value as Record<string, unknown> | null)?.tribe_id),
 )
 
 onMounted(() => {
   // 与首页共用同一个 MTT 数据源：先读缓存秒开，再静默刷新。
-  mttListStore.bootstrapMttList()
+  void ensureExperienceSession()
+    .catch((error) => {
+      console.warn('[mtt-list] resolve session identity failed:', error)
+    })
+    .finally(() => mttListStore.bootstrapMttList())
 })
 
 function toSafeInt(value: unknown): number {
@@ -52,11 +60,18 @@ function handleBack() {
   router.push('/home')
 }
 
+function handleRecharge() {
+  if (!requireRealUser(handleRecharge)) return
+  void router.push('/wallet')
+}
+
 function goToClubDetail(): void {
+  if (!requireRealUser(goToClubDetail)) return
   void router.push('/club/detail')
 }
 
 function handleOpenCustomerService() {
+  if (!requireRealUser(handleOpenCustomerService)) return
   const clubId = selectedClubId.value
   if (clubId <= 0) {
     showFailToast(t('UIClub_CurrentClubNo'))
@@ -72,7 +87,11 @@ function handleOpenCustomerService() {
 </script>
 
 <template>
-  <div class="mtt-list-page room-list-page themeType2" @back="handleBack">
+  <div
+    class="mtt-list-page room-list-page themeType2"
+    :class="{ 'mtt-list-page--channel-menu-b': isVersionB }"
+    @back="handleBack"
+  >
     <div class="bg-overlay"></div>
 
     <div class="room-list-stage mtt-list-stage">
@@ -87,10 +106,10 @@ function handleOpenCustomerService() {
               :name="t('UIGuildFund_RechargeText')"
               :icon="walletIcon"
               icon-alt="wallet"
-              @click="router.push('/wallet')"
+              @click="handleRecharge"
             />
             <TopActionButton
-              v-if="userInfoStore.currentClub?.support_im_rid"
+              v-if="selectedClub?.support_im_rid"
               :name="t('UIMineMain01')"
               :icon="serviceIcon"
               icon-alt="service"
@@ -208,6 +227,10 @@ function handleOpenCustomerService() {
     height: 100%;
     object-fit: contain;
   }
+}
+
+.mtt-list-page--channel-menu-b :deep(.mtt-content) {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 2.8rem);
 }
 
 .mtt-list-page :deep(.filter-tabbar) {

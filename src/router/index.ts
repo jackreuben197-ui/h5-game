@@ -1,4 +1,9 @@
-import { createRouter, createWebHashHistory, type RouteLocationNormalized } from 'vue-router'
+import {
+  createRouter,
+  createWebHashHistory,
+  type RouteLocationNormalized,
+  type RouteRecordRaw,
+} from 'vue-router'
 import { useGameStore } from '@/stores/game'
 import { useWalletStore } from '@/stores/wallet'
 import { useLoginModalStore } from '@/stores/loginModal'
@@ -13,6 +18,13 @@ import { messageRoutes } from './routes/message'
 import { mineRoutes } from './routes/mine'
 
 const log = createLogger('[router]')
+
+const legacyGuestRedirects: RouteRecordRaw[] = [
+  {
+    path: '/guest/home',
+    redirect: (to) => ({ name: 'lobby', query: to.query, hash: to.hash }),
+  },
+]
 
 function walletRouteClubId(to: RouteLocationNormalized): number | undefined {
   const raw = Array.isArray(to.query.clubId) ? to.query.clubId[0] : to.query.clubId
@@ -52,6 +64,7 @@ const router = createRouter({
       name: 'dev-icon-gallery',
       component: () => import('@/views/dev/IconGalleryView.vue'),
     },
+    ...legacyGuestRedirects,
     mainRoute,
     ...clubRoutes,
     ...messageRoutes,

@@ -232,7 +232,7 @@ http.interceptors.request.use(async (config) => {
 
   // 没有 token 且不是登录接口时，静默拒绝即可：guest 页上的全局组件不应被动唤起登录弹窗。
   // 真正的服务端 401（带 token 被服务端拒绝）由 response 拦截器在调用 forceToLogin。
-  if (!token && !isPreLoginRequest) {
+  if (!token && !isPreLoginRequest && !isGuestPreviewRequest(normalizedUrl)) {
     console.warn(`请求 ${requestUrl} 时没有登录，且不属于登录前接口，已被静默拒绝`)
     return Promise.reject(new Error('未登录或登录已过期'))
   }

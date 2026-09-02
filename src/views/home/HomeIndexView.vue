@@ -745,7 +745,7 @@ async function bootstrapHomeContent(): Promise<void> {
 
   const casinoClubId = channelCasinoClubId.value
   await casinoStore
-    .preloadCasinoData(casinoClubId || undefined, casinoClubId <= 0)
+    .preloadCasinoData(casinoClubId || undefined, isChannelPackage ? false : casinoClubId <= 0)
     .catch((e) => {
       console.warn('[home] preload casino data failed:', e)
     })

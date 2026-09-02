@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia'
 import { useGameStore } from '@/stores/game'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { isPrivateDomainMode } from '@/utils/channelPackage'
 import {
   type ExtendGameRecord,
   getDeviceType,
@@ -10,6 +12,39 @@ import {
 } from '@/api/casino'
 
 const BANNER_STORAGE_KEY = 'casino_popular_banner_v1'
+
+function toSafeInt(value: unknown): number {
+  const num = Number(value)
+  return Number.isFinite(num) ? Math.floor(num) : 0
+}
+
+async function resolveCasinoContext(
+  clubId?: number,
+  isGlobalMode: boolean = true,
+): Promise<{ effectiveClubId: number; effectiveGlobalMode: boolean }> {
+  const isPrivate = isPrivateDomainMode()
+  const userInfoStore = useUserInfoStore()
+  let resolvedClubId = toSafeInt(
+    clubId ||
+    userInfoStore.currentClubId ||
+    userInfoStore.currentClub?.club_id ||
+    userInfoStore.channelDefaultClub?.club_id,
+  )
+
+  if (isPrivate && resolvedClubId <= 0) {
+    try {
+      const defaultClub = await userInfoStore.ensureChannelDefaultClub()
+      if (defaultClub?.club_id) {
+        resolvedClubId = toSafeInt(defaultClub.club_id)
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  const effectiveGlobalMode = isPrivate ? false : (resolvedClubId > 0 ? false : isGlobalMode)
+  return { effectiveClubId: resolvedClubId, effectiveGlobalMode }
+}
 
 function loadBannerFromStorage(): ExtendGameRecord[] {
   try {
@@ -66,10 +101,11 @@ export const useCasinoStore = defineStore('casino', {
 
     async fetchPopularGames(clubId?: number, isGlobalMode: boolean = true) {
       try {
+        const { effectiveClubId, effectiveGlobalMode } = await resolveCasinoContext(clubId, isGlobalMode)
         const payload = { device_type: getDeviceType(), search: '' }
-        const res = isGlobalMode
+        const res = effectiveGlobalMode || effectiveClubId <= 0
           ? await getPopularGamesHome(payload)
-          : await getPopularGamesClub(payload, clubId!)
+          : await getPopularGamesClub(payload, effectiveClubId)
 
         if (res.code === 0 && res.data) {
           const listData = res.data.list ?? res.data.records ?? []
@@ -125,15 +161,16 @@ export const useCasinoStore = defineStore('casino', {
 
     async fetchPopularBannerGames(clubId?: number, isGlobalMode: boolean = true) {
       try {
+        const { effectiveClubId, effectiveGlobalMode } = await resolveCasinoContext(clubId, isGlobalMode)
         if (this.gameRecords.length === 0) {
-          await this.fetchPopularGames(clubId, isGlobalMode)
+          await this.fetchPopularGames(effectiveClubId, effectiveGlobalMode)
         }
 
         let apiGames: ExtendGameRecord[] = []
         try {
-          const res = isGlobalMode
+          const res = effectiveGlobalMode || effectiveClubId <= 0
             ? await getPopularBannerGamesHome({ device_type: getDeviceType(), game_type: '', search: '' })
-            : await getPopularBannerGamesClub({ device_type: getDeviceType(), game_type: '', search: '' }, clubId!)
+            : await getPopularBannerGamesClub({ device_type: getDeviceType(), game_type: '', search: '' }, effectiveClubId)
           if (res.code === 0 && res.data && res.data.list) {
             apiGames = res.data.list as ExtendGameRecord[]
           }
@@ -217,13 +254,14 @@ export const useCasinoStore = defineStore('casino', {
     },
 
     async preloadCasinoData(clubId?: number, isGlobalMode: boolean = true) {
-      if (this.hasFetchedInitialData) return
+      if (this.hasFetchedInitialData && this.gameRecords.length > 0) return
+      const { effectiveClubId, effectiveGlobalMode } = await resolveCasinoContext(clubId, isGlobalMode)
       await Promise.allSettled([
-        this.fetchPopularGames(clubId, isGlobalMode),
-        this.fetchPopularBannerGames(clubId, isGlobalMode),
+        this.fetchPopularGames(effectiveClubId, effectiveGlobalMode),
+        this.fetchPopularBannerGames(effectiveClubId, effectiveGlobalMode),
       ])
       const gameStore = useGameStore()
-      if (gameStore.sessionToken) {
+      if (gameStore.sessionToken && this.gameRecords.length > 0) {
         this.setHasFetchedInitialData(true)
       }
     }

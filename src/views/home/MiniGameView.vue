@@ -4,8 +4,10 @@ import { useRouter, useRoute } from 'vue-router'
 import { useCasinoStore } from '@/stores/casino'
 import { useMinigameStore } from '@/stores/minigame'
 import { useGameStore } from '@/stores/game'
+import { useUserInfoStore } from '@/stores/userInfo'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { useGameLaunchStore } from '@/stores/gameLaunch'
+import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 import {
   reserveGameWindow,
   launchGameUrl,
@@ -25,28 +27,17 @@ import walletIcon from '@/assets/icons/icon_wallet.png'
 import serviceIcon from '@/assets/icons/icon_server.png'
 import popularTextIcon from '@/assets/images/minigame-newui/populartext.svg'
 
-
 import legPokerSvg from '@/assets/images/minigame-newui/skinnyman.png'
-
 import kyPokerSvg from '@/assets/images/minigame-newui/mustacheman.png'
-
 import cowboyBlueSvg from '@/assets/images/minigame-newui/cowboypng.png'
-
 import mahjong1Svg from '@/assets/images/minigame-newui/麻将胡了.png'
-
 import mahjong2Svg from '@/assets/images/minigame-newui/麻将胡了2.png'
-
 import dbLiveSvg from '@/assets/images/minigame-newui/DB真人.png'
-
 import fbSportsSvg from '@/assets/images/minigame-newui/FB体育mini.png'
-
 import legPokerSvgCasino from '@/assets/images/minigame-newui/乐游棋牌.png'
-
 import kyPokerSvgCasino from '@/assets/images/minigame-newui/开元棋牌.png'
-
 import cowboyBlueSvgCasino from '@/assets/images/minigame-newui/德州牛仔.png'
-
-import game2 from '@/assets/images/minigame-newui/games2.png' //
+import game2 from '@/assets/images/minigame-newui/games2.png'
 import GameClubSelector from '@/components/GameClubSelector.vue'
 
 const props = defineProps<{ hideHeader?: boolean; clubId?: number }>()
@@ -55,23 +46,42 @@ const router = useRouter()
 const route = useRoute()
 const casinoStore = useCasinoStore()
 const gameStore = useGameStore()
+const userInfoStore = useUserInfoStore()
 const loginModalStore = useLoginModalStore()
 const gameLaunchStore = useGameLaunchStore()
+const { isChannelPackage, channelClub } = useChannelBottomMenu()
 
 const isGuest = computed(() => !gameStore.sessionToken)
 
-const isGlobalMode = computed(() => {
-  if (props.clubId && props.clubId > 0) return false
-  const clubId = route.query.clubId
-  return !clubId || clubId === '' || clubId === '0'
-})
+function toSafeInt(value: unknown): number {
+  const num = Number(value)
+  return Number.isFinite(num) ? Math.floor(num) : 0
+}
 
 const routeClubId = computed<number | undefined>(() => {
   if (props.clubId && props.clubId > 0) return props.clubId
   const val = route.query.clubId
-  if (!val || val === '' || val === '0') return undefined
-  const n = parseInt(val as string, 10)
-  return Number.isFinite(n) && n > 0 ? n : undefined
+  if (val && val !== '' && val !== '0') {
+    const n = parseInt(val as string, 10)
+    if (Number.isFinite(n) && n > 0) return n
+  }
+  if (isChannelPackage) {
+    const cid = toSafeInt(
+      channelClub.value?.club_id ||
+      userInfoStore.channelDefaultClub?.club_id ||
+      userInfoStore.currentClub?.club_id ||
+      userInfoStore.currentClubId,
+    )
+    if (cid > 0) return cid
+  }
+  return undefined
+})
+
+const isGlobalMode = computed(() => {
+  if (isChannelPackage) return false
+  if (props.clubId && props.clubId > 0) return false
+  if (routeClubId.value && routeClubId.value > 0) return false
+  return true
 })
 
 const minigameStore = useMinigameStore()
@@ -118,12 +128,20 @@ const fetchPopularBannerGames = async () => {
 
 
 
-onMounted(() => {
+onMounted(async () => {
+  if (isChannelPackage && !routeClubId.value) {
+    await userInfoStore.ensureChannelDefaultClub().catch((e) => {
+      console.warn('[minigame] ensureChannelDefaultClub failed:', e)
+    })
+  }
   fetchPopularBannerGames()
   minigameStore.preloadMinigameData(routeClubId.value, isGlobalMode.value)
 })
 
-onActivated(() => {
+onActivated(async () => {
+  if (isChannelPackage && !routeClubId.value) {
+    await userInfoStore.ensureChannelDefaultClub().catch(console.warn)
+  }
   fetchPopularBannerGames()
   if (mahjongGames.value.length === 0) minigameStore.fetchMahjongData(routeClubId.value, isGlobalMode.value)
 })

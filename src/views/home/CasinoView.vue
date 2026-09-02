@@ -12,6 +12,7 @@ import { t, getLocale, textI18n } from '@/i18n'
 import { showGameToast } from '@/components/Toast'
 import { useCasinoStore } from '@/stores/casino'
 import { useGameStore } from '@/stores/game'
+import { useUserInfoStore } from '@/stores/userInfo'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 import { useGameLaunchStore } from '@/stores/gameLaunch'
@@ -102,25 +103,43 @@ function handleBack() {
 
 const casinoStore = useCasinoStore()
 const gameStore = useGameStore()
+const userInfoStore = useUserInfoStore()
 const loginModalStore = useLoginModalStore()
 const gameLaunchStore = useGameLaunchStore()
-const { isVersionB } = useChannelBottomMenu()
+const { isChannelPackage, channelClub, isVersionB } = useChannelBottomMenu()
 
 const isGuest = computed(() => !gameStore.sessionToken)
 
-// Global mode = entered from home/bottom-nav (no club context)
-const isGlobalMode = computed(() => {
-  if (props.clubId && props.clubId > 0) return false
-  const clubId = route.query.clubId
-  return !clubId || clubId === '' || clubId === '0'
-})
+function toSafeInt(value: unknown): number {
+  const num = Number(value)
+  return Number.isFinite(num) ? Math.floor(num) : 0
+}
 
 const routeClubId = computed<number | undefined>(() => {
   if (props.clubId && props.clubId > 0) return props.clubId
   const val = route.query.clubId
-  if (!val || val === '' || val === '0') return undefined
-  const n = parseInt(val as string, 10)
-  return Number.isFinite(n) && n > 0 ? n : undefined
+  if (val && val !== '' && val !== '0') {
+    const n = parseInt(val as string, 10)
+    if (Number.isFinite(n) && n > 0) return n
+  }
+  if (isChannelPackage) {
+    const cid = toSafeInt(
+      channelClub.value?.club_id ||
+      userInfoStore.channelDefaultClub?.club_id ||
+      userInfoStore.currentClub?.club_id ||
+      userInfoStore.currentClubId,
+    )
+    if (cid > 0) return cid
+  }
+  return undefined
+})
+
+// Global mode = entered from home/bottom-nav with no club context. Never true in channel package / clubprivate link.
+const isGlobalMode = computed(() => {
+  if (isChannelPackage) return false
+  if (props.clubId && props.clubId > 0) return false
+  if (routeClubId.value && routeClubId.value > 0) return false
+  return true
 })
 
 const isFromHome = computed(() => route.query.fromHome === 'true')
@@ -968,12 +987,19 @@ watch(selectedCategory, () => {
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
 onMounted(async () => {
   try {
-    if (!casinoStore.hasFetchedInitialData) {
+    if (isChannelPackage && !routeClubId.value) {
+      await userInfoStore.ensureChannelDefaultClub().catch((err) => {
+        console.warn('[casino] ensureChannelDefaultClub failed:', err)
+      })
+    }
+    if (!casinoStore.hasFetchedInitialData || casinoStore.gameRecords.length === 0) {
       await Promise.allSettled([
         fetchPopularGames(),
         fetchPopularBannerGames(),
       ])
-      casinoStore.setHasFetchedInitialData(true)
+      if (casinoStore.gameRecords.length > 0) {
+        casinoStore.setHasFetchedInitialData(true)
+      }
     } else {
       // Refresh silently in background
       Promise.allSettled([
@@ -988,6 +1014,9 @@ onMounted(async () => {
 })
 
 onActivated(async () => {
+  if (isChannelPackage && !routeClubId.value) {
+    await userInfoStore.ensureChannelDefaultClub().catch(console.warn)
+  }
   if (gameRecords.value.length === 0) await fetchPopularGames()
   if (!hasTriedBanner.value || casinoStore.popularBannerGames.length === 0) {
     await fetchPopularBannerGames()

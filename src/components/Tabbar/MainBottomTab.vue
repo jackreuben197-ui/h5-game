@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
 import { useCasinoStore } from '@/stores/casino'
+import { useUserInfoStore } from '@/stores/userInfo'
 import { t } from '@/i18n'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 
@@ -33,15 +34,25 @@ const router = useRouter()
 const route = useRoute()
 const tabsStore = useMainTabsStore()
 const casinoStore = useCasinoStore()
+const userInfoStore = useUserInfoStore()
 const { isChannelPackage, channelClub, isVersionB, hasMtt, hasMiniGame } = useChannelBottomMenu()
+
+const channelClubId = computed(() =>
+  toSafeInt(
+    channelClub.value?.club_id ||
+    userInfoStore.channelDefaultClub?.club_id ||
+    userInfoStore.currentClub?.club_id ||
+    userInfoStore.currentClubId,
+  ),
+)
 
 // 娱乐场入口只在该俱乐部真的有游戏时出现；房间 / 赛事列表由会话层预热，这里只补娱乐场。
 const hasCasinoData = computed(
-  () => toSafeInt(channelClub.value?.club_id) > 0 && casinoStore.gameRecords.length > 0,
+  () => channelClubId.value > 0 && casinoStore.gameRecords.length > 0,
 )
 
 watch(
-  () => [isVersionB.value, toSafeInt(channelClub.value?.club_id)] as const,
+  () => [isVersionB.value, channelClubId.value] as const,
   ([versionB, clubId]) => {
     if (!isChannelPackage || !versionB || clubId <= 0) return
     if (casinoStore.gameRecords.length) return
@@ -103,7 +114,9 @@ const tabs = computed<TabItem[]>(() => {
             {
               key: 'casino' as const,
               label: t('UICasino_Title'),
-              path: '/casino',
+              path: isChannelPackage && channelClubId.value > 0
+                ? `/casino?clubId=${channelClubId.value}`
+                : '/casino',
               icon: 'casino' as const,
             },
           ]
@@ -307,6 +320,10 @@ function refreshPathByCurrentTab(): void {
 
 function onTabClick(tab: TabItem): void {
   tabsStore.setActiveTab(tab.key)
+  if (tab.key === 'casino' && isChannelPackage && channelClubId.value > 0) {
+    void router.push({ path: '/casino', query: { clubId: String(channelClubId.value) } })
+    return
+  }
   void router.push(tab.path)
 }
 
@@ -332,6 +349,11 @@ watch(
 )
 
 onMounted(async () => {
+  if (isChannelPackage && !channelClubId.value) {
+    void userInfoStore.ensureChannelDefaultClub().catch((e) => {
+      console.warn('[tabbar] ensureChannelDefaultClub failed:', e)
+    })
+  }
   await nextTick()
   refreshPathByCurrentTab()
   window.addEventListener('resize', handleWindowResize)

@@ -171,8 +171,12 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
     app = createApp(App)
     app.use(pinia)
     stopCurrentClubSync = initCurrentClubSync()
+    const userInfoStore = useUserInfoStore(pinia)
+    if (userInfoStore.channelDefaultClub) {
+      applySafariWebAppConfig(userInfoStore.channelDefaultClub)
+    }
     // Safari 保存到主屏幕前，按渠道子域名或自定义域名获取俱乐部配置并更新名称、图标。
-    void useUserInfoStore(pinia)
+    void userInfoStore
       .ensureChannelDefaultClub()
       .then((club) => applySafariWebAppConfig(club))
       .catch((error) => console.warn('[safariWebApp] load config failed:', error))

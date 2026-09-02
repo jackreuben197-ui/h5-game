@@ -13,6 +13,7 @@ import {
   resolveInviteCode,
 } from '@/utils/channelPackage'
 import { resolveTelegramClubRandomId } from '@/utils/telegramStartParam'
+import { applySafariWebAppConfig } from '@/utils/safariWebApp'
 
 export type ClubInfo = OrgClubData
 
@@ -52,19 +53,29 @@ function normalizeDefaultClub(club: OrgClubSearchInfoData | undefined): ClubInfo
   if (clubId <= 0) {
     return null
   }
+  const raw = club as Record<string, unknown>
+  const safariLabel =
+    club.safari_label ||
+    raw.safari_name ||
+    raw.safari_title ||
+    raw.desktop_name ||
+    raw.app_name ||
+    ''
+  const safariIconUrl = club.safari_icon_url || raw.safari_icon || ''
+
   return {
     ...club,
     club_id: clubId,
     club_name: String(club.club_name || ''),
     logo: String(club.logo || ''),
-    safari_icon_url: String(club.safari_icon_url || ''),
-    safari_label: String(club.safari_label || ''),
+    safari_icon_url: String(safariIconUrl),
+    safari_label: String(safariLabel),
     safari_base_url: String(club.safari_base_url || ''),
     room_logo: String(club.room_logo || ''),
     banner: String(club.banner || ''),
     random_id: toSafeInt(club.random_id),
     support_im_rid: String(club.support_im_rid || ''),
-    club_members: toSafeInt((club as Record<string, unknown>).club_members),
+    club_members: toSafeInt(raw.club_members),
   }
 }
 
@@ -168,6 +179,9 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
     },
     setChannelDefaultClub(club: ClubInfo | null): void {
       this.channelDefaultClub = club
+      if (club) {
+        applySafariWebAppConfig(club)
+      }
     },
     async ensureChannelDefaultClub(): Promise<ClubInfo | null> {
       const hostname =
@@ -214,13 +228,28 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
           if (Number(response.code) !== 0) {
             throw new Error(String(response.msg || '渠道俱乐部加载失败'))
           }
-          const club = normalizeDefaultClub(response.data?.club)
+          const rawClub = (response.data?.club || {}) as OrgClubSearchInfoData
+          const resData = response.data as Record<string, unknown> | undefined
+          const safariLabel = rawClub.safari_label || resData?.safari_label
+          const safariIconUrl = rawClub.safari_icon_url || resData?.safari_icon_url
+          const safariBaseUrl = rawClub.safari_base_url || resData?.safari_base_url
+          const club = normalizeDefaultClub({
+            ...rawClub,
+            safari_label: typeof safariLabel === 'string' ? safariLabel : rawClub.safari_label,
+            safari_icon_url:
+              typeof safariIconUrl === 'string' ? safariIconUrl : rawClub.safari_icon_url,
+            safari_base_url:
+              typeof safariBaseUrl === 'string' ? safariBaseUrl : rawClub.safari_base_url,
+          })
           const responseH5Menu = Number(response.data?.h5_menu)
           if (club && club.h5_menu === undefined && Number.isFinite(responseH5Menu)) {
             club.h5_menu = responseH5Menu
           }
           this.channelDefaultClub = club
           channelDefaultClubLoaded = true
+          if (club) {
+            applySafariWebAppConfig(club)
+          }
           return club
         } catch (error) {
           console.warn('[userInfo] ensureChannelDefaultClub failed:', error)

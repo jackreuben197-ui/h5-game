@@ -59,13 +59,26 @@ export function applySafariWebAppConfig(club: OrgClubSearchInfoData | null | und
     return
   }
 
-  const label = normalizedText(club.safari_label) || normalizedText(club.club_name)
+  const raw = club as Record<string, unknown>
+  const label =
+    normalizedText(club.safari_label) ||
+    normalizedText(raw.safari_name) ||
+    normalizedText(raw.safari_title) ||
+    normalizedText(raw.desktop_name) ||
+    normalizedText(raw.app_name) ||
+    normalizedText(club.club_name)
+
   if (label) {
     document.title = label
     ensureMeta('apple-mobile-web-app-title')?.setAttribute('content', label)
+    ensureMeta('application-name')?.setAttribute('content', label)
   }
 
-  const iconUrl = normalizedHttpUrl(club.safari_icon_url) || normalizedHttpUrl(club.logo)
+  const iconUrl =
+    normalizedHttpUrl(club.safari_icon_url) ||
+    normalizedHttpUrl(raw.safari_icon) ||
+    normalizedHttpUrl(club.logo)
+
   if (iconUrl) {
     const touchIcon = ensureLink('apple-touch-icon')
     touchIcon?.setAttribute('href', iconUrl)
@@ -73,5 +86,11 @@ export function applySafariWebAppConfig(club: OrgClubSearchInfoData | null | und
     const favicon = ensureLink('icon')
     favicon?.setAttribute('href', iconUrl)
     favicon?.setAttribute('type', 'image/png')
+  }
+
+  // 移除可能存在的 manifest 引用，避免 iOS 17+ Safari 强制以静态 manifest 里的固定名称覆盖俱乐部自定义桌面名称
+  const manifestLink = document.querySelector<HTMLLinkElement>('link[rel="manifest"]')
+  if (manifestLink) {
+    manifestLink.remove()
   }
 }

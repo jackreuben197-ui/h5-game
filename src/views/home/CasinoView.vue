@@ -2,6 +2,7 @@
 import {
   ref,
   computed,
+  nextTick,
   onMounted,
   onActivated,
   watch,
@@ -945,6 +946,25 @@ function handleServiceClick(): void {
   showGameToast(t('UIClub_InDeve'))
 }
 
+// ─── Category row ─────────────────────────────────────────────────────────────
+const iconRowRef = ref<HTMLElement | null>(null)
+
+// 8 категорий с длинными подписями (es/pt/ru) не помещаются в 390px:
+// строка скроллится по горизонтали, а выбранная категория подводится к центру.
+function centerSelectedCategory(): void {
+  const row = iconRowRef.value
+  const item = row?.querySelector<HTMLElement>('.icon-item.selected')
+  if (!row || !item) return
+  const maxLeft = row.scrollWidth - row.clientWidth
+  if (maxLeft <= 0) return
+  const left = item.offsetLeft - (row.clientWidth - item.offsetWidth) / 2
+  row.scrollTo({ left: Math.max(0, Math.min(left, maxLeft)), behavior: 'smooth' })
+}
+
+watch(selectedCategory, () => {
+  void nextTick(centerSelectedCategory)
+})
+
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
 onMounted(async () => {
   try {
@@ -964,6 +984,7 @@ onMounted(async () => {
   } finally {
     isInitLoading.value = false
   }
+  void nextTick(centerSelectedCategory)
 })
 
 onActivated(async () => {
@@ -1043,6 +1064,7 @@ onActivated(async () => {
     <!-- ── Category Icon Row ──────────────────────────────────────── -->
     <section
       v-show="hasGames || isInitLoading"
+      ref="iconRowRef"
       class="icon-row"
     >
       <button
@@ -1385,16 +1407,27 @@ onActivated(async () => {
   margin-left: auto;
   margin-right: auto;
   margin-top: 0;
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  align-items: center;
-  justify-items: center;
-  gap: 2px;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.16rem;
   position: relative;
   z-index: 1;
-  padding: 0.16rem 0.1rem 0;
-  overflow: visible;
+  // Нижний отступ — чтобы свечение выбранной пилюли не срезалось краем скроллера.
+  padding: 0.16rem 0.1rem 0.16rem;
   box-sizing: border-box;
+  // Длинные подписи (es/pt/ru) не влезают восьмёркой в 390px: строка едет вбок,
+  // а не сжимается и не режет последний пункт. Скроллбар скрыт.
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .casino-page.is-embedded .icon-row {
@@ -1414,7 +1447,11 @@ onActivated(async () => {
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
   cursor: pointer;
   transition: transform 0.15s ease, filter 0.15s ease;
-  width: 100%;
+  // Короткие подписи (cn/zh) по-прежнему укладываются в один экран без скролла;
+  // длинные переносятся в две строки внутри max-width, а не растягивают пункт.
+  flex: 1 0 auto;
+  min-width: 0.95rem;
+  max-width: 1.7rem;
   height: auto;
   &:active {
     transform: scale(0.95);
@@ -1514,7 +1551,8 @@ onActivated(async () => {
     0 8px 24px rgba(255, 87, 8, 0.2),
     inset 0 1px 1px rgba(255, 255, 255, 0.5),
     inset 0 -10px 6px rgba(180, 52, 0, 0.35);
-  white-space: nowrap;
+  // Длинная подпись переносится внутри пилюли, иначе она вылезает на соседние пункты.
+  white-space: normal;
   transform: scale(0.85);
   padding-left: 0.16rem;
   padding-bottom: 0.16rem;

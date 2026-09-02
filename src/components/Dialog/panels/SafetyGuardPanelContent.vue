@@ -404,7 +404,7 @@ function toSafeInt(value: unknown): number {
             <img :src="user.avatar" alt="avatar" />
             <!-- <img :src="baned" class="icon-baned" alt="avatar" /> -->
             <span class="safety-blacklist__badge">
-              <span>{{ t('UIDialog_Done2') }}</span>
+              <span v-fit-text="{ maxLines: 1 }">{{ t('UIDialog_Done2') }}</span>
             </span>
           </div>
           <div class="safety-blacklist__meta">
@@ -628,8 +628,14 @@ function toSafeInt(value: unknown): number {
   background: url('@/assets/images/table_baned.png') no-repeat center/cover;
   // box-shadow: 0 0.08rem 0.16rem rgba(0, 0, 0, 0.28);
   span {
+    // Ширина ограничена внутренним кругом печати: v-fit-text ужимает кегль по ней,
+    // иначе длинные слова (Bloqueado, प्रतिबंधित) заезжают на кольцо.
+    display: block;
+    width: 1rem;
+    text-align: center;
     color: #ff3556;
     font-size: 0.22rem;
+    line-height: 1.05;
     transform: rotate(-28deg);
   }
 }

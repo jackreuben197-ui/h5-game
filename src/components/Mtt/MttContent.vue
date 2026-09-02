@@ -376,9 +376,26 @@ function resolveLabel(key: string, fallback: string): string {
   return fallback
 }
 
+// Сервер отдаёт названия серий готовым текстом по-китайски (more_name = «全部月赛»),
+// мультиязычного шаблона под них нет. До правки на бэкенде подменяем известные строки
+// ключом словаря; когда сервер начнёт слать ключ или шаблон — карта просто перестанет
+// срабатывать, и её можно удалить.
+const SERVER_TEXT_KEY_MAP: Record<string, string> = {
+  全部月赛: 'UIMTT_SeriesMoreAllMonthly',
+  全部月賽: 'UIMTT_SeriesMoreAllMonthly',
+}
+
 function resolveNameByUnityRule(rawName: string): string {
   if (!rawName) {
     return ''
+  }
+
+  const serverTextKey = SERVER_TEXT_KEY_MAP[rawName.trim()]
+  if (serverTextKey) {
+    const mappedByKey = t(serverTextKey)
+    if (mappedByKey && mappedByKey !== serverTextKey) {
+      return mappedByKey
+    }
   }
 
   const mappedName = resolveTemplateTextByKey(rawName, getLocale())
@@ -594,33 +611,31 @@ function getDefaultGameIcon(category: MttCategory): string {
   gap: 0.08rem;
   max-width: 50%;
   min-height: 0.64rem;
-  padding: 0.08rem 0.24rem;
-  border: 0.0133rem solid rgba(255, 255, 255, 0.28);
-  border-radius: 0.32rem;
+  // Зелёная пилюля как у кнопки 报名 на карточке: полупрозрачная плашка читалась
+  // как заголовок, а не как элемент управления.
+  padding: 0.08rem 0.28rem;
+  border: none;
+  border-radius: 0.5067rem;
   appearance: none;
   font-size: 0.32rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #fff;
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--c-brand);
   cursor: pointer;
   line-height: 1.2;
   transition:
-    background-color 0.15s ease,
+    filter 0.15s ease,
     transform 0.15s ease;
 
   &:active {
-    background: rgba(255, 255, 255, 0.2);
+    filter: brightness(0.92);
     transform: scale(0.97);
   }
 
-  @include theme-light {
-    border-color: rgba(34, 34, 34, 0.14);
-    color: var(--c-brand);
-    background: rgba(34, 34, 34, 0.06);
-
-    &:active {
-      background: rgba(34, 34, 34, 0.11);
-    }
+  // На светлом фоне белый текст на мятной заливке читается плохо — контраст даёт чёрный.
+  // Именно theme-light-own: upstream-миксин theme-light выключен флагом и ничего не эмитит.
+  @include theme-light-own {
+    color: #000;
   }
 }
 

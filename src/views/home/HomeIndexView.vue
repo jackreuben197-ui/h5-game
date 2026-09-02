@@ -803,7 +803,7 @@ onBeforeUnmount(() => {
           type="button"
           @click="openGuestAuth('login')"
         >
-          {{ t('UIGuild_MemberManagerSortByLastLoginTime') }}
+          {{ t('UIClub_Mlist_denglu') }}
         </button>
       </div>
     </div>
@@ -1156,18 +1156,21 @@ onBeforeUnmount(() => {
 
 .top-bar__actions {
   display: flex;
-  gap: 0.1rem;
+  gap: 0.14rem;
+  flex: 1;
 }
 
 .top-bar__btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.18rem 0.75rem;
-  border: 0;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0.12rem 0.65rem;
+  border: none;
   border-radius: 0.56rem;
   font-family: 'PingFang SC', sans-serif;
-  font-size: 0.34rem;
+  font-size: 0.3rem;
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
@@ -1178,23 +1181,29 @@ onBeforeUnmount(() => {
 }
 
 .top-bar__btn--register {
-  color: rgba(0, 0, 0, 0.82);
-  background: rgba(174, 174, 174, 0.52);
-  box-shadow: 0.01rem 0.01rem 0.03rem rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(0.14rem);
+  background: rgba(128, 128, 128, 0.2);
+  color: #f9f9f9;
+  border: 0.02rem solid rgba(249, 249, 249, 0.15);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
 
   @include theme-light {
-    color: #fff;
+    background: rgba(255, 255, 255, 0.72);
+    color: rgba(15, 8, 8, 0.82);
+    border-color: rgba(0, 0, 0, 0.08);
   }
 }
 
 .top-bar__btn--login {
-  color: #fff;
-  background: linear-gradient(157deg, #05c297 0%, #027a5c 100%);
-  backdrop-filter: blur(0.55rem);
+  background: rgba(250, 43, 75, 0.8);
+  color: #f9f9f9;
+  border: 0.02rem solid rgba(249, 249, 249, 0.25);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
 
   @include theme-light {
-    background: var(--c-brand);
+    background: rgba(250, 43, 75, 0.92);
+    border-color: rgba(255, 255, 255, 0.4);
   }
 }
 

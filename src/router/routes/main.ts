@@ -10,6 +10,7 @@ export const mainRoute: RouteRecordRaw = {
   children: [
     {
       path: 'home',
+      alias: ['guest/home'],
       name: 'lobby',
       component: () => import('@/views/home/HomeIndexView.vue'),
       meta: {

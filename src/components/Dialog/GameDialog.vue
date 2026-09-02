@@ -11,6 +11,7 @@ import {
 } from 'vue'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import dialogBg from '@/assets/images/component_dialog_bg.png'
+import icModalClose from '@/assets/icons/modal_close.svg'
 import { t } from '@/i18n'
 
 /**
@@ -49,6 +50,8 @@ const props = withDefaults(
     bgImage?: string
     /** 卡片底色加深（仅用于个别需要高对比可读性的弹窗，如 MTT 报名） */
     darkBackdrop?: boolean
+    /** 是否显示右上角关闭按钮 */
+    showCloseButton?: boolean
     /** 关闭前回调，return false 阻止关闭 */
     beforeClose?: (action: string) => boolean | Promise<boolean>
   }>(),
@@ -69,6 +72,7 @@ const props = withDefaults(
     bodyStyle: undefined,
     bgImage: undefined,
     darkBackdrop: false,
+    showCloseButton: false,
     beforeClose: undefined,
   },
 )
@@ -86,6 +90,17 @@ function onConfirm() {
 
 function onCancel() {
   emit('cancel')
+}
+
+async function onCloseButton() {
+  if (props.beforeClose) {
+    const allow = await props.beforeClose('close')
+    if (allow === false) {
+      return
+    }
+  }
+  emit('update:show', false)
+  emit('close')
 }
 
 function hasRenderableContent(nodes: VNode[] | undefined): boolean {
@@ -163,6 +178,19 @@ const bodyStyles = computed<StyleValue>(() => [
           :style="{ backgroundImage: `url(${props.bgImage ?? dialogBg})` }"
         ></div>
         <div class="game-dialog__card-bg-shadow"></div>
+
+        <!-- Close button -->
+        <button
+          v-if="showCloseButton || $slots.close"
+          class="game-dialog__close-btn"
+          type="button"
+          aria-label="Close"
+          @click="onCloseButton"
+        >
+          <slot name="close">
+            <img :src="icModalClose" alt="" />
+          </slot>
+        </button>
 
         <!-- Title -->
         <div v-if="title || hasTitleSlotContent" class="game-dialog__title">
@@ -307,9 +335,43 @@ const bodyStyles = computed<StyleValue>(() => [
   }
 }
 
+.game-dialog__close-btn {
+  position: absolute;
+  top: 0.15rem;
+  right: 0.15rem;
+  z-index: 20;
+  width: 1.2rem;
+  height: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  img {
+    width: 0.7rem;
+    height: 0.7rem;
+    pointer-events: none;
+    user-select: none;
+    display: block;
+  }
+
+  &:hover {
+    opacity: 0.85;
+  }
+
+  &:active {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+}
+
 .game-dialog__title {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   font-size: 0.58rem;
   font-weight: 500;
   color: #f9f9f9;

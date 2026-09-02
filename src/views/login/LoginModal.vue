@@ -44,7 +44,6 @@ import icLock from '@/assets/icons/ic_lock.svg'
 import icKey from '@/assets/icons/ic_key.svg'
 import icEye from '@/assets/icons/ic_eye.svg'
 import icGlobe from '@/assets/icons/ic_globe.svg'
-import icModalClose from '@/assets/icons/modal_close.svg'
 import { showGameToast } from '@/components/Toast'
 import { ApiBusinessError } from '@/utils/apiError'
 import { LOGIN_FAILED_CODE, resolveLoginErrorText } from './loginErrorText'
@@ -661,6 +660,7 @@ function applyChannelInviteContext(): void {
   <GameDialog
     v-model:show="loginModalStore.visible"
     class="login-dialog"
+    :show-close-button="true"
     :show-footer="false"
     :show-confirm-button="false"
     :close-on-click-overlay="true"
@@ -668,18 +668,8 @@ function applyChannelInviteContext(): void {
     dialog-width="9rem"
     body-max-height="14rem"
     :bg-image="loginModalBg"
+    @close="loginModalStore.close()"
   >
-    <template #title>
-      <div v-if="false" class="login-title-row">
-        <button class="lang-btn" @click="showLanguageModal = true">
-          <img :src="icGlobe" alt="" />
-          <span class="lang-text">{{ currentLang.toUpperCase() }}</span>
-        </button>
-      </div>
-      <button class="login-close" type="button" @click="loginModalStore.close()">
-        <img :src="icModalClose" alt="" />
-      </button>
-    </template>
     <!-- <span class="debug-trigger" @click="openDebugAccountDialog">DEV</span> -->
     <div class="login-form">
       <div class="tab-row">
@@ -944,30 +934,6 @@ function applyChannelInviteContext(): void {
   cursor: pointer;
 }
 
-.login-close {
-  display: none;
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 10;
-  width: 0.71rem;
-  height: 0.71rem;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-
-  &:active {
-    opacity: 0.85;
-  }
-
-  img {
-    width: 0.7rem;
-  }
-}
-
 .login-form {
   display: flex;
   flex-direction: column;
@@ -1145,6 +1111,7 @@ function applyChannelInviteContext(): void {
   img {
     width: 0.59rem;
     height: 0.56rem;
+    pointer-events: none;
   }
 }
 
@@ -1261,15 +1228,7 @@ function applyChannelInviteContext(): void {
 <style lang="scss">
 @use '@/styles/mixins' as *;
 
-:root[data-theme='dark'] .login-dialog .game-dialog__title {
-  display: none;
-}
-
 :root[data-theme='light'] .login-dialog {
-  .login-close {
-    display: flex;
-  }
-
   @include light-panel-dialog;
 
   .input-row--filled {

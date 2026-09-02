@@ -349,7 +349,7 @@ export function buildChannelClubInviteUrl(inviteCode?: string): string {
   const currentUrl = new URL(window.location.href)
   const code = readString(inviteCode)
   if (!code) {
-    return `${currentUrl.origin}/#/home`
+    return `${currentUrl.origin}/#/guest/home`
   }
 
   let baseHost = currentUrl.hostname
@@ -358,7 +358,7 @@ export function buildChannelClubInviteUrl(inviteCode?: string): string {
     baseHost = mainDomain
   }
   const portSuffix = currentUrl.port ? `:${currentUrl.port}` : ''
-  return `${currentUrl.protocol}//${code}.${baseHost}${portSuffix}/#/home`
+  return `${currentUrl.protocol}//${code}.${baseHost}${portSuffix}/#/guest/home`
 }
 
 

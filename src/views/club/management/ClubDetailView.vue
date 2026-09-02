@@ -40,9 +40,7 @@ import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 import GameDialog from '@/components/Dialog/GameDialog.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
 import {
-  buildChannelAgentInviteUrl,
   buildChannelClubInviteUrl,
-  buildChannelRegisterUrl,
   isPrivateDomainMode,
 } from '@/utils/channelPackage'
 import { generateQrCodeUrl } from '@/utils/qrcode'
@@ -1079,14 +1077,11 @@ async function generateInviteQrCode(): Promise<void> {
     }
   }
 
-  const isChannelPackage = isPrivateDomainMode()
-  const finalLink = isAgent.value
-    ? buildChannelAgentInviteUrl(agentInviteCode.value, clubInviteCode)
-    : isChannelPackage
-      ? buildChannelClubInviteUrl(clubInviteCode)
-      : buildChannelRegisterUrl({ inviteCode: clubInviteCode })
+  // 始终用「邀请码 + 当前访问网站域名」生成子域名分享链接：
+  // https://<邀请码>.<当前域名>/#/guest/home（域名每天可能变化，故取 window.location.hostname）。
+  const finalLink = buildChannelClubInviteUrl(clubInviteCode)
 
-  if (!finalLink || !clubInviteCode || (isAgent.value && !agentInviteCode.value)) {
+  if (!finalLink || !clubInviteCode) {
     imgInviteQr.value = ''
     return
   }

@@ -5,10 +5,24 @@ import { clubRoutes, clubTabRoute } from '../src/router/routes/club.ts'
 import { messageRoutes, messageTabRoute } from '../src/router/routes/message.ts'
 import { mineRoutes, mineTabRoute } from '../src/router/routes/mine.ts'
 
+const homeRoute: RouteRecordRaw = {
+  path: 'home',
+  alias: ['guest/home'],
+  name: 'lobby',
+  component: {},
+  meta: {
+    requiresAuth: true,
+    guestPreview: true,
+    tabKey: 'home',
+    moduleTitle: '首页',
+    desktopLayout: 'primary',
+  },
+}
+
 const mainRoute: RouteRecordRaw = {
   path: '/',
   component: {},
-  children: [clubTabRoute, messageTabRoute, mineTabRoute],
+  children: [homeRoute, clubTabRoute, messageTabRoute, mineTabRoute],
 }
 
 const router = createRouter({
@@ -18,6 +32,8 @@ const router = createRouter({
 
 test('module route hierarchy keeps public paths and names stable', () => {
   const cases = [
+    ['/home', 'lobby'],
+    ['/guest/home', 'lobby'],
     ['/club', 'club'],
     ['/club/member/42/agent-profit', 'club-member-agent-profit'],
     ['/club/jackpot/pool-reward/reward-records', 'club-jackpot-pool-reward-reward-records'],

@@ -78,6 +78,16 @@ textarea {
   font: inherit;
 }
 
+button:not(:disabled),
+[role='button']:not([aria-disabled='true']) {
+  cursor: pointer;
+}
+
+button:disabled,
+[role='button'][aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
 // Disable browser callout menu on long press for non-editable areas.
 * {
   -webkit-touch-callout: none;

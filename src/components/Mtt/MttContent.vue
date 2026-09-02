@@ -383,6 +383,8 @@ function resolveLabel(key: string, fallback: string): string {
 const SERVER_TEXT_KEY_MAP: Record<string, string> = {
   全部月赛: 'UIMTT_SeriesMoreAllMonthly',
   全部月賽: 'UIMTT_SeriesMoreAllMonthly',
+  全部日赛: 'UIMTT_SeriesMoreAllDaily',
+  全部日賽: 'UIMTT_SeriesMoreAllDaily',
 }
 
 function resolveNameByUnityRule(rawName: string): string {
@@ -589,6 +591,9 @@ function getDefaultGameIcon(category: MttCategory): string {
 
 .mtt-group__title {
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.4893rem;
   font-weight: 700;
   color: #fff;
@@ -605,11 +610,10 @@ function getDefaultGameIcon(category: MttCategory): string {
 
 .mtt-group__toggle {
   display: inline-flex;
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   gap: 0.08rem;
-  max-width: 50%;
   min-height: 0.64rem;
   // Зелёная пилюля как у кнопки 报名 на карточке: полупрозрачная плашка читалась
   // как заголовок, а не как элемент управления.
@@ -631,17 +635,9 @@ function getDefaultGameIcon(category: MttCategory): string {
     filter: brightness(0.92);
     transform: scale(0.97);
   }
-
-  // На светлом фоне белый текст на мятной заливке читается плохо — контраст даёт чёрный.
-  // Именно theme-light-own: upstream-миксин theme-light выключен флагом и ничего не эмитит.
-  @include theme-light-own {
-    color: #000;
-  }
 }
 
 .mtt-group__toggle-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -686,10 +682,6 @@ function getDefaultGameIcon(category: MttCategory): string {
 :root[data-theme='light'] .mtt-content {
   .mtt-group__title {
     color: rgba(15, 8, 8, 0.85);
-  }
-
-  .mtt-group__toggle {
-    color: rgba(34, 34, 34, 0.72);
   }
 
   .empty-wrap {

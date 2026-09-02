@@ -440,7 +440,7 @@
   }
 
   html[data-main-layout='content'] .mtt-list-page .mtt-group__toggle {
-    width: 96px;
+    min-width: 96px;
     min-height: 26px;
     font-size: 14.1px;
     line-height: 26px;

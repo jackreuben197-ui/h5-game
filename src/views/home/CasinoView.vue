@@ -16,6 +16,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 import { useGameLaunchStore } from '@/stores/gameLaunch'
+import { requireRealUser } from '@/session/realUserGate'
 import {
   reserveGameWindow,
   launchGameUrl,
@@ -108,7 +109,7 @@ const loginModalStore = useLoginModalStore()
 const gameLaunchStore = useGameLaunchStore()
 const { isChannelPackage, channelClub, isVersionB } = useChannelBottomMenu()
 
-const isGuest = computed(() => !gameStore.sessionToken)
+const isGuest = computed(() => !gameStore.isRealUser)
 
 function toSafeInt(value: unknown): number {
   const num = Number(value)
@@ -853,8 +854,7 @@ async function handleGameClick(item: GameItem): Promise<void> {
   const { gameApiType, gameType } = item
 
   // 游客仅能预览目录，进入具体游戏前先引导登录。
-  if (isGuest.value) {
-    loginModalStore.open({ mode: 'login' })
+  if (!requireRealUser(() => handleGameClick(item))) {
     return
   }
 

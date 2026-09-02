@@ -59,13 +59,13 @@ export function applySafariWebAppConfig(club: OrgClubSearchInfoData | null | und
     return
   }
 
-  const label = normalizedText(club.safari_label)
+  const label = normalizedText(club.safari_label) || normalizedText(club.club_name)
   if (label) {
     document.title = label
     ensureMeta('apple-mobile-web-app-title')?.setAttribute('content', label)
   }
 
-  const iconUrl = normalizedHttpUrl(club.safari_icon_url)
+  const iconUrl = normalizedHttpUrl(club.safari_icon_url) || normalizedHttpUrl(club.logo)
   if (iconUrl) {
     const touchIcon = ensureLink('apple-touch-icon')
     touchIcon?.setAttribute('href', iconUrl)

@@ -146,7 +146,7 @@ export function resolveApiBaseUrl(): string {
     appConfig.baseApi ||
     appConfig.apiDomains[0] ||
     import.meta.env.VITE_API_BASE_URL ||
-    '/api'
+    TEST_API_FALLBACK
   )
 }
 

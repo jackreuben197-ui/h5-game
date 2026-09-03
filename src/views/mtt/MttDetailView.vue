@@ -83,13 +83,16 @@ const pageTitle = computed(() => {
   return resolveTemplateTextByKey(rawName, getLocale()) || t(rawName) || rawName
 })
 
-const tabs = ref<FilterTabOption[]>([
-  { name: 'status', title: t('UITexasReport_Label_AllBarSK') },
-  { name: 'players', title: t('UITexasReport_player') },
-  { name: 'rewards', title: t('MTT_State_Reward') },
-  { name: 'tables', title: t('UITexasReport_Label_AllBarPZ') },
-  { name: 'blinds', title: t('UITexasReport_Label_AllBarMZ') },
-])
+const tabs = computed<FilterTabOption[]>(() => {
+  const mttTabTexts = t('UIMatchMTTDetailList').split('^')
+  return [
+    { name: 'status', title: t('UITexasReport_Label_AllBarSK') },
+    { name: 'players', title: mttTabTexts[1] || t('UITexasReport_player') },
+    { name: 'rewards', title: t('MTT_State_Reward') },
+    { name: 'tables', title: t('UITexasReport_Label_AllBarPZ') },
+    { name: 'blinds', title: t('UITexasReport_Label_AllBarMZ') },
+  ]
+})
 
 const stateCode = computed(() => detailData.value?.state_code ?? -1)
 

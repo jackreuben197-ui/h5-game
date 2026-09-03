@@ -140,9 +140,12 @@
   }
 
   html[data-main-layout='content'] .mtt-detail-page .status-badge {
-    flex: 0 0 81px;
-    width: 81px;
+    flex: 0 0 auto;
+    min-width: 81px;
+    width: auto;
     height: 66px;
+    padding: 0 14px;
+    box-sizing: border-box;
     border-radius: 16px;
     font-size: 14px;
     line-height: 1.2;

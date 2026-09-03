@@ -469,7 +469,7 @@ const matchInfo = computed(() => {
 .status-card {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.35rem;
   padding: 0.22rem 0.27rem;
   background: rgba(0, 0, 0, 0.2);
   border-radius: 0.66rem;
@@ -483,8 +483,12 @@ const matchInfo = computed(() => {
 }
 
 .status-badge {
-  width: 2.05rem;
+  min-width: 2.05rem;
+  width: fit-content;
+  max-width: 4rem;
   height: 1.68rem;
+  padding: 0 0.28rem;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -493,6 +497,8 @@ const matchInfo = computed(() => {
   font-size: 0.36rem;
   font-weight: 600;
   color: #fff;
+  white-space: nowrap;
+  text-align: center;
   box-shadow: 0.03rem 0.04rem 0.07rem rgba(0, 0, 0, 0.18);
   flex-shrink: 0;
 
@@ -505,6 +511,8 @@ const matchInfo = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 0.05rem;
+  min-width: 0;
+  flex: 1;
 }
 
 .meta-row {

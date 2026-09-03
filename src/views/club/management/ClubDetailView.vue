@@ -2253,11 +2253,27 @@ onMounted(async () => {
     rgba(255, 255, 255, 0.1) 21.11%,
     rgba(230, 230, 230, 0.1) 71.43%
   ) !important;
-  // color: #fa2b4b !important;
   transition: opacity 0.2s ease;
 
   &:active {
     opacity: 0.8;
+  }
+
+  @include theme-light-own {
+    background: linear-gradient(135deg, #05c297 0%, #049e7b 100%) !important;
+    border: none !important;
+    box-shadow: 0 0.08rem 0.2rem rgba(5, 194, 151, 0.35) !important;
+    color: #ffffff !important;
+
+    :deep(.primary-btn__text) {
+      color: #ffffff !important;
+      font-weight: 500;
+    }
+
+    &:active {
+      opacity: 0.88;
+      transform: scale(0.985);
+    }
   }
 }
 
@@ -2991,6 +3007,23 @@ onMounted(async () => {
   .tribe-apply-btn--pending {
     color: rgba(15, 8, 8, 0.45);
     background: rgba(164, 164, 164, 0.2);
+  }
+
+  .danger-btn {
+    background: linear-gradient(135deg, #05c297 0%, #049e7b 100%) !important;
+    border: none !important;
+    box-shadow: 0 0.08rem 0.2rem rgba(5, 194, 151, 0.35) !important;
+    color: #ffffff !important;
+
+    .primary-btn__text {
+      color: #ffffff !important;
+      font-weight: 500;
+    }
+
+    &:active {
+      opacity: 0.88;
+      transform: scale(0.985);
+    }
   }
 }
 

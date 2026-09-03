@@ -204,6 +204,10 @@ const elapsedSeconds = computed(() => {
 const elapsedLabel = computed(() => fmtHHMMSS(elapsedSeconds.value))
 
 // ── players tab ───────────────────────────────────────────────────────────────
+const playersTabTitle = computed(() => {
+  const mttTabTexts = t('UIMatchMTTDetailList').split('^')
+  return mttTabTexts[1] || t('UITexasReport_player')
+})
 const showHunterMode = computed(() => (mtt.value?.hunter_on ?? 0) === 1)
 const showPlayerNullTips = computed(
   () => playerRequestCode.value === 10001 && !playersLoading.value,
@@ -588,7 +592,7 @@ onUnmounted(() => {
         type="button"
         @click="selectTab('players')"
       >
-        {{ t('UITexasReport_player') }}
+        {{ playersTabTitle }}
       </button>
       <button
         :class="['mrp__tab', { 'mrp__tab--active': activeTab === 'tables' }]"

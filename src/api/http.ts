@@ -17,7 +17,9 @@ import { resolveInviteCode, resolveTraceHash, resolveAgentInviteCode } from '@/u
 import { isTelegramMiniAppEnv } from '@/utils/environment'
 
 const http = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL:
+    import.meta.env.VITE_API_BASE_URL ||
+    (import.meta.env.DEV ? '/api' : 'https://preview.trackyourchoice.com/api'),
   timeout: 60000,
 })
 

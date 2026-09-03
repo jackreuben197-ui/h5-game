@@ -725,5 +725,10 @@ async function handleEnterTable(rid: number): Promise<void> {
   z-index: 1;
   padding: 0.2rem 0.54rem 0.4rem;
   flex-shrink: 0;
+
+  :deep(.primary-btn--glass:not(.primary-btn--disabled)) {
+    background: rgba(65, 137, 80, 1);
+    box-shadow: 0.03rem 0.04rem 0.07rem rgba(0, 0, 0, 0.18);
+  }
 }
 </style>

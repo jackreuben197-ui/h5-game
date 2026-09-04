@@ -91,12 +91,19 @@ export function checkIsShowForTribe(room: RoomRecord, tribeId: number): boolean 
   return false
 }
 
-// C# CheckIsShowForClubAndTribe：俱乐部桌 + 联盟桌（联盟还需 club_id 命中）。
+// C# CheckIsShowForClubAndTribe：平台桌直接展示；俱乐部桌 + 联盟桌按关联关系展示。
+// includePlatform=false 仅供仍受平台展示开关控制的场景（例如 MTT）使用。
 export function checkIsShowForClubAndTribe(
   room: RoomRecord,
   clubId: number,
   tribeId: number,
+  includePlatform = true,
 ): boolean {
+  const originType = getOriginType(room)
+  if (originType === ROOM_ORIGIN_TYPE.PLATFORM) {
+    return includePlatform
+  }
+
   // H5 兼容：未选中俱乐部时不做俱乐部筛选，避免页面空白。
   if (clubId <= 0) {
     return true
@@ -110,7 +117,6 @@ export function checkIsShowForClubAndTribe(
     return false
   }
 
-  const originType = getOriginType(room)
   if (originType !== ROOM_ORIGIN_TYPE.UNION) {
     // 兼容旧接口字段缺失 origin_type 的情况，保留原有展示行为。
     return originType <= 0
@@ -155,7 +161,7 @@ export function checkIsShowForClubAndTribeAndPlatform(
     return true
   }
 
-  return checkIsShowForClubAndTribe(room, clubId, tribeId)
+  return checkIsShowForClubAndTribe(room, clubId, tribeId, true)
 }
 
 export function formatUC(rawValue: number): string {

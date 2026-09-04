@@ -58,7 +58,7 @@ export function isMttRecordVisible(
 
   return displayPlatformMtt
     ? checkIsShowForClubAndTribeAndPlatform(roomLike, clubId, tribeId)
-    : checkIsShowForClubAndTribe(roomLike, clubId, tribeId)
+    : checkIsShowForClubAndTribe(roomLike, clubId, tribeId, false)
 }
 
 export function filterVisibleMttRecords(

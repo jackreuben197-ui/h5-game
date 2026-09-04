@@ -4,6 +4,7 @@ import iconPeople from '@/assets/icons/icon_people.png'
 import iconTime from '@/assets/icons/icon_time.png'
 import iconChips from '@/assets/icons/icon_chips.png'
 import iconBalance from '@/assets/icons/icon_credit_chip.png'
+import iconDiamond from '@/assets/icons/icon_diamond.png'
 import iconAof from '@/assets/icons/table_icon_Aof.png'
 import iconCritical from '@/assets/icons/table_icon_critical.png'
 import iconMushroom from '@/assets/icons/table_icon_mushroom.png'
@@ -104,8 +105,13 @@ const timeText = computed(() => {
   const totalSeconds = Number(props.room.play_duration) || 0
   return formatRoomLeftAndTotalByUnity(props.room.start_time, totalSeconds)
 })
-
-const chipsIcon = computed(() => (Number(props.room.gold_type) === 1 ? iconChips : iconBalance))
+const iconMap: Record<number, string> = {
+  1: iconChips,
+  2: iconChips,
+  3: iconBalance,
+  4: iconDiamond,
+}
+const chipsIcon = computed(() => iconMap[Number(props.room.gold_type)] ?? iconBalance)
 
 const showParticipation = computed(() => Number(props.room.participation_status) === 1)
 
@@ -117,7 +123,7 @@ const bringInText = computed(() => {
   if (!bringInValue) {
     return t('UIListItem_BuyIn')
   }
-  return (bringInValue) + t('MTT_xq_buy')
+  return bringInValue + t('MTT_xq_buy')
 })
 
 // 预设常见人数桌位坐标，保持和旧版一致。
@@ -234,7 +240,9 @@ function shortName(name?: string): string {
     </div>
 
     <div class="table-main">
-      <span v-if="showParticipation" class="participation-status">{{ t('UIFriendsTable_Text3') }}</span>
+      <span v-if="showParticipation" class="participation-status">
+        {{ t('UIFriendsTable_Text3') }}
+      </span>
       <div v-if="featureIcons.length" class="feature-icons">
         <img
           v-for="item in featureIcons"

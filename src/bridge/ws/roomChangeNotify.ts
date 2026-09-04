@@ -131,7 +131,9 @@ function mapRoomRecord(room: PbRoomRecord): RoomRecord {
     jackpot_id: toSafeInt(room.getJackpotId()),
     random_ante: room.getRandomAnte() || '',
     relate_club_ids: room.getRelateClubIdsList().map((id) => toSafeInt(id)),
-    relate_tribe_club_list: room.getRelateTribeClubListList().map((item) => mapTribeClubRelate(item)),
+    relate_tribe_club_list: room
+      .getRelateTribeClubListList()
+      .map((item) => mapTribeClubRelate(item)),
     users: roomUsersForView,
     currency: room.getCurrency() || '',
     cowboy_config: mapCowboyConfig(room.getCowboyConfig()),

@@ -18,7 +18,8 @@ import {
   type ReservedGameWindow,
 } from '@/utils/externalGameWindow'
 import { joinCasinoGame, getDeviceType, getPopularBannerGamesHome, getPopularBannerGamesClub } from '@/api/casino'
-import { showToast } from 'vant'
+import { showToast, showFailToast } from 'vant'
+import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 import { t } from '@/i18n'
 
 import mainBgUrl from '@/assets/images/main_bg.webp'
@@ -100,8 +101,31 @@ const handleBack = () => {
   router.back()
 }
 
+const selectedClub = computed(() => {
+  if (routeClubId.value && routeClubId.value > 0) {
+    const found = userInfoStore.clubList.find((c) => toSafeInt(c.club_id) === routeClubId.value)
+    if (found) return found
+  }
+  return userInfoStore.currentClub ?? userInfoStore.channelDefaultClub
+})
+const selectedClubId = computed(() => routeClubId.value || toSafeInt(selectedClub.value?.club_id))
+const selectedTribeId = computed(() =>
+  toSafeInt((selectedClub.value as Record<string, unknown> | null)?.tribe_id),
+)
+
 const handleServiceClick = () => {
-  router.push('/message/detail')
+  if (!requireRealUser(handleServiceClick)) return
+  const clubId = selectedClubId.value
+  if (clubId <= 0) {
+    showFailToast(t('UIClub_CurrentClubNo'))
+    return
+  }
+
+  openGlobalCustomerServiceChat({
+    imServiceType: 1,
+    clubId,
+    tribeId: selectedTribeId.value,
+  })
 }
 
 const pageStyle = computed(() => ({

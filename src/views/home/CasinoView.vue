@@ -10,6 +10,8 @@ import {
 import { useRouter, useRoute } from 'vue-router'
 import { t, getLocale, textI18n } from '@/i18n'
 import { showGameToast } from '@/components/Toast'
+import { showFailToast } from 'vant'
+import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 import { useCasinoStore } from '@/stores/casino'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -961,8 +963,31 @@ function handleCardImgError(event: Event, item: GameItem): void {
 }
 
 // ─── Service handler ──────────────────────────────────────────────────────────
+const selectedClub = computed(() => {
+  if (routeClubId.value && routeClubId.value > 0) {
+    const found = userInfoStore.clubList.find((c) => toSafeInt(c.club_id) === routeClubId.value)
+    if (found) return found
+  }
+  return userInfoStore.currentClub ?? userInfoStore.channelDefaultClub
+})
+const selectedClubId = computed(() => routeClubId.value || toSafeInt(selectedClub.value?.club_id))
+const selectedTribeId = computed(() =>
+  toSafeInt((selectedClub.value as Record<string, unknown> | null)?.tribe_id),
+)
+
 function handleServiceClick(): void {
-  showGameToast(t('UIClub_InDeve'))
+  if (!requireRealUser(handleServiceClick)) return
+  const clubId = selectedClubId.value
+  if (clubId <= 0) {
+    showFailToast(t('UIClub_CurrentClubNo'))
+    return
+  }
+
+  openGlobalCustomerServiceChat({
+    imServiceType: 1,
+    clubId,
+    tribeId: selectedTribeId.value,
+  })
 }
 
 // ─── Category row ─────────────────────────────────────────────────────────────

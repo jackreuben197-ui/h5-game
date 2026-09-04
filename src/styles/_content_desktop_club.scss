@@ -5,7 +5,7 @@
     --club-create-gutter: clamp(24px, 2.9861vw, 43px);
   }
 
-  html[data-main-layout='content'] .club-create-page .club-create {
+  html[data-main-layout='content'] .room-list-page.club-create-page .room-list-stage.club-create {
     position: relative;
     display: flex;
     flex-direction: column;
@@ -18,7 +18,7 @@
     scrollbar-width: none;
   }
 
-  html[data-main-layout='content'] .club-create-page .club-create::-webkit-scrollbar {
+  html[data-main-layout='content'] .room-list-page.club-create-page .room-list-stage.club-create::-webkit-scrollbar {
     display: none;
   }
 

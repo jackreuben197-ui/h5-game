@@ -60,6 +60,7 @@ export interface PaymentInfoListData {
 
 export interface CreatePaymentInfoRequest {
   account_no?: string
+  real_name?: string       // 收款人姓名（列表里回显为 pix_name）
   pix_name?: string
   bank_name?: string
   account_type?: number    // 1=bankcard

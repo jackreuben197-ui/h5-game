@@ -487,7 +487,6 @@ watch(filteredWithdrawTypes, (list) => {
                 <div class="wf__acct-details">
                   <div class="wf__acct-top">
                     <span class="wf__acct-name">{{ info.pix_name || info.bank_name || '—' }}</span>
-                    <span class="wf__acct-last4">{{ info.account_no?.slice(-4) || '—' }}</span>
                   </div>
                   <div class="wf__acct-no-pill">{{ formatAccountNumber(info.account_no) }}</div>
                 </div>
@@ -1079,16 +1078,6 @@ watch(filteredWithdrawTypes, (list) => {
   text-overflow: ellipsis;
 }
 
-.wf__acct-last4 {
-  font-family: var(--wallet-font-num);
-  font-size: 0.3rem;
-  color: rgba(255, 255, 255, 0.8);
-  white-space: nowrap;
-
-  @include theme-light-own {
-    color: var(--wallet-l-text);
-  }
-}
 
 .wf__acct-no-pill {
   display: flex;

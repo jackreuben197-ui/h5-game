@@ -19,12 +19,12 @@ const walletAddress = ref('')
 const saving = ref(false)
 
 async function handleSave() {
-  if (!walletName.value.trim() || !walletAddress.value.trim()) return
+  if (!walletAddress.value.trim()) return
   saving.value = true
   try {
     const res = await postPaymentInfoCreateApi({
       account_no: walletAddress.value.trim(),
-      pix_name: walletName.value.trim(),
+      real_name: walletName.value.trim(),
       account_type: 6,
     })
     if (res.code === 0) {
@@ -66,7 +66,6 @@ async function handleSave() {
           <span class="awa-field__required"
             >({{ tx('Wallet_CardHolderNote', 'Please fill in the real name corresponding to the payment method') }})</span
           >
-          <span class="awa-field__star">*</span>
         </label>
         <div class="awa-field__input-wrap">
           <input
@@ -109,10 +108,10 @@ async function handleSave() {
       <button
         type="button"
         class="awa-save-btn"
-        :disabled="!walletName.trim() || !walletAddress.trim() || saving"
+        :disabled="!walletAddress.trim() || saving"
         @click="handleSave"
       >
-        {{ saving ? tx('Wallet_Saving', '保存中…') : tx('Save', '保存') }}
+        {{ saving ? tx('Wallet_Saving', '保存中…') : t('Save') }}
       </button>
     </div>
   </div>

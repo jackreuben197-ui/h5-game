@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { showToast } from 'vant'
 import icSupportService from '@/assets/images/ic_support_service.png'
 import icBankcard from '@/assets/images/ic_bankcard.png'
@@ -34,6 +34,7 @@ const emit = defineEmits<{
 }>()
 
 const router = useRouter()
+const route = useRoute()
 const userInfoStore = useUserInfoStore()
 const walletStore = useWalletStore()
 
@@ -197,12 +198,26 @@ async function fetchWithdrawTypes(): Promise<void> {
     loadingWithdrawTypes.value = false
   }
 
-  if (bankWithdrawTypes.value.length > 0) {
+  const requested = route.query.channel
+  const requestedChannel: ChannelId | null =
+    requested === 'wallet' || requested === 'bankcard' || requested === 'customercare'
+      ? requested
+      : null
+
+  if (requestedChannel && availablePaymentChannels.value.some((c) => c.id === requestedChannel)) {
+    applyChannel(requestedChannel)
+  } else if (bankWithdrawTypes.value.length > 0) {
     applyChannel('bankcard')
   } else if (csWithdrawTypes.value.length > 0) {
     applyChannel('customercare')
   } else {
     selectedWithdrawType.value = null
+  }
+
+  if (requestedChannel) {
+    const query = { ...route.query }
+    delete query.channel
+    void router.replace({ query })
   }
 }
 
@@ -528,7 +543,6 @@ watch(filteredWithdrawTypes, (list) => {
               <span class="wf__type-card-name">{{
                 wt.name || tx('Wallet_BankCard', '银行卡')
               }}</span>
-              <span class="wf__type-card-sub">{{ tx('Wallet_Payment', '支付') }}</span>
             </div>
           </div>
         </div>
@@ -564,7 +578,6 @@ watch(filteredWithdrawTypes, (list) => {
                 <span class="wf__type-card-name">{{
                   wt.name || (isWallet ? 'USDT' : tx('Wallet_CsWithdraw', '客服'))
                 }}</span>
-                <span class="wf__type-card-sub">{{ tx('Wallet_Payment', '支付') }}</span>
               </div>
             </div>
           </div>
@@ -961,23 +974,6 @@ watch(filteredWithdrawTypes, (list) => {
   }
 }
 
-.wf__type-card-sub {
-  font-family: var(--wallet-font-cn);
-  font-size: 0.19rem;
-  color: rgba(255, 255, 255, 0.6);
-  flex-shrink: 0;
-  white-space: nowrap;
-
-  @include theme-light-own {
-    color: var(--wallet-l-text-muted);
-  }
-
-  .wf__type-card--active & {
-    @include theme-light-own {
-      color: var(--wallet-l-text-muted);
-    }
-  }
-}
 
 // Account rows
 .wf__acct-loading {

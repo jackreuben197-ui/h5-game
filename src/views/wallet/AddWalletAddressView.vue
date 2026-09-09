@@ -28,7 +28,7 @@ async function handleSave() {
       account_type: 6,
     })
     if (res.code === 0) {
-      router.replace({ name: 'wallet', query: { tab: '1' } })
+      router.replace({ name: 'wallet', query: { tab: '1', channel: 'wallet' } })
     } else {
       showToast((res.message ?? t('error999')) || '保存失败')
     }
@@ -50,7 +50,7 @@ async function handleSave() {
       <button
         class="awa-header__back"
         type="button"
-        @click="router.replace({ name: 'wallet', query: { tab: '1' } })"
+        @click="router.replace({ name: 'wallet', query: { tab: '1', channel: 'wallet' } })"
       >
         <img :src="icBack" alt="" class="awa-header__back-icon" />
       </button>

@@ -669,7 +669,8 @@ function applyChannelInviteContext(): void {
     :close-on-click-overlay="true"
     :before-close="() => !loading"
     dialog-width="9rem"
-    body-max-height="14rem"
+    style="top: 50%"
+    body-max-height="min(14rem, calc(100dvh - 1.6rem))"
   >
     <template #title>
       <div v-if="false" class="login-title-row">

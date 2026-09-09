@@ -669,8 +669,8 @@
         min-height: 0;
       }
 
-      /* 将 Telegram 安全区留白放到业务根节点，仅在 Telegram Mini App 环境启用 */
-      html[data-tg-mini-app='1'] #app > * {
+      /* 仅给路由页面留安全区；弹窗也是 #app 的直接子节点，不能被撑到一屏高。 */
+      html[data-tg-mini-app='1'] #app > .h5-route-host {
         box-sizing: border-box;
         min-height: 100%;
         padding-top: min(

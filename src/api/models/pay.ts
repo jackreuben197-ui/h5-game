@@ -40,6 +40,7 @@ export interface PaymentInfo {
   pix_name?: string
   bank_name?: string
   account_type?: number    // 1=bankcard, 3=alipay, 2=wechat
+  status?: number          // 1=normal, 2=deleted
   [key: string]: unknown
 }
 

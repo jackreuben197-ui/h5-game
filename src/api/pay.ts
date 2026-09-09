@@ -39,6 +39,15 @@ export async function postPaymentInfoCreateApi(
   return response.data
 }
 
+// 软删除：cpay/pay/info/update 用 status 标记，1=正常，2=删除。
+export async function postPaymentInfoDeleteApi(id: number): Promise<ApiResponse<null>> {
+  const response = await http.post<ApiResponse<null>>('/pay/cpay/pay/info/update', {
+    id,
+    status: 2,
+  })
+  return response.data
+}
+
 export async function postPayOrderInfoApi(
   payload: PayOrderInfoRequest = {},
   options: { suppressBusinessToast?: boolean } = {},

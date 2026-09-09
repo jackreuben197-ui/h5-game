@@ -7,10 +7,11 @@ import icBankcard from '@/assets/images/ic_bankcard.png'
 import walletPng from '@/assets/icons/walletpng.png'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import WithdrawConfirmModal from '@/views/wallet/components/WithdrawConfirmModal.vue'
+import GameDialog from '@/components/Dialog/GameDialog.vue'
 import { t } from '@/i18n'
 import { postOnlineWithdrawTypeListApi } from '@/api/config'
 import { postTiquGoldApi } from '@/api/order'
-import { postPaymentInfoListApi } from '@/api/pay'
+import { postPaymentInfoListApi, postPaymentInfoDeleteApi } from '@/api/pay'
 import type { OnlineWithdrawTypeItem } from '@/api/models/config'
 import type { PaymentInfo } from '@/api/models/pay'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -226,6 +227,7 @@ async function fetchPaymentInfo(): Promise<void> {
       const seen = new Set<string>()
       const deduped: PaymentInfo[] = []
       for (const item of res.data.list) {
+        if (item.status === 2) continue
         const key = `${item.pix_name}|${item.account_no}|${item.bank_name}|${item.account_type}`
         if (!seen.has(key)) {
           seen.add(key)
@@ -239,6 +241,70 @@ async function fetchPaymentInfo(): Promise<void> {
     console.error('fetchPaymentInfo failed', e)
   } finally {
     loadingPaymentInfo.value = false
+  }
+}
+
+const deleteCardTarget = ref<PaymentInfo | null>(null)
+const showDeleteCardConfirm = ref(false)
+const deletingCard = ref(false)
+
+const deleteCardDetail = computed(() => {
+  const info = deleteCardTarget.value
+  if (!info) return ''
+  const name = info.pix_name || info.bank_name || ''
+  return `${name} ${formatAccountNumber(info.account_no)}`.trim()
+})
+
+function askDeleteCard(info: PaymentInfo): void {
+  if (props.preview) {
+    emit('require-auth')
+    return
+  }
+  deleteCardTarget.value = info
+  showDeleteCardConfirm.value = true
+}
+
+// 全滑到左边缘也触发删除：追踪水平位移，超过行宽阈值即视为整条滑出。
+const FULL_SWIPE_RATIO = 0.6
+let swipeStartX = 0
+let swipeDeltaX = 0
+let swipeRowWidth = 0
+
+function onSwipeStart(e: TouchEvent): void {
+  if (props.preview) return
+  swipeStartX = e.touches[0]?.clientX ?? 0
+  swipeDeltaX = 0
+  swipeRowWidth = (e.currentTarget as HTMLElement | null)?.offsetWidth ?? 0
+}
+
+function onSwipeMove(e: TouchEvent): void {
+  if (props.preview) return
+  swipeDeltaX = (e.touches[0]?.clientX ?? 0) - swipeStartX
+}
+
+function onSwipeEnd(info: PaymentInfo): void {
+  if (props.preview) return
+  const passed = swipeDeltaX <= -(swipeRowWidth || 300) * FULL_SWIPE_RATIO
+  swipeDeltaX = 0
+  if (passed) askDeleteCard(info)
+}
+
+async function confirmDeleteCard(): Promise<void> {
+  const info = deleteCardTarget.value
+  if (!info?.id || deletingCard.value) return
+  deletingCard.value = true
+  try {
+    const res = await postPaymentInfoDeleteApi(info.id)
+    if (res.code === 0) {
+      showDeleteCardConfirm.value = false
+      deleteCardTarget.value = null
+      showToast(tx('error0', '操作成功'))
+      await fetchPaymentInfo()
+    }
+  } catch {
+    showToast(tx('error999', '删除失败'))
+  } finally {
+    deletingCard.value = false
   }
 }
 
@@ -399,26 +465,39 @@ watch(filteredWithdrawTypes, (list) => {
             {{ tx('Wallet_Loading', '加载中…') }}
           </div>
           <template v-else-if="paymentInfoList.length > 0">
-            <div
+            <van-swipe-cell
               v-for="info in paymentInfoList"
               :key="info.id"
-              class="wf__acct-row"
-              :class="{ 'wf__acct-row--active': selectedPaymentAccount?.id === info.id }"
-              @click="selectedPaymentAccount = info"
+              class="wf__acct-swipe"
+              :disabled="preview"
+              @touchstart.passive="onSwipeStart"
+              @touchmove.passive="onSwipeMove"
+              @touchend="onSwipeEnd(info)"
             >
-              <img
-                :src="info.account_type === 6 || isWallet ? walletPng : icBankcard"
-                alt=""
-                class="wf__acct-icon"
-              />
-              <div class="wf__acct-details">
-                <div class="wf__acct-top">
-                  <span class="wf__acct-name">{{ info.pix_name || info.bank_name || '—' }}</span>
-                  <span class="wf__acct-last4">{{ info.account_no?.slice(-4) || '—' }}</span>
+              <div
+                class="wf__acct-row"
+                :class="{ 'wf__acct-row--active': selectedPaymentAccount?.id === info.id }"
+                @click="selectedPaymentAccount = info"
+              >
+                <img
+                  :src="info.account_type === 6 || isWallet ? walletPng : icBankcard"
+                  alt=""
+                  class="wf__acct-icon"
+                />
+                <div class="wf__acct-details">
+                  <div class="wf__acct-top">
+                    <span class="wf__acct-name">{{ info.pix_name || info.bank_name || '—' }}</span>
+                    <span class="wf__acct-last4">{{ info.account_no?.slice(-4) || '—' }}</span>
+                  </div>
+                  <div class="wf__acct-no-pill">{{ formatAccountNumber(info.account_no) }}</div>
                 </div>
-                <div class="wf__acct-no-pill">{{ formatAccountNumber(info.account_no) }}</div>
               </div>
-            </div>
+              <template #right>
+                <button type="button" class="wf__acct-delete" @click="askDeleteCard(info)">
+                  {{ tx('UIClub_DeleteSomeone', '删除') }}
+                </button>
+              </template>
+            </van-swipe-cell>
           </template>
           <div v-else class="wf__acct-empty">
             {{
@@ -543,6 +622,19 @@ watch(filteredWithdrawTypes, (list) => {
     @close="showWithdrawConfirmModal = false"
     @confirm="confirmWithdraw"
   />
+
+  <GameDialog
+    v-model:show="showDeleteCardConfirm"
+    :title="tx('UIClub_ConfirmDelete', '确认删除')"
+    :show-cancel-button="true"
+    :cancel-button-text="tx('Wallet_Cancel', '取消')"
+    :confirm-button-text="tx('Wallet_Confirm', '确认')"
+    :confirm-button-disabled="deletingCard"
+    @confirm="confirmDeleteCard"
+    @cancel="showDeleteCardConfirm = false"
+  >
+    <div class="wf__delete-card-detail">{{ deleteCardDetail }}</div>
+  </GameDialog>
 </template>
 
 <style scoped lang="scss">
@@ -592,6 +684,15 @@ watch(filteredWithdrawTypes, (list) => {
     color: #78e490;
   }
 
+  // 未激活时保留与激活态一致的玻璃底，仅用文字色区分状态。
+  &.primary-btn--disabled {
+    opacity: 1;
+
+    :deep(.primary-btn__text) {
+      color: #fff;
+    }
+  }
+
   @include theme-light-own {
     border-color: rgba(242, 242, 242, 0.8) !important;
     background: var(--wallet-l-accent) !important;
@@ -605,6 +706,11 @@ watch(filteredWithdrawTypes, (list) => {
     :deep(.primary-btn__text),
     &:not(.primary-btn--disabled) :deep(.primary-btn__text) {
       color: var(--wallet-l-on-accent);
+    }
+
+    &.primary-btn--disabled :deep(.primary-btn__text) {
+      color: var(--wallet-l-on-accent);
+      opacity: 0.5;
     }
   }
 }
@@ -910,6 +1016,35 @@ watch(filteredWithdrawTypes, (list) => {
       background: rgba(5, 194, 151, 0.08);
       border-color: var(--wallet-l-accent);
     }
+  }
+}
+
+.wf__acct-swipe {
+  border-radius: 0.3rem;
+}
+
+.wf__acct-delete {
+  height: 100%;
+  margin-left: 0.16rem;
+  padding: 0 0.4rem;
+  border: 0;
+  border-radius: 0.3rem;
+  background: var(--wallet-color-danger);
+  font-family: var(--wallet-font-cn);
+  font-size: 0.3rem;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.wf__delete-card-detail {
+  text-align: center;
+  font-family: var(--wallet-font-cn);
+  font-size: 0.3rem;
+  color: #fff;
+  word-break: break-all;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
   }
 }
 

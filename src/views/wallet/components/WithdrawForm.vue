@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { showToast } from 'vant'
 import icSupportService from '@/assets/images/ic_support_service.png'
 import icBankcard from '@/assets/images/ic_bankcard.png'
+import walletPng from '@/assets/icons/walletpng.png'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import WithdrawConfirmModal from '@/views/wallet/components/WithdrawConfirmModal.vue'
 import { t } from '@/i18n'
@@ -43,12 +44,14 @@ function tx(key: string, fallback: string): string {
 
 const availableUc = computed(() => props.availableUc ?? 0)
 
-type ChannelId = 'bankcard' | 'customercare'
+type ChannelId = 'bankcard' | 'wallet' | 'customercare'
 const activeChannel = ref<ChannelId>('bankcard')
 const isCustomerCare = computed(() => activeChannel.value === 'customercare')
+const isWallet = computed(() => activeChannel.value === 'wallet')
 
 const paymentChannels: { id: ChannelId; image: string; label: string; key: string }[] = [
   { id: 'bankcard', image: icBankcard, label: '银行卡', key: 'Wallet_BankCard' },
+  { id: 'wallet', image: walletPng, label: 'USDT', key: 'Wallet_AddWalletAddressTitle' },
   { id: 'customercare', image: icSupportService, label: '客服', key: 'Wallet_CsWithdraw' },
 ]
 
@@ -67,7 +70,6 @@ const showWithdrawConfirmModal = ref(false)
 const withdrawConfirmAmount = ref(0)
 
 // ─── Computed ────────────────────────────────────────────────────────────────
-// 银行卡渠道：account_type === 1 且在线提现 (action_type === 1)；其余 (usdt、撮合提现等) 归为客服渠道
 function isBankcardWithdrawType(wt: OnlineWithdrawTypeItem): boolean {
   return wt.account_type === 1 && wt.action_type === 1
 }
@@ -76,17 +78,29 @@ const bankWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
   withdrawTypes.value.filter((wt) => wt.status === 1 && isBankcardWithdrawType(wt)),
 )
 
+const walletWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
+  withdrawTypes.value.filter(
+    (wt) => wt.status === 1 && (wt.account_type === 6 || wt.account_type === 0),
+  ),
+)
+
 const csWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
   withdrawTypes.value.filter((wt) => wt.status === 1 && wt.account_type === 0),
 )
 
-const filteredWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
-  activeChannel.value === 'bankcard' ? bankWithdrawTypes.value : csWithdrawTypes.value,
-)
+const filteredWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() => {
+  if (activeChannel.value === 'bankcard') return bankWithdrawTypes.value
+  if (activeChannel.value === 'wallet')
+    return walletWithdrawTypes.value.length > 0
+      ? walletWithdrawTypes.value
+      : csWithdrawTypes.value
+  return csWithdrawTypes.value
+})
 
 const availablePaymentChannels = computed(() =>
   paymentChannels.filter((ch) => {
     if (ch.id === 'bankcard') return bankWithdrawTypes.value.length > 0
+    if (ch.id === 'wallet') return true
     if (ch.id === 'customercare') return csWithdrawTypes.value.length > 0
     return true
   }),
@@ -201,9 +215,10 @@ async function fetchPaymentInfo(): Promise<void> {
   try {
     const userId =
       userInfoStore.userInfo?.user?.p_u_id ?? Number(localStorage.getItem('user_p_u_id') ?? '0')
+    const acctType = isWallet.value ? 6 : 1
     const res = await postPaymentInfoListApi({
       user_id: userId,
-      account_type: 1,
+      account_type: acctType,
       limit: 50,
       offset: 0,
     })
@@ -241,7 +256,7 @@ function applyChannel(ch: ChannelId): void {
   selectedWithdrawType.value = filteredWithdrawTypes.value[0] ?? null
   withdrawAmount.value = ''
   selectedPaymentAccount.value = null
-  if (ch === 'bankcard') void fetchPaymentInfo()
+  if (ch === 'bankcard' || ch === 'wallet') void fetchPaymentInfo()
 }
 
 function handleWithdraw(): void {
@@ -349,9 +364,15 @@ watch(filteredWithdrawTypes, (list) => {
             v-if="!isCustomerCare"
             class="wf__add-card-btn"
             type="button"
-            @click="router.push('/wallet/add-bank-card')"
+            @click="
+              router.push(isWallet ? '/wallet/add-wallet-address' : '/wallet/add-bank-card')
+            "
           >
-            {{ tx('Wallet_AddCard', '添加银行卡') }}
+            {{
+              isWallet
+                ? tx('Wallet_AddWalletAddressTitle', 'Add wallet address')
+                : tx('Wallet_AddCard', '添加银行卡')
+            }}
           </button>
         </div>
 
@@ -372,7 +393,7 @@ watch(filteredWithdrawTypes, (list) => {
           </div>
         </div>
 
-        <!-- 银行卡渠道：已绑定的收款账户 -->
+        <!-- 银行卡/钱包渠道：已绑定的收款账户 -->
         <template v-if="!isCustomerCare">
           <div v-if="loadingPaymentInfo" class="wf__acct-loading">
             {{ tx('Wallet_Loading', '加载中…') }}
@@ -385,7 +406,11 @@ watch(filteredWithdrawTypes, (list) => {
               :class="{ 'wf__acct-row--active': selectedPaymentAccount?.id === info.id }"
               @click="selectedPaymentAccount = info"
             >
-              <img :src="icBankcard" alt="" class="wf__acct-icon" />
+              <img
+                :src="info.account_type === 6 || isWallet ? walletPng : icBankcard"
+                alt=""
+                class="wf__acct-icon"
+              />
               <div class="wf__acct-details">
                 <div class="wf__acct-top">
                   <span class="wf__acct-name">{{ info.pix_name || info.bank_name || '—' }}</span>
@@ -396,7 +421,11 @@ watch(filteredWithdrawTypes, (list) => {
             </div>
           </template>
           <div v-else class="wf__acct-empty">
-            {{ tx('Wallet_NoCardBound', '暂无绑定银行卡') }}
+            {{
+              isWallet
+                ? tx('Wallet_NoWalletBound', '暂无绑定钱包地址')
+                : tx('Wallet_NoCardBound', '暂无绑定银行卡')
+            }}
           </div>
         </template>
       </template>
@@ -407,7 +436,7 @@ watch(filteredWithdrawTypes, (list) => {
     </div>
 
     <div v-if="withdrawTypes.length > 0" class="wf__methods">
-      <div v-if="!isCustomerCare && bankWithdrawTypes.length > 0" class="wf__type-scroll">
+      <div v-if="activeChannel === 'bankcard' && bankWithdrawTypes.length > 0" class="wf__type-scroll">
         <div
           v-for="wt in bankWithdrawTypes"
           :key="wt.id"
@@ -415,7 +444,7 @@ watch(filteredWithdrawTypes, (list) => {
           :class="{ 'wf__type-card--active': selectedWithdrawType?.id === wt.id }"
           @click="selectWithdrawType(wt)"
         >
-          <img class="wf__type-card-icon" :src="icBankcard" alt="" />
+          <img class="wf__type-card-icon" :src="wt.image || icBankcard" alt="" />
           <div class="wf__type-card-label">
             <div class="wf__type-card-text">
               <span class="wf__type-card-name">{{
@@ -427,20 +456,35 @@ watch(filteredWithdrawTypes, (list) => {
         </div>
       </div>
 
-      <template v-else-if="isCustomerCare">
-        <div v-if="csWithdrawTypes.length > 0" class="wf__type-scroll">
+      <template v-else-if="isWallet || isCustomerCare">
+        <div v-if="filteredWithdrawTypes.length > 0" class="wf__type-scroll">
           <div
-            v-for="wt in csWithdrawTypes"
+            v-for="wt in filteredWithdrawTypes"
             :key="wt.id"
             class="wf__type-card"
             :class="{ 'wf__type-card--active': selectedWithdrawType?.id === wt.id }"
             @click="selectCsWithdrawType(wt)"
           >
-            <img :src="icSupportService" alt="" class="wf__type-card-icon" />
+            <img
+              :src="
+                wt.image ||
+                (isWallet ||
+                wt.account_type === 6 ||
+                wt.name?.toLowerCase().includes('gopay') ||
+                wt.name?.toLowerCase().includes('topay') ||
+                wt.name?.toLowerCase().includes('onpay') ||
+                wt.name?.toLowerCase().includes('wallet') ||
+                wt.name?.toLowerCase().includes('usdt')
+                  ? walletPng
+                  : icSupportService)
+              "
+              alt=""
+              class="wf__type-card-icon"
+            />
             <div class="wf__type-card-label">
               <div class="wf__type-card-text">
                 <span class="wf__type-card-name">{{
-                  wt.name || tx('Wallet_CsWithdraw', '客服')
+                  wt.name || (isWallet ? 'USDT' : tx('Wallet_CsWithdraw', '客服'))
                 }}</span>
                 <span class="wf__type-card-sub">{{ tx('Wallet_Payment', '支付') }}</span>
               </div>

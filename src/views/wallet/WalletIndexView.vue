@@ -742,6 +742,7 @@ async function onPayClick() {
       orderNo: '',
       qrCode: '',
       payAddress: '',
+      paymentUrl: '',
     }
     onlinePopupOpen.value = true
   }

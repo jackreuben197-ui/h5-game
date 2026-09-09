@@ -279,7 +279,7 @@ export const useWalletStore = defineStore('wallet', () => {
           // 银行卡渠道(account_type 1)走在线流程，不进聊天。
           if (Number(o.status) !== 1) return false
           const acct = Number((o as any).account_type)
-          if (acct === 1) return false
+          if (acct === 1 || acct === 6) return false
           const ot = Number(
             (o as any).pay_api_type ??
               (o as any).pay_type ??

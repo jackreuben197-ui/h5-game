@@ -1042,10 +1042,6 @@ watch(filteredWithdrawTypes, (list) => {
   font-size: 0.3rem;
   color: #fff;
   word-break: break-all;
-
-  @include theme-light-own {
-    color: var(--wallet-l-text);
-  }
 }
 
 .wf__acct-icon {

@@ -164,6 +164,7 @@ function toMttListRecordFromWsRecord(record: WsUserMttRecord): MttListRecord {
     game_icon: record.game_icon || '',
     limit_participants: toSafeInt(record.limit_participants),
     origin_type: toSafeInt(record.origin_type),
+    gold_type: toSafeInt(record.gold_type),
     relate_club_ids: Array.isArray(record.relate_club_ids)
       ? record.relate_club_ids.map((id) => toSafeInt(id))
       : [],
@@ -175,6 +176,7 @@ function toMttIdMetaFromWsRecord(record: WsUserMttRecord): MttIdInfoRecord {
   return {
     match_id: toSafeInt(record.match_id),
     origin_type: toSafeInt(record.origin_type),
+    gold_type: toSafeInt(record.gold_type),
     relate_club_ids: Array.isArray(record.relate_club_ids)
       ? record.relate_club_ids.map((id) => toSafeInt(id))
       : [],

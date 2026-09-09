@@ -1,12 +1,9 @@
 import type { MttIdInfoRecord, MttListRecord, RoomRecord } from '@/api/models/roomcenter'
-import {
-  checkIsShowForClubAndTribe,
-  checkIsShowForClubAndTribeAndPlatform,
-} from '@/utils/roomVisibility'
+import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
 
 // 与 MttContent.filteredItems 保持同一过滤口径：排除麻将 + 按 club/tribe 可见性筛选。
 // 任何「首页 MTT 统计 / MTT 列表 / 其它需要展示赛事的入口」都应走这个 helper，避免分叉。
-// displayPlatformMtt 对齐 Unity 全局配置 club_display_platform_mtt：开启时平台赛事（origin_type=1）直接可见。
+// 平台赛事受 club_display_platform_mtt 控制；渠道包的平台钻石赛事还需俱乐部开关同时开启。
 
 function toSafeInt(value: unknown): number {
   const num = Number(value)
@@ -31,6 +28,7 @@ export function isMttRecordVisible(
   clubId: number,
   tribeId: number,
   displayPlatformMtt: boolean,
+  displayPlatformDiamond?: boolean,
 ): boolean {
   // 对齐 MttContent：麻将赛事固定隐藏（暂未开放）。
   const gameType = Number(record.game_type ?? 0)
@@ -52,13 +50,20 @@ export function isMttRecordVisible(
     poker_type: 0,
     sb: 0,
     origin_type: originType,
+    gold_type: meta?.gold_type ?? record.gold_type,
     relate_club_ids: relateClubIds,
     relate_tribe_club_list: relateTribeClubList,
   } as RoomRecord
 
-  return displayPlatformMtt
-    ? checkIsShowForClubAndTribeAndPlatform(roomLike, clubId, tribeId)
-    : checkIsShowForClubAndTribe(roomLike, clubId, tribeId, false)
+  return checkIsShowForClubAndTribe(
+    roomLike,
+    clubId,
+    tribeId,
+    displayPlatformMtt,
+    displayPlatformDiamond === undefined
+      ? undefined
+      : displayPlatformMtt && displayPlatformDiamond,
+  )
 }
 
 export function filterVisibleMttRecords(
@@ -67,9 +72,12 @@ export function filterVisibleMttRecords(
   clubId: number,
   tribeId: number,
   displayPlatformMtt: boolean,
+  displayPlatformDiamond?: boolean,
 ): MttListRecord[] {
   return records.filter((record) => {
     const matchId = toSafeInt(record.match_id)
-    return isMttRecordVisible(record, metaMap[matchId], clubId, tribeId, displayPlatformMtt)
+    return isMttRecordVisible(
+      record, metaMap[matchId], clubId, tribeId, displayPlatformMtt, displayPlatformDiamond,
+    )
   })
 }

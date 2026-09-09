@@ -92,16 +92,19 @@ export function checkIsShowForTribe(room: RoomRecord, tribeId: number): boolean 
 }
 
 // C# CheckIsShowForClubAndTribe：平台桌直接展示；俱乐部桌 + 联盟桌按关联关系展示。
-// includePlatform=false 仅供仍受平台展示开关控制的场景（例如 MTT）使用。
+// 渠道钻石开关仅覆盖平台钻石桌；其他币种继续服从原有平台规则。
 export function checkIsShowForClubAndTribe(
   room: RoomRecord,
   clubId: number,
   tribeId: number,
   includePlatform = true,
+  displayPlatformDiamond?: boolean,
 ): boolean {
   const originType = getOriginType(room)
   if (originType === ROOM_ORIGIN_TYPE.PLATFORM) {
-    return includePlatform
+    return Number(room.gold_type) === 4 && displayPlatformDiamond !== undefined
+      ? displayPlatformDiamond
+      : includePlatform
   }
 
   // H5 兼容：未选中俱乐部时不做俱乐部筛选，避免页面空白。

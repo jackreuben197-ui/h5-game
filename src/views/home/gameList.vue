@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { usePlatformDiamondVisibility } from '@/composables/usePlatformDiamondVisibility'
 import { computed, onMounted, reactive, ref, watch, type CSSProperties } from 'vue'
 import { useRouter } from 'vue-router'
 import { showFailToast } from 'vant'
@@ -65,6 +66,7 @@ const ROOM_GROUP_EXPANDED_CACHE_VERSION = 1
 
 const router = useRouter()
 const gameStore = useGameStore()
+const displayPlatformDiamond = usePlatformDiamondVisibility()
 const roomListStore = useRoomListStore()
 const userInfoStore = useUserInfoStore()
 const isChannelPackage = isChannelPackageHost()
@@ -88,7 +90,13 @@ const selectedTribeId = computed(() =>
 const filteredRecords = computed(() => {
   const baseList = roomListStore.records.filter((room) => Number(room.game_type) < 5)
   const scopedList = baseList.filter((room) =>
-    checkIsShowForClubAndTribe(room, selectedClubId.value, selectedTribeId.value),
+    checkIsShowForClubAndTribe(
+      room,
+      selectedClubId.value,
+      selectedTribeId.value,
+      true,
+      displayPlatformDiamond.value,
+    ),
   )
   return scopedList.filter((room) => matchTabRoom(room, activeTab.value))
 })

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { usePlatformDiamondVisibility } from '@/composables/usePlatformDiamondVisibility'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from 'vue'
 import { useRouter } from 'vue-router'
 import { getUserClubApi } from '@/api/user'
@@ -31,6 +32,7 @@ const roomListStore = useRoomListStore()
 const mttListStore = useMttListStore()
 const appConfigStore = useAppConfigStore()
 const gameStore = useGameStore()
+const displayPlatformDiamond = usePlatformDiamondVisibility()
 const isChannelPackage = isChannelPackageHost()
 const { isVersionB: isChannelMenuVersionB } = useChannelBottomMenu()
 
@@ -98,7 +100,8 @@ function normalizeHomeZoneStats(raw: unknown): HomeZoneStats {
 
 // 首屏优先读取缓存，避免从 0 闪到真实值。
 function restoreHomeRoomStatsCache(): HomeZoneStats | null {
-  if (typeof window === 'undefined') {
+  // 渠道开关可能已在 CMS 改变，首屏不能复用包含平台钻石内容的旧统计。
+  if (typeof window === 'undefined' || isChannelPackageHost()) {
     return null
   }
 
@@ -390,7 +393,11 @@ function refreshHomePokerMahjongStatsFromStore(): void {
   const nextStats = createEmptyZoneStats()
   roomListStore.records.forEach((room) => {
     // 对齐 C# RequestTableDataListForClubOrTribe：先按俱乐部/联盟关系过滤可见牌桌。
-    if (!checkIsShowForClubAndTribe(room, selectedClubId.value, selectedTribeId.value)) {
+    if (
+      !checkIsShowForClubAndTribe(
+        room, selectedClubId.value, selectedTribeId.value, true, displayPlatformDiamond.value,
+      )
+    ) {
       return
     }
 
@@ -467,6 +474,7 @@ function refreshHomeMttStatsFromStore(): void {
     selectedClubId.value,
     selectedTribeId.value,
     appConfigStore.clubDisplayPlatformMtt,
+    displayPlatformDiamond.value,
   )
   const players = visibleRecords.reduce((sum, item) => sum + toSafeNumber(item.participants), 0)
 
@@ -523,7 +531,7 @@ watch(
 )
 
 watch(
-  [() => roomListStore.records, selectedClubId, selectedTribeId],
+  [() => roomListStore.records, selectedClubId, selectedTribeId, displayPlatformDiamond],
   () => {
     refreshHomePokerMahjongStatsFromStore()
   },
@@ -540,6 +548,7 @@ watch(
     selectedTribeId,
     // 全局配置异步到达后重算，平台 MTT 可见性依赖 club_display_platform_mtt。
     () => appConfigStore.clubDisplayPlatformMtt,
+    displayPlatformDiamond,
   ],
   () => {
     refreshHomeMttStatsFromStore()

@@ -1,3 +1,4 @@
+import { usePlatformDiamondVisibility } from '@/composables/usePlatformDiamondVisibility'
 import { computed } from 'vue'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { useMttListStore } from '@/stores/mttList'
@@ -16,6 +17,7 @@ function toSafeInt(value: unknown): number {
 /** 渠道包底部导航的版本与动态玩法入口。 */
 export function useChannelBottomMenu() {
   const gameStore = useGameStore()
+  const displayPlatformDiamond = usePlatformDiamondVisibility()
   const userInfoStore = useUserInfoStore()
   const roomListStore = useRoomListStore()
   const mttListStore = useMttListStore()
@@ -51,7 +53,13 @@ export function useChannelBottomMenu() {
     roomListStore.records.some(
       (room) =>
         Number(room.game_type) < 5 &&
-        checkIsShowForClubAndTribe(room, selectedClubId.value, selectedTribeId.value),
+        checkIsShowForClubAndTribe(
+          room,
+          selectedClubId.value,
+          selectedTribeId.value,
+          true,
+          displayPlatformDiamond.value,
+        ),
     ),
   )
 
@@ -63,6 +71,7 @@ export function useChannelBottomMenu() {
         selectedClubId.value,
         selectedTribeId.value,
         appConfigStore.clubDisplayPlatformMtt,
+        displayPlatformDiamond.value,
       ).length > 0,
   )
 

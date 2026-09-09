@@ -198,6 +198,9 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
           if (club && club.h5_menu === undefined && Number.isFinite(responseH5Menu)) {
             club.h5_menu = responseH5Menu
           }
+          if (club && club.diamond_room_switch === undefined) {
+            club.diamond_room_switch = Number(response.data?.diamond_room_switch) === 1 ? 1 : 2
+          }
           this.channelDefaultClub = club
           channelDefaultClubLoaded = true
           return club

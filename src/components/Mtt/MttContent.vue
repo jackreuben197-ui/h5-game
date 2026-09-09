@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { usePlatformDiamondVisibility } from '@/composables/usePlatformDiamondVisibility'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import type { MttItem, MttActionType } from '@/components/ListItem/MttCard.vue'
@@ -67,6 +68,7 @@ const router = useRouter()
 const appConfigStore = useAppConfigStore()
 const mttListStore = useMttListStore()
 const userInfoStore = useUserInfoStore()
+const displayPlatformDiamond = usePlatformDiamondVisibility()
 
 const expandedGroupMap = ref<Record<string, boolean>>({})
 const selectedClub = computed(
@@ -114,6 +116,7 @@ const filteredItems = computed<MttViewItem[]>(() => {
         selectedClubId.value,
         selectedTribeId.value,
         appConfigStore.clubDisplayPlatformMtt,
+        displayPlatformDiamond.value,
       )
     ) {
       return false

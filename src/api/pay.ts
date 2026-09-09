@@ -6,6 +6,8 @@ import type {
   PaymentInfoListRequest,
   PaymentInfoListData,
   CreatePaymentInfoRequest,
+  PayOrderInfoRequest,
+  PayOrderInfoData,
 } from '@/api/models/pay'
 
 const formatPath = (
@@ -35,4 +37,13 @@ export async function postPaymentInfoCreateApi(
 ): Promise<ApiResponse<Record<string, unknown>>> {
   const response = await http.post<ApiResponse<Record<string, unknown>>>('/pay/cpay/pay/info/create', payload)
   return response.data
+}
+
+export async function postPayOrderInfoApi(
+  payload: PayOrderInfoRequest = {},
+  options: { suppressBusinessToast?: boolean } = {},
+): Promise<ApiResponse<PayOrderInfoData>> {
+  const response = await http.post<ApiResponse<PayOrderInfoData> | string>('/pay/order/info', payload, options)
+  const data = response.data
+  return typeof data === 'string' ? (JSON.parse(data) as ApiResponse<PayOrderInfoData>) : data
 }

@@ -23,6 +23,8 @@ const props = defineProps<{
   initialQrCode?: string
   initialPayAddress?: string
   initialPaymentUrl?: string
+  payPrice?: number
+  initialTimeLeft?: number
 }>()
 
 const emit = defineEmits<{
@@ -43,7 +45,7 @@ const qrCodeUrl = ref(props.initialQrCode || '')
 const payAddress = ref(props.initialPayAddress || '')
 const paymentUrl = ref(props.initialPaymentUrl || '')
 
-const timeLeft = ref(900) // 15-minute countdown (900s)
+const timeLeft = ref(props.initialTimeLeft ?? 900) // 15-minute countdown (900s)
 let timer: number | null = null
 
 const showFullQr = ref(false)
@@ -59,7 +61,7 @@ const priceData = computed(() => {
 })
 
 const formattedPrice = computed(() => {
-  return walletStore.formatUsdtPrice(priceData.value.totalUiPrice)
+  return walletStore.formatUsdtPrice(props.payPrice ?? priceData.value.totalUiPrice)
 })
 
 const formattedTime = computed(() => {
@@ -70,7 +72,7 @@ const formattedTime = computed(() => {
 
 function startTimer() {
   if (timer) clearInterval(timer)
-  timeLeft.value = 900
+  timeLeft.value = props.initialTimeLeft ?? 900
   timer = window.setInterval(() => {
     if (timeLeft.value > 0) {
       timeLeft.value--

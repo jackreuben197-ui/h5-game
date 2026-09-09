@@ -12,6 +12,7 @@ const props = defineProps<{
   feeRate?: number
   feeType?: number
   price: string
+  initialTimeLeft?: number
 }>()
 
 const emit = defineEmits<{
@@ -19,7 +20,7 @@ const emit = defineEmits<{
   cancel: [orderNo: string]
 }>()
 
-const timeLeft = ref(900) // 15 minutes default
+const timeLeft = ref(props.initialTimeLeft ?? 900) // 15 minutes default
 let timer: number | null = null
 
 const formattedTime = computed(() => {

@@ -65,3 +65,21 @@ export interface CreatePaymentInfoRequest {
   [key: string]: unknown
 }
 
+export interface PayOrderInfoRequest {
+  order_type?: number
+  order_no?: string
+  [key: string]: unknown
+}
+
+export interface PayOrderInfoData {
+  order_no?: string
+  status?: number
+  pay_type?: string
+  payment_url?: string
+  pay_address?: string
+  pay_type_address?: string
+  qr_code?: string
+  emv?: string
+  time_long?: number
+  [key: string]: unknown
+}

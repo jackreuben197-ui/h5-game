@@ -84,11 +84,11 @@ async function handleSave() {
           {{ tx('Wallet_WalletAddressLabel', 'wallet address') }}
           <span class="awa-field__star">*</span>
         </label>
-        <div class="awa-field__input-wrap">
-          <input
+        <div class="awa-field__input-wrap awa-field__input-wrap--textarea">
+          <textarea
             v-model="walletAddress"
-            type="text"
-            class="awa-field__input"
+            rows="3"
+            class="awa-field__input awa-field__textarea"
             :placeholder="tx('Wallet_EnterWalletAddressHint', 'Please enter wallet address.')"
           />
         </div>
@@ -276,6 +276,14 @@ async function handleSave() {
   }
 }
 
+.awa-field__input-wrap--textarea {
+  height: auto;
+  min-height: 2.2rem;
+  padding: 0.28rem 0.38rem;
+  border-radius: 0.45rem;
+  align-items: flex-start;
+}
+
 .awa-field__input {
   flex: 1;
   min-width: 0;
@@ -298,6 +306,11 @@ async function handleSave() {
       color: var(--wallet-l-text-muted);
     }
   }
+}
+
+.awa-field__textarea {
+  resize: none;
+  width: 100%;
 }
 
 .awa-disclaimer {

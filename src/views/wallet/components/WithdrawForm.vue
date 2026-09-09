@@ -51,7 +51,7 @@ const isWallet = computed(() => activeChannel.value === 'wallet')
 
 const paymentChannels: { id: ChannelId; image: string; label: string; key: string }[] = [
   { id: 'bankcard', image: icBankcard, label: '银行卡', key: 'Wallet_BankCard' },
-  { id: 'wallet', image: walletPng, label: 'USDT', key: 'Wallet_AddWalletAddressTitle' },
+  { id: 'wallet', image: walletPng, label: 'Wallet', key: 'Wallet_Title' },
   { id: 'customercare', image: icSupportService, label: '客服', key: 'Wallet_CsWithdraw' },
 ]
 

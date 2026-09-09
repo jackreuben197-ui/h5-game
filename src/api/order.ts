@@ -17,6 +17,8 @@ import type {
   ExchangeRateResponseData,
   GuildGiveRecyCleRequest,
   GuildGiveRecyCleResponseData,
+  OrderClubOrderDetailRequest,
+  OrderClubOrderDetailResponseData,
   OrderTribeOrderAuditRequest,
   OrderTribeOrderAuditResponseData,
   OrderTribeOrderListRequest,
@@ -112,6 +114,15 @@ export async function postClubFundOrderListApi(
     headers,
     ...options,
   })
+  return response.data
+}
+
+export async function postOrderClubOrderDetailApi(
+  payload: OrderClubOrderDetailRequest = {} as OrderClubOrderDetailRequest,
+  options: { suppressBusinessToast?: boolean } = {},
+): Promise<ApiResponse<OrderClubOrderDetailResponseData>> {
+  const endpoint = '/order/club/order/detail'
+  const response = await http.post<ApiResponse<OrderClubOrderDetailResponseData>>(endpoint, payload, options)
   return response.data
 }
 

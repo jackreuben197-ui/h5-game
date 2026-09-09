@@ -11,10 +11,10 @@ import {
   postClubFundOrderListApi,
   postClubPlayerOrderRecordApi,
   postOrderUserClubOrderCancelApi,
+  postOrderClubOrderDetailApi,
 } from '@/api/order'
 import type { ClubFundOrderListOrderInfo, ClubPlayerOrderRecordOrderInfo } from '@/api/models/order'
 import type { PropGoldPriceListPayType } from '@/api/models/prop'
-import { postPayOrderInfoApi } from '@/api/pay'
 import { useWalletStore } from '@/stores/wallet'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { isPrivateDomainMode } from '@/utils/channelPackage'
@@ -183,23 +183,28 @@ function orderPaymentUrl(order: ClubFundOrderListOrderInfo): string {
 }
 
 async function withPaymentInfo(order: ClubFundOrderListOrderInfo): Promise<ClubFundOrderListOrderInfo> {
-  if (orderPaymentUrl(order) || order.pay_type_address) return order
+  if (!order.order_no) return order
   try {
-    const res = await postPayOrderInfoApi(
-      { order_type: 1, order_no: order.order_no },
+    const res = await postOrderClubOrderDetailApi(
+      { order_no: order.order_no },
       { suppressBusinessToast: true },
     )
-    const info = res.code === 0 ? res.data : undefined
-    if (!info) return order
-    const emv = String(info.emv ?? '')
+    const detail = res.code === 0 ? res.data?.order_detail : undefined
+    if (!detail) return order
+
+    const paymentUrl = String(detail.payment_url ?? detail.pay_url ?? order.payment_url ?? '')
+    const payAddress = String(detail.pay_type_address ?? detail.pay_address ?? order.pay_type_address ?? order.pay_address ?? '')
+    const qrCode = String(detail.qr_code ?? detail.qrcode ?? order.qr_code ?? order.qrcode ?? '')
+
     return {
       ...order,
-      payment_url: info.payment_url || order.payment_url,
-      pay_type_address: order.pay_type_address || info.pay_type_address || info.pay_address || emv,
-      qr_code: info.qr_code || emv || order.qr_code,
+      ...detail,
+      payment_url: paymentUrl || order.payment_url,
+      pay_type_address: payAddress || order.pay_type_address,
+      qr_code: qrCode || order.qr_code,
     }
   } catch (e) {
-    console.error('Failed to load order payment info', e)
+    console.error('Failed to load order payment detail', e)
     return order
   }
 }

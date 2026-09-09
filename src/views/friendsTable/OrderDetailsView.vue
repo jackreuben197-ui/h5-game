@@ -1,10 +1,16 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { t } from '@/i18n'
 import type { ClubPlayerOrderRecordOrderInfo } from '@/api/models/order'
+import { postOrderClubOrderDetailApi } from '@/api/order'
+import { generateQrCodeUrl } from '@/utils/qrcode'
 
 const props = defineProps<{ order: ClubPlayerOrderRecordOrderInfo }>()
 const emit = defineEmits<{ close: [] }>()
+
+const detail = ref<Record<string, any>>({ ...props.order })
+const qrCodeUrl = ref('')
+const showFullQr = ref(false)
 
 interface Row {
   label: string
@@ -26,12 +32,9 @@ function formatTime(raw?: string): string {
   return raw.replace('T', ' ').slice(0, 19)
 }
 
-// 联盟币金额（gold_num）后端单位为分，展示需 /100；支付金额（pay_price/amount）已是展示单位
-const payField = props.order as { pay_price?: number; amount?: number }
-
 function orderValue(...keys: string[]): string {
   for (const key of keys) {
-    const value = props.order[key]
+    const value = detail.value[key]
     if (value !== undefined && value !== null && String(value).trim() !== '') {
       return String(value)
     }
@@ -39,22 +42,69 @@ function orderValue(...keys: string[]): string {
   return '-'
 }
 
+function isImageSource(value: string): boolean {
+  return /^data:image\//i.test(value) || /\.(png|jpe?g|gif|svg|webp|bmp)(\?|$)/i.test(value)
+}
+
+const isPending = computed(() => Number(detail.value.status) === 1)
+
+async function loadDetail() {
+  if (props.order.order_no) {
+    try {
+      const res = await postOrderClubOrderDetailApi(
+        { order_no: props.order.order_no },
+        { suppressBusinessToast: true },
+      )
+      if (res.code === 0 && res.data?.order_detail) {
+        detail.value = { ...props.order, ...res.data.order_detail }
+      }
+    } catch (e) {
+      console.error('Failed to load order detail', e)
+    }
+  }
+
+  if (!isPending.value) {
+    qrCodeUrl.value = ''
+    return
+  }
+
+  const direct = String(detail.value.qrcode ?? detail.value.qr_code ?? detail.value.pay_type_qr_code ?? '')
+  if (direct && isImageSource(direct)) {
+    qrCodeUrl.value = direct
+  } else {
+    const link = direct || detail.value.payment_url || detail.value.pay_url || detail.value.pay_type_address || detail.value.pay_address || ''
+    if (link) {
+      try {
+        qrCodeUrl.value = await generateQrCodeUrl(link, { size: 400, margin: 2 })
+      } catch {
+        qrCodeUrl.value = ''
+      }
+    }
+  }
+}
+
+onMounted(loadDetail)
+
+const payPriceVal = computed(() => {
+  return detail.value.pay_price ?? detail.value.amount ?? '-'
+})
+
 const rows = computed<Row[]>(() => [
-  { label: t('Wallet_OrderId'), value: props.order.order_no ?? '-' },
+  { label: t('Wallet_OrderId'), value: detail.value.order_no ?? '-' },
   {
     label: t('Wallet_OrderAmount'),
-    value: props.order.gold_num != null ? String(props.order.gold_num / 100) : '-',
+    value: detail.value.gold_num != null ? String(detail.value.gold_num / 100) : '-',
   },
-  { label: t('UIMine_WalletPlatform_fee_s'), value: orderValue('fee', 'fee_amount', 'service_fee') },
+  { label: t('UIMine_WalletPlatform_fee_s'), value: orderValue('fee', 'fee_amount', 'service_fee', 'pay_price_fee') },
   {
     label: t('Wallet_OrderPayAmount'),
-    value: String(payField.pay_price ?? payField.amount ?? '-'),
+    value: String(payPriceVal.value),
   },
-  { label: t('UICommon_PayAddress'), value: orderValue('pay_address', 'from_address') },
+  { label: t('UICommon_PayAddress'), value: orderValue('pay_address', 'pay_type_address', 'from_address') },
   { label: t('UITribeRechargeUSDTShopPayeetNameTip'), value: orderValue('name', 'payee_name', 'receive_name') },
   { label: t('Wallet_OrderRecvAddr'), value: orderValue('receive_address', 'to_address', 'dest_address') },
-  { label: t('Wallet_OrderTime'), value: formatTime(props.order.create_time) },
-  { label: t('Wallet_OrderStatus'), value: statusLabel(props.order.status) },
+  { label: t('Wallet_OrderTime'), value: formatTime(detail.value.create_time) },
+  { label: t('Wallet_OrderStatus'), value: statusLabel(detail.value.status) },
 ])
 
 function close(): void {
@@ -69,14 +119,27 @@ function close(): void {
       @click.self="close"
     >
       <div class="card">
-        <!-- <div class="card__bg" ></div> -->
         <h2 class="card__title">{{ t('Wallet_OrderTitle') }}</h2>
+
+        <div v-if="isPending && qrCodeUrl" class="card__qr" @click="showFullQr = true">
+          <img :src="qrCodeUrl" alt="Order QR Code" class="card__qr-img" />
+          <span class="card__qr-tip">{{ t('UIWallet_QrPayTip') || 'Click to view QR code' }}</span>
+        </div>
+
         <div class="card__rows">
           <div v-for="r in rows" :key="r.label" class="card__row">
             <span class="card__key">{{ r.label }}</span>
             <span class="card__val">{{ r.value }}</span>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Zoomed QR Overlay -->
+    <div v-if="showFullQr && qrCodeUrl" class="qr-zoom-overlay" @click="showFullQr = false">
+      <div class="qr-zoom-card">
+        <img :src="qrCodeUrl" alt="QR Code Full" class="qr-zoom-img" />
+        <p class="qr-zoom-tip">{{ t('UIWallet_QrPayTip') }}</p>
       </div>
     </div>
   </Teleport>
@@ -169,9 +232,63 @@ function close(): void {
   pointer-events: none;
 }
 .card__title,
+.card__qr,
 .card__rows {
   position: relative;
   z-index: 2;
+}
+
+.card__qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.card__qr-img {
+  width: 90px;
+  height: 90px;
+  border-radius: 8px;
+  background: #fff;
+  padding: 4px;
+  object-fit: contain;
+}
+
+.card__qr-tip {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.qr-zoom-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-zoom-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.qr-zoom-img {
+  width: 220px;
+  height: 220px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 8px;
+  object-fit: contain;
+}
+
+.qr-zoom-tip {
+  color: #fff;
+  font-size: 12px;
 }
 
 .card__title {

@@ -208,8 +208,15 @@ function handleClose() {
   emit('close')
 }
 
-onMounted(() => {
+onMounted(async () => {
   if (step.value === 2) {
+    if (!qrCodeUrl.value && (paymentUrl.value || payAddress.value)) {
+      qrCodeUrl.value = await resolveQrCode({
+        qrCode: props.initialQrCode,
+        payment_url: paymentUrl.value,
+        pay_type_address: payAddress.value,
+      })
+    }
     startTimer()
   }
 })

@@ -38,6 +38,7 @@ import {
   postRechargeGoldApi,
   postClubFundOrderListApi,
   postOrderUserClubOrderCancelApi,
+  postOrderClubOrderDetailApi,
 } from '@/api/order'
 import { postChatSupportChannelListApi } from '@/api/chat'
 import { generateQrCodeUrl } from '@/utils/qrcode'
@@ -172,6 +173,7 @@ const onlinePopupInitialData = ref({
   orderNo: '',
   qrCode: '',
   payAddress: '',
+  paymentUrl: '',
 })
 
 function handleOnlineSuccess() {
@@ -416,81 +418,98 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
   if (!requireRealUser(() => handleUnfinishedContinue(order))) return
   showUnfinishedPopup.value = false
 
-  let qrCode =
-    (order as any).qrcode || (order as any).qr_code || (order as any).pay_type_qr_code || ''
-  const payAddress = order.pay_type_address || ''
-  // 订单列表不返回二维码图片，只有收款地址：用地址即时生成二维码，
-  // 避免「继续支付」后 USDT/在线支付弹窗里二维码空白。
-  if (!qrCode && payAddress) {
+  let fullOrder = order
+  if (order.order_no) {
     try {
-      qrCode = await generateQrCodeUrl(payAddress, { size: 720, margin: 2 })
+      const res = await postOrderClubOrderDetailApi(
+        { order_no: order.order_no },
+        { suppressBusinessToast: true },
+      )
+      if (res.code === 0 && res.data?.order_detail) {
+        fullOrder = { ...order, ...res.data.order_detail }
+      }
+    } catch (e) {
+      console.error('Failed to fetch order detail for unfinished order', e)
+    }
+  }
+
+  const paymentUrl = String(fullOrder.payment_url ?? fullOrder.pay_url ?? (fullOrder as any).payUrl ?? '')
+  const payAddress = String(fullOrder.pay_type_address ?? fullOrder.pay_address ?? '')
+  let qrCode = String((fullOrder as any).qrcode || fullOrder.qr_code || (fullOrder as any).pay_type_qr_code || '')
+
+  const link = qrCode || paymentUrl || payAddress
+  if (link) {
+    try {
+      qrCode = await generateQrCodeUrl(link, { size: 720, margin: 2 })
     } catch (e) {
       console.error('Failed to generate QR for unfinished order', e)
     }
   }
+
   const result = {
-    order_no: order.order_no,
-    gold_num: order.gold_num,
-    pay_price: order.pay_price,
+    order_no: fullOrder.order_no,
+    gold_num: fullOrder.gold_num,
+    pay_price: fullOrder.pay_price,
     order: {
-      order_no: order.order_no,
-      amount: order.pay_price,
-      gold_num: order.gold_num,
+      order_no: fullOrder.order_no,
+      amount: fullOrder.pay_price,
+      gold_num: fullOrder.gold_num,
     },
     usdt_address: {
-      address: order.pay_type_address || '',
+      address: payAddress,
       qr_code: qrCode,
-      name: (order as any).pay_type_name || t('UIWallet_Text3'),
+      name: (fullOrder as any).pay_type_name || t('UIWallet_Text3'),
     },
   }
 
   rechargeResult.value = result
 
   // 用 pay_id / pay_type_name 匹配真实支付类型：未完成 USDT 订单「继续支付」回到 USDT 弹窗，而非在线支付弹窗。
-  const orderType = resolveOrderPayType(order)
+  const orderType = resolveOrderPayType(fullOrder)
   if (
     orderType === 3 ||
-    (order as any).pay_type_name?.includes('撮合') ||
-    (order as any).pay_type_name?.includes('客服') ||
-    (order as any).pay_type_name?.toLowerCase().includes('cs') ||
-    (order as any).pay_type_name?.toLowerCase().includes('service')
+    (fullOrder as any).pay_type_name?.includes('撮合') ||
+    (fullOrder as any).pay_type_name?.includes('客服') ||
+    (fullOrder as any).pay_type_name?.toLowerCase().includes('cs') ||
+    (fullOrder as any).pay_type_name?.toLowerCase().includes('service')
   ) {
     const opened = await openMatchOrderChat(result, 1)
     if (!opened) {
       walletStore.addOptimisticCsOrder(
         {
-          order_no: String(order.order_no),
-          gold_num: Number(order.gold_num) || 0,
-          pay_price: Number(order.pay_price) || 0,
-          pay_type_name: String(order.pay_type_name ?? '客服撮合'),
-          create_time: String(order.create_time ?? ''),
+          order_no: String(fullOrder.order_no),
+          gold_num: Number(fullOrder.gold_num) || 0,
+          pay_price: Number(fullOrder.pay_price) || 0,
+          pay_type_name: String((fullOrder as any).pay_type_name ?? '客服撮合'),
+          create_time: String(fullOrder.create_time ?? ''),
           account_type: 0,
         } as ClubFundOrderListOrderInfo,
-        Number((order as any).order_type) === 2 ? 'withdraw' : 'recharge',
+        Number((fullOrder as any).order_type) === 2 ? 'withdraw' : 'recharge',
       )
       await refreshPendingCsOrder()
       openCsOrderChat()
     }
   } else if (orderType === 1) {
     // Standard USDT flow
-    usdtPopupProps.value.rate = (order as any).rate || (order as any).exchange_rate || 1
+    usdtPopupProps.value.rate = (fullOrder as any).rate || (fullOrder as any).exchange_rate || 1
     usdtDetailsPopupOpen.value = true
   } else {
     // 微信 / 支付宝 / 银行卡等在线支付（type 2、4-9）继续未完成订单
     onlinePopupProps.value = {
-      goldCount: Number(order.gold_num) || 0,
-      rate: (order as any).rate || (order as any).exchange_rate || 1,
-      feeRate: (order as any).fee_rate || 0,
-      feeType: (order as any).fee_type || 0,
-      discount: (order as any).discount || 0,
-      payId: (order as any).pay_id || (order as any).pay_type || 0,
-      priceId: (order as any).price_id || 0,
+      goldCount: Number(fullOrder.gold_num) || 0,
+      rate: (fullOrder as any).rate || (fullOrder as any).exchange_rate || 1,
+      feeRate: (fullOrder as any).fee_rate || 0,
+      feeType: (fullOrder as any).fee_type || 0,
+      discount: (fullOrder as any).discount || 0,
+      payId: (fullOrder as any).pay_id || (fullOrder as any).pay_type || 0,
+      priceId: (fullOrder as any).price_id || 0,
     }
     onlinePopupInitialData.value = {
       step: 2,
-      orderNo: order.order_no || '',
+      orderNo: fullOrder.order_no || '',
       qrCode: qrCode,
-      payAddress: order.pay_type_address || '',
+      payAddress: payAddress,
+      paymentUrl: paymentUrl,
     }
     onlinePopupOpen.value = true
   }
@@ -1093,6 +1112,7 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
       :initial-order-no="onlinePopupInitialData.orderNo"
       :initial-qr-code="onlinePopupInitialData.qrCode"
       :initial-pay-address="onlinePopupInitialData.payAddress"
+      :initial-payment-url="onlinePopupInitialData.paymentUrl"
       @close="onlinePopupOpen = false"
       @success="handleOnlineSuccess"
       @unfinished-order="handleOnlineUnfinished"

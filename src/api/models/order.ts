@@ -80,6 +80,23 @@ export interface ClubFundOrderListResponseData extends ClubFundOrderListData {
   [key: string]: unknown
 }
 
+// /api/order/club/order_detail (OrderClubOrderDetail)
+export interface OrderClubOrderDetailRequest {
+  order_no?: string // 订单号
+
+  [key: string]: unknown
+}
+
+export interface OrderClubOrderDetailResponseData extends OrderClubOrderDetailData {
+  [key: string]: unknown
+}
+
+export interface OrderClubOrderDetailData {
+  order_detail?: ClubFundOrderListOrderInfo
+
+  [key: string]: unknown
+}
+
 // /api/order/club/recharge (RechargeGoldClub)
 export interface RechargeGoldClubRequest {
   //     amount: number,

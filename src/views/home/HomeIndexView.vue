@@ -25,6 +25,12 @@ import PokerGameList from '@/views/home/gameList.vue'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 import { requireRealUser } from '@/session/realUserGate'
 import { ensureExperienceSession } from '@/session/experienceSession'
+import {
+  buildHomeContentModeCacheKey,
+  getHomeContentModeCache,
+  setHomeContentModeCache,
+  type HomeContentMode,
+} from '@/utils/homeContentModeCache'
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
@@ -100,7 +106,7 @@ function normalizeHomeZoneStats(raw: unknown): HomeZoneStats {
 
 // 首屏优先读取缓存，避免从 0 闪到真实值。
 function restoreHomeRoomStatsCache(): HomeZoneStats | null {
-  // 渠道开关可能已在 CMS 改变，首屏不能复用包含平台钻石内容的旧统计。
+  // 渠道包的展示结果依赖 CMS 钻石开关；持久化统计没有携带该上下文，不能跨页面刷新复用。
   if (typeof window === 'undefined' || isChannelPackageHost()) {
     return null
   }
@@ -170,7 +176,6 @@ const mahjongTablesText = 0
 const mahjongPlayersText = 0
 const mttTablesText = computed(() => `${homeRoomStats.value.mtt.tables}`)
 const mttPlayersText = computed(() => `${homeRoomStats.value.mtt.players}`)
-type HomeContentMode = 'zones' | 'mtt' | 'poker'
 
 // 渠道包版本 B 的首页固定保留首页信息区，底部嵌入扑克列表。
 // 版本 A 与官方包继续沿用现有的单类型 / 专区入口行为。
@@ -188,10 +193,29 @@ const homeContentModeRaw = computed<HomeContentMode>(() => {
   }
   return 'zones'
 })
-// 首次进入时先按缓存渲染，等 room/mtt 两个 bootstrap 都完成后最多校正一次。
-// 当前页面生命周期内只更新列表与数量，不再因 WS 增量反复重挂载首页结构；
-// 下次重新进入首页时会按最新缓存重新选择模式。
-const homeContentMode = ref<HomeContentMode>(homeContentModeRaw.value)
+const homeContentModeCacheKey = computed(() =>
+  buildHomeContentModeCacheKey({
+    sessionKey: String(gameStore.loginUserId || (gameStore.isGuestAccount ? 'guest' : 'pending')),
+    isChannelPackage,
+    clubId: selectedClubId.value,
+    tribeId: selectedTribeId.value,
+    displayPlatformMtt: appConfigStore.clubDisplayPlatformMtt,
+    displayPlatformDiamond: displayPlatformDiamond.value,
+    isChannelMenuVersionB: isChannelMenuVersionB.value,
+  }),
+)
+// 渠道首页路由会随底部导航反复挂载。当前 SPA 内复用已确认的展示模式，避免每次从 zones 起步；
+// 页面刷新后内存缓存自然失效，仍会等待最新 CMS 配置，保留平台钻石开关的安全边界。
+const homeContentMode = ref<HomeContentMode>(
+  getHomeContentModeCache(homeContentModeCacheKey.value) || homeContentModeRaw.value,
+)
+const homeContentReady = ref(false)
+
+function commitHomeContentMode(): void {
+  const nextMode = homeContentModeRaw.value
+  homeContentMode.value = nextMode
+  setHomeContentModeCache(homeContentModeCacheKey.value, nextMode)
+}
 
 const currentJoinedClub = computed(() => userInfoStore.currentJoinedClub)
 const channelUserLevel = computed(() => toSafeInt(currentJoinedClub.value?.user_level))
@@ -538,6 +562,9 @@ watch(
   [() => roomListStore.records, selectedClubId, selectedTribeId, displayPlatformDiamond],
   () => {
     refreshHomePokerMahjongStatsFromStore()
+    if (homeContentReady.value) {
+      commitHomeContentMode()
+    }
   },
   {
     deep: false,
@@ -556,6 +583,9 @@ watch(
   ],
   () => {
     refreshHomeMttStatsFromStore()
+    if (homeContentReady.value) {
+      commitHomeContentMode()
+    }
   },
   {
     deep: false,
@@ -590,7 +620,8 @@ async function bootstrapHomeContent(): Promise<void> {
   // 两份列表及其共同过滤上下文全部稳定后，一次提交统计和页面模式。
   refreshHomePokerMahjongStatsFromStore()
   refreshHomeMttStatsFromStore()
-  homeContentMode.value = homeContentModeRaw.value
+  commitHomeContentMode()
+  homeContentReady.value = true
 }
 
 onMounted(() => {

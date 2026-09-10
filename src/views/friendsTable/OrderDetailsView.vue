@@ -4,8 +4,9 @@ import { t } from '@/i18n'
 import type { ClubPlayerOrderRecordOrderInfo } from '@/api/models/order'
 import { postOrderClubOrderDetailApi } from '@/api/order'
 import { generateQrCodeUrl } from '@/utils/qrcode'
+import { formatDateTime } from '@/utils/time'
 
-const props = defineProps<{ order: ClubPlayerOrderRecordOrderInfo }>()
+const props = defineProps<{ order: ClubPlayerOrderRecordOrderInfo; withdraw?: boolean }>()
 const emit = defineEmits<{ close: [] }>()
 
 const detail = ref<Record<string, any>>({ ...props.order })
@@ -29,7 +30,7 @@ function statusLabel(status?: number): string {
 
 function formatTime(raw?: string): string {
   if (!raw) return '-'
-  return raw.replace('T', ' ').slice(0, 19)
+  return formatDateTime(raw, 'YYYY-MM-DD HH:mm:ss')
 }
 
 function orderValue(...keys: string[]): string {
@@ -92,18 +93,18 @@ const payPriceVal = computed(() => {
 const rows = computed<Row[]>(() => [
   { label: t('Wallet_OrderId'), value: detail.value.order_no ?? '-' },
   {
-    label: t('Wallet_OrderAmount'),
+    label: t(props.withdraw ? 'Wallet_OrderAmountWithdraw' : 'Wallet_OrderAmount'),
     value: detail.value.gold_num != null ? String(detail.value.gold_num / 100) : '-',
   },
   { label: t('UIMine_WalletPlatform_fee_s'), value: orderValue('fee', 'fee_amount', 'service_fee', 'pay_price_fee') },
   {
-    label: t('Wallet_OrderPayAmount'),
+    label: t(props.withdraw ? 'UITribeRechargeUSDTRecord_WithdrawGold' : 'Wallet_OrderPayAmount'),
     value: String(payPriceVal.value),
   },
   { label: t('UICommon_PayAddress'), value: orderValue('pay_address', 'pay_type_address', 'from_address') },
   { label: t('UITribeRechargeUSDTShopPayeetNameTip'), value: orderValue('name', 'payee_name', 'receive_name') },
-  { label: t('Wallet_OrderRecvAddr'), value: orderValue('receive_address', 'to_address', 'dest_address') },
-  { label: t('Wallet_OrderTime'), value: formatTime(detail.value.create_time) },
+  { label: t('UICommon_ReceiveAddress'), value: orderValue('receive_address', 'to_address', 'dest_address') },
+  { label: t(props.withdraw ? 'Wallet_OrderTimeWithdraw' : 'Wallet_OrderTime'), value: formatTime(detail.value.create_time) },
   { label: t('Wallet_OrderStatus'), value: statusLabel(detail.value.status) },
 ])
 

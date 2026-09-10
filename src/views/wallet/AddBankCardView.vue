@@ -63,9 +63,11 @@ async function handleSave() {
   if (!cardName.value.trim() || !cardBank.value.trim() || !cardNumber.value.trim()) return
   saving.value = true
   try {
+    const name = cardName.value.trim()
     const res = await postPaymentInfoCreateApi({
       account_no: cardNumber.value.trim(),
-      pix_name: cardName.value.trim(),
+      real_name: name,
+      pix_name: name,
       bank_name: cardBank.value.trim(),
       bank_branch: cardBranch.value.trim() || undefined,
       account_type: 1,

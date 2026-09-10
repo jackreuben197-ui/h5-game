@@ -8,7 +8,7 @@ import walletPng from '@/assets/icons/walletpng.png'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import WithdrawConfirmModal from '@/views/wallet/components/WithdrawConfirmModal.vue'
 import GameDialog from '@/components/Dialog/GameDialog.vue'
-import { t } from '@/i18n'
+import { t, tColon } from '@/i18n'
 import { postOnlineWithdrawTypeListApi } from '@/api/config'
 import { postTiquGoldApi } from '@/api/order'
 import { postPaymentInfoListApi, postPaymentInfoDeleteApi } from '@/api/pay'
@@ -52,9 +52,9 @@ const isCustomerCare = computed(() => activeChannel.value === 'customercare')
 const isWallet = computed(() => activeChannel.value === 'wallet')
 
 const paymentChannels: { id: ChannelId; image: string; label: string; key: string }[] = [
-  { id: 'bankcard', image: icBankcard, label: '银行卡', key: 'Wallet_BankCard' },
+  { id: 'bankcard', image: icBankcard, label: 'Bank Card', key: 'Wallet_BankCard' },
   { id: 'wallet', image: walletPng, label: 'Wallet', key: 'Wallet_Title' },
-  { id: 'customercare', image: icSupportService, label: '客服', key: 'Wallet_CsWithdraw' },
+  { id: 'customercare', image: icSupportService, label: 'CS Withdraw', key: 'Wallet_CsWithdraw' },
 ]
 
 const withdrawTypes = ref<OnlineWithdrawTypeItem[]>([])
@@ -129,15 +129,6 @@ const withdrawRange = computed(() => {
   }
 })
 
-const amountPlaceholder = computed(() => {
-  const { min, max } = withdrawRange.value
-  if (min > 0 && Number.isFinite(max)) {
-    return `${tx('Wallet_WithdrawRange', '联盟币回收限')} ${min.toLocaleString()}-${max.toLocaleString()}`
-  }
-  if (min > 0) return `${tx('Wallet_MinWithdraw', '最低')} ${min.toLocaleString()}`
-  return tx('Wallet_InputPlaceholder', '输入需要回收的联盟币数量')
-})
-
 const canWithdraw = computed(() => {
   if (!selectedWithdrawType.value) return false
   const amt = parsedAmount.value
@@ -151,7 +142,10 @@ const canWithdraw = computed(() => {
 
 function formatAccountNumber(accountNo: string | undefined): string {
   if (!accountNo) return '—'
-  return accountNo.length > 4 ? `**** **** **** ${accountNo.slice(-4)}` : accountNo
+  if (accountNo.length > 5) {
+    return `*****${accountNo.slice(-5)}`
+  }
+  return accountNo
 }
 
 function withdrawClubPayload(): Record<string, number> {
@@ -266,7 +260,7 @@ const deletingCard = ref(false)
 const deleteCardDetail = computed(() => {
   const info = deleteCardTarget.value
   if (!info) return ''
-  const name = info.pix_name || info.bank_name || ''
+  const name = info.pix_name || info.real_name || info.bank_name || ''
   return `${name} ${formatAccountNumber(info.account_no)}`.trim()
 })
 
@@ -279,7 +273,6 @@ function askDeleteCard(info: PaymentInfo): void {
   showDeleteCardConfirm.value = true
 }
 
-// 全滑到左边缘也触发删除：追踪水平位移，超过行宽阈值即视为整条滑出。
 const FULL_SWIPE_RATIO = 0.6
 let swipeStartX = 0
 let swipeDeltaX = 0
@@ -324,11 +317,6 @@ async function confirmDeleteCard(): Promise<void> {
 }
 
 function selectWithdrawType(wt: OnlineWithdrawTypeItem): void {
-  selectedWithdrawType.value = wt
-}
-
-// 客服渠道下选择提现方式（usdt、撮合提现等），不切换渠道
-function selectCsWithdrawType(wt: OnlineWithdrawTypeItem): void {
   selectedWithdrawType.value = wt
 }
 
@@ -429,196 +417,172 @@ watch(filteredWithdrawTypes, (list) => {
 
 <template>
   <div class="wf">
+    <!-- Card 1: Channel Tabs, Sub-type Grid & Bound Accounts -->
     <div class="wf__card">
       <div v-if="loadingWithdrawTypes" class="wf__acct-loading">
-        {{ tx('Wallet_Loading', '加载中…') }}
+        {{ tx('Wallet_Loading', 'Loading…') }}
       </div>
 
       <template v-else-if="withdrawTypes.length > 0">
-        <div class="wf__acct-header">
-          <span class="wf__acct-title">{{
-            isCustomerCare
-              ? tx('Wallet_SelectMethod', '请选择提现方式')
-              : tx('Wallet_SelectAccount', '请选择收款账户')
-          }}</span>
+        <!-- Header with Tabs and Add Account Button -->
+        <div class="wf__top-bar">
+          <div class="wf__tabs">
+            <button
+              v-for="ch in availablePaymentChannels"
+              :key="ch.id"
+              type="button"
+              class="wf__tab"
+              :class="{ 'wf__tab--active': activeChannel === ch.id }"
+              @click="applyChannel(ch.id)"
+            >
+              {{ tx(ch.key, ch.label) }}
+            </button>
+          </div>
           <button
             v-if="!isCustomerCare"
-            class="wf__add-card-btn"
+            class="wf__add-btn"
             type="button"
             @click="
               router.push(isWallet ? '/wallet/add-wallet-address' : '/wallet/add-bank-card')
             "
           >
-            {{
-              isWallet
-                ? tx('Wallet_AddWalletAddressTitle', 'Add wallet address')
-                : tx('Wallet_AddCard', '添加银行卡')
-            }}
+            {{ tx('Wallet_AddAccount', 'Add Account') }}
           </button>
         </div>
 
-        <div v-if="availablePaymentChannels.length > 0" class="wf__channels">
+        <!-- 4-Column Sub-type Grid -->
+        <div v-if="filteredWithdrawTypes.length > 0" class="wf__grid">
           <div
-            v-for="ch in availablePaymentChannels"
-            :key="ch.id"
-            class="wf__type-card"
-            :class="{ 'wf__type-card--active': activeChannel === ch.id }"
-            @click="applyChannel(ch.id)"
+            v-for="wt in filteredWithdrawTypes"
+            :key="wt.id"
+            class="wf__grid-item"
+            :class="{ 'wf__grid-item--active': selectedWithdrawType?.id === wt.id }"
+            @click="selectWithdrawType(wt)"
           >
-            <img class="wf__type-card-icon" :src="ch.image" alt="" />
-            <div class="wf__type-card-label">
-              <div class="wf__type-card-text">
-                <span class="wf__type-card-name">{{ tx(ch.key, ch.label) }}</span>
-              </div>
+            <img
+              :src="
+                wt.image ||
+                (isWallet || wt.account_type === 6
+                  ? walletPng
+                  : isCustomerCare
+                    ? icSupportService
+                    : icBankcard)
+              "
+              alt=""
+              class="wf__grid-icon"
+            />
+            <span class="wf__grid-name">{{
+              wt.name || (isWallet ? 'USDT' : tx('Wallet_BankCard', 'Bank Card'))
+            }}</span>
+            <div v-if="selectedWithdrawType?.id === wt.id" class="wf__grid-check">
+              <svg width="8" height="6" viewBox="0 0 8 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 3L3 5L7 1" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             </div>
           </div>
         </div>
 
-        <!-- 银行卡/钱包渠道：已绑定的收款账户 -->
+        <!-- Bound Accounts List -->
         <template v-if="!isCustomerCare">
           <div v-if="loadingPaymentInfo" class="wf__acct-loading">
-            {{ tx('Wallet_Loading', '加载中…') }}
+            {{ tx('Wallet_Loading', 'Loading…') }}
           </div>
           <template v-else-if="paymentInfoList.length > 0">
-            <van-swipe-cell
-              v-for="info in paymentInfoList"
-              :key="info.id"
-              class="wf__acct-swipe"
-              :disabled="preview"
-              @touchstart.passive="onSwipeStart"
-              @touchmove.passive="onSwipeMove"
-              @touchend="onSwipeEnd(info)"
-            >
-              <div
-                class="wf__acct-row"
-                :class="{ 'wf__acct-row--active': selectedPaymentAccount?.id === info.id }"
-                @click="selectedPaymentAccount = info"
+            <div class="wf__acct-list">
+              <van-swipe-cell
+                v-for="info in paymentInfoList"
+                :key="info.id"
+                class="wf__acct-swipe"
+                :disabled="preview"
+                @touchstart.passive="onSwipeStart"
+                @touchmove.passive="onSwipeMove"
+                @touchend="onSwipeEnd(info)"
               >
-                <img
-                  :src="info.account_type === 6 || isWallet ? walletPng : icBankcard"
-                  alt=""
-                  class="wf__acct-icon"
-                />
-                <div class="wf__acct-details">
-                  <div class="wf__acct-top">
-                    <span class="wf__acct-name">{{ info.pix_name || info.bank_name || '—' }}</span>
+                <div
+                  class="wf__acct-card"
+                  :class="{ 'wf__acct-card--active': selectedPaymentAccount?.id === info.id }"
+                  @click="selectedPaymentAccount = info"
+                >
+                  <img
+                    :src="info.account_type === 6 || isWallet ? walletPng : icBankcard"
+                    alt=""
+                    class="wf__acct-card-icon"
+                  />
+                  <div class="wf__acct-card-info">
+                    <div class="wf__acct-card-header">
+                      <span class="wf__acct-card-name">{{
+                        info.pix_name || info.real_name || info.name || info.account_name || '—'
+                      }}</span>
+                      <span class="wf__acct-card-badge">{{
+                        info.bank_name ||
+                        selectedWithdrawType?.name ||
+                        (isWallet ? tx('Wallet_Title', 'Wallet') : tx('Wallet_BankCard', 'Bank Card'))
+                      }}</span>
+                    </div>
+                    <div class="wf__acct-card-sub">
+                      {{ tColon(tx('Wallet_ReceivingAccount', 'Receiving Account')) }}{{ formatAccountNumber(info.account_no) }}
+                    </div>
                   </div>
-                  <div class="wf__acct-no-pill">{{ formatAccountNumber(info.account_no) }}</div>
                 </div>
-              </div>
-              <template #right>
-                <button type="button" class="wf__acct-delete" @click="askDeleteCard(info)">
-                  {{ tx('UIClub_DeleteSomeone', '删除') }}
-                </button>
-              </template>
-            </van-swipe-cell>
+                <template #right>
+                  <button type="button" class="wf__acct-delete-btn" @click="askDeleteCard(info)">
+                    <svg width="14" height="16" viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M1 3.5H13M5 3.5V2C5 1.44772 5.44772 1 6 1H8C8.55228 1 9 1.44772 9 2V3.5M11.5 3.5V13.5C11.5 14.0523 11.0523 14.5 10.5 14.5H3.5C2.94772 14.5 2.5 14.0523 2.5 13.5V3.5H11.5Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>{{ tx('UIClub_DeleteSomeone', 'Delete') }}</span>
+                  </button>
+                </template>
+              </van-swipe-cell>
+            </div>
           </template>
           <div v-else class="wf__acct-empty">
             {{
               isWallet
-                ? tx('Wallet_NoWalletBound', '暂无绑定钱包地址')
-                : tx('Wallet_NoCardBound', '暂无绑定银行卡')
+                ? tx('Wallet_NoWalletBound', 'No wallet address bound')
+                : tx('Wallet_NoCardBound', 'No bank card bound')
             }}
           </div>
         </template>
       </template>
 
       <div v-else class="wf__acct-empty">
-        {{ tx('Wallet_NoWithdrawMethod', '暂无可用提现方式') }}
+        {{ tx('Wallet_NoWithdrawMethod', 'No withdrawal method available') }}
       </div>
     </div>
 
-    <div v-if="withdrawTypes.length > 0" class="wf__methods">
-      <div v-if="activeChannel === 'bankcard' && bankWithdrawTypes.length > 0" class="wf__type-scroll">
-        <div
-          v-for="wt in bankWithdrawTypes"
-          :key="wt.id"
-          class="wf__type-card"
-          :class="{ 'wf__type-card--active': selectedWithdrawType?.id === wt.id }"
-          @click="selectWithdrawType(wt)"
-        >
-          <img class="wf__type-card-icon" :src="wt.image || icBankcard" alt="" />
-          <div class="wf__type-card-label">
-            <div class="wf__type-card-text">
-              <span class="wf__type-card-name">{{
-                wt.name || tx('Wallet_BankCard', '银行卡')
-              }}</span>
-            </div>
-          </div>
-        </div>
+    <!-- Card 2: Withdrawal Amount -->
+    <div v-if="withdrawTypes.length > 0" class="wf__card wf__amount-card">
+      <div class="wf__amount-title">
+        {{ tx('Wallet_WithdrawalAmount', 'Withdrawal Amount') }}
       </div>
 
-      <template v-else-if="isWallet || isCustomerCare">
-        <div v-if="filteredWithdrawTypes.length > 0" class="wf__type-scroll">
-          <div
-            v-for="wt in filteredWithdrawTypes"
-            :key="wt.id"
-            class="wf__type-card"
-            :class="{ 'wf__type-card--active': selectedWithdrawType?.id === wt.id }"
-            @click="selectCsWithdrawType(wt)"
-          >
-            <img
-              :src="
-                wt.image ||
-                (isWallet ||
-                wt.account_type === 6 ||
-                wt.name?.toLowerCase().includes('gopay') ||
-                wt.name?.toLowerCase().includes('topay') ||
-                wt.name?.toLowerCase().includes('onpay') ||
-                wt.name?.toLowerCase().includes('wallet') ||
-                wt.name?.toLowerCase().includes('usdt')
-                  ? walletPng
-                  : icSupportService)
-              "
-              alt=""
-              class="wf__type-card-icon"
-            />
-            <div class="wf__type-card-label">
-              <div class="wf__type-card-text">
-                <span class="wf__type-card-name">{{
-                  wt.name || (isWallet ? 'USDT' : tx('Wallet_CsWithdraw', '客服'))
-                }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div v-else class="wf__acct-empty">
-          {{ tx('Wallet_NoWithdrawMethod', '暂无可用提现方式') }}
-        </div>
-      </template>
-    </div>
-
-    <div class="wf__card wf__amount-card">
-      <div class="wf__amount-input-wrap">
-        <div class="wf__amount-range">{{ amountPlaceholder }}</div>
-      </div>
-
-      <div class="wf__amount-display">
-        <span class="wf__amount-value" :class="{ 'wf__amount-value--active': parsedAmount > 0 }">
-          {{ parsedAmount > 0 ? calculatedWithdrawAmountAfterFee.toFixed(2) : '—' }}
-        </span>
-      </div>
-
-      <div class="wf__amount-footer wf__amount-footer--visible">
+      <div class="wf__amount-input-box">
         <input
           v-model="withdrawAmount"
           type="text"
           inputmode="decimal"
-          class="wf__amount-entered-input"
-          :placeholder="tx('Wallet_InputPlaceholder', '输入需要回收的联盟币数量')"
+          class="wf__amount-input"
+          :placeholder="tx('Wallet_EnterWithdrawalAmount', 'Enter withdrawal amount')"
         />
-        <span class="wf__amount-fee-tag"
-          >{{ t('UIMine_WalletPlatform_fee_s') }}：{{ (handlingFeeRate * 100).toFixed(0) }}%</span
-        >
+      </div>
+
+      <div class="wf__amount-info">
+        <span class="wf__amount-fee">
+          {{ tColon(tx('Wallet_Fee', 'Fee')) }}{{ (handlingFeeRate * 100).toFixed(0) }}%
+        </span>
+        <span class="wf__amount-received">
+          {{ tColon(tx('Wallet_EstimatedAmountReceived', 'Estimated Amount Received')) }}{{ parsedAmount > 0 ? calculatedWithdrawAmountAfterFee.toFixed(2) : '-' }}
+        </span>
       </div>
     </div>
 
+    <!-- Submit Action Button -->
     <div class="wf__cta-wrapper" :class="{ 'wf__cta-wrapper--channel': isChannelPackage }">
       <PrimaryButton
         :text="
           isCustomerCare
-            ? tx('Wallet_ContactCs', '联系客服')
-            : tx('Wallet_SubmitWithdraw', '立即提现')
+            ? tx('Wallet_ContactCs', 'Contact CS')
+            : tx('Wallet_Submit', 'Submit')
         "
         :disabled="!canWithdraw || withdrawing"
         class="wf__cta"
@@ -637,10 +601,10 @@ watch(filteredWithdrawTypes, (list) => {
 
   <GameDialog
     v-model:show="showDeleteCardConfirm"
-    :title="tx('UIClub_ConfirmDelete', '确认删除')"
+    :title="tx('UIClub_ConfirmDelete', 'Confirm Delete')"
     :show-cancel-button="true"
-    :cancel-button-text="tx('Wallet_Cancel', '取消')"
-    :confirm-button-text="tx('Wallet_Confirm', '确认')"
+    :cancel-button-text="tx('Wallet_Cancel', 'Cancel')"
+    :confirm-button-text="tx('Wallet_Confirm', 'Confirm')"
     :confirm-button-disabled="deletingCard"
     @confirm="confirmDeleteCard"
     @cancel="showDeleteCardConfirm = false"
@@ -655,92 +619,24 @@ watch(filteredWithdrawTypes, (list) => {
 .wf {
   display: flex;
   flex-direction: column;
-  gap: 0.32rem;
+  gap: 0.28rem;
   width: 100%;
-  padding-bottom: 2.5rem;
+  padding-bottom: 1.2rem;
 }
 
-.wf__cta-wrapper {
-  position: fixed;
-  bottom: calc(env(safe-area-inset-bottom) + 0.6rem);
-  left: 0.455rem;
-  width: calc(100% - 0.91rem);
-  height: 1.47rem;
-  z-index: 10;
-}
-
-.wf__cta-wrapper--channel {
-  bottom: calc(env(safe-area-inset-bottom) + 2.82rem);
-}
-
-.wf__cta {
-  position: relative;
-  width: 100% !important;
-  height: 100% !important;
-  border: 0.02rem solid rgba(249, 249, 249, 0.1) !important;
-  border-radius: 1.08rem !important;
-  background: rgba(170, 170, 170, 0.1) !important;
-  backdrop-filter: blur(18.5px);
-  -webkit-backdrop-filter: blur(18.5px);
-
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    box-shadow: inset 0 0 0.0149rem rgba(255, 255, 255, 0.5);
-    pointer-events: none;
-  }
-
-  &:not(.primary-btn--disabled) :deep(.primary-btn__text) {
-    color: #78e490;
-  }
-
-  // 未激活时保留与激活态一致的玻璃底，仅用文字色区分状态。
-  &.primary-btn--disabled {
-    opacity: 1;
-
-    :deep(.primary-btn__text) {
-      color: #fff;
-    }
-  }
-
-  @include theme-light-own {
-    border-color: rgba(242, 242, 242, 0.8) !important;
-    background: var(--wallet-l-accent) !important;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-
-    &::after {
-      box-shadow: none;
-    }
-
-    :deep(.primary-btn__text),
-    &:not(.primary-btn--disabled) :deep(.primary-btn__text) {
-      color: var(--wallet-l-on-accent);
-    }
-
-    &.primary-btn--disabled :deep(.primary-btn__text) {
-      color: var(--wallet-l-on-accent);
-      opacity: 0.5;
-    }
-  }
-}
-
-// ── Glass card ────────────────────────────────────────────────────────────────
+/* Card 1 & Card 2 Base Glass Styling */
 .wf__card:first-child {
   margin-top: -20px;
 }
 
 .wf__card {
   position: relative;
-  padding: 0.55rem 0.42rem;
-  border: 0.016rem solid rgba(242, 242, 242, 0.3);
-  border-radius: 0.94rem;
-  box-shadow: 3.4px 4.3px 6.8px rgba(0, 0, 0, 0.25);
+  padding: 0.36rem 0.32rem;
+  border: 0.016rem solid rgba(242, 242, 242, 0.25);
+  border-radius: 0.72rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
-  gap: 0.38rem;
   overflow: hidden;
   z-index: 1;
 
@@ -748,13 +644,12 @@ watch(filteredWithdrawTypes, (list) => {
     content: '';
     position: absolute;
     inset: 0;
-    backdrop-filter: blur(16.6px);
-    -webkit-backdrop-filter: blur(16.6px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     background: linear-gradient(
-      107.6deg,
-      rgba(249, 249, 249, 0.18) 12.3%,
-      rgba(249, 249, 249, 0.24) 33.3%,
-      rgba(147, 147, 147, 0.3) 85.1%
+      110deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.06) 100%
     );
     mix-blend-mode: hard-light;
     pointer-events: none;
@@ -769,9 +664,8 @@ watch(filteredWithdrawTypes, (list) => {
     pointer-events: none;
     border-radius: inherit;
     box-shadow:
-      inset 0 0 8.6px rgba(0, 0, 0, 1),
-      inset 3.4px 2.6px 8.6px rgba(0, 0, 0, 0.1),
-      inset 0 0 36.1px rgba(242, 242, 242, 0.3);
+      inset 0 0 12px rgba(0, 0, 0, 0.8),
+      inset 0 0 24px rgba(255, 255, 255, 0.15);
     z-index: 0;
   }
 
@@ -798,38 +692,74 @@ watch(filteredWithdrawTypes, (list) => {
   }
 }
 
-// ── Account card ──────────────────────────────────────────────────────────────
-.wf__acct-header {
+/* Header Bar: Tabs & Add Button */
+.wf__top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.2rem;
+  margin-bottom: 0.32rem;
 }
 
-.wf__acct-title {
-  font-family: var(--wallet-font-cn);
-  font-size: 0.28rem;
-  font-weight: 500;
-  color: #fff;
+.wf__tabs {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 0.05rem;
+  border-radius: 999px;
+  gap: 0.04rem;
 
   @include theme-light-own {
-    color: var(--wallet-l-text);
+    background: var(--wallet-l-surface-soft);
   }
 }
 
-.wf__add-card-btn {
-  flex-shrink: 0;
-  height: 0.62rem;
-  padding: 0 0.32rem;
+.wf__tab {
+  height: 0.64rem;
+  padding: 0 0.36rem;
   border: none;
-  border-radius: 0.72rem;
-  background: #fff;
-  color: #262525;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.75);
   font-family: var(--wallet-font-cn);
-  font-size: 0.3rem;
+  font-size: 0.29rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &--active {
+    background: #ff3b5c;
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  @include theme-light-own {
+    color: var(--wallet-l-text-muted);
+
+    &--active {
+      background: #ff3b5c;
+      color: #ffffff;
+    }
+  }
+}
+
+.wf__add-btn {
+  height: 0.64rem;
+  padding: 0 0.36rem;
+  border: none;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #111111;
+  font-family: var(--wallet-font-cn);
+  font-size: 0.28rem;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.2s;
+
   &:active {
     opacity: 0.85;
   }
@@ -840,173 +770,125 @@ watch(filteredWithdrawTypes, (list) => {
   }
 }
 
-// Type cards horizontal scroll
-.wf__channels {
-  display: flex;
-  gap: 0.3rem;
-  justify-content: flex-start;
-  margin-bottom: 0.3rem;
+/* 4-Column Sub-type Grid */
+.wf__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.16rem;
+  margin-bottom: 0.28rem;
 }
 
-.wf__methods {
-  margin-bottom: 0.3rem;
-}
-
-.wf__channels .wf__type-card-name {
-  font-size: 0.3rem;
-}
-
-.wf__type-scroll {
-  display: flex;
-  gap: 0.3rem;
-  overflow-x: auto;
-  padding-bottom: 0.04rem;
-  scrollbar-width: none;
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-.wf__type-card {
-  flex-shrink: 0;
+.wf__grid-item {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  padding: 0.18rem 0.06rem;
+  min-height: 1.36rem;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 0.24rem;
+  border: 1.5px solid transparent;
   cursor: pointer;
+  transition: all 0.2s ease;
   -webkit-tap-highlight-color: transparent;
-}
 
-.wf__type-card-icon {
-  width: 1.5rem;
-  height: 1.5rem;
-  position: relative;
-  z-index: 2;
-  pointer-events: none;
-}
+  &--active {
+    border-color: #ff3b5c;
+    background: rgba(255, 59, 92, 0.12);
 
-.wf__type-card-label {
-  margin-top: -0.45rem;
-  width: 1.64rem;
-  height: 1.16rem;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 0.23rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  padding-bottom: 0.12rem;
-  position: relative;
-  z-index: 1;
-  box-sizing: border-box;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 0.004rem;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(153, 153, 153, 1) 100%);
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-  }
-
-  .wf__type-card--active & {
-    border-radius: 0.26rem;
-    background: #ee3955;
-
-    &::before {
-      display: none;
+    .wf__grid-name {
+      color: #d7a356;
+      font-weight: 600;
     }
   }
 
   @include theme-light-own {
     background: var(--wallet-l-surface-soft);
 
-    &::before {
-      background: linear-gradient(180deg, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0.06) 100%);
-    }
-  }
+    &--active {
+      border-color: #ff3b5c;
+      background: rgba(255, 59, 92, 0.1);
 
-  .wf__type-card--active & {
-    @include theme-light-own {
-      background: var(--wallet-l-accent);
+      .wf__grid-name {
+        color: #d7a356;
+        font-weight: 600;
+      }
     }
   }
 }
 
-.wf__type-card-text {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 0.05rem;
-  width: 100%;
-  padding: 0 0.1rem;
-  overflow: hidden;
+.wf__grid-icon {
+  width: 0.72rem;
+  height: 0.72rem;
+  object-fit: contain;
+  margin-bottom: 0.08rem;
+  pointer-events: none;
 }
 
-.wf__type-card-name {
+.wf__grid-name {
   font-family: var(--wallet-font-cn);
-  font-size: 0.22rem;
+  font-size: 0.25rem;
   font-weight: 500;
-  color: #fff;
-
+  color: #ffffff;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex-shrink: 1;
-  min-width: 0;
+  width: 100%;
+  padding: 0 0.02rem;
 
   @include theme-light-own {
     color: var(--wallet-l-text);
   }
-
-  .wf__type-card--active & {
-    @include theme-light-own {
-      color: var(--wallet-l-text);
-    }
-  }
 }
 
-
-// Account rows
-.wf__acct-loading {
-  text-align: center;
-  font-family: var(--wallet-font-cn);
-  font-size: 0.3rem;
-  color: rgba(255, 255, 255, 0.5);
-  padding: 0.24rem 0;
-
-  @include theme-light-own {
-    color: var(--wallet-l-text-muted);
-  }
-}
-
-.wf__acct-row {
+.wf__grid-check {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 0.34rem;
+  height: 0.34rem;
+  background: #ff3b5c;
+  border-top-left-radius: 0.16rem;
+  border-bottom-right-radius: 0.22rem;
   display: flex;
   align-items: center;
-  gap: 0.2rem;
+  justify-content: center;
+}
+
+/* Bound Accounts List */
+.wf__acct-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.wf__acct-swipe {
+  border-radius: 0.28rem;
+  overflow: hidden;
+}
+
+.wf__acct-card {
+  display: flex;
+  align-items: center;
+  gap: 0.22rem;
+  padding: 0.22rem 0.26rem;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 0.28rem;
+  border: 1px solid transparent;
   cursor: pointer;
+  transition: all 0.2s ease;
   -webkit-tap-highlight-color: transparent;
-  padding: 0.12rem 0.16rem;
-  border-radius: 0.3rem;
-  border: 0.016rem solid transparent;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
 
   &--active {
-    background: rgba(255, 255, 255, 0.18);
-    border-color: rgba(242, 242, 242, 0.4);
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.35);
   }
 
   @include theme-light-own {
+    background: var(--wallet-l-surface-soft);
+
     &--active {
       background: rgba(5, 194, 151, 0.08);
       border-color: var(--wallet-l-accent);
@@ -1014,220 +896,219 @@ watch(filteredWithdrawTypes, (list) => {
   }
 }
 
-.wf__acct-swipe {
-  border-radius: 0.3rem;
+.wf__acct-card-icon {
+  width: 0.82rem;
+  height: 0.82rem;
+  flex-shrink: 0;
+  object-fit: contain;
 }
 
-.wf__acct-delete {
+.wf__acct-card-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+}
+
+.wf__acct-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.16rem;
+}
+
+.wf__acct-card-name {
+  font-family: var(--wallet-font-cn);
+  font-size: 0.32rem;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
+}
+
+.wf__acct-card-badge {
+  font-family: var(--wallet-font-cn);
+  font-size: 0.26rem;
+  font-weight: 600;
+  color: #d7a356;
+  border: 1px solid rgba(215, 163, 86, 0.7);
+  background: rgba(215, 163, 86, 0.12);
+  border-radius: 999px;
+  padding: 0.04rem 0.2rem;
+  white-space: nowrap;
+}
+
+.wf__acct-card-sub {
+  font-family: var(--wallet-font-num);
+  font-size: 0.29rem;
+  font-weight: 500;
+  color: #ffffff;
+  opacity: 0.95;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text-muted);
+    opacity: 1;
+  }
+}
+
+.wf__acct-delete-btn {
   height: 100%;
   margin-left: 0.16rem;
   padding: 0 0.4rem;
-  border: 0;
-  border-radius: 0.3rem;
-  background: var(--wallet-color-danger);
+  border: none;
+  border-radius: 0.28rem;
+  background: #ff3b5c;
+  color: #ffffff;
   font-family: var(--wallet-font-cn);
-  font-size: 0.3rem;
-  color: #fff;
+  font-size: 0.28rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
   white-space: nowrap;
+  cursor: pointer;
+}
+
+/* Card 2: Withdrawal Amount */
+.wf__amount-card {
+  padding: 0.36rem 0.32rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+}
+
+.wf__amount-title {
+  font-family: var(--wallet-font-cn);
+  font-size: 0.32rem;
+  font-weight: 600;
+  color: #ffffff;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
+}
+
+.wf__amount-input-box {
+  width: 100%;
+  height: 1.02rem;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 0.24rem;
+  padding: 0 0.28rem;
+  display: flex;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  @include theme-light-own {
+    background: var(--wallet-l-surface-soft);
+    border-color: var(--wallet-l-border);
+  }
+}
+
+.wf__amount-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 0.32rem;
+  color: #ffffff;
+  font-family: var(--wallet-font-num);
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.28rem;
+    font-family: var(--wallet-font-cn);
+  }
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+
+    &::placeholder {
+      color: var(--wallet-l-text-muted);
+    }
+  }
+}
+
+.wf__amount-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--wallet-font-cn);
+  font-size: 0.28rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.95);
+
+  @include theme-light-own {
+    color: var(--wallet-l-text-muted);
+  }
+}
+
+/* Submit Action Button */
+.wf__cta-wrapper {
+  width: 100%;
+  margin-top: 0.1rem;
+}
+
+.wf__cta {
+  width: 100% !important;
+  height: 1.08rem !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer;
+
+  :deep(.primary-btn__text) {
+    font-size: 0.34rem !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
+  }
+
+  &:not(.primary-btn--disabled) {
+    background: linear-gradient(90deg, #ff3b5c, #ee3955) !important;
+
+    :deep(.primary-btn__text) {
+      color: #ffffff !important;
+    }
+  }
+
+  @include theme-light-own {
+    border-color: rgba(242, 242, 242, 0.8) !important;
+    background: var(--wallet-l-accent) !important;
+    backdrop-filter: none;
+
+    :deep(.primary-btn__text) {
+      color: var(--wallet-l-on-accent) !important;
+    }
+  }
+}
+
+.wf__acct-loading,
+.wf__acct-empty {
+  text-align: center;
+  font-family: var(--wallet-font-cn);
+  font-size: 0.26rem;
+  color: #999999;
+  padding: 0.2rem 0;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text-muted);
+  }
 }
 
 .wf__delete-card-detail {
   text-align: center;
   font-family: var(--wallet-font-cn);
   font-size: 0.3rem;
-  color: #fff;
+  color: #ffffff;
   word-break: break-all;
-}
-
-.wf__acct-icon {
-  flex-shrink: 0;
-  width: 1.12rem;
-  height: 1.12rem;
-  object-fit: contain;
-}
-
-.wf__acct-details {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.12rem;
-}
-
-.wf__acct-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.wf__acct-name {
-  font-family: var(--wallet-font-cn);
-  font-size: 0.3rem;
-  font-weight: 400;
-  color: #fff;
-
-  @include theme-light-own {
-    color: var(--wallet-l-text);
-  }
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-
-.wf__acct-no-pill {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 0.62rem;
-  padding: 0 0.25rem;
-  background: #2d2b2b;
-  border-radius: 0.72rem;
-  font-family: var(--wallet-font-num);
-  font-size: 0.3rem;
-  color: #fff;
-  white-space: nowrap;
-
-  @include theme-light-own {
-    background: var(--wallet-l-surface-soft);
-    color: var(--wallet-l-text);
-  }
-}
-
-.wf__acct-empty {
-  text-align: center;
-  font-family: var(--wallet-font-cn);
-  font-size: 0.3rem;
-  color: rgba(255, 255, 255, 0.45);
-  padding: 0.16rem 0;
-
-  @include theme-light-own {
-    color: var(--wallet-l-text-muted);
-  }
-}
-
-// ── Amount card ───────────────────────────────────────────────────────────────
-.wf__amount-card {
-  gap: 0;
-  padding: 0;
-  overflow: hidden;
-}
-
-.wf__amount-input-wrap {
-  padding: 0 0.42rem;
-  margin-top: 0.2rem;
-}
-
-.wf__amount-range {
-  width: 100%;
-  margin-top: 0.1rem;
-  height: 1.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--wallet-font-cn);
-  font-size: 0.28rem;
-  color: rgba(249, 249, 249, 0.45);
-  box-sizing: border-box;
-
-  @include theme-light-own {
-    color: var(--wallet-l-text-muted);
-    background: rgba(34, 34, 34, 0.13);
-    border-radius: 0.75rem;
-  }
-}
-
-.wf__amount-display {
-  margin-top: 0.1rem;
-  width: 100%;
-  min-height: 1.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(170.7deg, rgb(54, 54, 54) 7.9%, rgb(23, 23, 23) 80.2%);
-
-  @include theme-light-own {
-    background: transparent;
-  }
-}
-
-.wf__amount-value {
-  font-family: var(--wallet-font-num);
-  font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.2);
-  transition: color 0.2s;
-  &--active {
-    color: #e80000;
-  }
-
-  @include theme-light-own {
-    color: rgba(0, 0, 0, 0.25);
-
-    &--active {
-      color: #e80000;
-    }
-  }
-}
-
-.wf__amount-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 1.2rem;
-  padding: 0 0.5rem;
-  margin: 0.4rem 0.42rem 0.4rem;
-  border-radius: 0.75rem;
-  background: rgba(255, 255, 255, 0.04);
-  opacity: 0;
-  transition: opacity 0.2s;
-  &--visible {
-    opacity: 1;
-    background: rgba(255, 255, 255, 0.9);
-  }
-
-  @include theme-light-own {
-    &--visible {
-      background: rgba(34, 34, 34, 0.13);
-      box-shadow: none;
-    }
-  }
-}
-
-.wf__amount-entered-input {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-family: var(--wallet-font-num);
-  font-size: 0.36rem;
-  color: #000;
-
-  &::placeholder {
-    font-family: var(--wallet-font-cn);
-    font-size: 0.28rem;
-    color: rgba(0, 0, 0, 0.4);
-  }
-}
-
-.wf__amount-fee-tag {
-  font-family: var(--wallet-font-cn);
-  font-size: 0.28rem;
-  color: #000;
-}
-
-// Balance hint
-.wf__balance-hint {
-  text-align: center;
-  font-family: var(--wallet-font-cn);
-  font-size: 0.26rem;
-  color: rgba(255, 255, 255, 0.5);
-  span {
-    line-height: 1.4;
-  }
-
-  @include theme-light-own {
-    color: var(--wallet-l-text-muted);
-  }
 }
 </style>

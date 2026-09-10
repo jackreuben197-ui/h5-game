@@ -14,7 +14,6 @@ import { useMttListStore } from '@/stores/mttList'
 import { useRoomListStore } from '@/stores/roomList'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { localStore } from '@/utils/localStore'
-import { isTelegramMiniAppEnv } from '@/utils/environment'
 import { isChannelPackageHost, resolveInviteCode } from '@/utils/channelPackage'
 import type { ExperienceLoginRequest, UserInfoData } from '@/api/models/user'
 
@@ -132,10 +131,7 @@ async function runEnsureExperienceSession(revision: number): Promise<boolean> {
     }
   }
 
-  // Telegram Mini App 优先走既有真实账号自动登录，避免先占用体验账号。
-  if (isTelegramMiniAppEnv()) {
-    return false
-  }
+  // 所有运行环境共用体验账号初始化，列表不能依赖其他请求碰巧触发自动登录。
   if (revision !== experienceLoginRevision) {
     return false
   }

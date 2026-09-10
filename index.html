@@ -24,7 +24,7 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/icon.png" />
 
-    <!-- Telegram SDK 必须在业务脚本前读取原始启动参数；普通浏览器不加载，避免阻塞首屏。 -->
+    <!-- Telegram SDK 必须在业务脚本前读取启动参数（含 SDK 的同标签页刷新缓存）。 -->
     <script>
       ;(function () {
         if (window.Telegram && window.Telegram.WebApp) {
@@ -32,9 +32,17 @@
         }
 
         var locationText = String(window.location.search || '') + String(window.location.hash || '')
-        if (!/(?:[?#&]|^)tgWebAppData=/.test(locationText)) {
+        var hasTelegramLaunch = /(?:[?#&]|^)tgWebAppData=/.test(locationText)
+        // Vue Router 会把初始 hash 替换为 /home。SDK 自己能从 sessionStorage
+        // 恢复 initParams，但前提是刷新时仍加载 SDK，不能只检查当前 URL。
+        try {
+          var storedParams = JSON.parse(window.sessionStorage.getItem('__telegram__initParams') || 'null')
+          hasTelegramLaunch = hasTelegramLaunch || Boolean(storedParams && storedParams.tgWebAppData)
+        } catch (error) {}
+        if (!hasTelegramLaunch) {
           return
         }
+        window.__H5_TG_MINI_APP__ = true
 
         document.write('<script src="https://telegram.org/js/telegram-web-app.js?63"><\/script>')
       })()
@@ -670,14 +678,19 @@
       }
 
       /* 仅给路由页面留安全区；弹窗也是 #app 的直接子节点，不能被撑到一屏高。 */
+      html[data-tg-mini-app='1'] {
+        /* 页面自己的 Header 已包含系统安全区，这里只补 Telegram 额外遮挡部分。 */
+        --app-route-safe-area-top: max(
+          0px,
+          calc(var(--tg-content-safe-area-inset-top, 0px) - env(safe-area-inset-top)),
+          calc(var(--tg-safe-area-guard-top, 0px) - env(safe-area-inset-top))
+        );
+      }
+
       html[data-tg-mini-app='1'] #app > .h5-route-host {
         box-sizing: border-box;
         min-height: 100%;
-        padding-top: min(
-          env(safe-area-inset-top),
-          calc(var(--tg-content-safe-area-inset-top, 0px) - var(--app-top-padding)),
-          calc(var(--tg-safe-area-guard-top, 0px) - var(--app-top-padding))
-        );
+        padding-top: var(--app-route-safe-area-top, 0px);
       }
 
       #drawCanvas {
@@ -769,7 +782,7 @@
             var search = window.location.search || ''
             var hash = window.location.hash || ''
             var hashQueryIndex = hash.indexOf('?')
-            var hashQuery = hashQueryIndex >= 0 ? hash.slice(hashQueryIndex) : ''
+            var hashQuery = hashQueryIndex >= 0 ? hash.slice(hashQueryIndex) : hash.replace(/^#/, '')
 
             var fromSearch = new URLSearchParams(search).get('tgWebAppData')
             if (fromSearch) {
@@ -780,6 +793,8 @@
             if (fromHash) {
               return fromHash
             }
+            var storedParams = JSON.parse(window.sessionStorage.getItem('__telegram__initParams') || 'null')
+            return String((storedParams && storedParams.tgWebAppData) || '')
           } catch (error) {
             if (typeof console !== 'undefined' && typeof console.warn === 'function') {
               console.warn('[telegram] parse tgWebAppData failed:', error)
@@ -849,6 +864,11 @@
          * 阈值与 CC 层 OrientationComponent.isKeyboardLikelyOpen 保持一致（已生产验证）
          */
         function isKeyboardOpen(tg) {
+          // 展开/全屏动画也会产生高度差。没有输入焦点时不能仅凭高度拦截安全区。
+          if (window.__H5_KEYBOARD_OPEN__ || window.__H5_KEYBOARD_CLOSING__) return true
+          var active = document.activeElement
+          if (!active || !(active.tagName === 'INPUT' || active.tagName === 'TEXTAREA'
+              || active.isContentEditable)) return false
           if (tg && tg.viewportHeight != null && tg.viewportStableHeight != null
               && tg.viewportStableHeight - tg.viewportHeight > 50) {
             return true
@@ -870,7 +890,6 @@
           if (isKeyboardOpen(tg)) {
             return
           }
-          console.log('[telegram] applying safe area to css with tg:', tg)
           var safe = tg.safeAreaInset || {}
           var contentSafe = tg.contentSafeAreaInset || {}
 
@@ -886,6 +905,8 @@
 
           var guardTop = getTopControlsCompensation(tg, safeTop, contentTop)
           var guardBottom = Math.max(safeBottom, contentBottom)
+          var previousSafeArea = [window.__H5_SAFE_AREA_TOP__, window.__H5_SAFE_AREA_BOTTOM__,
+            window.__H5_SAFE_AREA_LEFT__, window.__H5_SAFE_AREA_RIGHT__].join(',')
 
           if (document && document.documentElement) {
             var rootStyle = document.documentElement.style
@@ -906,6 +927,11 @@
             window.__H5_SAFE_AREA_BOTTOM__ = Math.max(guardBottom, contentBottom)
             window.__H5_SAFE_AREA_LEFT__ = Math.max(safeLeft, contentLeft)
             window.__H5_SAFE_AREA_RIGHT__ = Math.max(safeRight, contentRight)
+            var nextSafeArea = [window.__H5_SAFE_AREA_TOP__, window.__H5_SAFE_AREA_BOTTOM__,
+              window.__H5_SAFE_AREA_LEFT__, window.__H5_SAFE_AREA_RIGHT__].join(',')
+            if (previousSafeArea !== nextSafeArea) {
+              window.dispatchEvent(new Event('h5:safe-area-changed'))
+            }
           }
         }
 
@@ -914,10 +940,10 @@
             return
           }
 
-          window.__H5_TG_SAFE_AREA_BOUND__ = true
           if (typeof tg.onEvent !== 'function') {
             return
           }
+          window.__H5_TG_SAFE_AREA_BOUND__ = true
 
           var refresh = function () {
             applySafeAreaToCss(tg)
@@ -927,6 +953,14 @@
           tg.onEvent('contentSafeAreaChanged', refresh)
           tg.onEvent('viewportChanged', refresh)
           tg.onEvent('fullscreenChanged', refresh)
+          tg.onEvent('fullscreenFailed', refresh)
+          tg.onEvent('activated', refresh)
+          window.addEventListener('pageshow', refresh)
+          document.addEventListener('visibilitychange', refresh)
+          document.addEventListener('focusout', function () {
+            window.setTimeout(refresh, 300)
+            window.setTimeout(refresh, 1000)
+          })
         }
 
         /**
@@ -1191,48 +1225,39 @@
           }
           // 通知运行时 Telegram 主题信息已可用；theme.ts 会优先读取 WebApp.colorScheme。
           window.dispatchEvent(new Event('h5:telegram-ready'))
-          tg.ready()
-          var isFullscreenRequested = false
+          // 先订阅再请求全屏；安全区可能晚于握手到达，也可能同步触发事件。
+          bindSafeAreaEvents(tg)
+          applySafeAreaToCss(tg)
+          window.setTimeout(function () { applySafeAreaToCss(tg) }, 200)
+          window.setTimeout(function () { applySafeAreaToCss(tg) }, 1000)
+          callTelegramOptional(tg, 'ready')
           if (typeof tg.requestFullscreen === 'function') {
             try {
               tg.requestFullscreen()
-              isFullscreenRequested = true
             } catch (error) {
               console.warn('[telegram] requestFullscreen failed, falling back to expand:', error)
-              if (typeof tg.expand === 'function') {
-                tg.expand()
-              }
+              callTelegramOptional(tg, 'expand')
             }
           } else if (typeof tg.expand === 'function') {
-            tg.expand()
+            callTelegramOptional(tg, 'expand')
           }
 
-          if (typeof tg.disableVerticalSwipes === 'function') {
-            tg.disableVerticalSwipes()
-          }
-          if (typeof tg.enableClosingConfirmation === 'function') {
-            tg.enableClosingConfirmation()
-          }
-          if (typeof tg.lockOrientation === 'function') {
-            tg.lockOrientation()
-          }
-          // 不是全屏不需要适配安全区。
-          if (!isFullscreenRequested){
-            console.log('[telegram] not fullscreen, skip applying safe area')
-            return
-          }
+          callTelegramOptional(tg, 'disableVerticalSwipes')
+          callTelegramOptional(tg, 'enableClosingConfirmation')
+          callTelegramOptional(tg, 'lockOrientation')
 
           applySafeAreaToCss(tg)
-          bindSafeAreaEvents(tg)
           setupTelegramKeyboardFix(tg)
           syncTelegramHeaderAndBackground(tg)
+        }
 
-          window.setTimeout(function () {
-            applySafeAreaToCss(tg)
-          }, 200)
-          window.setTimeout(function () {
-            applySafeAreaToCss(tg)
-          }, 1000)
+        function callTelegramOptional(tg, method) {
+          if (typeof tg[method] !== 'function') return
+          try {
+            tg[method]()
+          } catch (error) {
+            console.warn('[telegram] optional method failed:', method, error)
+          }
         }
 
         function initH5TelegramEnvironment() {

@@ -59,7 +59,7 @@ watch(
 
 .main-layout {
   position: relative;
-  min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  min-height: calc(var(--app-full-height, var(--app-viewport-height, 100dvh)) - var(--app-route-safe-area-top, 0px));
   background-image: var(--main-bg-dark);
   background-size: cover;
   background-position: center;
@@ -86,7 +86,7 @@ watch(
   position: relative;
   z-index: 2;
   // 统一作为“页面滚动容器”：在 html/body fixed 的场景下也可稳定滚动。
-  height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  height: calc(var(--app-full-height, var(--app-viewport-height, 100dvh)) - var(--app-route-safe-area-top, 0px));
   box-sizing: border-box;
   display: flex;
   flex-direction: column;

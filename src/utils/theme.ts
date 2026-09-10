@@ -1,6 +1,8 @@
 import { readonly, ref } from 'vue'
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
+import mainBgUrl from '@/assets/images/main_bg.webp'
+import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 
 // 主题运行时：维护 html[data-theme] 属性 + <meta name="theme-color">，
 // 与 _themes.scss 的 --c-* 变量层配套。首帧防闪烁由 index.html 内联脚本完成，
@@ -88,6 +90,13 @@ function applyTheme(): void {
   const theme = resolveTheme(urlOverrideMode ?? themeMode.value)
   resolvedTheme.value = theme
   document.documentElement.setAttribute('data-theme', theme)
+  // 外壳/安全区与业务页同步。使用 Vite 导入的 URL，避免 CSS 相对路径在
+  // index.html 的 var(--h5-main-bg-image) 引用处解析到错误目录。
+  document.documentElement.style.setProperty(
+    '--h5-main-bg-image',
+    `url(${theme === 'light' ? mainBgLightUrl : mainBgUrl})`,
+  )
+  document.documentElement.style.setProperty('--h5-main-bg-color', THEME_COLOR_META[theme])
   syncThemeColorMeta(theme)
 }
 

@@ -8,7 +8,7 @@ import walletPng from '@/assets/icons/walletpng.png'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import WithdrawConfirmModal from '@/views/wallet/components/WithdrawConfirmModal.vue'
 import GameDialog from '@/components/Dialog/GameDialog.vue'
-import { t, tColon } from '@/i18n'
+import { getLocale, t, tColon } from '@/i18n'
 import { postOnlineWithdrawTypeListApi } from '@/api/config'
 import { postTiquGoldApi } from '@/api/order'
 import { postPaymentInfoListApi, postPaymentInfoDeleteApi } from '@/api/pay'
@@ -38,7 +38,7 @@ const walletStore = useWalletStore()
 // ─── i18n helper: returns fallback when key not translated ────────────────────
 function tx(key: string, fallback: string): string {
   const val = t(key)
-  return val !== key ? val : fallback
+  return val && val !== key ? val : fallback
 }
 
 const availableUc = computed(() => props.availableUc ?? 0)
@@ -51,7 +51,7 @@ const isWallet = computed(() => activeChannel.value === 'wallet')
 const paymentChannels: { id: ChannelId; image: string; label: string; key: string }[] = [
   { id: 'bankcard', image: icBankcard, label: 'Bank Card', key: 'Wallet_BankCard' },
   { id: 'wallet', image: walletPng, label: 'Wallet', key: 'Wallet_Title' },
-  { id: 'customercare', image: icSupportService, label: 'CS Withdraw', key: 'Wallet_CsWithdraw' },
+  { id: 'customercare', image: icSupportService, label: 'Support', key: 'Wallet_CsWithdraw' },
 ]
 
 const withdrawTypes = ref<OnlineWithdrawTypeItem[]>([])
@@ -78,13 +78,15 @@ const bankWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
 )
 
 const walletWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
-  withdrawTypes.value.filter(
-    (wt) => wt.status === 1 && (wt.account_type === 6 || wt.account_type === 0),
-  ),
+  withdrawTypes.value.filter((wt) => wt.status === 1 && wt.account_type === 6),
 )
 
 const csWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
-  withdrawTypes.value.filter((wt) => wt.status === 1 && wt.account_type === 0),
+  withdrawTypes.value.filter(
+    (wt) =>
+      wt.status === 1 &&
+      (wt.account_type === 0 || wt.account_type === 7 || wt.action_type === 0),
+  ),
 )
 
 const filteredWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() => {
@@ -354,7 +356,12 @@ async function confirmWithdraw(): Promise<void> {
   const fee = baseValue * feeRate
   const payPrice = baseValue - fee
   const legalTender = Math.round(payPrice * 100)
-  const paymentTypeId = isCustomerCare.value ? 0 : (selectedPaymentAccount.value?.id ?? 0)
+  const isCsType =
+    isCustomerCare.value ||
+    wt.account_type === 0 ||
+    wt.account_type === 7 ||
+    wt.action_type === 0
+  const paymentTypeId = isCsType ? 0 : (selectedPaymentAccount.value?.id ?? 0)
 
   withdrawing.value = true
   try {
@@ -372,15 +379,15 @@ async function confirmWithdraw(): Promise<void> {
       withdrawAmount.value = ''
       selectedPaymentAccount.value = paymentInfoList.value[0] ?? null
       emit('withdrawn')
-      if (isCustomerCare.value || res.data?.api_type === 3) {
+      if (isCsType || res.data?.api_type === 3) {
         emit('open-cs-chat', {
           orderType: 'withdraw',
           order_no: res.data?.order_no ?? '',
           gold_num: amountCents,
           pay_price: payPrice,
-          pay_type_name: wt.name ?? tx('Wallet_CustomerService', '客服'),
+          pay_type_name: wt.name ?? tx('Wallet_CsWithdraw', '客服撮合'),
           create_time: new Date().toISOString(),
-          account_type: 0,
+          account_type: wt.account_type ?? 7,
         })
       } else {
         showToast(tx('Wallet_SubmitWithdrawSuccess', '提款申请已提交'))
@@ -469,7 +476,7 @@ watch(filteredWithdrawTypes, (list) => {
                 wt.image ||
                 (isWallet || wt.account_type === 6
                   ? walletPng
-                  : isCustomerCare
+                  : isCustomerCare || wt.account_type === 0 || wt.account_type === 7
                     ? icSupportService
                     : icBankcard)
               "
@@ -477,7 +484,7 @@ watch(filteredWithdrawTypes, (list) => {
               class="wf__grid-icon"
             />
             <span v-fit-text="{ maxLines: 1, minScale: 0.75 }" class="wf__grid-name">{{
-              wt.name || (isWallet ? 'USDT' : tx('Wallet_BankCard', 'Bank Card'))
+              wt.name || (isWallet ? 'USDT' : isCustomerCare ? tx('Wallet_CsWithdraw', 'Support') : tx('Wallet_BankCard', 'Bank Card'))
             }}</span>
             <div v-if="selectedWithdrawType?.id === wt.id" class="wf__grid-check">
               <svg width="8" height="6" viewBox="0 0 8 6" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -830,7 +837,8 @@ watch(filteredWithdrawTypes, (list) => {
 .wf__grid-icon {
   width: 0.72rem;
   height: 0.72rem;
-  object-fit: contain;
+  border-radius: 50%;
+  object-fit: cover;
   margin-bottom: 0.08rem;
   pointer-events: none;
 }
@@ -913,7 +921,8 @@ watch(filteredWithdrawTypes, (list) => {
   width: 0.82rem;
   height: 0.82rem;
   flex-shrink: 0;
-  object-fit: contain;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .wf__acct-card-info {

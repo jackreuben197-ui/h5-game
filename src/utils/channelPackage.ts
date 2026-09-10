@@ -4,8 +4,8 @@ export const CHANNEL_MAIN_DOMAIN = (import.meta.env.VITE_CHANNEL_MAIN_DOMAIN || 
   .trim()
   .toLowerCase()
 // 渠道包联调时可临时启用：
-// const TEST_CHANNEL_INVITE_CODE = ''
-const TEST_CHANNEL_INVITE_CODE = 'ksGuBmMk'
+const TEST_CHANNEL_INVITE_CODE = ''
+// const TEST_CHANNEL_INVITE_CODE = 'ksGuBmMk'
 // const TEST_CHANNEL_INVITE_CODE = 'rhswehjy'
 
 interface ParsedQueryParams {

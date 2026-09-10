@@ -9,8 +9,6 @@ import { useUserInfoStore, type ClubInfo } from '@/stores/userInfo'
 import { postRechargeGoldApi } from '@/api/order'
 import { getUserInfoApi } from '@/api/user'
 
-import { isPrivateDomainMode } from '@/utils/channelPackage'
-
 // ─── i18n helper: returns fallback when key not translated ────────────────────
 function tx(key: string, fallback: string): string {
   const val = t(key)
@@ -24,7 +22,6 @@ const props = defineProps<{
 const router = useRouter()
 const route = useRoute()
 const userInfoStore = useUserInfoStore()
-const isChannelPackage = isPrivateDomainMode()
 
 const activeClub = computed(() => props.club ?? userInfoStore.currentClub ?? null)
 
@@ -125,10 +122,7 @@ function onSuccessConfirm(): void {
       />
     </div>
 
-    <div
-      class="club-deposit__cta-wrapper"
-      :class="{ 'club-deposit__cta-wrapper--channel': isChannelPackage }"
-    >
+    <div class="club-deposit__cta-wrapper">
       <PrimaryButton
         :text="tx('Wallet_Next', '下一步')"
         :disabled="!canSubmit"

@@ -16,9 +16,6 @@ import type { OnlineWithdrawTypeItem } from '@/api/models/config'
 import type { PaymentInfo } from '@/api/models/pay'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useWalletStore } from '@/stores/wallet'
-import { isPrivateDomainMode } from '@/utils/channelPackage'
-
-const isChannelPackage = isPrivateDomainMode()
 
 const props = defineProps<{
   availableUc?: number
@@ -524,11 +521,7 @@ watch(filteredWithdrawTypes, (list) => {
                       >{{
                         info.pix_name || info.real_name || info.name || info.account_name
                       }}</span>
-                      <span class="wf__acct-card-badge">{{
-                        info.bank_name ||
-                        selectedWithdrawType?.name ||
-                        (isWallet ? tx('Wallet_Title', 'Wallet') : tx('Wallet_BankCard', 'Bank Card'))
-                      }}</span>
+                      <span v-if="info.bank_name" class="wf__acct-card-badge">{{ info.bank_name }}</span>
                     </div>
                     <div class="wf__acct-card-sub">
                       {{ tColon(tx('Wallet_ReceivingAccount', 'Receiving Account')) }}{{ formatAccountNumber(info.account_no) }}
@@ -584,7 +577,7 @@ watch(filteredWithdrawTypes, (list) => {
     </div>
 
     <!-- Submit Action Button -->
-    <div class="wf__cta-wrapper" :class="{ 'wf__cta-wrapper--channel': isChannelPackage }">
+    <div class="wf__cta-wrapper">
       <PrimaryButton
         :text="
           isCustomerCare

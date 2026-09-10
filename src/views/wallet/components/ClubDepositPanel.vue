@@ -178,7 +178,7 @@ function onSuccessConfirm(): void {
   display: flex;
   flex-direction: column;
   gap: 0.38rem;
-  padding-bottom: 2.5rem;
+  padding-bottom: 0;
 }
 
 // Figma node 53:63379 — flat label + rounded soft-light input (no glass wrapper).
@@ -234,15 +234,10 @@ function onSuccessConfirm(): void {
 }
 
 .club-deposit__cta-wrapper {
-  position: fixed;
-  bottom: calc(env(safe-area-inset-bottom) + 0.6rem);
-  left: 0.455rem;
-  width: calc(100% - 0.91rem);
-  z-index: 10;
-}
-
-.club-deposit__cta-wrapper--channel {
-  bottom: calc(env(safe-area-inset-bottom) + 2.82rem);
+  position: relative;
+  width: 100%;
+  margin-top: 0.1rem;
+  z-index: 1;
 }
 
 // Figma node 53:63382 — full-width glass button with a green label.

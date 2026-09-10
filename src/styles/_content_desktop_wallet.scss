@@ -323,17 +323,15 @@
   html[data-main-layout='content'] .wallet-screen .club-deposit__cta-wrapper,
   html[data-main-layout='content'] .deposit-screen .club-deposit__cta-wrapper,
   html[data-main-layout='content'] .wallet-fixed-deposit-shell .club-deposit__cta-wrapper {
-    position: fixed;
-    bottom: calc(var(--wallet-stage-offset-y, 0px) + 30.51px);
-    right: 0;
-    left: 0;
-    z-index: 10;
+    position: relative;
     width: min(calc(100% - 80px), 387.8px);
     height: 62.49px;
-    margin-inline: auto;
+    margin: 20px auto 0;
+    z-index: 1;
   }
 
   html[data-main-layout='content'] .wallet-screen .pay-cta,
+  html[data-main-layout='content'] .wallet-screen .wf__cta,
   html[data-main-layout='content'] .deposit-screen .club-deposit__cta,
   html[data-main-layout='content'] .wallet-fixed-deposit-shell .club-deposit__cta {
     position: relative;

@@ -14,6 +14,7 @@ function tx(key: string, fallback: string): string {
   return val !== key ? val : fallback
 }
 
+const realName = ref('')
 const walletName = ref('')
 const walletAddress = ref('')
 const saving = ref(false)
@@ -22,11 +23,13 @@ async function handleSave() {
   if (!walletAddress.value.trim()) return
   saving.value = true
   try {
-    const name = walletName.value.trim()
+    const rName = realName.value.trim()
+    const wName = walletName.value.trim()
     const res = await postPaymentInfoCreateApi({
       account_no: walletAddress.value.trim(),
-      real_name: name,
-      pix_name: name,
+      real_name: rName || undefined,
+      pix_name: rName || undefined,
+      bank_name: wName || undefined,
       account_type: 6,
     })
     if (res.code === 0) {
@@ -63,7 +66,7 @@ async function handleSave() {
 
     <!-- Form -->
     <div class="awa-form">
-      <!-- 姓名 Name -->
+      <!-- 姓名 Name (Item 1 - Optional) -->
       <div class="awa-field">
         <label class="awa-field__label">
           {{ tx('Wallet_CardHolder', 'Name') }}
@@ -78,10 +81,25 @@ async function handleSave() {
         </label>
         <div class="awa-field__input-wrap">
           <input
-            v-model="walletName"
+            v-model="realName"
             type="text"
             class="awa-field__input"
             :placeholder="tx('Wallet_EnterNameHint', 'Please enter name')"
+          />
+        </div>
+      </div>
+
+      <!-- Wallet Name (Item 2 - Optional, key: bank_name) -->
+      <div class="awa-field">
+        <label class="awa-field__label">
+          {{ tx('Wallet_WalletName', 'Wallet Name') }}
+        </label>
+        <div class="awa-field__input-wrap">
+          <input
+            v-model="walletName"
+            type="text"
+            class="awa-field__input"
+            :placeholder="tx('Wallet_EnterWalletNameHint', 'Please enter the wallet name.')"
           />
         </div>
       </div>

@@ -102,7 +102,7 @@ const filteredWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() => {
 const availablePaymentChannels = computed(() =>
   paymentChannels.filter((ch) => {
     if (ch.id === 'bankcard') return bankWithdrawTypes.value.length > 0
-    if (ch.id === 'wallet') return true
+    if (ch.id === 'wallet') return walletWithdrawTypes.value.length > 0
     if (ch.id === 'customercare') return csWithdrawTypes.value.length > 0
     return true
   }),
@@ -202,8 +202,12 @@ async function fetchWithdrawTypes(): Promise<void> {
     applyChannel(requestedChannel)
   } else if (bankWithdrawTypes.value.length > 0) {
     applyChannel('bankcard')
+  } else if (walletWithdrawTypes.value.length > 0) {
+    applyChannel('wallet')
   } else if (csWithdrawTypes.value.length > 0) {
     applyChannel('customercare')
+  } else if (availablePaymentChannels.value.length > 0) {
+    applyChannel(availablePaymentChannels.value[0].id)
   } else {
     selectedWithdrawType.value = null
   }
@@ -382,15 +386,19 @@ async function confirmWithdraw(): Promise<void> {
           account_type: 0,
         })
       } else {
-        showToast(tx('Wallet_SubmitWithdraw', '提款申请已提交'))
+        showToast(tx('Wallet_SubmitWithdrawSuccess', '提款申请已提交'))
         await walletStore.refreshPendingCsOrder(props.clubId)
       }
     } else {
-      showToast((res.message ?? tx('Wallet_SubmitWithdraw', '提款失败')) || '提款失败')
+      const isSuccessMsg = res.message?.toLowerCase() === 'success'
+      const msg = isSuccessMsg
+        ? tx('Wallet_SubmitWithdrawSuccess', '提款申请已提交')
+        : ((res.message ? t(res.message) || res.message : null) ?? tx('Wallet_SubmitWithdrawFailed', '提款失败'))
+      showToast(msg)
     }
   } catch (e) {
     console.error('confirmWithdraw failed', e)
-    showToast(tx('Wallet_SubmitWithdraw', '提款失败，请重试'))
+    showToast(tx('Wallet_SubmitWithdrawFailed', '提款失败，请重试'))
   } finally {
     withdrawing.value = false
   }
@@ -426,7 +434,7 @@ watch(filteredWithdrawTypes, (list) => {
       <template v-else-if="withdrawTypes.length > 0">
         <!-- Header with Tabs and Add Account Button -->
         <div class="wf__top-bar">
-          <div class="wf__tabs">
+          <div class="wf__tabs" :class="{ 'wf__tabs--single': availablePaymentChannels.length === 1 }">
             <button
               v-for="ch in availablePaymentChannels"
               :key="ch.id"
@@ -510,8 +518,11 @@ watch(filteredWithdrawTypes, (list) => {
                   />
                   <div class="wf__acct-card-info">
                     <div class="wf__acct-card-header">
-                      <span class="wf__acct-card-name">{{
-                        info.pix_name || info.real_name || info.name || info.account_name || '—'
+                      <span
+                        v-if="info.pix_name || info.real_name || info.name || info.account_name"
+                        class="wf__acct-card-name"
+                      >{{
+                        info.pix_name || info.real_name || info.name || info.account_name
                       }}</span>
                       <span class="wf__acct-card-badge">{{
                         info.bank_name ||
@@ -536,11 +547,7 @@ watch(filteredWithdrawTypes, (list) => {
             </div>
           </template>
           <div v-else class="wf__acct-empty">
-            {{
-              isWallet
-                ? tx('Wallet_NoWalletBound', 'No wallet address bound')
-                : tx('Wallet_NoCardBound', 'No bank card bound')
-            }}
+            {{ tx('Wallet_NoAccountBound', '暂无账户') }}
           </div>
         </template>
       </template>
@@ -709,8 +716,17 @@ watch(filteredWithdrawTypes, (list) => {
   border-radius: 999px;
   gap: 0.04rem;
 
+  &--single {
+    background: transparent;
+    padding: 0;
+  }
+
   @include theme-light-own {
     background: var(--wallet-l-surface-soft);
+
+    &--single {
+      background: transparent;
+    }
   }
 }
 
@@ -798,7 +814,7 @@ watch(filteredWithdrawTypes, (list) => {
     background: rgba(255, 59, 92, 0.12);
 
     .wf__grid-name {
-      color: #d7a356;
+      color: #ffd259;
       font-weight: 600;
     }
   }
@@ -811,7 +827,7 @@ watch(filteredWithdrawTypes, (list) => {
       background: rgba(255, 59, 92, 0.1);
 
       .wf__grid-name {
-        color: #d7a356;
+        color: #e69500;
         font-weight: 600;
       }
     }
@@ -935,12 +951,18 @@ watch(filteredWithdrawTypes, (list) => {
   font-family: var(--wallet-font-cn);
   font-size: 0.26rem;
   font-weight: 600;
-  color: #d7a356;
-  border: 1px solid rgba(215, 163, 86, 0.7);
-  background: rgba(215, 163, 86, 0.12);
+  color: #ffd259;
+  border: 1px solid rgba(255, 210, 89, 0.6);
+  background: rgba(255, 210, 89, 0.16);
   border-radius: 999px;
   padding: 0.04rem 0.2rem;
   white-space: nowrap;
+
+  @include theme-light-own {
+    color: #d97706;
+    border-color: rgba(217, 119, 6, 0.5);
+    background: rgba(217, 119, 6, 0.1);
+  }
 }
 
 .wf__acct-card-sub {
@@ -1049,41 +1071,51 @@ watch(filteredWithdrawTypes, (list) => {
 
 /* Submit Action Button */
 .wf__cta-wrapper {
+  position: relative;
   width: 100%;
-  margin-top: 0.1rem;
+  height: 1.47rem;
+  margin-top: 0.36rem;
+  z-index: 1;
 }
 
 .wf__cta {
+  position: relative;
   width: 100% !important;
-  height: 1.08rem !important;
-  border-radius: 999px !important;
-  background: rgba(255, 255, 255, 0.15) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  height: 100% !important;
+  border: 0.02rem solid rgba(249, 249, 249, 0.04) !important;
+  border-radius: 1.08rem !important;
+  background: rgba(170, 170, 170, 0.1) !important;
+  backdrop-filter: blur(18.5px);
+  -webkit-backdrop-filter: blur(18.5px);
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   cursor: pointer;
 
-  :deep(.primary-btn__text) {
-    font-size: 0.34rem !important;
-    font-weight: 600 !important;
-    color: #ffffff !important;
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0.0149rem rgba(255, 255, 255, 0.5);
+    pointer-events: none;
   }
 
-  &:not(.primary-btn--disabled) {
-    background: linear-gradient(90deg, #ff3b5c, #ee3955) !important;
-
-    :deep(.primary-btn__text) {
-      color: #ffffff !important;
-    }
+  :deep(.primary-btn__text) {
+    font-size: 0.493rem !important;
+    font-weight: 600 !important;
+    color: #78e490 !important;
   }
 
   @include theme-light-own {
     border-color: rgba(242, 242, 242, 0.8) !important;
     background: var(--wallet-l-accent) !important;
     backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+
+    &::after {
+      box-shadow: none;
+    }
 
     :deep(.primary-btn__text) {
       color: var(--wallet-l-on-accent) !important;

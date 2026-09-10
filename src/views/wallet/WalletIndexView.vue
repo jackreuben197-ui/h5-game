@@ -1046,14 +1046,14 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
               :active-index="activeMethod"
               @select="activeMethod = $event"
             />
-          </div>
 
-          <div class="pay-cta-wrapper">
-            <PrimaryButton
-              :text="`${t('UIMineMallUSDTShop_PromptlyRechargeTip')} ${displayPayAmount}`"
-              class="pay-cta"
-              @click="onPayClick"
-            />
+            <div class="pay-cta-wrapper">
+              <PrimaryButton
+                :text="`${t('UIMineMallUSDTShop_PromptlyRechargeTip')} ${displayPayAmount}`"
+                class="pay-cta"
+                @click="onPayClick"
+              />
+            </div>
           </div>
         </template>
 
@@ -1197,7 +1197,7 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   overscroll-behavior: contain;
-  padding-bottom: calc(env(safe-area-inset-bottom) + 0.64rem);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 3.2rem);
 }
 
 .wallet-screen--channel .wallet-scrollable,
@@ -1235,7 +1235,8 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
 .recharge-content {
   position: relative;
   z-index: 1;
-  padding-bottom: 2.5rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .presets-card {
@@ -1393,12 +1394,11 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
 }
 
 .pay-cta-wrapper {
-  position: fixed;
-  bottom: calc(env(safe-area-inset-bottom) + 0.6rem);
-  left: 0.455rem;
-  width: calc(100% - 0.91rem);
+  position: relative;
+  width: 100%;
   height: 1.47rem;
-  z-index: 10;
+  margin-top: 0.36rem;
+  z-index: 1;
 }
 
 .pay-cta {

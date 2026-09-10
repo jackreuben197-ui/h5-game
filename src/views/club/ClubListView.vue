@@ -220,7 +220,7 @@ function computeClubRoomStats(
 
 function getMemberRoleText(value: unknown): string {
   const role = Number(value)
-  if (role === 1) return t('UIClub_UserLevelOwner')
+  if (role === 1) return t('UIGuid_Founder')
   if (role === 2) return t('UIClub_VicePr')
   if (role === 3) return t('UIGuild_FilterButtonManager')
   if (role === 4) return t('UIClub_AgentItem')

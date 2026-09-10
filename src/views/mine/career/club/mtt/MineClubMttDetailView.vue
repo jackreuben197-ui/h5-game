@@ -333,7 +333,6 @@ onMounted(() => {
       text-shadow: none;
     }
 
-    .head-card,
     .rank-row {
       background: #ffffff;
       color: #000000;
@@ -346,7 +345,7 @@ onMounted(() => {
       }
     }
 
-    .head-top .title,
+    .title-row .title,
     .left .name,
     .right,
     .metric .value,
@@ -354,8 +353,8 @@ onMounted(() => {
       color: #000000;
     }
 
-    .head-top .sub,
-    .head-top .time,
+    .title-row .sub,
+    .title-row .time,
     .left .sub,
     .metric .label {
       color: rgba(0, 0, 0, 0.62);

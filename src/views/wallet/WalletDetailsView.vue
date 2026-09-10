@@ -17,7 +17,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { resolveOpCodeText, resolveBillOpCodeText } from '@/utils/transText'
 import { formatDateTime } from '@/utils/time'
-import { getLocale, t } from '@/i18n'
+import { getLocale, t, tColon } from '@/i18n'
 import {
   multiLanguageTemplateVersion,
   resolveTemplateTextByKey,
@@ -179,7 +179,7 @@ onMounted(() => {
             </div>
 
             <div class="balance-section">
-              <span class="balance-label">Balance:</span>
+              <span class="balance-label">{{ tColon(t('Wallet_BalanceLabel')) }}</span>
               <span class="balance-value">{{ balanceText }}</span>
               <img :src="iconChips" alt="chips" class="chip-icon" />
             </div>

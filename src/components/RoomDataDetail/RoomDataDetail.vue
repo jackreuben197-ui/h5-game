@@ -89,15 +89,15 @@ function detailCacheKey(): string {
   return `${clubId}_roomdetail_${props.roomId || 0}_${props.matchId || 0}`
 }
 
-const tableHeaders = [
-  'User',
+const tableHeaders = computed(() => [
+  t('UIMine_RecordDetailForNormal_RiDnNRPJ'),
   t('UIMine_Paipu_win'),
   t('UIMine_WalletPlatform_fee_f'),
   t('adaptation10179'),
   t('MTT_xq_buy'),
   t('UIMine_RecordItemsNormal_3RCUa3w8'),
   'JP',
-]
+])
 
 function buildEmptyDetailInfo(): DetailInfo {
   return {
@@ -398,10 +398,10 @@ onMounted(() => {
         <div class="board-head-strip"></div>
         <div class="board-head board-grid">
           <span
-            v-for="header in tableHeaders"
-            :key="header"
+            v-for="(header, index) in tableHeaders"
+            :key="index"
             class="head-cell"
-            :class="{ 'head-cell--user': header === 'User' }"
+            :class="{ 'head-cell--user': index === 0 }"
           >
             {{ header }}
           </span>

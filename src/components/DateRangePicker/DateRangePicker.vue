@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { t } from '@/i18n'
+import { t, toIntlLocale } from '@/i18n'
 
 type PickTarget = 'start' | 'end'
 
@@ -35,14 +35,23 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
-const weekLabels = ['m', 't', 'w', 't', 'f', 's', 's']
+const WEEK_LABEL_FALLBACK = ['m', 't', 'w', 't', 'f', 's', 's']
+
+const weekLabels = computed(() => {
+  try {
+    const formatter = new Intl.DateTimeFormat(`${toIntlLocale()}-u-ca-gregory`, { weekday: 'narrow' })
+    return WEEK_LABEL_FALLBACK.map((_, index) => formatter.format(new Date(2024, 0, 1 + index)))
+  } catch {
+    return WEEK_LABEL_FALLBACK
+  }
+})
 
 const startDateModel = ref(startOfDay(props.startDate))
 const endDateModel = ref(startOfDay(props.endDate))
 const pickingTarget = ref<PickTarget>(props.initialTarget)
 const currentMonth = ref(new Date(endDateModel.value.getFullYear(), endDateModel.value.getMonth(), 1))
 
-const monthTitle = computed(() => `${currentMonth.value.getFullYear()}年${currentMonth.value.getMonth() + 1}月`)
+const monthTitle = computed(() => formatMonthTitle(currentMonth.value))
 const startDateText = computed(() => formatDateSlash(startDateModel.value))
 const endDateText = computed(() => formatDateSlash(endDateModel.value))
 
@@ -113,6 +122,14 @@ watch(
     }
   },
 )
+
+function formatMonthTitle(date: Date): string {
+  try {
+    return new Intl.DateTimeFormat(`${toIntlLocale()}-u-ca-gregory`, { year: 'numeric', month: 'long' }).format(date)
+  } catch {
+    return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}`
+  }
+}
 
 function closePicker(): void {
   emit('update:visible', false)
@@ -548,71 +565,7 @@ function startOfDay(date: Date): Date {
 
 @include theme-light-own {
   .date-picker-sheet {
-    background: rgba(255, 255, 255, 0.96);
-    border-color: rgba(0, 0, 0, 0.08);
-    box-shadow: 0 -0.1rem 0.3rem rgba(0, 0, 0, 0.08);
-  }
-
-  .picker-tip p {
-    color: rgba(15, 8, 8, 0.85);
-  }
-
-  .picker-close {
-    background: rgba(0, 0, 0, 0.08);
-    color: rgba(15, 8, 8, 0.85);
-  }
-
-  .picker-date-btn {
-    background: rgba(0, 0, 0, 0.05);
-    border-color: rgba(0, 0, 0, 0.08);
-    color: rgba(15, 8, 8, 0.85);
-
-    &.active {
-      border-color: #05c297;
-    }
-  }
-
-  .calendar-icon {
-    border-color: rgba(15, 8, 8, 0.7);
-
-    &::before,
-    &::after {
-      background: rgba(15, 8, 8, 0.7);
-    }
-  }
-
-  .arrow-btn,
-  .month-title,
-  .day-cell {
-    color: rgba(15, 8, 8, 0.85);
-  }
-
-  .weekday-row {
-    color: rgba(15, 8, 8, 0.5);
-  }
-
-  .day-cell {
-    &.disabled,
-    &.muted {
-      color: rgba(15, 8, 8, 0.25);
-    }
-
-    &.in-range::before,
-    &.range-start::before,
-    &.range-end::before {
-      background: rgba(5, 194, 151, 0.2);
-    }
-
-    &.range-start::after,
-    &.range-end::after {
-      background: #05c297;
-      color: #ffffff;
-    }
-  }
-
-  .picker-ok {
-    background: #05c297;
-    color: #ffffff;
+    background: rgba(18, 18, 22, 0.85);
   }
 }
 </style>

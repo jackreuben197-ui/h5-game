@@ -310,6 +310,7 @@ function close(): void {
 
 .card__row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -324,5 +325,10 @@ function close(): void {
   color: #fff;
   letter-spacing: 0.3px;
   white-space: nowrap;
+}
+
+.card__val {
+  margin-left: auto;
+  text-align: right;
 }
 </style>

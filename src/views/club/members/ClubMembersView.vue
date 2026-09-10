@@ -889,7 +889,7 @@ function resolveRole(record: OrgMemberListRecord): {
   const isBoss = toSafeNumber(record.is_boss) === 1
 
   if (isBoss || userLevel === 1) {
-    return { role: t('UIClub_UserLevelOwner'), identityType: 'founder' }
+    return { role: t('UIGuid_Founder'), identityType: 'founder' }
   }
 
   if (userLevel === 2 || userLevel === 3) {
@@ -1998,6 +1998,7 @@ onMounted(() => {
   line-height: 1;
   color: rgba(249, 249, 249, 0.9);
   padding-left: 0.32rem;
+  text-align: right;
 }
 
 .member-tabs {
@@ -3317,6 +3318,6 @@ onMounted(() => {
 }
 
 :deep(.page-back-header .title) {
-  font-size: 0.48rem !important;
+  font-size: 0.48rem;
 }
 </style>

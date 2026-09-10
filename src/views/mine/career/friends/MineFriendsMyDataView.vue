@@ -21,7 +21,7 @@ import { useGameStore } from '@/stores/game'
 import { userCache } from '@/utils/userCache'
 import { createKeyedRefresh } from '@/utils/keyedRefresh'
 import { USER_STORE_CAREER } from '@/utils/indexedDB'
-import { t } from '@/i18n'
+import { t, toIntlLocale } from '@/i18n'
 
 interface SummaryItem {
   label: string
@@ -72,7 +72,16 @@ const currentMonth = ref(
   new Date(endDateModel.value.getFullYear(), endDateModel.value.getMonth(), 1),
 )
 
-const weekLabels = ['m', 't', 'w', 't', 'f', 's', 's']
+const WEEK_LABEL_FALLBACK = ['m', 't', 'w', 't', 'f', 's', 's']
+
+const weekLabels = computed(() => {
+  try {
+    const formatter = new Intl.DateTimeFormat(`${toIntlLocale()}-u-ca-gregory`, { weekday: 'narrow' })
+    return WEEK_LABEL_FALLBACK.map((_, index) => formatter.format(new Date(2024, 0, 1 + index)))
+  } catch {
+    return WEEK_LABEL_FALLBACK
+  }
+})
 
 const summary = ref<SummaryItem[]>([
   { label: t('UINumberOfParticipants'), value: '0' },
@@ -111,13 +120,15 @@ const title = computed(() => t('UIClub_Mlistinfo_GiVUYG7E'))
 
 const startDateText = computed(() => formatDateTime(startDateModel.value, 'DD/MM/YYYY'))
 const endDateText = computed(() => formatDateTime(endDateModel.value, 'DD/MM/YYYY'))
-const monthTitle = computed(
-  () =>
-    currentMonth.value.getFullYear() +
-    t('UIMine_VIP_year') +
-    (currentMonth.value.getMonth() + 1) +
-    t('UIMine_VIP_month'),
-)
+const monthTitle = computed(() => formatMonthTitle(currentMonth.value))
+
+function formatMonthTitle(date: Date): string {
+  try {
+    return new Intl.DateTimeFormat(`${toIntlLocale()}-u-ca-gregory`, { year: 'numeric', month: 'long' }).format(date)
+  } catch {
+    return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}`
+  }
+}
 
 type DayCell = {
   date: Date
@@ -880,10 +891,6 @@ onBeforeUnmount(() => {
   background: rgba(12, 12, 12, 0.6);
   display: flex;
   align-items: flex-end;
-
-  @include theme-light-own {
-    background: var(--c-overlay);
-  }
 }
 
 .date-picker-sheet {
@@ -892,11 +899,6 @@ onBeforeUnmount(() => {
   border-radius: 0.84459rem 0.84459rem 0 0;
   background: rgba(0, 0, 0, 0.86);
   backdrop-filter: blur(0.16064rem);
-
-  @include theme-light-own {
-    color: var(--c-text);
-    background: var(--c-surface);
-  }
 }
 
 .picker-tip {
@@ -909,10 +911,6 @@ onBeforeUnmount(() => {
     font-size: 0.41861rem;
     line-height: 1.4;
     color: #fff;
-
-    @include theme-light-own {
-      color: var(--c-text);
-    }
   }
 }
 
@@ -925,11 +923,6 @@ onBeforeUnmount(() => {
   color: #fff;
   font-size: 0.8rem;
   line-height: 1;
-
-  @include theme-light-own {
-    color: var(--c-text);
-    background: rgba(0, 0, 0, 0.1);
-  }
 }
 
 .picker-range-row {
@@ -953,11 +946,6 @@ onBeforeUnmount(() => {
   font-size: 0.35893rem;
   line-height: 1.2;
 
-  @include theme-light-own {
-    color: var(--c-text);
-    background: rgba(0, 0, 0, 0.08);
-  }
-
   &.active {
     box-shadow: 0 0 0 0.02rem rgba(var(--c-brand-rgb), 0.45) inset;
   }
@@ -970,10 +958,6 @@ onBeforeUnmount(() => {
   border-radius: 0.1rem;
   position: relative;
 
-  @include theme-light-own {
-    border-color: var(--c-text);
-  }
-
   &::before,
   &::after {
     content: '';
@@ -983,10 +967,6 @@ onBeforeUnmount(() => {
     height: 0.12rem;
     border-radius: 0.03rem;
     background: rgba(243, 243, 243, 0.85);
-
-    @include theme-light-own {
-      background: var(--c-text);
-    }
   }
 
   &::before {
@@ -1020,10 +1000,6 @@ onBeforeUnmount(() => {
   height: 0.64rem;
   line-height: 0.64rem;
   padding: 0;
-
-  @include theme-light-own {
-    color: var(--c-text);
-  }
 }
 
 .month-title {
@@ -1031,10 +1007,6 @@ onBeforeUnmount(() => {
   color: #fff;
   font-size: 0.49547rem;
   line-height: 1.4;
-
-  @include theme-light-own {
-    color: var(--c-text);
-  }
 }
 
 .calendar-wrap {
@@ -1072,10 +1044,6 @@ onBeforeUnmount(() => {
   line-height: 0.42667rem;
   display: grid;
   place-items: center;
-
-  @include theme-light-own {
-    color: var(--c-text);
-  }
 
   > span {
     position: relative;
@@ -1124,13 +1092,6 @@ onBeforeUnmount(() => {
     border-radius: 50%;
     background: var(--c-brand);
     z-index: 1;
-  }
-
-  &.range-start,
-  &.range-end {
-    @include theme-light-own {
-      color: #fff;
-    }
   }
 }
 

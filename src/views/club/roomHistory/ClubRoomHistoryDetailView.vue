@@ -65,7 +65,7 @@ const detailInfo = ref<DetailInfo>({
 })
 
 const tableHeaders = computed(() => [
-  'User',
+  t('UIMine_RecordDetailForNormal_RiDnNRPJ'),
   t('Page_DataDetails_Win'),
   t('Page_DataDetails_Fee'),
   t('Page_DataDetails_Insurance'),
@@ -297,10 +297,10 @@ onMounted(() => {
           <div class="board-head-strip"></div>
           <div class="board-head board-grid">
             <span
-              v-for="header in tableHeaders"
-              :key="header"
+              v-for="(header, index) in tableHeaders"
+              :key="index"
               class="head-cell"
-              :class="{ 'head-cell--user': header === 'User' }"
+              :class="{ 'head-cell--user': index === 0 }"
             >
               {{ header }}
             </span>

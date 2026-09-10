@@ -80,7 +80,7 @@ async function ensureChannelClubContext(): Promise<void> {
     return
   }
 
-  // 渠道俱乐部是游客列表、首页标题、公告和 h5_menu 的共同 scope。
+  // 渠道俱乐部是列表展示过滤、首页标题、公告和 h5_menu 的共同配置来源。
   // 必须先固定它，再用 user/info 判定身份；否则体验身份会先清空真实用户资料，
   // 页面会短暂退回平台 scope，并抢跑一轮错误的房间/赛事请求。
   await useUserInfoStore(pinia).ensureChannelDefaultClub()

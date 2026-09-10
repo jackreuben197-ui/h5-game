@@ -1,5 +1,8 @@
 import { defineStore } from 'pinia'
-import { getAllMttSngIdsApi, getGuestAllMttSngIdsApi, postRoomCenterUserMatchListApi, postRoomCenterGuestMatchListApi } from '@/api/roomcenter'
+import {
+  getAllMttSngIdsApi,
+  postRoomCenterUserMatchListApi,
+} from '@/api/roomcenter'
 import { Code, subscribeH5WsCodes } from '@/bridge/ws'
 import {
   decodeMttSeriesNotifyFromRawPacket,
@@ -20,8 +23,6 @@ import type {
 } from '@/api/models/roomcenter'
 import StorageKey from '@/constants/storageKey'
 import { useGameStore } from '@/stores/game'
-import { useUserInfoStore } from '@/stores/userInfo'
-import { isChannelPackageHost } from '@/utils/channelPackage'
 import { localStore } from '@/utils/localStore'
 import { createLogger } from '@/utils/logger'
 
@@ -45,9 +46,6 @@ interface MttListState {
 }
 
 const MTT_LIST_CACHE_VERSION = 2
-const CHANNEL_GUEST_UID = '0'
-const CHANNEL_GUEST_SESSION_KEY = `user_${CHANNEL_GUEST_UID}`
-
 // 同一 token 会话内只拉一次：mtt/list + all/mtt/sng/ids。
 let mttListLoadedToken = ''
 let mttListLoadingPromise: Promise<void> | null = null
@@ -58,10 +56,6 @@ let pendingRepairNeedIds = false
 
 function resolveMttSessionKey(): string {
   const gameStore = useGameStore()
-  // 体验账号有独立 uid，但仍必须使用游客赛事接口和渠道俱乐部范围。
-  if (isChannelPackageHost() && gameStore.isGuestAccount) {
-    return CHANNEL_GUEST_SESSION_KEY
-  }
   const uid = String(gameStore.loginUserId || '').trim()
   if (uid) {
     return `user_${uid}`
@@ -72,35 +66,12 @@ function resolveMttSessionKey(): string {
     return `token_${sessionToken}`
   }
 
-  if (isChannelPackageHost()) {
-    return CHANNEL_GUEST_SESSION_KEY
-  }
-
   return ''
 }
 
-function isOfficialGuestMode(): boolean {
+function isUnauthenticatedMode(): boolean {
   const gameStore = useGameStore()
-  return !gameStore.sessionToken.trim() && !isChannelPackageHost()
-}
-
-function isChannelGuestSession(sessionKey: string): boolean {
-  return sessionKey === CHANNEL_GUEST_SESSION_KEY
-}
-
-async function resolveGuestClubRid(): Promise<number> {
-  if (!isChannelPackageHost()) {
-    return 0
-  }
-
-  const userInfoStore = useUserInfoStore()
-  const cachedRid = toSafeInt(userInfoStore.channelDefaultClub?.random_id)
-  if (cachedRid > 0) {
-    return cachedRid
-  }
-
-  const club = await userInfoStore.ensureChannelDefaultClub()
-  return toSafeInt(club?.random_id)
+  return !gameStore.sessionToken.trim()
 }
 
 function toSafeInt(value: unknown): number {
@@ -271,7 +242,7 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
   actions: {
     // 对外统一入口：恢复缓存 + 会话内静默拉取一次。
     async bootstrapMttList(): Promise<void> {
-      if (isOfficialGuestMode()) {
+      if (isUnauthenticatedMode()) {
         this.clearMttList()
         return
       }
@@ -356,14 +327,7 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
         return false
       }
 
-      const channelGuest = isChannelGuestSession(sessionKey)
-      const guestClubRid = channelGuest ? await resolveGuestClubRid() : 0
       if (resolveMttSessionKey() !== sessionKey) return false
-      if (channelGuest && guestClubRid <= 0) {
-        this.records = []
-        this.persistMttListCache()
-        return false
-      }
 
       const mttIds = this.mttIdList
         .map((item) => toSafeInt(item.match_id))
@@ -391,18 +355,11 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
             continue
           }
 
-          const response = channelGuest
-            ? await postRoomCenterGuestMatchListApi({
-              mtt_ids: requestMttIds,
-              sng_ids: requestSngIds,
-              room_type: 0,
-              club_rid: guestClubRid,
-            })
-            : await postRoomCenterUserMatchListApi({
-              mtt_ids: requestMttIds,
-              sng_ids: requestSngIds,
-              room_type: 0,
-            })
+          const response = await postRoomCenterUserMatchListApi({
+            mtt_ids: requestMttIds,
+            sng_ids: requestSngIds,
+            room_type: 0,
+          })
 
           if (resolveMttSessionKey() !== sessionKey) return false
 
@@ -443,20 +400,9 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
           return false
         }
 
-        const channelGuest = isChannelGuestSession(sessionKey)
-        const guestClubRid = channelGuest ? await resolveGuestClubRid() : 0
         if (resolveMttSessionKey() !== sessionKey) return false
-        if (channelGuest && guestClubRid <= 0) {
-          this.mttIdList = []
-          this.sngIdList = []
-          this.seriesList = []
-          this.persistMttListCache()
-          return false
-        }
 
-        const response = channelGuest
-          ? await getGuestAllMttSngIdsApi({ club_rid: guestClubRid })
-          : await getAllMttSngIdsApi()
+        const response = await getAllMttSngIdsApi()
         if (resolveMttSessionKey() !== sessionKey) return false
         // 异常码不再把索引覆盖成空（否则会连带清空列表并被会话标记锁死），保留旧数据等重试。
         if (Number(response.code) !== 0) {

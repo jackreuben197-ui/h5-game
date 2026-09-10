@@ -32,10 +32,7 @@ import {
 import { completeCocosTableSitdownAuth } from '@/session/cocosTableSitdownAuth'
 import { sendBridgeMessage } from '@/bridge/core'
 import { setH5TableAuthOverlay, setH5Visible } from '@/bridge/channels/uiChannel'
-import {
-  clearPendingRealUserAction,
-  takePendingRealUserAction,
-} from '@/session/realUserGate'
+import { clearPendingRealUserAction, takePendingRealUserAction } from '@/session/realUserGate'
 import { SUPPORTED_LOCALES_OPTIONS, getLocale, setLocale, t, type LocaleCode } from '@/i18n'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import icPhone from '@/assets/icons/ic_phone.svg'
@@ -52,7 +49,6 @@ import {
   resolveInviteCode,
   resolveTraceHash,
   shouldOpenRegisterMode,
-  resolveAgentInviteCode,
   clearAgentInviteCodeCache,
 } from '@/utils/channelPackage'
 import ProtocolView from './components/ProtocolView.vue'
@@ -436,18 +432,19 @@ async function runLoginTransaction(target: string, replacingExperienceAccount: b
     await logoutCurrentSession()
   }
 
-  const effectiveInviteCode = resolveAgentInviteCode() || inviteCodeFromChannel.value
   const res = await loginV2Api({
     phone: contactType.value === 'phone' ? target : undefined,
     email: contactType.value === 'email' ? target : undefined,
     password: md5(form.password.trim()),
     area: contactType.value === 'phone' ? normalizeArea() : undefined,
-    invite_code: effectiveInviteCode || undefined,
+    // 俱乐部邀请码与代理邀请是两套业务：渠道邀请码只传 invite_code，
+    // 代理邀请由 traceHashFromChannel 通过 trace_hash 传递。
+    invite_code: inviteCodeFromChannel.value || undefined,
     trace_hash: traceHashFromChannel.value || undefined,
   })
   const token = String(res.token || '').trim()
   if (!token) {
-    throw new Error(t('UILogin_Text') + " token")
+    throw new Error(t('UILogin_Text') + ' token')
   }
 
   // 先写 TOKEN_EXPIREAT，再 setSessionToken：后者会把最新 expireAt 一并同步给 Cocos。
@@ -508,16 +505,14 @@ async function runLoginTransaction(target: string, replacingExperienceAccount: b
 }
 
 async function handleRegister(target: string) {
-  const effectiveInviteCode = resolveAgentInviteCode() || inviteCodeFromChannel.value
-
   const payload: Record<string, string | number> = {
     password: md5(form.password.trim()),
     code: form.code.trim(),
     platform: 5,
   }
 
-  if (effectiveInviteCode) {
-    payload.invite_code = effectiveInviteCode
+  if (inviteCodeFromChannel.value) {
+    payload.invite_code = inviteCodeFromChannel.value
   }
 
   if (traceHashFromChannel.value) {

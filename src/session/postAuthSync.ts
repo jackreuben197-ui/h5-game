@@ -15,6 +15,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { localStore } from '@/utils/localStore'
 import { ensureMultiLanguageTemplateLoaded } from '@/utils/multiLanguageTemplate'
 import { readClubListCache } from '@/utils/userClubListCache'
+import { isChannelPackageHost } from '@/utils/channelPackage'
 
 let inFlightToken = ''
 let inFlightPromise: Promise<PostAuthProfileSyncResult> | null = null
@@ -83,6 +84,12 @@ async function runPostAuthSync(token: string): Promise<PostAuthProfileSyncResult
   const gameStore = useGameStore(pinia)
   const appConfigStore = useAppConfigStore(pinia)
   const userInfoStore = useUserInfoStore(pinia)
+
+  // 体验账号退出时会清理用户状态。真实账号同步前重新加载渠道公开配置，
+  // 保证 diamond_room_switch、h5_menu 等 CMS 字段在登录切换后仍然存在。
+  if (isChannelPackageHost()) {
+    await userInfoStore.ensureChannelDefaultClub()
+  }
 
   await appConfigStore.restorePublicConfigCache()
     .then(() => {

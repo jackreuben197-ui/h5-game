@@ -14,6 +14,8 @@ export default class StorageKey {
   static WS_PORT_UPDATED_AT = 'WS_PORT_UPDATED_AT'
   // 牌局分组展开状态缓存（key 为 groupKey，value 为是否展开）。
   static ROOM_GROUP_EXPANDED_CACHE = 'ROOM_GROUP_EXPANDED_CACHE'
+  // MTT 系列分组展开状态缓存（key 为 series/group id，value 为是否展开）。
+  static MTT_GROUP_EXPANDED_CACHE = 'MTT_GROUP_EXPANDED_CACHE'
   // 联盟封禁名单缓存（按 tribe_id 维度存储）。
   static TRIBE_BLACK_USER_LIST_CACHE = 'TRIBE_BLACK_USER_LIST_CACHE'
   // 首页玩法统计缓存（扑克/麻将/小游戏/MTT）。

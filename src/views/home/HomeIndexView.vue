@@ -395,7 +395,11 @@ function refreshHomePokerMahjongStatsFromStore(): void {
     // 对齐 C# RequestTableDataListForClubOrTribe：先按俱乐部/联盟关系过滤可见牌桌。
     if (
       !checkIsShowForClubAndTribe(
-        room, selectedClubId.value, selectedTribeId.value, true, displayPlatformDiamond.value,
+        room,
+        selectedClubId.value,
+        selectedTribeId.value,
+        true,
+        displayPlatformDiamond.value,
       )
     ) {
       return
@@ -1220,6 +1224,7 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 .mtt-content {
+  padding: 0.1rem 0.38rem 0rem;
   :deep(.mtt-group) {
     .mtt-group__title {
       color: #000;

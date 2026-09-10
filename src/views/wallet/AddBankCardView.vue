@@ -194,7 +194,7 @@ async function handleSave() {
         :disabled="!cardName.trim() || !cardBank.trim() || !cardNumber.trim() || saving"
         @click="handleSave"
       >
-        {{ saving ? tx('Wallet_Saving', '保存中…') : tx('Save', '保存') }}
+        {{ saving ? tx('Wallet_Saving', '保存中…') : t('Save') }}
       </button>
     </div>
 

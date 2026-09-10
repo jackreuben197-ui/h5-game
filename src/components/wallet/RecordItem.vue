@@ -7,6 +7,7 @@ interface Props {
   payAmount: string | number
   time: string
   status: string
+  withdraw?: boolean
 }
 
 defineProps<Props>()
@@ -22,7 +23,7 @@ defineProps<Props>()
         :label="type"
         variant="dark"
       />
-      <span class="record__label">{{ $txt('Wallet_OrderPayAmount') }}</span>
+      <span class="record__label">{{ $txt(withdraw ? 'UITribeRechargeUSDTRecord_WithdrawGold' : 'Wallet_OrderPayAmount') }}</span>
       <span class="record__label">{{ $txt('Wallet_ApplyTime') }}</span>
       <span class="record__label">{{ $txt('Wallet_OrderStatus') }}</span>
     </div>

@@ -471,7 +471,7 @@ watch(filteredWithdrawTypes, (list) => {
               alt=""
               class="wf__grid-icon"
             />
-            <span class="wf__grid-name">{{
+            <span v-fit-text="{ maxLines: 1, minScale: 0.75 }" class="wf__grid-name">{{
               wt.name || (isWallet ? 'USDT' : tx('Wallet_BankCard', 'Bank Card'))
             }}</span>
             <div v-if="selectedWithdrawType?.id === wt.id" class="wf__grid-check">
@@ -828,13 +828,17 @@ watch(filteredWithdrawTypes, (list) => {
 
 .wf__grid-name {
   font-family: var(--wallet-font-cn);
-  font-size: 0.25rem;
+  font-size: 0.38rem;
   font-weight: 500;
   color: #ffffff;
   text-align: center;
-  white-space: nowrap;
+  line-height: 1.1;
+  white-space: normal;
+  word-break: break-word;
   overflow: hidden;
-  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   width: 100%;
   padding: 0 0.02rem;
 
@@ -922,6 +926,7 @@ watch(filteredWithdrawTypes, (list) => {
   font-size: 0.32rem;
   font-weight: 600;
   color: #ffffff;
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -933,6 +938,8 @@ watch(filteredWithdrawTypes, (list) => {
 
 .wf__acct-card-badge {
   font-family: var(--wallet-font-cn);
+  margin-left: auto;
+  flex-shrink: 0;
   font-size: 0.26rem;
   font-weight: 600;
   color: #d7a356;

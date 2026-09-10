@@ -19,7 +19,7 @@ import { useWalletStore } from '@/stores/wallet'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { isPrivateDomainMode } from '@/utils/channelPackage'
 import { generateQrCodeUrl } from '@/utils/qrcode'
-import { toTimestampMs } from '@/utils/time'
+import { formatDateTime, toTimestampMs } from '@/utils/time'
 import { openCsOrderChat } from '@/components/GlobalCsOrderFloat/channel'
 
 type PendingPaymentKind = 'online' | 'usdt'
@@ -58,7 +58,7 @@ function statusLabel(status?: number): string {
 
 function formatTime(raw?: string): string {
   if (!raw) return '-'
-  return raw.replace('T', ' ').slice(0, 16)
+  return formatDateTime(raw, 'YYYY-MM-DD HH:mm')
 }
 
 // 联盟币金额（gold_num）后端单位为分，展示需 /100；支付金额（pay_price/amount）已是展示单位
@@ -343,11 +343,12 @@ onMounted(loadOrders)
         :pay-amount="payAmount(order)"
         :time="formatTime(order.create_time)"
         :status="statusLabel(order.status)"
+        :withdraw="activeTab === 1"
         @click="onRecordClick(order)"
       />
     </div>
 
-    <OrderDetailsView v-if="selectedOrder" :order="selectedOrder" @close="selectedOrder = null" />
+    <OrderDetailsView v-if="selectedOrder" :order="selectedOrder" :withdraw="activeTab === 1" @close="selectedOrder = null" />
 
     <OnlinePaymentPopup
       v-if="pendingPayment?.kind === 'online'"

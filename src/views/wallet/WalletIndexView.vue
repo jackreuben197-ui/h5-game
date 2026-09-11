@@ -622,7 +622,39 @@ function onCustom(): void {
   keypadOpen.value = true
 }
 
+const activePayType = computed(() => filteredPayTypes.value[activeMethod.value])
+
+const depositRange = computed(() => {
+  const min = Number(activePayType.value?.user_recharge_min ?? 0) / 100
+  const max = Number(activePayType.value?.user_recharge_max ?? 0) / 100
+  return { min: min > 0 ? min : 0, max: max > 0 ? max : Infinity }
+})
+
+function formatLimit(value: number): string {
+  return value.toLocaleString('en-US', { maximumFractionDigits: 2 })
+}
+
+const keypadPlaceholder = computed(() => {
+  const { min, max } = depositRange.value
+  return Number.isFinite(max) ? `${formatLimit(min)}–${formatLimit(max)}` : ''
+})
+
+function isDepositAmountInRange(amount: number): boolean {
+  const { min, max } = depositRange.value
+  if (!Number.isFinite(max)) return true
+  return amount >= min && amount <= max
+}
+
+function showDepositRangeError(): void {
+  const { min, max } = depositRange.value
+  showToast(t('Wallet_AmountRangeError', formatLimit(min), formatLimit(max)))
+}
+
 function onKeypadSubmit(v: number): void {
+  if (!isDepositAmountInRange(v)) {
+    showDepositRangeError()
+    return
+  }
   customAmount.value = String(v)
   keypadOpen.value = false
   activePreset.value = -1
@@ -674,6 +706,10 @@ const tabLabels = computed(() => [t('Wallet_Deposit'), t('Wallet_Withdraw')])
 
 async function onPayClick() {
   if (!requireRealUser(resumeWalletPayAfterLogin)) return
+  if (activePreset.value === -1 && !isDepositAmountInRange(Number(selectedAmount.value))) {
+    showDepositRangeError()
+    return
+  }
   const payTypes = filteredPayTypes.value
   const selectedPayType = payTypes[activeMethod.value]
 
@@ -1074,6 +1110,7 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
     <NumericKeypad
       :open="keypadOpen"
       :show-input-area="true"
+      :placeholder="keypadPlaceholder"
       @close="keypadOpen = false"
       @submit="onKeypadSubmit"
     />

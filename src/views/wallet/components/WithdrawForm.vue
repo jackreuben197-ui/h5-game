@@ -128,13 +128,27 @@ const withdrawRange = computed(() => {
   }
 })
 
+function formatLimit(value: number): string {
+  return value.toLocaleString('en-US', { maximumFractionDigits: 2 })
+}
+
+const withdrawLimitLabel = computed(() => {
+  const { min, max } = withdrawRange.value
+  if (!Number.isFinite(max)) return ''
+  return t('Wallet_WithdrawLimitUc', formatLimit(min), formatLimit(max))
+})
+
+function isWithdrawAmountInRange(amount: number): boolean {
+  const { min, max } = withdrawRange.value
+  if (!Number.isFinite(max)) return true
+  return amount >= min && amount <= max
+}
+
 const canWithdraw = computed(() => {
   if (!selectedWithdrawType.value) return false
   const amt = parsedAmount.value
   if (amt <= 0) return false
   if (amt > availableUc.value / 100) return false
-  if (withdrawRange.value.min > 0 && amt < withdrawRange.value.min) return false
-  if (Number.isFinite(withdrawRange.value.max) && amt > withdrawRange.value.max) return false
   if (!isCustomerCare.value && !selectedPaymentAccount.value) return false
   return true
 })
@@ -337,6 +351,12 @@ function handleWithdraw(): void {
     return
   }
   if (!canWithdraw.value) return
+  if (!isWithdrawAmountInRange(parsedAmount.value)) {
+    showToast(
+      t('Wallet_AmountRangeError', formatLimit(withdrawRange.value.min), formatLimit(withdrawRange.value.max)),
+    )
+    return
+  }
   withdrawConfirmAmount.value = parsedAmount.value
   showWithdrawConfirmModal.value = true
 }
@@ -559,8 +579,11 @@ watch(filteredWithdrawTypes, (list) => {
 
     <!-- Card 2: Withdrawal Amount -->
     <div v-if="withdrawTypes.length > 0" class="wf__card wf__amount-card">
-      <div class="wf__amount-title">
-        {{ tx('Wallet_WithdrawalAmount', 'Withdrawal Amount') }}
+      <div class="wf__amount-head">
+        <div class="wf__amount-title">
+          {{ tx('Wallet_WithdrawalAmount', 'Withdrawal Amount') }}
+        </div>
+        <span v-if="withdrawLimitLabel" class="wf__amount-limit">{{ withdrawLimitLabel }}</span>
       </div>
 
       <div class="wf__amount-input-box">
@@ -1021,6 +1044,26 @@ watch(filteredWithdrawTypes, (list) => {
 
   @include theme-light-own {
     color: var(--wallet-l-text);
+  }
+}
+
+.wf__amount-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.16rem;
+  flex-wrap: wrap;
+}
+
+.wf__amount-limit {
+  font-family: var(--wallet-font-cn);
+  font-size: 0.24rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: right;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text-muted);
   }
 }
 

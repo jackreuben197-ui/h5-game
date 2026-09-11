@@ -16,6 +16,7 @@ interface Props {
   showInputArea?: boolean
   confirmText?: string
   title?: string
+  placeholder?: string
   allowDecimal?: boolean // When true, replace 'C' with '.' and allow decimal input
   showCancel?: boolean
   showActions?: boolean
@@ -30,6 +31,7 @@ const props = withDefaults(defineProps<Props>(), {
   initialValue: '',
   allowLeadingZero: false,
   title: '',
+  placeholder: '',
   showMask: true,
   showBackground: true,
   showInputArea: false,
@@ -200,7 +202,7 @@ function confirm(): void {
             <span class="kp__title">{{ title || t('Wallet_CustomAmount') }}</span>
             <div class="kp__input">
               <span v-if="!value" class="kp__placeholder">
-                {{ t('Wallet_KeypadPlaceholder', min, max) }}
+                {{ placeholder || t('Wallet_KeypadPlaceholder', min, max) }}
               </span>
               <span v-else class="kp__value">
                 {{ value }}

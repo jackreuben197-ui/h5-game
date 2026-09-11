@@ -651,7 +651,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="home-page">
+  <div class="home-page" :class="{ 'home-page--mtt': homeContentMode === 'mtt' }">
     <!-- 0. 正式首页统一承载游客/真实账号；游客仅额外显示注册、登录入口。 -->
     <div class="top-bar">
       <span class="top-bar__logo">POKER</span>
@@ -988,7 +988,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 0.24rem;
-  padding: 0 0.4rem 2.3rem;
+  padding: 0 0.4rem 2.6rem;
   background: transparent;
   min-height: max-content;
   box-sizing: border-box;
@@ -1000,6 +1000,17 @@ onBeforeUnmount(() => {
   :deep(.group-item) {
     padding: 0.2667rem 0.2rem 0.45rem;
   }
+}
+
+// 仅有 MTT 时，首页固定顶部信息区，把剩余高度全部交给赛事列表滚动。
+// 页面自身不再超过 MainLayout 的内容区，避免外层滚动容器同时滚动。
+.home-page.home-page--mtt {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding-bottom: 0;
+  overflow: hidden;
 }
 
 .top-bar {
@@ -1254,9 +1265,11 @@ onBeforeUnmount(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.mtt-content {
+.home-mtt-content {
   padding: 0.1rem 0.38rem 0rem;
+
   :deep(.mtt-group) {
+    margin-bottom: 0;
     .mtt-group__title {
       color: #000;
     }
@@ -1282,6 +1295,28 @@ onBeforeUnmount(() => {
   margin-left: -0.4rem;
   margin-right: -0.4rem;
   min-height: 5rem;
+}
+
+.home-page--mtt .home-swap-container {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.home-page--mtt .home-swap-panel {
+  height: 100%;
+  min-height: 0;
+}
+
+.home-page--mtt .home-mtt-content {
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior-y: contain;
 }
 
 .home-swap-panel {

@@ -49,6 +49,7 @@ import {
   resolveInviteCode,
   resolveTraceHash,
   shouldOpenRegisterMode,
+  resolveAgentInviteCode,
   clearAgentInviteCodeCache,
 } from '@/utils/channelPackage'
 import ProtocolView from './components/ProtocolView.vue'
@@ -431,15 +432,13 @@ async function runLoginTransaction(target: string, replacingExperienceAccount: b
   if (replacingExperienceAccount) {
     await logoutCurrentSession()
   }
-
+  const effectiveInviteCode = resolveAgentInviteCode() || inviteCodeFromChannel.value
   const res = await loginV2Api({
     phone: contactType.value === 'phone' ? target : undefined,
     email: contactType.value === 'email' ? target : undefined,
     password: md5(form.password.trim()),
     area: contactType.value === 'phone' ? normalizeArea() : undefined,
-    // 俱乐部邀请码与代理邀请是两套业务：渠道邀请码只传 invite_code，
-    // 代理邀请由 traceHashFromChannel 通过 trace_hash 传递。
-    invite_code: inviteCodeFromChannel.value || undefined,
+    invite_code: effectiveInviteCode || undefined,
     trace_hash: traceHashFromChannel.value || undefined,
   })
   const token = String(res.token || '').trim()
@@ -505,14 +504,16 @@ async function runLoginTransaction(target: string, replacingExperienceAccount: b
 }
 
 async function handleRegister(target: string) {
+  const effectiveInviteCode = resolveAgentInviteCode() || inviteCodeFromChannel.value
+
   const payload: Record<string, string | number> = {
     password: md5(form.password.trim()),
     code: form.code.trim(),
     platform: 5,
   }
 
-  if (inviteCodeFromChannel.value) {
-    payload.invite_code = inviteCodeFromChannel.value
+  if (effectiveInviteCode) {
+    payload.invite_code = effectiveInviteCode
   }
 
   if (traceHashFromChannel.value) {

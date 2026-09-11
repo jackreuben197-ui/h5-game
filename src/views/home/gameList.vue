@@ -444,6 +444,7 @@ function handleOpenCustomerService(): void {
 
 .room-list-page {
   position: relative;
+  height: 100dvh;
   min-height: 100dvh;
   color: #fff;
   overflow: hidden;
@@ -456,6 +457,7 @@ function handleOpenCustomerService(): void {
 }
 
 .room-list-page--embedded {
+  height: auto;
   min-height: 0;
   overflow: visible;
   color: #000;
@@ -470,7 +472,16 @@ function handleOpenCustomerService(): void {
 .room-list-stage {
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
   width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.room-list-page--embedded .room-list-stage {
+  display: block;
+  height: auto;
 }
 
 .bg-overlay {
@@ -498,9 +509,11 @@ function handleOpenCustomerService(): void {
 .group-list {
   position: relative;
   z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   margin-top: 0;
   padding-top: 0;
-  max-height: calc(100dvh - 2rem);
+  max-height: none;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
@@ -516,6 +529,7 @@ function handleOpenCustomerService(): void {
 }
 
 .room-list-page--embedded .group-list {
+  min-height: auto;
   max-height: none;
   overflow: visible;
   padding-right: 0;

@@ -78,7 +78,9 @@ const bankWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
 )
 
 const walletWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
-  withdrawTypes.value.filter((wt) => wt.status === 1 && wt.account_type === 6),
+  withdrawTypes.value.filter(
+    (wt) => wt.status === 1 && wt.account_type === 6 && wt.action_type !== 0,
+  ),
 )
 
 const csWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
@@ -91,10 +93,7 @@ const csWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
 
 const filteredWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() => {
   if (activeChannel.value === 'bankcard') return bankWithdrawTypes.value
-  if (activeChannel.value === 'wallet')
-    return walletWithdrawTypes.value.length > 0
-      ? walletWithdrawTypes.value
-      : csWithdrawTypes.value
+  if (activeChannel.value === 'wallet') return walletWithdrawTypes.value
   return csWithdrawTypes.value
 })
 

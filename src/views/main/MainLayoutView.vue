@@ -44,9 +44,14 @@ watch(
     :style="backgroundStyle"
   >
     <div class="main-layout-content">
-      <!-- 子模块页面内容区域：由路由子页面渲染。 -->
+      <!-- 首页首次完成服务端初始化后保活，底部导航返回时直接恢复最终布局，不再出现空白帧。 -->
       <section class="module-slot">
-        <RouterView />
+        <RouterView v-slot="{ Component }">
+          <KeepAlive>
+            <component :is="Component" v-if="isHomeRoute" />
+          </KeepAlive>
+          <component :is="Component" v-if="!isHomeRoute" />
+        </RouterView>
       </section>
     </div>
     <!-- 公共底部导航：跨模块复用。 -->

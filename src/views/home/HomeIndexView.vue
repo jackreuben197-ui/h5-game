@@ -25,12 +25,6 @@ import PokerGameList from '@/views/home/gameList.vue'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 import { requireRealUser } from '@/session/realUserGate'
 import { ensureExperienceSession } from '@/session/experienceSession'
-import {
-  buildHomeContentModeCacheKey,
-  getHomeContentModeCache,
-  setHomeContentModeCache,
-  type HomeContentMode,
-} from '@/utils/homeContentModeCache'
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
@@ -176,6 +170,7 @@ const mahjongTablesText = 0
 const mahjongPlayersText = 0
 const mttTablesText = computed(() => `${homeRoomStats.value.mtt.tables}`)
 const mttPlayersText = computed(() => `${homeRoomStats.value.mtt.players}`)
+type HomeContentMode = 'zones' | 'mtt' | 'poker'
 
 // 渠道包版本 B 的首页固定保留首页信息区，底部嵌入扑克列表。
 // 版本 A 与官方包继续沿用现有的单类型 / 专区入口行为。
@@ -193,28 +188,12 @@ const homeContentModeRaw = computed<HomeContentMode>(() => {
   }
   return 'zones'
 })
-const homeContentModeCacheKey = computed(() =>
-  buildHomeContentModeCacheKey({
-    sessionKey: String(gameStore.loginUserId || (gameStore.isGuestAccount ? 'guest' : 'pending')),
-    isChannelPackage,
-    clubId: selectedClubId.value,
-    tribeId: selectedTribeId.value,
-    displayPlatformMtt: appConfigStore.clubDisplayPlatformMtt,
-    displayPlatformDiamond: displayPlatformDiamond.value,
-    isChannelMenuVersionB: isChannelMenuVersionB.value,
-  }),
-)
-// 渠道首页路由会随底部导航反复挂载。当前 SPA 内复用已确认的展示模式，避免每次从 zones 起步；
-// 页面刷新后内存缓存自然失效，仍会等待最新 CMS 配置，保留平台钻石开关的安全边界。
-const homeContentMode = ref<HomeContentMode>(
-  getHomeContentModeCache(homeContentModeCacheKey.value) || homeContentModeRaw.value,
-)
+// 首屏不猜测布局：俱乐部配置、全局配置、牌桌和 MTT 全部稳定后再一次性展示。
+const homeContentMode = ref<HomeContentMode>(homeContentModeRaw.value)
 const homeContentReady = ref(false)
 
 function commitHomeContentMode(): void {
-  const nextMode = homeContentModeRaw.value
-  homeContentMode.value = nextMode
-  setHomeContentModeCache(homeContentModeCacheKey.value, nextMode)
+  homeContentMode.value = homeContentModeRaw.value
 }
 
 const currentJoinedClub = computed(() => userInfoStore.currentJoinedClub)
@@ -593,11 +572,7 @@ watch(
 )
 
 async function bootstrapHomeContent(): Promise<void> {
-  // 全局配置可以并行加载；渠道俱乐部必须先于身份识别完成，因为它同时决定
-  // 游客列表 scope、俱乐部标题/公告和 h5_menu 展示版本。
-  const configReady = ensureHomeAnnouncementConfig().catch((error) => {
-    console.warn('[home] fetch announcement config failed:', error)
-  })
+  // 渠道俱乐部必须先于身份识别完成，因为它同时决定游客列表 scope、俱乐部标题和 h5_menu。
   if (isChannelPackage) {
     await userInfoStore.ensureChannelDefaultClub()
   }
@@ -610,12 +585,17 @@ async function bootstrapHomeContent(): Promise<void> {
       console.warn('[home] fetch mini game stats failed:', error)
     })
   }
-  await configReady
   ensureClubDataReady()
 
+  // 首页显示前必须确认本会话的最新全局配置。postAuthSync 若已在请求，这里会复用同一 promise；
+  // 身份初始化失败且没有 token 时，回退到免登录配置接口。
+  const sessionKey = gameStore.sessionToken.trim()
+  const configReady = sessionKey
+    ? appConfigStore.ensureFreshGlobalConfig(sessionKey)
+    : ensureHomeAnnouncementConfig()
   const roomListReady = roomListStore.bootstrapRoomList()
   const mttListReady = mttListStore.bootstrapMttList()
-  await Promise.allSettled([roomListReady, mttListReady])
+  await Promise.allSettled([configReady, roomListReady, mttListReady])
 
   // 两份列表及其共同过滤上下文全部稳定后，一次提交统计和页面模式。
   refreshHomePokerMahjongStatsFromStore()
@@ -651,7 +631,10 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="home-page" :class="{ 'home-page--mtt': homeContentMode === 'mtt' }">
+  <div
+    class="home-page"
+    :class="{ 'home-page--mtt': homeContentReady && homeContentMode === 'mtt' }"
+  >
     <!-- 0. 正式首页统一承载游客/真实账号；游客仅额外显示注册、登录入口。 -->
     <div class="top-bar">
       <span class="top-bar__logo">POKER</span>
@@ -775,18 +758,26 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- 渠道包单类型直接展示列表；赛事和牌桌并存时展示专区入口。 -->
-    <div class="home-swap-container">
+    <div class="home-swap-container" :aria-busy="!homeContentReady">
       <Transition name="home-swap">
-        <div v-if="homeContentMode === 'mtt'" key="mtt" class="home-swap-panel">
+        <div
+          v-if="homeContentReady && homeContentMode === 'mtt'"
+          key="mtt"
+          class="home-swap-panel"
+        >
           <MttContent class="home-mtt-content" />
         </div>
         <PokerGameList
-          v-else-if="homeContentMode === 'poker'"
+          v-else-if="homeContentReady && homeContentMode === 'poker'"
           key="poker"
           embedded
           class="home-poker-content home-swap-panel"
         />
-        <div v-else key="default" class="home-default-sections home-swap-panel">
+        <div
+          v-else-if="homeContentReady"
+          key="default"
+          class="home-default-sections home-swap-panel"
+        >
           <!-- 4. 游戏模块 -->
           <div class="section-header">
             <span class="section-title">{{ t('UIHome_Text3') }}</span>

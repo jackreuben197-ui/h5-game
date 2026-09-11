@@ -1,4 +1,4 @@
-import { postDiamondConfigApi, postGlobalConfigApi } from '@/api/config'
+import { postDiamondConfigApi } from '@/api/config'
 import { getUserClubApi, getUserInfoApi } from '@/api/user'
 import {
   forwardDiamondConfigToCocos,
@@ -152,11 +152,10 @@ async function runPostAuthSync(token: string): Promise<PostAuthProfileSyncResult
 
   // 配置和多语言不参与身份确认，后台刷新即可；登录弹窗只等待用户、俱乐部和 WS。
   void Promise.allSettled([
-    postGlobalConfigApi({})
-      .then((res) => {
-        if (res.code === 0 && res.data) {
-          appConfigStore.setGlobalConfig(res.data)
-          forwardGlobalConfigToCocos(res.data)
+    appConfigStore.ensureFreshGlobalConfig(token)
+      .then((loaded) => {
+        if (loaded && appConfigStore.globalConfig) {
+          forwardGlobalConfigToCocos(appConfigStore.globalConfig)
         }
       })
       .catch((error) => {

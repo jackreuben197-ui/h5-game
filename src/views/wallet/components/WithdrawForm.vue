@@ -1057,7 +1057,7 @@ watch(filteredWithdrawTypes, (list) => {
 
 .wf__amount-limit {
   font-family: var(--wallet-font-cn);
-  font-size: 0.24rem;
+  font-size: 0.28rem;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.7);
   text-align: right;

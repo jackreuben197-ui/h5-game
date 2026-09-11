@@ -636,7 +636,7 @@ function formatLimit(value: number): string {
 
 const keypadPlaceholder = computed(() => {
   const { min, max } = depositRange.value
-  return Number.isFinite(max) ? `${formatLimit(min)}–${formatLimit(max)}` : ''
+  return Number.isFinite(max) ? `${formatLimit(min)} - ${formatLimit(max)}` : ''
 })
 
 function isDepositAmountInRange(amount: number): boolean {

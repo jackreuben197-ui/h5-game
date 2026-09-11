@@ -54,13 +54,13 @@ import iconHotlive from '@/assets/images/minigame-newui/icon_hotlive.png'
 import img3 from '@/assets/images/minigame-newui/icon_777.svg'
 import img4 from '@/assets/images/img4.png'
 import img5 from '@/assets/images/img5.png'
-import img6 from '@/assets/images/img6.png'
+// import img6 from '@/assets/images/img6.png'
 import img7 from '@/assets/images/img7.png'
 import img8 from '@/assets/images/img8.png'
 import imgMinigame from '@/assets/images/icon_minigame.png'
 
 // @ts-ignore
-import dbEsportsImg from '@/assets/images/minigame-newui/DB电竞.png'
+// import dbEsportsImg from '@/assets/images/minigame-newui/DB电竞.png'
 
 import sideYellowBtn from '@/assets/images/sideyellowbtn.png'
 import sideBlueBtn from '@/assets/images/sidebluebtn.png'
@@ -215,8 +215,8 @@ const getHotCategoryByGameApiType = (gameApiType: string): string | null => {
     case 'shaba_sport':
     case 'panda_sport':
       return 'hot-sports'
-    case 'real_sports':
-      return 'hot-esports'
+    // case 'real_sports':
+    //   return 'hot-esports'
     case 'ky_poker':
     case 'leg_poker':
     case 't1_game':
@@ -255,8 +255,8 @@ const getCategoryByGameApiType = (gameApiType: string): string | null => {
     case 'shaba_sport':
     case 'panda_sport':
       return 'tiyu'
-    case 'real_sports':
-      return 'dianjing'
+    // case 'real_sports':
+    //   return 'dianjing'
     case 'leg_poker':
     case 'ky_poker':
     case 't1_game':
@@ -286,8 +286,8 @@ const getHotCategoryKey = (category: string): string | null => {
       return 'hot-fish'
     case 'tiyu':
       return 'hot-sports'
-    case 'dianjing':
-      return 'hot-esports'
+    // case 'dianjing':
+    //   return 'hot-esports'
     case 'minigame':
       return 'hot-minigame'
     default:
@@ -305,8 +305,8 @@ const getCategoryFromBlockKey = (blockKey: string): string | null => {
       return 'zhenren'
     case 'hot-sports':
       return 'tiyu'
-    case 'hot-esports':
-      return 'dianjing'
+    // case 'hot-esports':
+    //   return 'dianjing'
     case 'hot-minigame':
       return 'minigame'
     default:
@@ -689,7 +689,7 @@ const categoryBlocks = computed<GameBlock[]>(() => {
   const hotSlotGames = sortHotSlotGames(getPopularGamesForCategory('hot-slot'))
   const hotFishGames = sortHotFishGames(getPopularGamesForCategory('hot-fish'))
   const hotSportsGames = sortSportsGames(getPopularGamesForCategory('hot-sports'))
-  const hotEsportsGames = getPopularGamesForCategory('hot-esports')
+  // const hotEsportsGames = getPopularGamesForCategory('hot-esports')
   const hotMinigameGames = getPopularGamesForCategory('hot-minigame')
 
   const getBlockItems = (
@@ -730,6 +730,7 @@ const categoryBlocks = computed<GameBlock[]>(() => {
       items: getBlockItems('hot-sports', hotSportsGames, 3),
     },
     ...buildMinigameBlocks(hotMinigameGames, 'hot-minigame'),
+    /*
     {
       key: 'hot-esports',
       title: t('UICasino_HotEsports'),
@@ -741,6 +742,7 @@ const categoryBlocks = computed<GameBlock[]>(() => {
           ? [{ ...hotEsportsGames[0], img: dbEsportsImg }]
           : [{ title: '', img: dbEsportsImg }],
     },
+    */
   ]
 })
 
@@ -764,6 +766,7 @@ const displayBlocks = computed<GameBlock[]>(() => {
       return [sportsBlock]
     }
 
+    /*
     if (selectedCategory.value === 'dianjing') {
       const hotEsportsGames = getPopularGamesForCategory('hot-esports')
       const esportsBlock = {
@@ -779,6 +782,7 @@ const displayBlocks = computed<GameBlock[]>(() => {
       }
       return esportsBlock.items.length > 0 ? [esportsBlock] : []
     }
+    */
 
     if (selectedCategory.value === 'minigame') {
       return buildMinigameBlocks(getCategoryGames('minigame'), 'minigame')
@@ -827,7 +831,7 @@ const hasWheelData = computed(() => {
 
   const blocks = categoryBlocks.value
   const blocksWithActualGames = blocks.filter((block) => {
-    if (block.key === 'hot-sports' || block.key === 'hot-esports') {
+    if (block.key === 'hot-sports' /* || block.key === 'hot-esports' */) {
       return block.items.some((item) => (item.gameId || item.originalGame) && getCategoryByGameApiType(item.originalGame?.game_api_type || item.gameApiType || ''))
     }
     return block.items && block.items.some((item) => (item.gameId || item.originalGame) && getCategoryByGameApiType(item.originalGame?.game_api_type || item.gameApiType || ''))
@@ -845,7 +849,7 @@ const categoryTabs = computed(() => [
   { key: 'dianzi'   as HotCategoryKey, label: t('UICasino_TabSlots'),     icon: '🎰' },
   { key: 'tiyu'     as HotCategoryKey, label: t('UICasino_TabSports'),    icon: '⚽' },
   { key: 'buyu'     as HotCategoryKey, label: t('UICasino_TabFishing'),   icon: '🎣' },
-  { key: 'dianjing' as HotCategoryKey, label: t('UICasino_TabEsports'),   icon: '🎮' },
+  // { key: 'dianjing' as HotCategoryKey, label: t('UICasino_TabEsports'),   icon: '🎮' },
   { key: 'board'    as HotCategoryKey, label: t('UICasino_TabCards'),     icon: '♟️' },
   { key: 'minigame' as HotCategoryKey, label: t('UICasino_TabMinigames'), icon: '🕹️' },
   { key: 'lottery'  as HotCategoryKey, label: t('UICasino_TabLottery'),   icon: '🎱' },
@@ -1168,6 +1172,7 @@ onActivated(async () => {
         <img :src="img5" :alt="t('UICasino_TabFishing')" class="icon-img" />
         <span class="icon-label">{{ t('UICasino_TabFishing') }}</span>
       </button>
+      <!-- 电竞 分类 暂时隐藏，后续可能恢复
       <button
         class="icon-item"
         :class="{ selected: selectedCategory === 'dianjing' }"
@@ -1177,6 +1182,7 @@ onActivated(async () => {
         <img :src="img6" :alt="t('UICasino_TabEsports')" class="icon-img" />
         <span class="icon-label">{{ t('UICasino_TabEsports') }}</span>
       </button>
+      -->
       <button
         class="icon-item"
         :class="{ selected: selectedCategory === 'board' }"
@@ -1238,29 +1244,19 @@ onActivated(async () => {
             />
             <div class="category-text">
               <span class="category-title">{{ block.title }}</span>
-              <span class="category-sub">{{ block.subtitle }}</span>
+              <span v-if="block.subtitle" class="category-sub">{{ block.subtitle }}</span>
             </div>
           </div>
+          <button
+            v-if="(block.key === 'hot-slot' || block.key === 'hot-fish') && selectedCategory === 'hot'"
+            class="header-expand-btn"
+            type="button"
+            @click="toggleBlockExpand(block.key)"
+          >
+            {{ t('UICasino_AllGames') }}
+          </button>
         </div>
         <div class="game-card-grid-wrapper">
-          <button
-            v-if="block.key === 'hot-slot' && selectedCategory === 'hot'"
-            class="expand-btn-absolute"
-            type="button"
-            @click="toggleBlockExpand(block.key)"
-          >
-            <img :src="sideYellowBtn" :alt="t('UICasino_AllGames')" class="expand-btn-img" />
-            <span class="expand-btn-text">{{ t('UICasino_AllGames') }}</span>
-          </button>
-          <button
-            v-if="block.key === 'hot-fish' && selectedCategory === 'hot'"
-            class="expand-btn-absolute"
-            type="button"
-            @click="toggleBlockExpand(block.key)"
-          >
-            <img :src="sideBlueBtn" :alt="t('UICasino_AllGames')" class="expand-btn-img" />
-            <span class="expand-btn-text">{{ t('UICasino_AllGames') }}</span>
-          </button>
           <div
             class="game-card-grid"
             :class="{ wide: block.layout === 'wide' }"
@@ -1655,9 +1651,10 @@ onActivated(async () => {
 
 .category-header {
   display: flex;
-  padding-left: 3.012px;
+  padding-left: 3px;
   align-items: center;
-  gap: 4.217px;
+  justify-content: space-between;
+  gap: 8px;
   align-self: stretch;
   margin-bottom: 6px;
   margin-top: 4px;
@@ -1668,14 +1665,19 @@ onActivated(async () => {
 .category-title-wrap {
   display: flex;
   align-items: center;
-  gap: 0.05rem;
+  gap: 0.12rem;
+  flex: 1;
+  min-width: 0;
 }
 
 .category-text {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 0.35rem;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
 }
 
 .category-title {
@@ -1686,6 +1688,10 @@ onActivated(async () => {
   font-style: normal;
   font-weight: 500;
   line-height: 120%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .category-sub {
@@ -1696,59 +1702,37 @@ onActivated(async () => {
   font-style: normal;
   font-weight: 500;
   line-height: 120%;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+  max-width: 100%;
 }
 
-.expand-btn {
-  background: transparent;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  display: flex;
+.header-expand-btn {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  padding: 4px 14px;
+  background: linear-gradient(135deg, #00d2ad 0%, #009879 100%);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50px;
+  box-shadow: 0 2px 8px rgba(0, 210, 173, 0.35);
+  cursor: pointer;
+  white-space: nowrap;
   flex-shrink: 0;
   margin-left: auto;
-}
+  transition: transform 0.15s ease, filter 0.15s ease;
 
-.expand-btn-absolute {
-  position: absolute;
-  right: -12px;
-  top: 0;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  transition: transform 0.2s ease, opacity 0.2s ease;
-  z-index: 10;
   &:active {
-    transform: scale(0.95);
-    opacity: 0.8;
+    transform: scale(0.94);
+    filter: brightness(0.9);
   }
-}
-
-.expand-btn-text {
-  position: absolute;
-  color: #fff;
-  font-size: 0.24rem;
-  font-weight: 600;
-  line-height: 1.1;
-  letter-spacing: 0.02rem;
-  pointer-events: none;
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  white-space: nowrap;
-}
-
-.expand-btn-img {
-  width: auto;
-  height: 1.6rem;
-  object-fit: contain;
-  display: block;
 }
 
 .category-icon-img {

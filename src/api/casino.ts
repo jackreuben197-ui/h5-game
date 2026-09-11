@@ -163,7 +163,7 @@ export type CategoryKey =
   | 'dianzi'
   | 'tiyu'
   | 'buyu'
-  | 'dianjing'
+  // | 'dianjing'
   | 'board'
   | 'lottery'
   | 'minigame'
@@ -174,7 +174,7 @@ export const CATEGORY_API_TYPES: Record<CategoryKey, string[]> = {
   dianzi:   ['real_elect', 'panda_pgs', 'slots_pgsoft', 'zf_pgsoft', 'slots_fc', 'slots_cq9', 'slots_fg', 'slots_pa'],
   tiyu:     ['panda_fbs', 'fb_sports', 'shaba_sport', 'panda_sport'],
   buyu:     ['real_fish', 'sea_jdb', 'panda_jdb', 'slots_jdb'],
-  dianjing: ['real_sports'],
+  // dianjing: ['real_sports'],
   board:    ['go_poker'],
   lottery:  ['hn_marbles'],
   minigame: ['ky_poker', 'leg_poker', 't1_game'],

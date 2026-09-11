@@ -17,6 +17,11 @@ const BANNER_STATUS_ENABLED = 1
 // /misc/banner/list display_scene：1 = h5，2 = telegram。
 const DISPLAY_SCENE_H5 = 1
 const DISPLAY_SCENE_TELEGRAM = 2
+// CMS 没有单独维护简体中文 Banner，H5 的简体中文与繁体中文统一读取 zh_TW 配置。
+function getLobbyBannerLang(): string {
+  const lang = toServerLang(getLocale())
+  return lang === 'zh_CN' ? 'zh_TW' : lang
+}
 // 官方包未登录 banner 一键切换：
 // - 'platform'：只显示 CMS club_id=0 的平台 banner
 // - 'default-club'：优先显示 CMS club_id>0 的默认俱乐部 banner，没有时回退平台 banner
@@ -172,7 +177,7 @@ export function useLobbyBannerImages(): {
   bannerImages: Ref<string[]>
   fetchLobbyBannerImages: () => Promise<void>
 } {
-  const initialLang = toServerLang(getLocale())
+  const initialLang = getLobbyBannerLang()
   const initialDisplayScene = isTelegramMiniAppEnv()
     ? DISPLAY_SCENE_TELEGRAM
     : DISPLAY_SCENE_H5
@@ -201,7 +206,7 @@ export function useLobbyBannerImages(): {
   }
 
   async function fetchLobbyBannerImages(): Promise<void> {
-    const lang = toServerLang(getLocale())
+    const lang = getLobbyBannerLang()
     const hasRealUser = useGameStore().isRealUser
     const displayScene = isTelegramMiniAppEnv() ? DISPLAY_SCENE_TELEGRAM : DISPLAY_SCENE_H5
 

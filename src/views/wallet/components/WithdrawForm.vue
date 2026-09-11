@@ -48,11 +48,18 @@ const activeChannel = ref<ChannelId>('bankcard')
 const isCustomerCare = computed(() => activeChannel.value === 'customercare')
 const isWallet = computed(() => activeChannel.value === 'wallet')
 
-const paymentChannels: { id: ChannelId; image: string; label: string; key: string }[] = [
-  { id: 'bankcard', image: icBankcard, label: 'Bank Card', key: 'Wallet_BankCard' },
-  { id: 'wallet', image: walletPng, label: 'Wallet', key: 'Wallet_Title' },
-  { id: 'customercare', image: icSupportService, label: 'Support', key: 'Wallet_CsWithdraw' },
-]
+function getCustomerCareLabel(): string {
+  if (getLocale() === 'cn' || getLocale() === 'zh') {
+    return '人工客服'
+  }
+  return tx('Wallet_CsWithdraw', 'Support')
+}
+
+const paymentChannels = computed<{ id: ChannelId; image: string; label: string; key: string }[]>(() => [
+  { id: 'bankcard', image: icBankcard, label: tx('Wallet_BankCard', 'Bank Card'), key: 'Wallet_BankCard' },
+  { id: 'wallet', image: walletPng, label: tx('Wallet_Title', 'Wallet'), key: 'Wallet_Title' },
+  { id: 'customercare', image: icSupportService, label: getCustomerCareLabel(), key: 'Wallet_CsWithdraw' },
+])
 
 const withdrawTypes = ref<OnlineWithdrawTypeItem[]>([])
 const loadingWithdrawTypes = ref(false)
@@ -98,7 +105,7 @@ const filteredWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() => {
 })
 
 const availablePaymentChannels = computed(() =>
-  paymentChannels.filter((ch) => {
+  paymentChannels.value.filter((ch) => {
     if (ch.id === 'bankcard') return bankWithdrawTypes.value.length > 0
     if (ch.id === 'wallet') return walletWithdrawTypes.value.length > 0
     if (ch.id === 'customercare') return csWithdrawTypes.value.length > 0
@@ -404,7 +411,7 @@ async function confirmWithdraw(): Promise<void> {
           order_no: res.data?.order_no ?? '',
           gold_num: amountCents,
           pay_price: payPrice,
-          pay_type_name: wt.name ?? tx('Wallet_CsWithdraw', '客服撮合'),
+          pay_type_name: wt.name ?? getCustomerCareLabel(),
           create_time: new Date().toISOString(),
           account_type: wt.account_type ?? 7,
         })
@@ -466,19 +473,9 @@ watch(filteredWithdrawTypes, (list) => {
               :class="{ 'wf__tab--active': activeChannel === ch.id }"
               @click="applyChannel(ch.id)"
             >
-              {{ tx(ch.key, ch.label) }}
+              {{ ch.label }}
             </button>
           </div>
-          <button
-            v-if="!isCustomerCare"
-            class="wf__add-btn"
-            type="button"
-            @click="
-              router.push(isWallet ? '/wallet/add-wallet-address' : '/wallet/add-bank-card')
-            "
-          >
-            {{ tx('Wallet_AddAccount', 'Add Account') }}
-          </button>
         </div>
 
         <!-- 4-Column Sub-type Grid -->
@@ -503,7 +500,7 @@ watch(filteredWithdrawTypes, (list) => {
               class="wf__grid-icon"
             />
             <span v-fit-text="{ maxLines: 1, minScale: 0.75 }" class="wf__grid-name">{{
-              wt.name || (isWallet ? 'USDT' : isCustomerCare ? tx('Wallet_CsWithdraw', 'Support') : tx('Wallet_BankCard', 'Bank Card'))
+              wt.name || (isWallet ? 'USDT' : isCustomerCare ? getCustomerCareLabel() : tx('Wallet_BankCard', 'Bank Card'))
             }}</span>
             <div v-if="selectedWithdrawType?.id === wt.id" class="wf__grid-check">
               <svg width="8" height="6" viewBox="0 0 8 6" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -511,6 +508,19 @@ watch(filteredWithdrawTypes, (list) => {
               </svg>
             </div>
           </div>
+        </div>
+
+        <div v-if="!isCustomerCare" class="wf__add-row">
+          <button
+            class="wf__add-btn"
+            type="button"
+            @click="
+              router.push(isWallet ? '/wallet/add-wallet-address' : '/wallet/add-bank-card')
+            "
+          >
+            <span class="wf__add-btn-plus">+</span>
+            <span>{{ tx('Wallet_AddAccount', 'Add Account') }}</span>
+          </button>
         </div>
 
         <!-- Bound Accounts List -->
@@ -730,6 +740,15 @@ watch(filteredWithdrawTypes, (list) => {
   margin-bottom: 0.32rem;
 }
 
+.wf__add-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.12rem;
+  margin-top: 0.08rem;
+  margin-bottom: 0.24rem;
+}
+
 .wf__tabs {
   display: inline-flex;
   align-items: center;
@@ -784,6 +803,10 @@ watch(filteredWithdrawTypes, (list) => {
 }
 
 .wf__add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.12rem;
   height: 0.64rem;
   padding: 0 0.36rem;
   border: none;
@@ -806,6 +829,12 @@ watch(filteredWithdrawTypes, (list) => {
     background: var(--wallet-l-accent);
     color: var(--wallet-l-on-accent);
   }
+}
+
+.wf__add-btn-plus {
+  color: #ff3b5c;
+  font-size: 1.15em;
+  line-height: 1;
 }
 
 /* 4-Column Sub-type Grid */

@@ -913,6 +913,7 @@ async function onCsSubmit() {
     } else if (res.code === 20066 || res.code === 90016) {
       showToast(t('Wallet_OrderUnderReview'))
       await refreshPendingCsOrder()
+      openCsOrderChat()
     } else {
       alert(`Recharge failed: ${res.message}`)
     }

@@ -6,8 +6,10 @@ import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import GameDialog from '@/components/Dialog/GameDialog.vue'
 import { t, ucLabel } from '@/i18n'
 import { useUserInfoStore, type ClubInfo } from '@/stores/userInfo'
+import { useWalletStore } from '@/stores/wallet'
 import { postRechargeGoldApi } from '@/api/order'
 import { getUserInfoApi } from '@/api/user'
+import { openCsOrderChat } from '@/components/GlobalCsOrderFloat/channel'
 
 // ─── i18n helper: returns fallback when key not translated ────────────────────
 function tx(key: string, fallback: string): string {
@@ -22,6 +24,7 @@ const props = defineProps<{
 const router = useRouter()
 const route = useRoute()
 const userInfoStore = useUserInfoStore()
+const walletStore = useWalletStore()
 
 const activeClub = computed(() => props.club ?? userInfoStore.currentClub ?? null)
 
@@ -80,6 +83,7 @@ async function onConfirmRecharge(): Promise<void> {
         order_no: '',
       },
       clubId.value,
+      { suppressBusinessCodes: [20066, 90016] },
     )
 
     showConfirm.value = false
@@ -89,6 +93,8 @@ async function onConfirmRecharge(): Promise<void> {
       void refreshBalance()
     } else if (res.code === 20066 || res.code === 90016) {
       showToast(tx('Wallet_OrderUnderReview', '订单审核中，请稍后再试～'))
+      await walletStore.refreshPendingCsOrder(clubId.value)
+      openCsOrderChat()
     } else {
       showToast(res.message || tx('Wallet_DepositFailed', '充值申请失败'))
     }

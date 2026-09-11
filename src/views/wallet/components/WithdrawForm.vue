@@ -16,6 +16,7 @@ import type { OnlineWithdrawTypeItem } from '@/api/models/config'
 import type { PaymentInfo } from '@/api/models/pay'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useWalletStore } from '@/stores/wallet'
+import { openCsOrderChat } from '@/components/GlobalCsOrderFloat/channel'
 
 const props = defineProps<{
   availableUc?: number
@@ -32,8 +33,8 @@ const emit = defineEmits<{
 
 const router = useRouter()
 const route = useRoute()
-const userInfoStore = useUserInfoStore()
 const walletStore = useWalletStore()
+const userInfoStore = useUserInfoStore()
 
 // ─── i18n helper: returns fallback when key not translated ────────────────────
 function tx(key: string, fallback: string): string {
@@ -391,15 +392,18 @@ async function confirmWithdraw(): Promise<void> {
 
   withdrawing.value = true
   try {
-    const res = await postTiquGoldApi({
-      amount: amountCents,
-      gold_type: 1,
-      pay_id: wt.id,
-      pay_price: payPrice,
-      legal_tender: legalTender,
-      payment_type_id: paymentTypeId,
-      ...withdrawClubPayload(),
-    })
+    const res = await postTiquGoldApi(
+      {
+        amount: amountCents,
+        gold_type: 1,
+        pay_id: wt.id,
+        pay_price: payPrice,
+        legal_tender: legalTender,
+        payment_type_id: paymentTypeId,
+        ...withdrawClubPayload(),
+      },
+      { suppressBusinessCodes: [20066, 90016] },
+    )
 
     if (res.code === 0) {
       withdrawAmount.value = ''
@@ -419,6 +423,10 @@ async function confirmWithdraw(): Promise<void> {
         showToast(tx('Wallet_SubmitWithdrawSuccess', '提款申请已提交'))
         await walletStore.refreshPendingCsOrder(props.clubId)
       }
+    } else if (res.code === 20066 || res.code === 90016) {
+      showToast(t('Wallet_OrderUnderReview'))
+      await walletStore.refreshPendingCsOrder(props.clubId)
+      openCsOrderChat()
     } else {
       const isSuccessMsg = res.message?.toLowerCase() === 'success'
       const msg = isSuccessMsg

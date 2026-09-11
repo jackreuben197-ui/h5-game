@@ -284,9 +284,12 @@ export async function postOrderUserUsdtRechargeApi(
 
 // 对齐 cocos WebTiquGold.API
 export async function postTiquGoldApi(
-  payload: TiquGoldRequest = {} as TiquGoldRequest
+  payload: TiquGoldRequest = {} as TiquGoldRequest,
+  options?: { suppressBusinessCodes?: number[] }
 ): Promise<ApiResponse<TiquGoldResponseData>> {
   const endpoint = '/order/user/withdraw'
-  const response = await http.post<ApiResponse<TiquGoldResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<TiquGoldResponseData>>(endpoint, payload, {
+    suppressBusinessCodes: options?.suppressBusinessCodes,
+  })
   return response.data
 }

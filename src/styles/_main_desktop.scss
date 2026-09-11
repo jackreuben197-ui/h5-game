@@ -118,7 +118,9 @@
   }
 
   html[data-main-layout='primary'] .home-header {
+    aspect-ratio: 1360 / 270;
     border-radius: clamp(44px, 5.69vw, 82px);
+    background: #f5f5f5;
   }
 
   html[data-main-layout='primary'] .home-banner,

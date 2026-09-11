@@ -7,7 +7,6 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { getLocale, toServerLang } from '@/i18n'
 import { isTelegramMiniAppEnv } from '@/utils/environment'
 import { isChannelPackageHost } from '@/utils/channelPackage'
-import { readLobbyBannerListCache, writeLobbyBannerListCache } from '@/utils/lobbyBannerCache'
 
 // /config/before/login/config 聚合项：8 = banner 列表。
 const NO_AUTH_API_BANNER_LIST = 8
@@ -32,9 +31,8 @@ type CmsBannerScope =
   | { type: 'default-club' }
   | { type: 'channel-club'; clubId: number }
 
-// 路由切换会销毁并重新创建首页组件。IndexedDB 虽然有缓存，但读取仍是异步的，
-// 会让 HomeBannerSwiper 在首帧短暂回退到 home_header_1。这里保留当前 SPA
-// 生命周期内已经解析过的 Banner，使首页重新挂载时可以同步拿到正确图片。
+// 只缓存当前 SPA 已由服务端确认过的 Banner。浏览器刷新后 Map 会清空，
+// 首屏保持占位，禁止读取持久化旧图或回退默认图。
 const runtimeBannerImages = new Map<string, string[]>()
 
 function createRuntimeBannerKey(
@@ -142,7 +140,7 @@ async function fetchSceneBannerUrls(
   }
 }
 
-// 公开聚合 banner 在官方包、渠道未登录或渠道登录兜底时请求；缓存只用于首屏。
+// 公开聚合 banner 在官方包、渠道未登录或渠道登录兜底时请求。
 async function fetchCmsBannerUrls(
   lang: string,
   displayScene: number,
@@ -169,7 +167,7 @@ async function fetchCmsBannerUrls(
 
 /**
  * 首页/游客首页共用的顶部轮播图数据源：
- * 先读 public_cache 即刻渲染，再静默请求最新数据并回写缓存。
+ * 冷启动只接受本次服务端请求结果，不读取持久化旧图；同一 SPA 内复用已确认结果。
  * 渠道链接登录后优先请求 /misc/banner/list（按 h5/telegram 场景 + 渠道俱乐部配置），
  * 平台链接始终读取平台 banner；渠道俱乐部没有数据时也回落到平台 banner。
  */
@@ -225,13 +223,11 @@ export function useLobbyBannerImages(): {
       channelClubId,
     )
 
-    // 初始化时渠道俱乐部尚未恢复完成的极少数场景，在这里命中最终分桶后立即补上；
-    // 正常的底部导航往返会在 setup 阶段就同步命中，不产生默认图闪现。
-    if (!bannerImages.value.length) {
-      const runtimeCached = runtimeBannerImages.get(runtimeKey)
-      if (runtimeCached?.length) {
-        bannerImages.value = [...runtimeCached]
-      }
+    // 页面间切换只复用本次 SPA 已确认的结果，不再发请求造成旧图切新图。
+    const runtimeCached = runtimeBannerImages.get(runtimeKey)
+    if (runtimeCached) {
+      bannerImages.value = [...runtimeCached]
+      return
     }
     // 渠道包调用 before-login CMS 时传渠道 club_id；官方包不传，只取平台配置。
     const cmsScope: CmsBannerScope = hasChannelClub
@@ -239,18 +235,6 @@ export function useLobbyBannerImages(): {
       : !hasRealUser && !isChannelPackage && OFFICIAL_GUEST_BANNER_MODE === 'default-club'
         ? { type: 'default-club' }
         : { type: 'platform' }
-    const platformCacheKey = `${lang}_scene_${displayScene}_platform`
-    // 只有渠道链接按渠道俱乐部分桶；平台链接不再按登录账号当前俱乐部分桶。
-    const cacheKey = hasChannelClub
-      ? `${lang}_scene_${displayScene}_channel_club_${channelClubId}`
-      : !hasRealUser && !isChannelPackage && OFFICIAL_GUEST_BANNER_MODE === 'default-club'
-        ? `${lang}_scene_${displayScene}_default-club`
-        : platformCacheKey
-    const cached = await readLobbyBannerListCache(cacheKey)
-    if (cached?.length) {
-      commitBannerImages(runtimeKey, cached)
-    }
-
     // 只有渠道链接才请求俱乐部 banner。平台链接即使账号是俱乐部创始人，也只展示平台 banner。
     const shouldFetchClubBanner = hasRealUser && hasChannelClub
     if (shouldFetchClubBanner) {
@@ -258,7 +242,6 @@ export function useLobbyBannerImages(): {
 
       if (sceneUrls.length) {
         commitBannerImages(runtimeKey, sceneUrls)
-        void writeLobbyBannerListCache(cacheKey, sceneUrls)
         return
       }
     }
@@ -271,7 +254,6 @@ export function useLobbyBannerImages(): {
     }
 
     commitBannerImages(runtimeKey, cmsUrls)
-    void writeLobbyBannerListCache(cacheKey, cmsUrls)
   }
 
   return { bannerImages, fetchLobbyBannerImages }

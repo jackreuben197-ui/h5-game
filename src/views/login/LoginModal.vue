@@ -634,11 +634,21 @@ function persistLoginDraft() {
   localStore.setItem(LOGIN_EMAIL_PASSWORD_KEY, password)
 }
 
-function localeToServerLang(locale: string): number {
-  if (locale === 'cn') return 0
-  if (locale === 'zh') return 2
-  if (locale === 'pt') return 3
-  return 1
+function localeToServerLang(locale: string): string {
+  if (locale === 'cn') return 'zh_CN'
+  if (locale === 'zh') return 'zh_TW'
+  if (locale === 'pt') return 'pt_BR'
+  if (locale === 'de') return 'de_DE'
+  if (locale === 'es') return 'es_ES'
+  if (locale === 'fr') return 'fr_FR'
+  if (locale === 'hi') return 'hi_IN'
+  if (locale === 'it') return 'it_IT'
+  if (locale === 'ja') return 'ja_JP'
+  if (locale === 'ko') return 'ko_KR'
+  if (locale === 'ru') return 'ru_RU'
+  if (locale === 'th') return 'th_TH'
+  if (locale === 'vi') return 'vi_VN'
+  return 'en_US'
 }
 
 function applyChannelInviteContext(): void {

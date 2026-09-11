@@ -9,7 +9,7 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import icMail from '@/assets/icons/ic_mail.svg'
 import icLock from '@/assets/icons/ic_lock_new.svg'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
-import { t } from '@/i18n'
+import { t, toServerLang } from '@/i18n'
 
 const router = useRouter()
 
@@ -128,7 +128,7 @@ async function requestOtp(): Promise<void> {
       area: zoneCode.value,
       phone: phone.value,
       email: email.value,
-      lang: 0,
+      lang: toServerLang(),
     })
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_CodeFail3'))

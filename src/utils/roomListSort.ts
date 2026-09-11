@@ -32,6 +32,18 @@ export function isRoomFull(room: RoomRecord): boolean {
   return (roomers || usersLength) >= total
 }
 
+export function getRoomSeatedCount(room: RoomRecord): number {
+  const seatCount = toSafeInt(room.seat_count)
+  const emptySeat = toSafeInt(room.empty_seat, -1)
+  if (seatCount > 0 && emptySeat >= 0) {
+    return Math.max(seatCount - emptySeat, 0)
+  }
+  if (Array.isArray(room.users)) {
+    return room.users.length
+  }
+  return Math.max(toSafeInt(room.roomers), 0)
+}
+
 function getRoomCreateTimestamp(room: RoomRecord): number {
   const createTs = toTimestampMs(room.create_time)
   if (createTs > 0) {

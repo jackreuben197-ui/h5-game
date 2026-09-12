@@ -841,7 +841,7 @@ watch(filteredWithdrawTypes, (list) => {
 
 .wf__add-btn-plus {
   color: #ff3b5c;
-  font-size: 1.15em;
+  font-size: 1.7em;
   line-height: 1;
 }
 

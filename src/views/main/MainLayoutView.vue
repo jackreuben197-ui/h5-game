@@ -281,7 +281,7 @@ watch(
 }
 
 .main-layout.is-version-b .main-layout-content {
-  padding-bottom: calc(env(safe-area-inset-bottom) + 3.0rem);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 2.5rem);
 }
 
 .module-slot {

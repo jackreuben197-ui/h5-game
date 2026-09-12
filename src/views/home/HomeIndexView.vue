@@ -1194,7 +1194,7 @@ onBeforeUnmount(() => {
   }
 
   &.is-version-b {
-    padding-bottom: calc(3.0rem + env(safe-area-inset-bottom));
+    padding-bottom: 0;
   }
 
   :deep(.group-item) {
@@ -1601,16 +1601,6 @@ onBeforeUnmount(() => {
 }
 .home-mtt-content {
   padding: 0.1rem 0.38rem 0rem;
-
-  :deep(.mtt-group) {
-    margin-bottom: 0;
-    .mtt-group__title {
-      color: #000;
-    }
-    .mtt-group__toggle {
-      color: rgba(0, 0, 0, 0.77);
-    }
-  }
 }
 // 保持和 .home-page 的直接子级同样的纵向堆叠 + 间距。
 .home-default-sections {
@@ -1656,15 +1646,10 @@ onBeforeUnmount(() => {
 }
 
 .home-casino-content {
-  padding: 0 0.4rem calc(3.0rem + env(safe-area-inset-bottom)) !important;
-}
-
-:deep(.home-mtt-content) {
-  padding-bottom: calc(3.0rem + env(safe-area-inset-bottom)) !important;
+  padding: 0 0.4rem 1.2rem;
 }
 
 .home-poker-content {
-  padding-bottom: calc(3.0rem + env(safe-area-inset-bottom)) !important;
   :deep(.room-tabs) {
     margin-right: 0;
     margin-left: 0;

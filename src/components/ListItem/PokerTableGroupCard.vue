@@ -4,7 +4,7 @@ import iconTable from '@/assets/icons/icon_table.png'
 import iconPeople from '@/assets/icons/icon_people.png'
 import iconDropDown from '@/assets/icons/ic_arrow_drop.svg'
 import type { RoomRecord } from '@/api/models/roomcenter'
-import { t, tJoin } from '@/i18n'
+import { getLocale, ruPlural, t, tJoin } from '@/i18n'
 
 interface RoomGroupViewModel {
   groupKey: string
@@ -37,6 +37,13 @@ const emit = defineEmits<{
 // 通过 class 控制展开收起动画。
 const expandClass = computed(() => (props.expanded ? 'is-expanded' : 'is-collapsed'))
 
+const tableCountText = computed(() => {
+  const count = props.group.tableCount
+  return getLocale() === 'ru'
+    ? tJoin(count, ruPlural(count, 'стол', 'стола', 'столов'))
+    : tJoin(count, t('UIClub_Table2'))
+})
+
 function toggleGroup(): void {
   emit('toggle', props.group.groupKey)
 }
@@ -66,7 +73,7 @@ function handleTableClick(room: RoomRecord): void {
           </p>
           <p class="count-text">
             <span>
-              <img class="count-icon" :src="iconTable" alt="table" />{{ tJoin(group.tableCount, t('UIClub_Table2')) }}
+              <img class="count-icon" :src="iconTable" alt="table" />{{ tableCountText }}
             </span>
             <span>
               <img class="count-icon" :src="iconPeople" alt="people" />{{ tJoin(group.playerCount, t('Common_People')) }}

@@ -169,6 +169,15 @@ export function tJoin(...parts: (string | number | null | undefined)[]): string 
     .join(separator)
 }
 
+export function ruPlural(count: number, one: string, few: string, many: string): string {
+  const abs = Math.abs(Math.trunc(count)) % 100
+  const last = abs % 10
+  if (abs > 10 && abs < 20) return many
+  if (last === 1) return one
+  if (last >= 2 && last <= 4) return few
+  return many
+}
+
 export function tColon(label: string): string {
   return NO_SEPARATOR_LOCALES.has(currentLocale.value) ? `${label}：` : `${label}: `
 }

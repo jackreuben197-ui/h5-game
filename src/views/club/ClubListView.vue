@@ -37,7 +37,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { checkIsShowForClubAndTribe, formatUC } from '@/utils/roomVisibility'
 import { isPrivateDomainMode } from '@/utils/channelPackage'
 import { readClubListCache, writeClubListCache } from '@/utils/userClubListCache'
-import { t, getLocale } from '@/i18n'
+import { getLocale, t, tJoin } from '@/i18n'
 import { requireRealUser } from '@/session/realUserGate'
 
 type QuickActionKind = 'create-club' | 'club-panel' | 'create-union' | 'club-career'
@@ -457,7 +457,7 @@ watch(
             autocomplete="off"
             maxlength="6"
             readonly
-            :placeholder="t('UIGuild_SearchBtn') + 'ID'"
+            :placeholder="tJoin(t('UIGuild_SearchBtn'), 'ID')"
             @focus="openSearchKeypad"
             @click="openSearchKeypad"
           />

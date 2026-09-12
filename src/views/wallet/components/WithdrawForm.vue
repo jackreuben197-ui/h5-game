@@ -519,6 +519,7 @@ watch(filteredWithdrawTypes, (list) => {
         </div>
 
         <div v-if="!isCustomerCare" class="wf__add-row">
+          <span class="wf__add-title">{{ tx('WalletTranschipsCard_ZhjVmd', 'My Account') }}</span>
           <button
             class="wf__add-btn"
             type="button"
@@ -751,10 +752,26 @@ watch(filteredWithdrawTypes, (list) => {
 .wf__add-row {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 0.12rem;
+  justify-content: space-between;
+  gap: 0.16rem;
   margin-top: 0.08rem;
   margin-bottom: 0.24rem;
+}
+
+.wf__add-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--wallet-font-cn);
+  font-size: 0.32rem;
+  font-weight: 600;
+  color: #ffffff;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
 }
 
 .wf__tabs {
@@ -812,6 +829,7 @@ watch(filteredWithdrawTypes, (list) => {
 
 .wf__add-btn {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
   gap: 0.12rem;

@@ -1194,7 +1194,7 @@ onBeforeUnmount(() => {
   }
 
   &.is-version-b {
-    padding-bottom: 0;
+    padding-bottom: calc(2.5rem + env(safe-area-inset-bottom));
   }
 
   :deep(.group-item) {

@@ -347,11 +347,11 @@ export function shouldOpenRegisterMode(): boolean {
   return parseInviteParamsFromLocation().mode === 'register'
 }
 
-export function buildChannelClubInviteUrl(inviteCode?: string): string {
+function buildChannelClubOrigin(inviteCode?: string): string {
   const currentUrl = new URL(window.location.href)
   const code = readString(inviteCode)
   if (!code) {
-    return `${currentUrl.origin}${INVITE_LANDING_HASH}`
+    return currentUrl.origin
   }
 
   let baseHost = currentUrl.hostname
@@ -360,7 +360,11 @@ export function buildChannelClubInviteUrl(inviteCode?: string): string {
     baseHost = mainDomain
   }
   const portSuffix = currentUrl.port ? `:${currentUrl.port}` : ''
-  return `${currentUrl.protocol}//${code}.${baseHost}${portSuffix}${INVITE_LANDING_HASH}`
+  return `${currentUrl.protocol}//${code}.${baseHost}${portSuffix}`
+}
+
+export function buildChannelClubInviteUrl(inviteCode?: string): string {
+  return `${buildChannelClubOrigin(inviteCode)}${INVITE_LANDING_HASH}`
 }
 
 
@@ -369,16 +373,15 @@ export function buildChannelAgentInviteUrl(
   clubInviteCode?: string,
 ): string {
   const normalizedCode = readString(agentInviteCode)
-  const clubInviteUrl = buildChannelClubInviteUrl(clubInviteCode)
   if (!normalizedCode) {
-    return clubInviteUrl
+    return buildChannelClubInviteUrl(clubInviteCode)
   }
 
   const params = new URLSearchParams({
     mode: 'register',
     i: normalizedCode,
   })
-  return `${clubInviteUrl}?${params.toString()}`
+  return `${buildChannelClubOrigin(clubInviteCode)}/#/?${params.toString()}`
 }
 
 export function buildChannelRegisterUrl(options?: {

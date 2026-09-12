@@ -31,9 +31,7 @@ const canManageChannelClub = computed(
   () => isChannelPackage && Boolean(gameStore.isRealUser && userInfoStore.currentJoinedClub),
 )
 
-const selectedClub = computed(
-  () => userInfoStore.currentClub ?? userInfoStore.channelDefaultClub,
-)
+const selectedClub = computed(() => userInfoStore.currentClub ?? userInfoStore.channelDefaultClub)
 const selectedClubId = computed(() => toSafeInt(selectedClub.value?.club_id))
 const selectedTribeId = computed(() =>
   toSafeInt((selectedClub.value as Record<string, unknown> | null)?.tribe_id),
@@ -144,6 +142,7 @@ function handleOpenCustomerService() {
 
 .mtt-list-page {
   position: relative;
+  height: 100dvh;
   min-height: 100dvh;
   color: #fff;
   overflow: hidden;
@@ -175,6 +174,14 @@ function handleOpenCustomerService() {
     min-height: 0;
     max-height: none;
   }
+}
+
+.mtt-list-stage {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
 }
 
 .bg-overlay {
@@ -229,8 +236,14 @@ function handleOpenCustomerService() {
   }
 }
 
+.mtt-list-page :deep(.mtt-content) {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+}
+
 .mtt-list-page--channel-menu-b :deep(.mtt-content) {
-  padding-bottom: calc(env(safe-area-inset-bottom) + 2.8rem);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 2.5rem);
 }
 
 .mtt-list-page :deep(.filter-tabbar) {

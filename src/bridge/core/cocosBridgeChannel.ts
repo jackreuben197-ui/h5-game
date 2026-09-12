@@ -652,6 +652,15 @@ if (typeof window !== 'undefined') {
   })
 
   window.__H5_READY__ = true
+  // 复用现有 h5Ready 的安全区字段补发晚到的几何数据；不带 token，避免重新同步账号。
+  window.addEventListener('h5:safe-area-changed', () => {
+    if (!h5ReadySent) return
+    sendBridgeMessage(
+      BRIDGE_ACTION.H5_READY,
+      { safeArea: createH5ReadyPayload().safeArea },
+      { msgtype: BRIDGE_MSG_TYPE.H5 },
+    )
+  })
   h5ReadyTime = Date.now()
   maybeSendH5Ready()
 }

@@ -121,11 +121,12 @@
   }
 
   html[data-main-layout='primary'] .home-header {
-    border-radius: clamp(44px, 5.69vw, 82px);
     aspect-ratio: 1360 / 270;
+    border-radius: clamp(44px, 5.69vw, 82px);
     height: auto;
     max-height: none;
     flex: none;
+    background: #f5f5f5;
   }
 
   html[data-main-layout='primary'] .home-banner,

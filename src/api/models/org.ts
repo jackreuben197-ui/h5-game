@@ -1186,6 +1186,7 @@ export interface OrgClubSearchInfoData {
   user_status?: number // 请求用户状态 1 未申请 2 已申请 3 已加入
   pretty_id?: number // 靓号 >0则是靓号 =0不是靓号
   club_subscription_id?: number // 会员id
+  diamond_room_switch?: number // 渠道平台钻石桌及比赛：1 开，2 关，缺失默认关
   h5_menu?: number // 渠道包 H5 底部导航：2-版本 A，其他值-版本 B
 
   [key: string]: unknown
@@ -2554,6 +2555,7 @@ export interface OrgClubData {
   security_deposit?: number
   freeze_status?: number
   invitation_code?: string
+  diamond_room_switch?: number // 渠道平台钻石桌及比赛：1 开，2 关，缺失默认关
 
   [key: string]: unknown
 }
@@ -2898,6 +2900,7 @@ export interface OrgClubDefaultResponseData extends OrgClubDefaultData{
 
 export interface OrgClubDefaultData {
   club: OrgClubSearchInfoData;
+  diamond_room_switch?: number // 渠道平台钻石桌及比赛：1 开，2 关，缺失默认关
   h5_menu?: number // 兼容服务端将菜单版本返回在 data 层级
   [key: string]: unknown
 }

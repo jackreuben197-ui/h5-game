@@ -30,7 +30,11 @@ import {
   postRoomcenterMttRoomsApi,
 } from '@/api/roomcenter'
 import { getLocale, t } from '@/i18n'
-import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
+import {
+  ensureMultiLanguageTemplateLoaded,
+  multiLanguageTemplateVersion,
+  resolveTemplateTextByKey,
+} from '@/utils/multiLanguageTemplate'
 import { toUnixSeconds } from '@/utils/time'
 import { enterMtt, subscribeCocosMessages } from '@/bridge/core'
 import {
@@ -78,6 +82,8 @@ const matchId = computed(() => {
 })
 
 const pageTitle = computed(() => {
+  // 详情和模板接口并行加载时，模板到达后需要重新计算 HeaderBack 标题。
+  void multiLanguageTemplateVersion.value
   const rawName = detailData.value?.mtt?.name
   if (!rawName) return ''
   return resolveTemplateTextByKey(rawName, getLocale()) || t(rawName) || rawName
@@ -342,6 +348,8 @@ watch(
 )
 
 onMounted(() => {
+  // 兼容通过详情链接直达、尚未执行登录后后台同步的场景。
+  void ensureMultiLanguageTemplateLoaded()
   refreshStatusAndRankData()
   // Cocos 返回 H5 时页面不会重新挂载，同时刷新淘汰状态和最终排名。
   stopCocosMessageListener = subscribeCocosMessages(

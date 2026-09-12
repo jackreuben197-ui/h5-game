@@ -6,7 +6,10 @@ import diamondIcon from '@/assets/icons/icon_diamond.png'
 import type { RoomcenterMttDetailData, RoomcenterMttRanksData } from '@/api/models/roomcenter'
 import { formatDateTime, toUnixSeconds } from '@/utils/time'
 import { getLocale, t } from '@/i18n'
-import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
+import {
+  multiLanguageTemplateVersion,
+  resolveTemplateTextByKey,
+} from '@/utils/multiLanguageTemplate'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 
@@ -60,6 +63,8 @@ function fmtMoney(n: number | undefined | null): string {
 }
 
 function resolveName(rawName: string | undefined | null): string {
+  // 模板异步恢复/刷新后重新渲染比赛名称，避免停留在原始模板 ID。
+  void multiLanguageTemplateVersion.value
   if (!rawName) return '-'
   return resolveTemplateTextByKey(rawName, getLocale()) || t(rawName) || rawName
 }

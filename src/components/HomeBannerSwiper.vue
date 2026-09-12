@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import homeHeaderFallback from '@/assets/images/home_header_1.png'
 import { useCachedImages } from '@/utils/imageCache'
 import ThemeQuickSwitch from '@/components/ThemeQuickSwitch.vue'
 
@@ -8,8 +7,8 @@ const props = defineProps<{
   images: string[]
 }>()
 
-// 无数据时回落到默认单图；单图不启用轮播/圆点。
-const displayImages = computed(() => (props.images.length ? props.images : [homeHeaderFallback]))
+// 首次服务端结果返回前保持空白占位，不展示默认图或持久化旧图。
+const displayImages = computed(() => props.images.filter((url) => Boolean(url?.trim())))
 const cachedImages = useCachedImages(() => displayImages.value)
 const isSwipeEnabled = computed(() => cachedImages.value.length > 1)
 </script>
@@ -31,7 +30,12 @@ const isSwipeEnabled = computed(() => cachedImages.value.length > 1)
         </div>
       </template>
     </van-swipe>
-    <img v-else class="home-banner__img" :src="cachedImages[0]" alt="banner" />
+    <img
+      v-else-if="cachedImages.length === 1"
+      class="home-banner__img"
+      :src="cachedImages[0]"
+      alt="banner"
+    />
     <ThemeQuickSwitch class="home-banner__theme-switch" />
   </div>
 </template>
@@ -42,6 +46,9 @@ const isSwipeEnabled = computed(() => cachedImages.value.length > 1)
   position: relative;
   width: 100%;
   height: 100%;
+  overflow: hidden;
+  border-radius: 0.8rem;
+  background: #f5f5f5;
 }
 
 .home-banner__theme-switch {
@@ -66,6 +73,7 @@ const isSwipeEnabled = computed(() => cachedImages.value.length > 1)
   height: 100%;
   object-fit: cover;
   display: block;
+  border-radius: 0.8rem;
 }
 
 .home-banner__dots {

@@ -14,7 +14,6 @@ import { useMttListStore } from '@/stores/mttList'
 import { useRoomListStore } from '@/stores/roomList'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { localStore } from '@/utils/localStore'
-import { isTelegramMiniAppEnv } from '@/utils/environment'
 import { isChannelPackageHost, resolveInviteCode } from '@/utils/channelPackage'
 import type { ExperienceLoginRequest, UserInfoData } from '@/api/models/user'
 
@@ -80,7 +79,7 @@ async function ensureChannelClubContext(): Promise<void> {
     return
   }
 
-  // 渠道俱乐部是游客列表、首页标题、公告和 h5_menu 的共同 scope。
+  // 渠道俱乐部是列表展示过滤、首页标题、公告和 h5_menu 的共同配置来源。
   // 必须先固定它，再用 user/info 判定身份；否则体验身份会先清空真实用户资料，
   // 页面会短暂退回平台 scope，并抢跑一轮错误的房间/赛事请求。
   await useUserInfoStore(pinia).ensureChannelDefaultClub()
@@ -132,10 +131,7 @@ async function runEnsureExperienceSession(revision: number): Promise<boolean> {
     }
   }
 
-  // Telegram Mini App 优先走既有真实账号自动登录，避免先占用体验账号。
-  if (isTelegramMiniAppEnv()) {
-    return false
-  }
+  // 所有运行环境共用体验账号初始化，列表不能依赖其他请求碰巧触发自动登录。
   if (revision !== experienceLoginRevision) {
     return false
   }

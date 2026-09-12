@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { usePlatformDiamondVisibility } from '@/composables/usePlatformDiamondVisibility'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from 'vue'
 import iconService1Dark from '@/assets/icons/icon_service_1.svg'
 import iconService1Light from '@/assets/icons/icon_service_1_light.svg'
@@ -44,6 +45,8 @@ import { useGameStore } from '@/stores/game'
 import PokerGameList from '@/views/home/gameList.vue'
 import CasinoView from '@/views/home/CasinoView.vue'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
+import { isChannelPackageHost } from '@/utils/channelPackage'
+import { getCowboyRoomListApi } from '@/api/gc'
 import { requireRealUser } from '@/session/realUserGate'
 import { ensureExperienceSession } from '@/session/experienceSession'
 
@@ -107,6 +110,7 @@ const casinoStore = useCasinoStore()
 const appConfigStore = useAppConfigStore()
 const gameStore = useGameStore()
 const gameLaunchStore = useGameLaunchStore()
+const displayPlatformDiamond = usePlatformDiamondVisibility()
 const { isChannelPackage, isVersionB } = useChannelBottomMenu()
 
 const loading = ref(false)
@@ -288,6 +292,7 @@ interface HomeZoneStats {
   poker: ZoneStats
   mahjong: ZoneStats
   mtt: ZoneStats
+  miniGame?: ZoneStats
 }
 
 interface HomeRoomStatsCachePayload {
@@ -303,6 +308,7 @@ function createEmptyZoneStats(): HomeZoneStats {
     poker: { tables: 0, players: 0 },
     mahjong: { tables: 0, players: 0 },
     mtt: { tables: 0, players: 0 },
+    miniGame: { tables: 0, players: 0 },
   }
 }
 
@@ -327,7 +333,8 @@ function normalizeHomeZoneStats(raw: unknown): HomeZoneStats {
 
 // 首屏优先读取缓存，避免从 0 闪到真实值。
 function restoreHomeRoomStatsCache(): HomeZoneStats | null {
-  if (typeof window === 'undefined') {
+  // 渠道包的展示结果依赖 CMS 钻石开关；持久化统计没有携带该上下文，不能跨页面刷新复用。
+  if (typeof window === 'undefined' || isChannelPackageHost()) {
     return null
   }
 
@@ -455,10 +462,13 @@ const homeContentModeRaw = computed<HomeContentMode>(() => {
   }
   return 'zones'
 })
-// 首次进入时先按缓存渲染，等 room/mtt 两个 bootstrap 都完成后最多校正一次。
-// 当前页面生命周期内只更新列表与数量，不再因 WS 增量反复重挂载首页结构；
-// 下次重新进入首页时会按最新缓存重新选择模式。
+// 首屏不猜测布局：俱乐部配置、全局配置、牌桌和 MTT 全部稳定后再一次性展示。
 const homeContentMode = ref<HomeContentMode>(homeContentModeRaw.value)
+const homeContentReady = ref(false)
+
+function commitHomeContentMode(): void {
+  homeContentMode.value = homeContentModeRaw.value
+}
 
 // 专区入口只在 zones 模式渲染：赛事 / 扑克常驻（没内容也保留入口，点进去是空态），
 // 娱乐场没给俱乐部开通时隐藏——那里点进去只会报错。
@@ -616,7 +626,15 @@ function refreshHomePokerMahjongStatsFromStore(): void {
   const nextStats = createEmptyZoneStats()
   roomListStore.records.forEach((room) => {
     // 对齐 C# RequestTableDataListForClubOrTribe：先按俱乐部/联盟关系过滤可见牌桌。
-    if (!checkIsShowForClubAndTribe(room, selectedClubId.value, selectedTribeId.value)) {
+    if (
+      !checkIsShowForClubAndTribe(
+        room,
+        selectedClubId.value,
+        selectedTribeId.value,
+        true,
+        displayPlatformDiamond.value,
+      )
+    ) {
       return
     }
 
@@ -648,6 +666,7 @@ function refreshHomeMttStatsFromStore(): void {
     selectedClubId.value,
     selectedTribeId.value,
     appConfigStore.clubDisplayPlatformMtt,
+    displayPlatformDiamond.value,
   )
   const players = visibleRecords.reduce((sum, item) => sum + toSafeNumber(item.participants), 0)
 
@@ -656,6 +675,43 @@ function refreshHomeMttStatsFromStore(): void {
     mtt: {
       tables: visibleRecords.length,
       players,
+    },
+  }
+  persistHomeRoomStatsCache(homeRoomStats.value)
+}
+
+function extractCowboyOnlineCount(raw: unknown): number {
+  if (!raw || typeof raw !== 'object') {
+    return 0
+  }
+  const data = raw as Record<string, unknown>
+  if ('online' in data) {
+    return toSafeNumber(data.online)
+  }
+
+  const records = Array.isArray(data.records) ? data.records : []
+  if (records.length) {
+    return records.reduce((total, item) => {
+      const record = item as Record<string, unknown>
+      return total + toSafeNumber(record.online)
+    }, 0)
+  }
+
+  return extractCowboyOnlineCount(data.data)
+}
+
+async function fetchHomeMiniGameStats(): Promise<void> {
+  const response = await getCowboyRoomListApi({
+    limit: 100,
+    offset: 0,
+  })
+  const online = Number(response.code) === 0 ? extractCowboyOnlineCount(response.data) : 0
+
+  homeRoomStats.value = {
+    ...homeRoomStats.value,
+    miniGame: {
+      tables: 0,
+      players: online,
     },
   }
   persistHomeRoomStatsCache(homeRoomStats.value)
@@ -693,9 +749,23 @@ watch(noticeText, () => {
 })
 
 watch(
-  [() => roomListStore.records, selectedClubId, selectedTribeId],
+  () => gameStore.isRealUser,
+  (isRealUser) => {
+    if (isRealUser) {
+      void fetchHomeMiniGameStats().catch((error) => {
+        console.warn('[home] fetch mini game stats failed:', error)
+      })
+    }
+  },
+)
+
+watch(
+  [() => roomListStore.records, selectedClubId, selectedTribeId, displayPlatformDiamond],
   () => {
     refreshHomePokerMahjongStatsFromStore()
+    if (homeContentReady.value) {
+      commitHomeContentMode()
+    }
   },
   {
     deep: false,
@@ -710,9 +780,13 @@ watch(
     selectedTribeId,
     // 全局配置异步到达后重算，平台 MTT 可见性依赖 club_display_platform_mtt。
     () => appConfigStore.clubDisplayPlatformMtt,
+    displayPlatformDiamond,
   ],
   () => {
     refreshHomeMttStatsFromStore()
+    if (homeContentReady.value) {
+      commitHomeContentMode()
+    }
   },
   {
     deep: false,
@@ -720,11 +794,7 @@ watch(
 )
 
 async function bootstrapHomeContent(): Promise<void> {
-  // 全局配置可以并行加载；渠道俱乐部必须先于身份识别完成，因为它同时决定
-  // 游客列表 scope、俱乐部标题/公告和 h5_menu 展示版本。
-  const configReady = ensureHomeAnnouncementConfig().catch((error) => {
-    console.warn('[home] fetch announcement config failed:', error)
-  })
+  // 渠道俱乐部必须先于身份识别完成，因为它同时决定游客列表 scope、俱乐部标题和 h5_menu。
   if (isChannelPackage) {
     await userInfoStore.ensureChannelDefaultClub()
   }
@@ -732,17 +802,26 @@ async function bootstrapHomeContent(): Promise<void> {
   await ensureExperienceSession().catch((error) => {
     console.warn('[home] resolve session identity failed:', error)
   })
-  await configReady
+  if (gameStore.isRealUser) {
+    void fetchHomeMiniGameStats().catch((error) => {
+      console.warn('[home] fetch mini game stats failed:', error)
+    })
+  }
   ensureClubDataReady()
 
+  // 首页显示前必须确认本会话的最新全局配置。postAuthSync 若已在请求，这里会复用同一 promise；
+  // 身份初始化失败且没有 token 时，回退到免登录配置接口。
+  const sessionKey = gameStore.sessionToken.trim()
+  const configReady = sessionKey
+    ? appConfigStore.ensureFreshGlobalConfig(sessionKey)
+    : ensureHomeAnnouncementConfig()
   const roomListReady = roomListStore.bootstrapRoomList()
   const mttListReady = mttListStore.bootstrapMttList()
-  await Promise.allSettled([roomListReady, mttListReady])
+  await Promise.allSettled([configReady, roomListReady, mttListReady])
 
   // 两份列表及其共同过滤上下文全部稳定后，一次提交统计和页面模式。
   refreshHomePokerMahjongStatsFromStore()
   refreshHomeMttStatsFromStore()
-
   const casinoClubId = channelCasinoClubId.value
   await casinoStore
     .preloadCasinoData(casinoClubId || undefined, isChannelPackage ? false : casinoClubId <= 0)
@@ -750,7 +829,8 @@ async function bootstrapHomeContent(): Promise<void> {
       console.warn('[home] preload casino data failed:', e)
     })
 
-  homeContentMode.value = homeContentModeRaw.value
+  commitHomeContentMode()
+  homeContentReady.value = true
 }
 
 onMounted(() => {
@@ -784,6 +864,7 @@ onBeforeUnmount(() => {
     class="home-page"
     :class="{
       'home-page--fit': homeContentMode === 'zones',
+      'home-page--mtt': homeContentReady && homeContentMode === 'mtt',
       'is-version-b': isVersionB
     }"
   >
@@ -909,25 +990,33 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- 渠道包单类型直接展示列表；赛事和牌桌并存时展示专区入口。 -->
-    <div class="home-swap-container">
+    <div class="home-swap-container" :aria-busy="!homeContentReady">
       <Transition name="home-swap">
-        <div v-if="homeContentMode === 'mtt'" key="mtt" class="home-swap-panel">
+        <div
+          v-if="homeContentReady && homeContentMode === 'mtt'"
+          key="mtt"
+          class="home-swap-panel"
+        >
           <MttContent embedded class="home-mtt-content" />
         </div>
         <PokerGameList
-          v-else-if="homeContentMode === 'poker'"
+          v-else-if="homeContentReady && homeContentMode === 'poker'"
           key="poker"
           embedded
           class="home-poker-content home-swap-panel"
         />
         <div
-          v-else-if="homeContentMode === 'casino'"
+          v-else-if="homeContentReady && homeContentMode === 'casino'"
           key="casino"
           class="home-casino-content home-swap-panel"
         >
           <CasinoView :hide-header="true" :club-id="channelCasinoClubId" />
         </div>
-        <div v-else key="default" class="home-default-sections home-swap-panel">
+        <div
+          v-else-if="homeContentReady"
+          key="default"
+          class="home-default-sections home-swap-panel"
+        >
           <!-- 4. 游戏模块 -->
           <div class="section-header">
             <span class="section-title">{{ t('UIHome_Text3') }}</span>
@@ -1093,8 +1182,8 @@ onBeforeUnmount(() => {
 .home-page {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  padding: 0 0.4rem calc(2.3rem + env(safe-area-inset-bottom));
+  gap: 0.24rem;
+  padding: 0 0.4rem calc(2.6rem + env(safe-area-inset-bottom));
   background: transparent;
   min-height: max-content;
   box-sizing: border-box;
@@ -1113,7 +1202,10 @@ onBeforeUnmount(() => {
   }
 }
 
-.home-page--fit {
+.home-page--fit,
+.home-page.home-page--mtt {
+  display: flex;
+  flex-direction: column;
   height: 100%;
   min-height: 0;
   padding-bottom: 0;
@@ -1145,7 +1237,6 @@ onBeforeUnmount(() => {
   // 只剩一行的场景（俱乐部没开娱乐场 → 热门游戏整条隐藏）会把卡片拉满整屏。
   max-height: 3.9rem;
 }
-
 .top-bar {
   display: flex;
   align-items: center;
@@ -1508,6 +1599,19 @@ onBeforeUnmount(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.home-mtt-content {
+  padding: 0.1rem 0.38rem 0rem;
+
+  :deep(.mtt-group) {
+    margin-bottom: 0;
+    .mtt-group__title {
+      color: #000;
+    }
+    .mtt-group__toggle {
+      color: rgba(0, 0, 0, 0.77);
+    }
+  }
+}
 // 保持和 .home-page 的直接子级同样的纵向堆叠 + 间距。
 .home-default-sections {
   display: flex;
@@ -1523,6 +1627,28 @@ onBeforeUnmount(() => {
   margin-left: -0.4rem;
   margin-right: -0.4rem;
   min-height: 5rem;
+}
+
+.home-page--mtt .home-swap-container {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.home-page--mtt .home-swap-panel {
+  height: 100%;
+  min-height: 0;
+}
+
+.home-page--mtt .home-mtt-content {
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior-y: contain;
 }
 
 .home-swap-panel {

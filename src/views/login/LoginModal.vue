@@ -32,10 +32,7 @@ import {
 import { completeCocosTableSitdownAuth } from '@/session/cocosTableSitdownAuth'
 import { sendBridgeMessage } from '@/bridge/core'
 import { setH5TableAuthOverlay, setH5Visible } from '@/bridge/channels/uiChannel'
-import {
-  clearPendingRealUserAction,
-  takePendingRealUserAction,
-} from '@/session/realUserGate'
+import { clearPendingRealUserAction, takePendingRealUserAction } from '@/session/realUserGate'
 import { SUPPORTED_LOCALES_OPTIONS, getLocale, setLocale, t, type LocaleCode } from '@/i18n'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import loginModalBg from '@/assets/images/main_bg2.png'
@@ -676,7 +673,8 @@ function applyChannelInviteContext(): void {
     :close-on-click-overlay="true"
     :before-close="() => !loading"
     dialog-width="9rem"
-    body-max-height="14rem"
+    body-max-height="min(14rem, calc(100dvh - 1.6rem))"
+    style="top: 50%"
     :bg-image="loginModalBg"
     @close="loginModalStore.close()"
   >

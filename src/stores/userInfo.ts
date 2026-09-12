@@ -145,10 +145,15 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
           (item) => item.invitation_code?.toLowerCase() === subDomainInviteCode.toLowerCase(),
         )
         if (targetClub) {
-          // 登录后以用户俱乐部列表中的渠道俱乐部刷新游客态数据。
-          // 不能清成 null：ensureChannelDefaultClub 可能已标记 loaded，随后会一直返回 null，
-          // 导致首页拿不到渠道 club_id，从而跳过 /misc/banner/list。
-          this.channelDefaultClub = targetClub
+          // 用户俱乐部接口不保证返回渠道 CMS 配置字段；保留 default 接口的公开配置，
+          // 再用登录用户的俱乐部资料刷新成员态字段。
+          this.channelDefaultClub = {
+            ...this.channelDefaultClub,
+            ...targetClub,
+            diamond_room_switch:
+              targetClub.diamond_room_switch ?? this.channelDefaultClub?.diamond_room_switch,
+            h5_menu: targetClub.h5_menu ?? this.channelDefaultClub?.h5_menu,
+          }
           channelDefaultClubLoaded = true
           this.currentClubId = normalizeClubId(targetClub.club_id)
           return
@@ -244,6 +249,9 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
           const responseH5Menu = Number(response.data?.h5_menu)
           if (club && club.h5_menu === undefined && Number.isFinite(responseH5Menu)) {
             club.h5_menu = responseH5Menu
+          }
+          if (club && club.diamond_room_switch === undefined) {
+            club.diamond_room_switch = Number(response.data?.diamond_room_switch) === 1 ? 1 : 2
           }
           this.channelDefaultClub = club
           channelDefaultClubLoaded = true

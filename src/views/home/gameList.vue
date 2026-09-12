@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { usePlatformDiamondVisibility } from '@/composables/usePlatformDiamondVisibility'
 import { computed, onMounted, reactive, ref, watch, type CSSProperties } from 'vue'
 import { useRouter } from 'vue-router'
 import { showFailToast } from 'vant'
@@ -66,6 +67,7 @@ const ROOM_GROUP_EXPANDED_CACHE_VERSION = 1
 
 const router = useRouter()
 const gameStore = useGameStore()
+const displayPlatformDiamond = usePlatformDiamondVisibility()
 const roomListStore = useRoomListStore()
 const userInfoStore = useUserInfoStore()
 const isChannelPackage = computed(() => isPrivateDomainMode())
@@ -89,7 +91,13 @@ const selectedTribeId = computed(() =>
 const filteredRecords = computed(() => {
   const baseList = roomListStore.records.filter((room) => Number(room.game_type) < 5)
   const scopedList = baseList.filter((room) =>
-    checkIsShowForClubAndTribe(room, selectedClubId.value, selectedTribeId.value),
+    checkIsShowForClubAndTribe(
+      room,
+      selectedClubId.value,
+      selectedTribeId.value,
+      true,
+      displayPlatformDiamond.value,
+    ),
   )
   return scopedList.filter((room) => matchTabRoom(room, activeTab.value))
 })
@@ -431,6 +439,7 @@ function handleOpenCustomerService(): void {
 <style scoped lang="scss">
 .room-list-page {
   position: relative;
+  height: 100dvh;
   min-height: 100dvh;
   color: #fff;
   overflow: hidden;
@@ -438,6 +447,7 @@ function handleOpenCustomerService(): void {
 }
 
 .room-list-page--embedded {
+  height: auto;
   min-height: 0;
   overflow: visible;
   background-image: none;
@@ -446,7 +456,16 @@ function handleOpenCustomerService(): void {
 .room-list-stage {
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
   width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.room-list-page--embedded .room-list-stage {
+  display: block;
+  height: auto;
 }
 
 .bg-overlay {
@@ -466,8 +485,11 @@ function handleOpenCustomerService(): void {
 .group-list {
   position: relative;
   z-index: 1;
-  margin-top: -0.03rem;
-  max-height: calc(100dvh - 2rem);
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: 0;
+  padding-top: 0;
+  max-height: none;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
@@ -483,6 +505,7 @@ function handleOpenCustomerService(): void {
 }
 
 .room-list-page--embedded .group-list {
+  min-height: auto;
   max-height: none;
   overflow: visible;
   padding-right: 0;

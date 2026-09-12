@@ -1,4 +1,4 @@
-import { postDiamondConfigApi, postGlobalConfigApi } from '@/api/config'
+import { postDiamondConfigApi } from '@/api/config'
 import { getUserClubApi, getUserInfoApi } from '@/api/user'
 import {
   forwardDiamondConfigToCocos,
@@ -15,6 +15,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { localStore } from '@/utils/localStore'
 import { ensureMultiLanguageTemplateLoaded } from '@/utils/multiLanguageTemplate'
 import { readClubListCache } from '@/utils/userClubListCache'
+import { isChannelPackageHost } from '@/utils/channelPackage'
 
 let inFlightToken = ''
 let inFlightPromise: Promise<PostAuthProfileSyncResult> | null = null
@@ -84,6 +85,12 @@ async function runPostAuthSync(token: string): Promise<PostAuthProfileSyncResult
   const appConfigStore = useAppConfigStore(pinia)
   const userInfoStore = useUserInfoStore(pinia)
 
+  // 体验账号退出时会清理用户状态。真实账号同步前重新加载渠道公开配置，
+  // 保证 diamond_room_switch、h5_menu 等 CMS 字段在登录切换后仍然存在。
+  if (isChannelPackageHost()) {
+    await userInfoStore.ensureChannelDefaultClub()
+  }
+
   await appConfigStore.restorePublicConfigCache()
     .then(() => {
       if (appConfigStore.globalConfig) {
@@ -145,11 +152,10 @@ async function runPostAuthSync(token: string): Promise<PostAuthProfileSyncResult
 
   // 配置和多语言不参与身份确认，后台刷新即可；登录弹窗只等待用户、俱乐部和 WS。
   void Promise.allSettled([
-    postGlobalConfigApi({})
-      .then((res) => {
-        if (res.code === 0 && res.data) {
-          appConfigStore.setGlobalConfig(res.data)
-          forwardGlobalConfigToCocos(res.data)
+    appConfigStore.ensureFreshGlobalConfig(token)
+      .then((loaded) => {
+        if (loaded && appConfigStore.globalConfig) {
+          forwardGlobalConfigToCocos(appConfigStore.globalConfig)
         }
       })
       .catch((error) => {

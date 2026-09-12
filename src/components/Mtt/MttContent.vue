@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { usePlatformDiamondVisibility } from '@/composables/usePlatformDiamondVisibility'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import type { MttItem, MttActionType } from '@/components/ListItem/MttCard.vue'
@@ -18,6 +19,8 @@ import {
   resolveTemplateTextByKey,
 } from '@/utils/multiLanguageTemplate'
 import { formatDateTime, formatTodayAwareTimeLabel, toTimestampMs } from '@/utils/time'
+import StorageKey from '@/constants/storageKey'
+import { localStore } from '@/utils/localStore'
 
 const MttMatchStatus = { CREATED: 0, RUNNING: 1, CLOSED: 2, CANCEL: 3 } as const
 
@@ -62,6 +65,13 @@ interface Props {
   embedded?: boolean
 }
 
+interface MttGroupExpandedCachePayload {
+  version: number
+  expandedMap: Record<string, boolean>
+}
+
+const MTT_GROUP_EXPANDED_CACHE_VERSION = 1
+
 const props = withDefaults(defineProps<Props>(), {
   activeTab: 'all',
   embedded: false,
@@ -73,11 +83,10 @@ const mttListStore = useMttListStore()
 const userInfoStore = useUserInfoStore()
 const loginModalStore = useLoginModalStore()
 const gameStore = useGameStore()
+const displayPlatformDiamond = usePlatformDiamondVisibility()
 
-const expandedGroupMap = ref<Record<string, boolean>>({})
-const selectedClub = computed(
-  () => userInfoStore.currentClub ?? userInfoStore.channelDefaultClub,
-)
+const expandedGroupMap = ref<Record<string, boolean>>(restoreExpandedGroupMap())
+const selectedClub = computed(() => userInfoStore.currentClub ?? userInfoStore.channelDefaultClub)
 const selectedClubId = computed(() => toSafeInt(selectedClub.value?.club_id))
 const selectedTribeId = computed(() =>
   toSafeInt((selectedClub.value as Record<string, unknown> | null)?.tribe_id),
@@ -120,6 +129,7 @@ const filteredItems = computed<MttViewItem[]>(() => {
         selectedClubId.value,
         selectedTribeId.value,
         appConfigStore.clubDisplayPlatformMtt,
+        displayPlatformDiamond.value,
       )
     ) {
       return false
@@ -169,6 +179,35 @@ function handleCardClick(item: MttItem): void {
 
 function handleViewAll(group: MttRenderGroup): void {
   expandedGroupMap.value[group.groupId] = !(expandedGroupMap.value[group.groupId] === true)
+  persistExpandedGroupMap()
+}
+
+function restoreExpandedGroupMap(): Record<string, boolean> {
+  const cached = localStore.getItem<MttGroupExpandedCachePayload | null>(
+    StorageKey.MTT_GROUP_EXPANDED_CACHE,
+    null,
+  )
+  if (
+    !cached ||
+    typeof cached !== 'object' ||
+    cached.version !== MTT_GROUP_EXPANDED_CACHE_VERSION ||
+    !cached.expandedMap ||
+    typeof cached.expandedMap !== 'object'
+  ) {
+    return {}
+  }
+
+  return Object.fromEntries(
+    Object.entries(cached.expandedMap).map(([groupId, expanded]) => [groupId, expanded === true]),
+  )
+}
+
+function persistExpandedGroupMap(): void {
+  const payload: MttGroupExpandedCachePayload = {
+    version: MTT_GROUP_EXPANDED_CACHE_VERSION,
+    expandedMap: { ...expandedGroupMap.value },
+  }
+  localStore.setItem(StorageKey.MTT_GROUP_EXPANDED_CACHE, payload)
 }
 
 function buildGroupsBySeries(
@@ -180,7 +219,9 @@ function buildGroupsBySeries(
 
   const clubItems = sortedItems.filter((item) => item.originType === ROOM_ORIGIN_TYPE.CLUB)
   if (clubItems.length) {
-    groups.push(buildGroup('club', resolveLabel('UIGuildMain_ClubGame', t('UIClub_Club3')), clubItems))
+    groups.push(
+      buildGroup('club', resolveLabel('UIGuildMain_ClubGame', t('UIClub_Club3')), clubItems),
+    )
   }
 
   const noSeriesItems: MttViewItem[] = []
@@ -209,7 +250,8 @@ function buildGroupsBySeries(
 
   seriesIds.forEach((seriesId) => {
     const seriesInfo = seriesMap[seriesId]
-    const seriesName = resolveNameByUnityRule(toSafeString(seriesInfo?.name)) || t('UIClub_Text18') + " #" + (seriesId)
+    const seriesName =
+      resolveNameByUnityRule(toSafeString(seriesInfo?.name)) || t('UIClub_Text18') + ' #' + seriesId
     const moreName = resolveNameByUnityRule(toSafeString(seriesInfo?.more_name))
     const seriesItems = [...seriesBucketMap[seriesId]].sort(compareSeriesRoom)
     const seriesLayout = resolveSeriesLayoutByType(toSafeInt(seriesInfo?.type), seriesItems.length)

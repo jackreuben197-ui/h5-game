@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { isMttRecordVisible } from '@/utils/mttVisibility'
+import { usePlatformDiamondVisibility } from '@/composables/usePlatformDiamondVisibility'
 import {
   computed,
   nextTick,
@@ -36,7 +38,6 @@ import { localStore } from '@/utils/localStore'
 import { getRoomSeatedCount } from '@/utils/roomListSort'
 import {
   checkIsShowForClubAndTribe,
-  checkIsShowForClubAndTribeAndPlatform,
   ROOM_ORIGIN_TYPE,
 } from '@/utils/roomVisibility'
 import { getLocale, t } from '@/i18n'
@@ -155,6 +156,7 @@ const ROOM_GROUP_EXPANDED_CACHE_VERSION = 1
 
 const appConfigStore = useAppConfigStore()
 const gameStore = useGameStore()
+const displayPlatformDiamond = usePlatformDiamondVisibility()
 const mttListStore = useMttListStore()
 const roomListStore = useRoomListStore()
 const userInfoStore = useUserInfoStore()
@@ -216,7 +218,13 @@ const filteredRecords = computed(() => {
     if (Number(room.game_type) >= 5) {
       return false
     }
-    return checkIsShowForClubAndTribe(room, selectedClubId.value, selectedTribeId.value)
+    return checkIsShowForClubAndTribe(
+      room,
+      selectedClubId.value,
+      selectedTribeId.value,
+      true,
+      displayPlatformDiamond.value,
+    )
   })
 
   return baseList.filter((room) => matchTabRoom(room, activeTab.value))
@@ -899,19 +907,14 @@ function compareSeriesRoom(a: MttViewItem, b: MttViewItem): number {
 }
 
 function checkMttVisibility(item: MttViewItem, clubId: number, tribeId: number): boolean {
-  const roomLike = {
-    rid: 0,
-    game_type: 0,
-    poker_type: 0,
-    sb: 0,
-    origin_type: item.originType,
-    relate_club_ids: item.relateClubIds,
-    relate_tribe_club_list: item.relateTribeClubList,
-  } as RoomRecord
-  // 对齐 Unity UIMatchItemListComponent：club_display_platform_mtt 开启时平台赛事直接可见。
-  return appConfigStore.clubDisplayPlatformMtt
-    ? checkIsShowForClubAndTribeAndPlatform(roomLike, clubId, tribeId)
-    : checkIsShowForClubAndTribe(roomLike, clubId, tribeId)
+  return isMttRecordVisible(
+    item.raw,
+    mttListStore.mttIdMetaMap[toSafeInt(item.raw.match_id)],
+    clubId,
+    tribeId,
+    appConfigStore.clubDisplayPlatformMtt,
+    displayPlatformDiamond.value,
+  )
 }
 
 function resolveCategory(record: RawMttRecord): MttCategory {

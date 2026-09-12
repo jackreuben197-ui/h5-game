@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { postBeforeLoginConfigApi } from '@/api/config'
+import { postBeforeLoginConfigApi, postGlobalConfigApi } from '@/api/config'
 import type {
   DiamondConfigData,
   DiamondConfigItem,
@@ -24,6 +24,9 @@ interface AppConfigState {
 }
 
 let guestGlobalConfigPromise: Promise<void> | null = null
+let globalConfigRefreshPromise: Promise<boolean> | null = null
+let globalConfigRefreshSessionKey = ''
+let globalConfigLoadedSessionKey = ''
 
 // 兼容 global_config_resp 挂在 data 顶层或 data.data 内层两种返回结构。
 function extractGuestGlobalConfig(
@@ -138,6 +141,36 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
           })
       }
       await guestGlobalConfigPromise
+    },
+    // 登录态下每个 token 会话至少确认一次服务端最新配置；并发调用共享同一请求。
+    async ensureFreshGlobalConfig(sessionKey: string): Promise<boolean> {
+      const normalizedSessionKey = sessionKey.trim()
+      if (!normalizedSessionKey) return false
+      if (globalConfigLoadedSessionKey === normalizedSessionKey && this.globalConfig) return true
+
+      if (globalConfigRefreshPromise) {
+        await globalConfigRefreshPromise
+        if (globalConfigLoadedSessionKey === normalizedSessionKey && this.globalConfig) return true
+        return this.ensureFreshGlobalConfig(normalizedSessionKey)
+      }
+
+      globalConfigRefreshSessionKey = normalizedSessionKey
+      const currentTask = postGlobalConfigApi({})
+        .then((response) => {
+          if (globalConfigRefreshSessionKey !== normalizedSessionKey) return false
+          if (Number(response.code) !== 0 || !response.data) return false
+          this.setGlobalConfig(response.data)
+          globalConfigLoadedSessionKey = normalizedSessionKey
+          return true
+        })
+        .finally(() => {
+          if (globalConfigRefreshPromise !== currentTask) return
+          globalConfigRefreshPromise = null
+          globalConfigRefreshSessionKey = ''
+        })
+
+      globalConfigRefreshPromise = currentTask
+      return currentTask
     },
     setDiamondConfig(raw: DiamondConfigData): void {
       const map = buildDiamondConfigMap(raw)

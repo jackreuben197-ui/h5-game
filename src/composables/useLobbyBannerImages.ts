@@ -16,10 +16,9 @@ const BANNER_STATUS_ENABLED = 1
 // /misc/banner/list display_scene：1 = h5，2 = telegram。
 const DISPLAY_SCENE_H5 = 1
 const DISPLAY_SCENE_TELEGRAM = 2
-// CMS 没有单独维护简体中文 Banner，H5 的简体中文与繁体中文统一读取 zh_TW 配置。
+// Banner 按服务端语言码独立读取，简体中文与繁体中文分别使用 zh_CN / zh_TW。
 function getLobbyBannerLang(): string {
-  const lang = toServerLang(getLocale())
-  return lang === 'zh_CN' ? 'zh_TW' : lang
+  return toServerLang(getLocale())
 }
 // 官方包未登录 banner 一键切换：
 // - 'platform'：只显示 CMS club_id=0 的平台 banner

@@ -6,7 +6,7 @@ import { postMiscArtiCleInfoApi } from '@/api/misc'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
-import { t } from '@/i18n'
+import { t, toServerLang } from '@/i18n'
 
 // 主容器背景图：全页面共用一张底图，深浅色各一张。
 const backgroundStyle = computed(() => ({
@@ -60,7 +60,7 @@ async function fetchDocContent(): Promise<void> {
   try {
     const response = await postMiscArtiCleInfoApi({
       type: resolveArticleType(),
-      lang: 'zh_TW',
+      lang: toServerLang(),
     })
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadFail12'))

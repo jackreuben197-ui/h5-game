@@ -220,6 +220,7 @@ async function fetchCmsBannerUrls(
  */
 export function useLobbyBannerImages(): {
   bannerImages: Ref<string[]>
+  isBannerLoaded: Ref<boolean>
   fetchLobbyBannerImages: () => Promise<void>
 } {
   const initialLang = getLobbyBannerLang()
@@ -242,12 +243,14 @@ export function useLobbyBannerImages(): {
     initialIsChannelPackage,
     initialChannelClubId,
   )
+  const isBannerLoaded = ref<boolean>(runtimeBannerImages.has(initialRuntimeKey))
   const bannerImages = ref<string[]>([...(runtimeBannerImages.get(initialRuntimeKey) || [])])
 
   function commitBannerImages(runtimeKey: string, urls: string[]): void {
     const normalized = normalizeBannerUrls(urls)
     bannerImages.value = normalized
     runtimeBannerImages.set(runtimeKey, [...normalized])
+    isBannerLoaded.value = true
   }
 
   async function fetchLobbyBannerImages(): Promise<void> {
@@ -274,35 +277,42 @@ export function useLobbyBannerImages(): {
     const runtimeCached = runtimeBannerImages.get(runtimeKey)
     if (runtimeCached) {
       bannerImages.value = [...runtimeCached]
+      isBannerLoaded.value = true
       return
     }
-    // 渠道包调用 before-login CMS 时传渠道 club_id；官方包不传，只取平台配置。
-    const cmsScope: CmsBannerScope = hasChannelClub
-      ? { type: 'channel-club', clubId: channelClubId }
-      : !hasRealUser && !isChannelPackage && OFFICIAL_GUEST_BANNER_MODE === 'default-club'
-        ? { type: 'default-club' }
-        : { type: 'platform' }
-    // 只有渠道链接才请求俱乐部 banner。平台链接即使账号是俱乐部创始人，也只展示平台 banner。
-    const shouldFetchClubBanner = hasRealUser && hasChannelClub
-    if (shouldFetchClubBanner) {
-      const sceneUrls = await fetchSceneBannerUrls(lang, displayScene, channelClubId)
 
-      if (sceneUrls.length) {
-        commitBannerImages(runtimeKey, sceneUrls)
+    try {
+      // 渠道包调用 before-login CMS 时传渠道 club_id；官方包不传，只取平台配置。
+      const cmsScope: CmsBannerScope = hasChannelClub
+        ? { type: 'channel-club', clubId: channelClubId }
+        : !hasRealUser && !isChannelPackage && OFFICIAL_GUEST_BANNER_MODE === 'default-club'
+          ? { type: 'default-club' }
+          : { type: 'platform' }
+      // 只有渠道链接才请求俱乐部 banner。平台链接即使账号是俱乐部创始人，也只展示平台 banner。
+      const shouldFetchClubBanner = hasRealUser && hasChannelClub
+      if (shouldFetchClubBanner) {
+        const sceneUrls = await fetchSceneBannerUrls(lang, displayScene, channelClubId)
+
+        if (sceneUrls.length) {
+          commitBannerImages(runtimeKey, sceneUrls)
+          return
+        }
+      }
+
+      // 渠道未登录或登录接口无俱乐部 banner 时，传渠道 club_id 请求公开聚合接口；
+      // 返回后精确匹配该俱乐部，没有才回退平台 banner。
+      const cmsUrls = await fetchCmsBannerUrls(lang, displayScene, cmsScope)
+      if (!cmsUrls) {
+        commitBannerImages(runtimeKey, [])
         return
       }
-    }
 
-    // 渠道未登录或登录接口无俱乐部 banner 时，传渠道 club_id 请求公开聚合接口；
-    // 返回后精确匹配该俱乐部，没有才回退平台 banner。
-    const cmsUrls = await fetchCmsBannerUrls(lang, displayScene, cmsScope)
-    if (!cmsUrls) {
-      return
+      commitBannerImages(runtimeKey, cmsUrls)
+    } catch {
+      commitBannerImages(runtimeKey, [])
     }
-
-    commitBannerImages(runtimeKey, cmsUrls)
   }
 
-  return { bannerImages, fetchLobbyBannerImages }
+  return { bannerImages, isBannerLoaded, fetchLobbyBannerImages }
 }
 

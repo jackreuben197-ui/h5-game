@@ -379,12 +379,14 @@ const selectedTribeId = computed(() =>
   toSafeInt((currentClub.value as Record<string, unknown> | null)?.tribe_id),
 )
 
-const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages()
-// 无后台配置时回落到内置单图，并叠加 hero 文案。
-const displayBannerImages = computed<string[]>(() =>
-  bannerImages.value.length ? bannerImages.value : [homeHeaderFallback],
-)
-const isFallbackBanner = computed<boolean>(() => !bannerImages.value.length)
+const { bannerImages, isBannerLoaded, fetchLobbyBannerImages } = useLobbyBannerImages()
+// 仅在服务端 banner 确认且无配置时，才回落到内置单图和 hero 文案。
+// 在服务端接口未完成返回前 (isBannerLoaded === false)，保持为空数组，不盲目展示默认图。
+const displayBannerImages = computed<string[]>(() => {
+  if (!isBannerLoaded.value) return []
+  return bannerImages.value.length ? bannerImages.value : [homeHeaderFallback]
+})
+const isFallbackBanner = computed<boolean>(() => isBannerLoaded.value && !bannerImages.value.length)
 const { noticeText, ensureHomeAnnouncementConfig } = useHomeAnnouncement()
 const noticeTrackStyle = computed<CSSProperties>(() => ({
   '--notice-gap': `${NOTICE_GAP_PX}px`,
@@ -893,13 +895,15 @@ onBeforeUnmount(() => {
     <div class="home-header">
       <div class="home-header__inner">
         <HomeBannerSwiper :images="displayBannerImages" />
-        <div v-if="isFallbackBanner" class="home-header__hero">
-          <div class="home-header__text">
-            <p class="home-header__title">全民代理</p>
-            <p class="home-header__subtitle">一键创建你的线上俱乐部</p>
+        <Transition name="banner-fade">
+          <div v-if="isFallbackBanner" class="home-header__hero">
+            <div class="home-header__text">
+              <p class="home-header__title">全民代理</p>
+              <p class="home-header__subtitle">一键创建你的线上俱乐部</p>
+            </div>
+            <span class="home-header__pill">xypk.com</span>
           </div>
-          <span class="home-header__pill">xypk.com</span>
-        </div>
+        </Transition>
       </div>
     </div>
 
@@ -2062,5 +2066,15 @@ onBeforeUnmount(() => {
     flex-shrink: 0;
     max-height: none;
   }
+}
+
+.banner-fade-enter-active,
+.banner-fade-leave-active {
+  transition: opacity 0.35s ease-in-out;
+}
+
+.banner-fade-enter-from,
+.banner-fade-leave-to {
+  opacity: 0;
 }
 </style>

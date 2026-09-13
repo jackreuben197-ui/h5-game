@@ -7,7 +7,7 @@ import { getLocale } from '@/i18n'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import imgFishLogo from '@/assets/images/img_fish_browser_logo.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
-import { t } from '@/i18n'
+import { t, toServerLang } from '@/i18n'
 
 const backgroundStyle = computed(() => ({
   backgroundImage: `url(${mainBgUrl})`,
@@ -58,7 +58,7 @@ async function fetchDocContent(): Promise<void> {
   try {
     const response = await postMiscArtiCleInfoApi({
       type: resolveArticleType(),
-      lang: 'zh_TW',
+      lang: toServerLang(),
     })
     if (response.code !== 0) {
       throw new Error(typeof response.msg === 'string' ? response.msg : t('UIClub_LoadFail12'))

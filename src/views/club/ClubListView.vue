@@ -16,6 +16,7 @@ import imgClubLogo from '@/assets/images/club_default_logo.png'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { GameDialog } from '@/components/Dialog'
+import { usePlatformDiamondVisibility } from '@/composables/usePlatformDiamondVisibility'
 import type { RoomRecord } from '@/api/models/roomcenter'
 import { useGameStore } from '@/stores/game'
 import { useRoomListStore } from '@/stores/roomList'
@@ -54,6 +55,7 @@ const router = useRouter()
 const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
 const roomListStore = useRoomListStore()
+const displayPlatformDiamond = usePlatformDiamondVisibility()
 
 const searchKeyword = ref('')
 const loadingMyClubs = ref(false)
@@ -78,7 +80,7 @@ const clubList = computed<ClubCardItem[]>(() => {
     const displayId = normalizeClubId(club.random_id ?? club.club_id)
     const clubId = normalizeClubId(club.club_id)
     const key = `${clubId || displayId || index}`
-    const stats = computeClubRoomStats(club, records)
+    const stats = computeClubRoomStats(club, records, displayPlatformDiamond.value)
 
     return {
       key,
@@ -164,13 +166,14 @@ function getRoomPlayers(room: RoomRecord): number {
 function computeClubRoomStats(
   club: ClubInfo,
   records: RoomRecord[],
+  displayPlatformDiamond?: boolean,
 ): { tables: number; players: number } {
   const clubId = toSafeInt(club.club_id)
   const tribeId = toSafeInt((club as Record<string, unknown>).tribe_id)
   let tables = 0
   let players = 0
   records.forEach((room) => {
-    if (!checkIsShowForClubAndTribe(room, clubId, tribeId)) {
+    if (!checkIsShowForClubAndTribe(room, clubId, tribeId, true, displayPlatformDiamond)) {
       return
     }
     const gameType = Number(room.game_type)

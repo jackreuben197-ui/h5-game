@@ -63,9 +63,6 @@ async function handleSave() {
     const res = await postPaymentInfoCreateApi({
       account_no: addr,
       bank_branch: qrCodeUrl.value.trim(),
-      bank_name: 'USDT',
-      real_name: 'USDT',
-      pix_name: 'USDT',
       account_type: 4,
     })
     if (res.code === 0) {

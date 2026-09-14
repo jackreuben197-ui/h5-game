@@ -129,8 +129,8 @@ function handleOpenCustomerService() {
         :class="{ 'mtt-content--no-tabs': !showMttTabs }"
       />
     </div>
+    <MainBottomTab v-if="isChannelMenuVersionB" />
   </div>
-  <MainBottomTab v-if="isChannelMenuVersionB" />
 </template>
 
 <style scoped lang="scss">

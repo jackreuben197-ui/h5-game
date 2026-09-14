@@ -491,8 +491,8 @@ function handleOpenCustomerService(): void {
         </div>
       </section>
     </div>
+    <MainBottomTab v-if="isChannelMenuVersionB && !props.embedded" />
   </div>
-  <MainBottomTab v-if="isChannelMenuVersionB && !props.embedded" />
 </template>
 
 <style scoped lang="scss">

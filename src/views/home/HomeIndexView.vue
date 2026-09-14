@@ -767,13 +767,13 @@ onBeforeUnmount(() => {
         >
           <MttContent class="home-mtt-content" scroll-key="home-mtt" />
         </div>
-        <PokerGameList
+        <div
           v-else-if="homeContentReady && homeContentMode === 'poker'"
           key="poker"
-          embedded
-          scroll-key="home-poker"
           class="home-poker-content home-swap-panel"
-        />
+        >
+          <PokerGameList embedded scroll-key="home-poker" />
+        </div>
         <div
           v-else-if="homeContentReady"
           key="default"

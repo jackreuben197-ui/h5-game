@@ -874,7 +874,7 @@ watch(filteredWithdrawTypes, (list) => {
   position: relative;
   display: flex;
   align-items: center;
-  width: 100%;
+  width: fit-content;
   max-width: 100%;
   background: rgba(0, 0, 0, 0.4);
   padding: 0.06rem;
@@ -900,7 +900,8 @@ watch(filteredWithdrawTypes, (list) => {
 .wf__tabs-scroll {
   display: flex;
   align-items: center;
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;

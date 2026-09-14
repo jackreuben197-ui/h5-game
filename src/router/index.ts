@@ -107,6 +107,18 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/wallet/add-wechat-account',
+      name: 'wallet-add-wechat-account',
+      component: () => import('@/views/wallet/AddWechatAccountView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/wallet/add-alipay-account',
+      name: 'wallet-add-alipay-account',
+      component: () => import('@/views/wallet/AddAlipayAccountView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/wallet/gift-uc',
       name: 'wallet-gift-uc',
       component: () => import('@/views/wallet/WalletGiftUcView.vue'),

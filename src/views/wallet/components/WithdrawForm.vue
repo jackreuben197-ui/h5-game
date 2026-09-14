@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { showToast } from 'vant'
 import icSupportService from '@/assets/images/ic_support_service.png'
 import icBankcard from '@/assets/images/ic_bankcard.png'
 import walletPng from '@/assets/icons/walletpng.png'
+import icWeChat from '@/assets/icons/wallet/ic_wechat.svg'
+import icAlipay from '@/assets/icons/wallet/ic_alipay.svg'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import WithdrawConfirmModal from '@/views/wallet/components/WithdrawConfirmModal.vue'
 import GameDialog from '@/components/Dialog/GameDialog.vue'
@@ -44,10 +46,12 @@ function tx(key: string, fallback: string): string {
 
 const availableUc = computed(() => props.availableUc ?? 0)
 
-type ChannelId = 'bankcard' | 'wallet' | 'customercare'
+type ChannelId = 'bankcard' | 'wallet' | 'customercare' | 'wechat' | 'alipay'
 const activeChannel = ref<ChannelId>('bankcard')
 const isCustomerCare = computed(() => activeChannel.value === 'customercare')
 const isWallet = computed(() => activeChannel.value === 'wallet')
+const isWechat = computed(() => activeChannel.value === 'wechat')
+const isAlipay = computed(() => activeChannel.value === 'alipay')
 
 function getCustomerCareLabel(): string {
   if (getLocale() === 'cn' || getLocale() === 'zh') {
@@ -60,6 +64,8 @@ const paymentChannels = computed<{ id: ChannelId; image: string; label: string; 
   { id: 'bankcard', image: icBankcard, label: tx('Wallet_BankCard', 'Bank Card'), key: 'Wallet_BankCard' },
   { id: 'wallet', image: walletPng, label: tx('Wallet_Title', 'Wallet'), key: 'Wallet_Title' },
   { id: 'customercare', image: icSupportService, label: getCustomerCareLabel(), key: 'Wallet_CsWithdraw' },
+  { id: 'wechat', image: icWeChat, label: tx('Wallet_WeChat', 'WeChat'), key: 'Wallet_WeChat' },
+  { id: 'alipay', image: icAlipay, label: tx('Wallet_Alipay', 'Alipay'), key: 'Wallet_Alipay' },
 ])
 
 const withdrawTypes = ref<OnlineWithdrawTypeItem[]>([])
@@ -91,6 +97,18 @@ const walletWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
   ),
 )
 
+const wechatWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
+  withdrawTypes.value.filter(
+    (wt) => wt.status === 1 && wt.account_type === 2 && wt.action_type !== 0,
+  ),
+)
+
+const alipayWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
+  withdrawTypes.value.filter(
+    (wt) => wt.status === 1 && wt.account_type === 3 && wt.action_type !== 0,
+  ),
+)
+
 const csWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
   withdrawTypes.value.filter(
     (wt) =>
@@ -102,6 +120,8 @@ const csWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
 const filteredWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() => {
   if (activeChannel.value === 'bankcard') return bankWithdrawTypes.value
   if (activeChannel.value === 'wallet') return walletWithdrawTypes.value
+  if (activeChannel.value === 'wechat') return wechatWithdrawTypes.value
+  if (activeChannel.value === 'alipay') return alipayWithdrawTypes.value
   return csWithdrawTypes.value
 })
 
@@ -109,6 +129,8 @@ const availablePaymentChannels = computed(() =>
   paymentChannels.value.filter((ch) => {
     if (ch.id === 'bankcard') return bankWithdrawTypes.value.length > 0
     if (ch.id === 'wallet') return walletWithdrawTypes.value.length > 0
+    if (ch.id === 'wechat') return wechatWithdrawTypes.value.length > 0
+    if (ch.id === 'alipay') return alipayWithdrawTypes.value.length > 0
     if (ch.id === 'customercare') return csWithdrawTypes.value.length > 0
     return true
   }),
@@ -214,7 +236,7 @@ async function fetchWithdrawTypes(): Promise<void> {
 
   const requested = route.query.channel
   const requestedChannel: ChannelId | null =
-    requested === 'wallet' || requested === 'bankcard' || requested === 'customercare'
+    requested === 'wallet' || requested === 'bankcard' || requested === 'customercare' || requested === 'wechat' || requested === 'alipay'
       ? requested
       : null
 
@@ -224,6 +246,10 @@ async function fetchWithdrawTypes(): Promise<void> {
     applyChannel('bankcard')
   } else if (walletWithdrawTypes.value.length > 0) {
     applyChannel('wallet')
+  } else if (wechatWithdrawTypes.value.length > 0) {
+    applyChannel('wechat')
+  } else if (alipayWithdrawTypes.value.length > 0) {
+    applyChannel('alipay')
   } else if (csWithdrawTypes.value.length > 0) {
     applyChannel('customercare')
   } else if (availablePaymentChannels.value.length > 0) {
@@ -249,7 +275,7 @@ async function fetchPaymentInfo(): Promise<void> {
   try {
     const userId =
       userInfoStore.userInfo?.user?.p_u_id ?? Number(localStorage.getItem('user_p_u_id') ?? '0')
-    const acctType = isWallet.value ? 6 : 1
+    const acctType = isWallet.value ? 6 : isWechat.value ? 2 : isAlipay.value ? 3 : 1
     const res = await postPaymentInfoListApi({
       user_id: userId,
       account_type: acctType,
@@ -340,6 +366,54 @@ async function confirmDeleteCard(): Promise<void> {
   }
 }
 
+const tabsScrollRef = ref<HTMLElement | null>(null)
+const tabItemRefs = ref<Record<string, HTMLElement | null>>({})
+const canScrollLeft = ref(false)
+const canScrollRight = ref(false)
+
+function setTabRef(id: string, el: unknown) {
+  if (el) {
+    tabItemRefs.value[id] = el as HTMLElement
+  }
+}
+
+function updateScrollState() {
+  const el = tabsScrollRef.value
+  if (!el) return
+  canScrollLeft.value = el.scrollLeft > 4
+  canScrollRight.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 4
+}
+
+function scrollToRight() {
+  const el = tabsScrollRef.value
+  if (!el) return
+  el.scrollBy({ left: 120, behavior: 'smooth' })
+}
+
+function scrollToLeft() {
+  const el = tabsScrollRef.value
+  if (!el) return
+  el.scrollBy({ left: -120, behavior: 'smooth' })
+}
+
+function scrollToActiveTab(id: ChannelId) {
+  void nextTick(() => {
+    const tabEl = tabItemRefs.value[id]
+    if (tabEl) {
+      tabEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+    }
+    updateScrollState()
+  })
+}
+
+onMounted(() => {
+  void nextTick(updateScrollState)
+})
+
+watch(availablePaymentChannels, () => {
+  void nextTick(updateScrollState)
+})
+
 function selectWithdrawType(wt: OnlineWithdrawTypeItem): void {
   selectedWithdrawType.value = wt
 }
@@ -349,7 +423,10 @@ function applyChannel(ch: ChannelId): void {
   selectedWithdrawType.value = filteredWithdrawTypes.value[0] ?? null
   withdrawAmount.value = ''
   selectedPaymentAccount.value = null
-  if (ch === 'bankcard' || ch === 'wallet') void fetchPaymentInfo()
+  if (ch === 'bankcard' || ch === 'wallet' || ch === 'wechat' || ch === 'alipay') {
+    void fetchPaymentInfo()
+  }
+  scrollToActiveTab(ch)
 }
 
 function handleWithdraw(): void {
@@ -470,20 +547,51 @@ watch(filteredWithdrawTypes, (list) => {
       </div>
 
       <template v-else-if="withdrawTypes.length > 0">
-        <!-- Header with Tabs and Add Account Button -->
-        <div class="wf__top-bar">
-          <div class="wf__tabs" :class="{ 'wf__tabs--single': availablePaymentChannels.length === 1 }">
-            <button
-              v-for="ch in availablePaymentChannels"
-              :key="ch.id"
-              type="button"
-              class="wf__tab"
-              :class="{ 'wf__tab--active': activeChannel === ch.id }"
-              @click="applyChannel(ch.id)"
-            >
-              {{ ch.label }}
-            </button>
+        <!-- Header with Tabs and Scroll Arrow Indicator -->
+        <div class="wf__top-bar" :class="{ 'wf__top-bar--single': availablePaymentChannels.length === 1 }">
+          <button
+            v-if="canScrollLeft"
+            type="button"
+            class="wf__tabs-arrow wf__tabs-arrow--left"
+            aria-label="Scroll left"
+            @click="scrollToLeft"
+          >
+            <svg width="10" height="10" viewBox="0 0 8 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M7 1L2 6L7 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+
+          <div
+            ref="tabsScrollRef"
+            class="wf__tabs-scroll"
+            @scroll.passive="updateScrollState"
+          >
+            <div class="wf__tabs">
+              <button
+                v-for="ch in availablePaymentChannels"
+                :key="ch.id"
+                :ref="(el) => setTabRef(ch.id, el)"
+                type="button"
+                class="wf__tab"
+                :class="{ 'wf__tab--active': activeChannel === ch.id }"
+                @click="applyChannel(ch.id)"
+              >
+                <span>{{ ch.label }}</span>
+              </button>
+            </div>
           </div>
+
+          <button
+            v-if="canScrollRight"
+            type="button"
+            class="wf__tabs-arrow wf__tabs-arrow--right"
+            aria-label="Scroll right"
+            @click="scrollToRight"
+          >
+            <svg width="10" height="10" viewBox="0 0 8 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1 1L6 6L1 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
         </div>
 
         <!-- 4-Column Sub-type Grid -->
@@ -498,17 +606,15 @@ watch(filteredWithdrawTypes, (list) => {
             <img
               :src="
                 wt.image ||
-                (isWallet || wt.account_type === 6
-                  ? walletPng
-                  : isCustomerCare || wt.account_type === 0 || wt.account_type === 7
-                    ? icSupportService
-                    : icBankcard)
+                (isCustomerCare || wt.account_type === 0 || wt.account_type === 7
+                  ? icSupportService
+                  : walletPng)
               "
               alt=""
               class="wf__grid-icon"
             />
             <span v-fit-text="{ maxLines: 1, minScale: 0.75 }" class="wf__grid-name">{{
-              wt.name || (isWallet ? 'USDT' : isCustomerCare ? getCustomerCareLabel() : tx('Wallet_BankCard', 'Bank Card'))
+              wt.name || (isWallet ? 'USDT' : isWechat ? 'WeChat' : isAlipay ? 'Alipay' : isCustomerCare ? getCustomerCareLabel() : tx('Wallet_BankCard', 'Bank Card'))
             }}</span>
             <div v-if="selectedWithdrawType?.id === wt.id" class="wf__grid-check">
               <svg width="8" height="6" viewBox="0 0 8 6" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -524,7 +630,15 @@ watch(filteredWithdrawTypes, (list) => {
             class="wf__add-btn"
             type="button"
             @click="
-              router.push(isWallet ? '/wallet/add-wallet-address' : '/wallet/add-bank-card')
+              router.push(
+                isWallet
+                  ? '/wallet/add-wallet-address'
+                  : isWechat
+                    ? '/wallet/add-wechat-account'
+                    : isAlipay
+                      ? '/wallet/add-alipay-account'
+                      : '/wallet/add-bank-card'
+              )
             "
           >
             <span class="wf__add-btn-plus">+</span>
@@ -554,7 +668,7 @@ watch(filteredWithdrawTypes, (list) => {
                   @click="selectedPaymentAccount = info"
                 >
                   <img
-                    :src="info.account_type === 6 || isWallet ? walletPng : icBankcard"
+                    :src="walletPng"
                     alt=""
                     class="wf__acct-card-icon"
                   />
@@ -740,13 +854,130 @@ watch(filteredWithdrawTypes, (list) => {
   }
 }
 
-/* Header Bar: Tabs & Add Button */
+/* Header Bar: Tabs & Scroll Arrow Indicator */
 .wf__top-bar {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.2rem;
+  width: 100%;
+  max-width: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 0.06rem;
+  border-radius: 999px;
   margin-bottom: 0.32rem;
+  overflow: hidden;
+  box-sizing: border-box;
+
+  &--single {
+    background: transparent;
+    padding: 0;
+  }
+
+  @include theme-light-own {
+    background: var(--wallet-l-surface-soft);
+
+    &--single {
+      background: transparent;
+    }
+  }
+}
+
+.wf__tabs-scroll {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  scroll-behavior: smooth;
+  padding: 0 0.04rem;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.wf__tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.08rem;
+  min-width: max-content;
+}
+
+.wf__tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 0.68rem;
+  padding: 0 0.36rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  font-family: var(--wallet-font-cn);
+  font-size: 0.32rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &--active {
+    background: #ff3b5c;
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 0.04rem 0.12rem rgba(255, 59, 92, 0.4);
+  }
+
+  @include theme-light-own {
+    color: var(--wallet-l-text-muted);
+
+    &--active {
+      background: #ff3b5c;
+      color: #ffffff;
+    }
+  }
+}
+
+.wf__tabs-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.52rem;
+  height: 0.52rem;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: opacity 0.2s;
+
+  &:active {
+    opacity: 0.8;
+  }
+
+  &--left {
+    left: 0.08rem;
+  }
+
+  &--right {
+    right: 0.08rem;
+  }
+
+  @include theme-light-own {
+    background: rgba(255, 255, 255, 0.9);
+    color: #333333;
+  }
 }
 
 .wf__add-row {
@@ -771,59 +1002,6 @@ watch(filteredWithdrawTypes, (list) => {
 
   @include theme-light-own {
     color: var(--wallet-l-text);
-  }
-}
-
-.wf__tabs {
-  display: inline-flex;
-  align-items: center;
-  background: rgba(0, 0, 0, 0.4);
-  padding: 0.05rem;
-  border-radius: 999px;
-  gap: 0.04rem;
-
-  &--single {
-    background: transparent;
-    padding: 0;
-  }
-
-  @include theme-light-own {
-    background: var(--wallet-l-surface-soft);
-
-    &--single {
-      background: transparent;
-    }
-  }
-}
-
-.wf__tab {
-  height: 0.64rem;
-  padding: 0 0.36rem;
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.75);
-  font-family: var(--wallet-font-cn);
-  font-size: 0.29rem;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s ease;
-  -webkit-tap-highlight-color: transparent;
-
-  &--active {
-    background: #ff3b5c;
-    color: #ffffff;
-    font-weight: 600;
-  }
-
-  @include theme-light-own {
-    color: var(--wallet-l-text-muted);
-
-    &--active {
-      background: #ff3b5c;
-      color: #ffffff;
-    }
   }
 }
 

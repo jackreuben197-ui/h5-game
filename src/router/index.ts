@@ -119,6 +119,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/wallet/add-usdt-account',
+      name: 'wallet-add-usdt-account',
+      component: () => import('@/views/wallet/AddUsdtAccountView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/wallet/gift-uc',
       name: 'wallet-gift-uc',
       component: () => import('@/views/wallet/WalletGiftUcView.vue'),

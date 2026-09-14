@@ -39,7 +39,7 @@ export interface PaymentInfo {
   account_no?: string
   pix_name?: string
   bank_name?: string
-  account_type?: number    // 1=bankcard, 3=alipay, 2=wechat
+  account_type?: number    // 1=bankcard, 2=wechat, 3=alipay, 4=usdt, 6=wallet
   status?: number          // 1=normal, 2=deleted
   [key: string]: unknown
 }
@@ -63,7 +63,8 @@ export interface CreatePaymentInfoRequest {
   real_name?: string       // 收款人姓名（列表里回显为 pix_name）
   pix_name?: string
   bank_name?: string
-  account_type?: number    // 1=bankcard
+  bank_branch?: string     // 二维码图片地址 (QR code image URL)
+  account_type?: number    // 1=bankcard, 2=wechat, 3=alipay, 4=usdt, 6=wallet
   [key: string]: unknown
 }
 

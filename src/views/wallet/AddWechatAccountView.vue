@@ -208,29 +208,35 @@ async function handleSave() {
           @change="handleFileChange"
         />
 
-        <div v-if="qrCodeUrl" class="abc-qr-preview">
-          <img :src="qrCodeUrl" alt="QR Code" class="abc-qr-img" />
-          <button type="button" class="abc-qr-reupload" @click="triggerQrUpload">
-            {{ tx('Wallet_Reupload', '重新上传') }}
-          </button>
-        </div>
+        <div class="abc-qr-box" @click="triggerQrUpload">
+          <template v-if="qrCodeUrl">
+            <img :src="qrCodeUrl" alt="QR Code" class="abc-qr-preview-img" />
+            <div class="abc-qr-overlay">
+              <span>{{ tx('Wallet_Reupload', '重新上传') }}</span>
+            </div>
+          </template>
 
-        <button
-          v-else
-          type="button"
-          class="abc-upload-btn"
-          :disabled="uploadingQr"
-          @click="triggerQrUpload"
-        >
-          <div class="abc-upload-icon-circle">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 5V19M5 12H19" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <span class="abc-upload-text">{{
-            uploadingQr ? tx('Wallet_Uploading', '上传中…') : tx('Wallet_UploadQr', 'Upload QR')
-          }}</span>
-        </button>
+          <template v-else>
+            <div class="abc-qr-placeholder">
+              <div class="abc-qr-icon-wrap">
+                <svg width="44" height="40" viewBox="0 0 44 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <!-- Gallery Image Icon -->
+                  <rect x="2" y="2" width="40" height="36" rx="8" stroke="white" stroke-width="3" fill="none" />
+                  <circle cx="14" cy="14" r="4" fill="white" />
+                  <path d="M6 32L16 20L25 30L31 23L38 32H6Z" fill="white" />
+                </svg>
+                <div class="abc-qr-plus-badge">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7 2V12M2 7H12" stroke="white" stroke-width="2.5" stroke-linecap="round" />
+                  </svg>
+                </div>
+              </div>
+              <span class="abc-qr-text">
+                {{ uploadingQr ? tx('Wallet_Uploading', '上传中…') : tx('Wallet_UploadQr', 'Upload QR') }}
+              </span>
+            </div>
+          </template>
+        </div>
       </div>
 
       <!-- Disclaimer Note -->
@@ -488,7 +494,7 @@ async function handleSave() {
   opacity: 0.6;
 }
 
-// Upload QR
+// Upload QR Box (Matching AddUsdtAccountView UI)
 .abc-upload-wrapper {
   margin-top: 0.1rem;
 }
@@ -497,77 +503,87 @@ async function handleSave() {
   display: none;
 }
 
-.abc-upload-btn {
+.abc-qr-box {
+  position: relative;
   width: 100%;
-  height: 2.2rem;
-  background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
-  border: none;
-  border-radius: 0.48rem;
+  height: 3.8rem;
+  border-radius: 0.5rem;
+  background: linear-gradient(135deg, #ff4d63 0%, #e63952 100%);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.16rem;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(255, 65, 108, 0.3);
-  transition: transform 0.2s, opacity 0.2s;
-  -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
+  box-shadow: 0 0.1rem 0.3rem rgba(230, 57, 82, 0.3);
+  transition: transform 0.15s ease, opacity 0.15s ease;
 
   &:active {
     transform: scale(0.98);
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+    opacity: 0.95;
   }
 }
 
-.abc-upload-icon-circle {
-  width: 0.88rem;
-  height: 0.88rem;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.25);
+.abc-qr-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.abc-qr-icon-wrap {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.abc-upload-text {
+.abc-qr-plus-badge {
+  position: absolute;
+  bottom: -0.05rem;
+  right: -0.05rem;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: #34c759;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0.04rem 0.1rem rgba(0, 0, 0, 0.2);
+}
+
+.abc-qr-text {
   font-family: var(--wallet-font-cn, 'HONOR Sans CN');
-  font-size: 0.34rem;
+  font-size: 0.52rem;
   font-weight: 600;
   color: #ffffff;
+  letter-spacing: 0.01rem;
 }
 
-.abc-qr-preview {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.2rem;
-  padding: 0.3rem;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 0.48rem;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.abc-qr-img {
-  width: 2.4rem;
-  height: 2.4rem;
+.abc-qr-preview-img {
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  border-radius: 0.24rem;
-  background: #ffffff;
+  background: #000;
 }
 
-.abc-qr-reupload {
-  padding: 0.12rem 0.36rem;
-  background: rgba(255, 255, 255, 0.15);
-  border: none;
-  border-radius: 0.24rem;
-  color: #ffffff;
-  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
-  font-size: 0.28rem;
-  cursor: pointer;
+.abc-qr-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 0.38rem;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+
+  .abc-qr-box:hover &,
+  .abc-qr-box:active & {
+    opacity: 1;
+  }
 }
 
 .abc-disclaimer {

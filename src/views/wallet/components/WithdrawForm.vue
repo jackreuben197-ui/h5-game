@@ -7,6 +7,7 @@ import icBankcard from '@/assets/images/ic_bankcard.png'
 import walletPng from '@/assets/icons/walletpng.png'
 import icWeChat from '@/assets/icons/wallet/ic_wechat.svg'
 import icAlipay from '@/assets/icons/wallet/ic_alipay.svg'
+import icUsdt from '@/assets/icons/wallet/ic_usdt.svg'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import WithdrawConfirmModal from '@/views/wallet/components/WithdrawConfirmModal.vue'
 import GameDialog from '@/components/Dialog/GameDialog.vue'
@@ -46,12 +47,13 @@ function tx(key: string, fallback: string): string {
 
 const availableUc = computed(() => props.availableUc ?? 0)
 
-type ChannelId = 'bankcard' | 'wallet' | 'customercare' | 'wechat' | 'alipay'
+type ChannelId = 'bankcard' | 'wallet' | 'customercare' | 'wechat' | 'alipay' | 'usdt'
 const activeChannel = ref<ChannelId>('bankcard')
 const isCustomerCare = computed(() => activeChannel.value === 'customercare')
 const isWallet = computed(() => activeChannel.value === 'wallet')
 const isWechat = computed(() => activeChannel.value === 'wechat')
 const isAlipay = computed(() => activeChannel.value === 'alipay')
+const isUsdt = computed(() => activeChannel.value === 'usdt')
 
 function getCustomerCareLabel(): string {
   if (getLocale() === 'cn' || getLocale() === 'zh') {
@@ -66,6 +68,7 @@ const paymentChannels = computed<{ id: ChannelId; image: string; label: string; 
   { id: 'customercare', image: icSupportService, label: getCustomerCareLabel(), key: 'Wallet_CsWithdraw' },
   { id: 'wechat', image: icWeChat, label: tx('Wallet_WeChat', 'WeChat'), key: 'Wallet_WeChat' },
   { id: 'alipay', image: icAlipay, label: tx('Wallet_Alipay', 'Alipay'), key: 'Wallet_Alipay' },
+  { id: 'usdt', image: icUsdt, label: 'USDT', key: 'Wallet_USDT' },
 ])
 
 const withdrawTypes = ref<OnlineWithdrawTypeItem[]>([])
@@ -109,6 +112,12 @@ const alipayWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
   ),
 )
 
+const usdtWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
+  withdrawTypes.value.filter(
+    (wt) => wt.status === 1 && wt.account_type === 4 && wt.action_type !== 0,
+  ),
+)
+
 const csWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() =>
   withdrawTypes.value.filter(
     (wt) =>
@@ -122,6 +131,7 @@ const filteredWithdrawTypes = computed<OnlineWithdrawTypeItem[]>(() => {
   if (activeChannel.value === 'wallet') return walletWithdrawTypes.value
   if (activeChannel.value === 'wechat') return wechatWithdrawTypes.value
   if (activeChannel.value === 'alipay') return alipayWithdrawTypes.value
+  if (activeChannel.value === 'usdt') return usdtWithdrawTypes.value
   return csWithdrawTypes.value
 })
 
@@ -131,6 +141,7 @@ const availablePaymentChannels = computed(() =>
     if (ch.id === 'wallet') return walletWithdrawTypes.value.length > 0
     if (ch.id === 'wechat') return wechatWithdrawTypes.value.length > 0
     if (ch.id === 'alipay') return alipayWithdrawTypes.value.length > 0
+    if (ch.id === 'usdt') return usdtWithdrawTypes.value.length > 0
     if (ch.id === 'customercare') return csWithdrawTypes.value.length > 0
     return true
   }),
@@ -236,7 +247,7 @@ async function fetchWithdrawTypes(): Promise<void> {
 
   const requested = route.query.channel
   const requestedChannel: ChannelId | null =
-    requested === 'wallet' || requested === 'bankcard' || requested === 'customercare' || requested === 'wechat' || requested === 'alipay'
+    requested === 'wallet' || requested === 'bankcard' || requested === 'customercare' || requested === 'wechat' || requested === 'alipay' || requested === 'usdt'
       ? requested
       : null
 
@@ -250,6 +261,8 @@ async function fetchWithdrawTypes(): Promise<void> {
     applyChannel('wechat')
   } else if (alipayWithdrawTypes.value.length > 0) {
     applyChannel('alipay')
+  } else if (usdtWithdrawTypes.value.length > 0) {
+    applyChannel('usdt')
   } else if (csWithdrawTypes.value.length > 0) {
     applyChannel('customercare')
   } else if (availablePaymentChannels.value.length > 0) {
@@ -275,7 +288,7 @@ async function fetchPaymentInfo(): Promise<void> {
   try {
     const userId =
       userInfoStore.userInfo?.user?.p_u_id ?? Number(localStorage.getItem('user_p_u_id') ?? '0')
-    const acctType = isWallet.value ? 6 : isWechat.value ? 2 : isAlipay.value ? 3 : 1
+    const acctType = isUsdt.value ? 4 : isWallet.value ? 6 : isWechat.value ? 2 : isAlipay.value ? 3 : 1
     const res = await postPaymentInfoListApi({
       user_id: userId,
       account_type: acctType,
@@ -423,7 +436,7 @@ function applyChannel(ch: ChannelId): void {
   selectedWithdrawType.value = filteredWithdrawTypes.value[0] ?? null
   withdrawAmount.value = ''
   selectedPaymentAccount.value = null
-  if (ch === 'bankcard' || ch === 'wallet' || ch === 'wechat' || ch === 'alipay') {
+  if (ch === 'bankcard' || ch === 'wallet' || ch === 'wechat' || ch === 'alipay' || ch === 'usdt') {
     void fetchPaymentInfo()
   }
   scrollToActiveTab(ch)
@@ -614,7 +627,7 @@ watch(filteredWithdrawTypes, (list) => {
               class="wf__grid-icon"
             />
             <span v-fit-text="{ maxLines: 1, minScale: 0.75 }" class="wf__grid-name">{{
-              wt.name || (isWallet ? 'USDT' : isWechat ? 'WeChat' : isAlipay ? 'Alipay' : isCustomerCare ? getCustomerCareLabel() : tx('Wallet_BankCard', 'Bank Card'))
+              wt.name || (isUsdt ? 'USDT' : isWallet ? 'USDT' : isWechat ? 'WeChat' : isAlipay ? 'Alipay' : isCustomerCare ? getCustomerCareLabel() : tx('Wallet_BankCard', 'Bank Card'))
             }}</span>
             <div v-if="selectedWithdrawType?.id === wt.id" class="wf__grid-check">
               <svg width="8" height="6" viewBox="0 0 8 6" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -631,13 +644,15 @@ watch(filteredWithdrawTypes, (list) => {
             type="button"
             @click="
               router.push(
-                isWallet
-                  ? '/wallet/add-wallet-address'
-                  : isWechat
-                    ? '/wallet/add-wechat-account'
-                    : isAlipay
-                      ? '/wallet/add-alipay-account'
-                      : '/wallet/add-bank-card'
+                isUsdt
+                  ? '/wallet/add-usdt-account'
+                  : isWallet
+                    ? '/wallet/add-wallet-address'
+                    : isWechat
+                      ? '/wallet/add-wechat-account'
+                      : isAlipay
+                        ? '/wallet/add-alipay-account'
+                        : '/wallet/add-bank-card'
               )
             "
           >

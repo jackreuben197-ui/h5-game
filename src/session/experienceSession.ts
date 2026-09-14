@@ -15,6 +15,7 @@ import { useRoomListStore } from '@/stores/roomList'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { localStore } from '@/utils/localStore'
 import { isChannelPackageHost, resolveInviteCode } from '@/utils/channelPackage'
+import { ensureMultiLanguageTemplateLoaded } from '@/utils/multiLanguageTemplate'
 import type { ExperienceLoginRequest, UserInfoData } from '@/api/models/user'
 
 let ensurePromise: Promise<boolean> | null = null
@@ -69,6 +70,7 @@ function hydrateSessionUser(userInfo: UserInfoData, account: string): void {
 
 async function bootstrapResolvedSessionLists(): Promise<void> {
   await Promise.allSettled([
+    ensureMultiLanguageTemplateLoaded(),
     useRoomListStore(pinia).bootstrapRoomList(),
     useMttListStore(pinia).bootstrapMttList(),
   ])
@@ -209,7 +211,8 @@ export function ensureExperienceSession(): Promise<boolean> {
   const currentToken = gameStore.sessionToken.trim()
   // 身份确认结果与 token 绑定；同一会话内切换路由只复用结果，不再重复请求 user/info。
   if (currentToken && !gameStore.shouldSyncIdentity(currentToken)) {
-    return Promise.resolve(true)
+    // 模板接口同样需要 token。即使身份已确认，也要经过统一入口补齐无缓存或上次失败的模板加载。
+    return ensureMultiLanguageTemplateLoaded().then(() => true)
   }
   if (!ensurePromise) {
     const revision = experienceLoginRevision

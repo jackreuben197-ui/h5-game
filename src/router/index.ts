@@ -33,7 +33,8 @@ function walletRouteClubId(to: RouteLocationNormalized): number | undefined {
 }
 
 function preloadWalletPriceList(to: RouteLocationNormalized): true {
-  if (!useGameStore(pinia).isRealUser) {
+  // 首次进入时体验会话可能仍在领取 token；页面会监听 token 并在就绪后补拉。
+  if (!useGameStore(pinia).sessionToken.trim()) {
     return true
   }
   const walletStore = useWalletStore(pinia)

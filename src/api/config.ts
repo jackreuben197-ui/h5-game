@@ -1,4 +1,4 @@
-import http from '@/api/http'
+import http, { type HttpRequestOptionsExt } from '@/api/http'
 import type { ApiResponse } from '@/api/models/common'
 import type {
   BaseConfigCombineData,
@@ -27,6 +27,7 @@ export async function getMultiLanguageTemplateApi(): Promise<
   const response = await http.post<ApiResponse<MultiLanguageTemplateRecord[]>>(
     '/config/multi_language/template',
     {},
+    { allowGuestAccount: true } satisfies HttpRequestOptionsExt,
   )
   return response.data
 }

@@ -17,7 +17,8 @@ export const useWalletStore = defineStore('wallet', () => {
       return Number(clubIdOverride)
     }
     const userInfoStore = useUserInfoStore()
-    const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
+    const currentClub =
+      userInfoStore.currentClub ?? userInfoStore.clubList[0] ?? userInfoStore.channelDefaultClub
     const clubId = Number(currentClub?.club_id)
     return Number.isFinite(clubId) && clubId > 0 ? clubId : undefined
   }

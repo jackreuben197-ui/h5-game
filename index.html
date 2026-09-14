@@ -518,7 +518,7 @@
         --app-full-height: var(--app-viewport-height);
         /* Cocos uses this as its real frame height; do not include H5 bottom bleed. */
         --app-cocos-height: var(--app-viewport-height);
-        --h5-main-bg-color: #c487a8;
+        --h5-shell-bg-color: #000;
         --app-bottom-bleed: 0px;
         --app-content-safe-area-top: env(safe-area-inset-top);
         --app-visual-safe-area-top: 0px;
@@ -526,6 +526,10 @@
         --app-keyboard-inset: 0px;
         --app-cocos-keyboard-offset: 0px;
         --app-h5-keyboard-offset: 0px;
+      }
+
+      html[data-theme='light'] {
+        --h5-shell-bg-color: #fff;
       }
 
       @supports (height: 100dvh) {
@@ -550,11 +554,7 @@
         min-height: -webkit-fill-available;
         overflow: hidden;
         overscroll-behavior: none;
-        background-color: var(--h5-main-bg-color);
-        background-image: var(--h5-main-bg-image, none);
-        background-repeat: no-repeat;
-        background-position: center top;
-        background-size: cover;
+        background-color: var(--h5-shell-bg-color);
       }
 
       body {
@@ -572,10 +572,6 @@
         overscroll-behavior: none;
         position: relative;
         background-color: #000;
-        background-image: var(--h5-main-bg-image, none);
-        background-repeat: no-repeat;
-        background-position: center top;
-        background-size: cover;
       }
 
       /*
@@ -664,10 +660,6 @@
         z-index: 10;
         box-sizing: border-box;
         background-color: #fff;
-        background-image: var(--h5-main-bg-image, none);
-        background-repeat: no-repeat;
-        background-position: center top; /* 确保背景图从绝对顶部开始对齐 */
-        background-size: cover;          /* 或者设置 100% 100% 铺满 */
       }
 
       /* 普通 H5 输入框仅在会被键盘遮挡时平移；客服面板单独使用 keyboard inset。 */

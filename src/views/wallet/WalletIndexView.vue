@@ -64,10 +64,21 @@ const directedClubId = computed(() => {
 const walletClub = computed(() => {
   if (directedClubId.value) {
     return (
-      userInfoStore.clubList.find((club) => Number(club.club_id) === directedClubId.value) ?? null
+      userInfoStore.clubList.find((club) => Number(club.club_id) === directedClubId.value) ??
+      (Number(userInfoStore.channelDefaultClub?.club_id) === directedClubId.value
+        ? userInfoStore.channelDefaultClub
+        : null)
     )
   }
-  return userInfoStore.currentClub ?? userInfoStore.clubList[0] ?? null
+  if (!gameStore.isRealUser) {
+    return userInfoStore.channelDefaultClub
+  }
+  return (
+    userInfoStore.currentClub ??
+    userInfoStore.clubList[0] ??
+    userInfoStore.channelDefaultClub ??
+    null
+  )
 })
 const walletClubId = computed(
   () => directedClubId.value ?? (Number(walletClub.value?.club_id) || undefined),
@@ -375,16 +386,20 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
 }
 
 watch(
-  [walletClubId, () => gameStore.isRealUser],
-  ([clubId, isRealUser]) => {
+  [walletClubId, () => gameStore.sessionToken, () => gameStore.isRealUser],
+  ([clubId, sessionToken, isRealUser]) => {
     walletStore.clearCsOrders()
-    if (!isRealUser) {
+    if (!sessionToken) {
       walletStore.clearPriceList()
       unfinishedOrder.value = null
       return
     }
     void walletStore.loadPriceList(clubId)
-    void refreshPendingCsOrder()
+    if (isRealUser) {
+      void refreshPendingCsOrder()
+    } else {
+      unfinishedOrder.value = null
+    }
   },
   { immediate: true },
 )

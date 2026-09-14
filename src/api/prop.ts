@@ -1,4 +1,4 @@
-import http from '@/api/http'
+import http, { type HttpRequestOptionsExt } from '@/api/http'
 import type { ApiResponse } from '@/api/models/common'
 import type {
   BagCurrentPendantListRequest,
@@ -125,7 +125,11 @@ export async function postPropGoldPriceListApi(
 ): Promise<ApiResponse<PropGoldPriceListData>> {
   const endpoint = '/prop/gold/price/list'
   const headers = clubId != null ? { 'X-Club': String(clubId) } : undefined
-  const response = await http.post<ApiResponse<PropGoldPriceListData>>(endpoint, payload, { headers })
+  // 钱包与商城都允许体验账号预览价格/支付渠道；下单操作仍由各自入口拦截真实身份。
+  const response = await http.post<ApiResponse<PropGoldPriceListData>>(endpoint, payload, {
+    headers,
+    allowGuestAccount: true,
+  } satisfies HttpRequestOptionsExt)
   return response.data
 }
 

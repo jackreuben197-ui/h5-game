@@ -45,11 +45,13 @@ export async function ensureMultiLanguageTemplateLoaded(): Promise<void> {
   }
 
   loadingTask = fetchAndCacheTemplates()
+    .then(() => {
+      hasLoaded = true
+    })
     .catch((error) => {
       log.warn('multiLanguageTemplate load failed:', error)
     })
     .finally(() => {
-      hasLoaded = true
       loadingTask = null
     })
 
@@ -83,7 +85,10 @@ export function resolveTemplateTextByKey(rawName: string, locale: LocaleCode = g
 
 async function fetchAndCacheTemplates(): Promise<void> {
   const response = await getMultiLanguageTemplateApi()
-  const records = Number(response.code) === 0 && Array.isArray(response.data) ? response.data : []
+  if (Number(response.code) !== 0 || !Array.isArray(response.data)) {
+    throw new Error(`multiLanguageTemplate invalid response: ${String(response.code)}`)
+  }
+  const records = response.data
   applyRecords(records)
   await persistToCache(records)
 }

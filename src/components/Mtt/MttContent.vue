@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { usePlatformDiamondVisibility } from '@/composables/usePlatformDiamondVisibility'
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import type { MttItem, MttActionType } from '@/components/ListItem/MttCard.vue'
 import type { MttIdInfoRecord, MttListRecord, MttSeriesInfoRecord } from '@/api/models/roomcenter'
@@ -60,6 +60,7 @@ interface MttRenderGroup extends MttGroup {
 
 interface Props {
   activeTab?: MttTabName
+  scrollKey?: string
 }
 
 interface MttGroupExpandedCachePayload {
@@ -71,6 +72,7 @@ const MTT_GROUP_EXPANDED_CACHE_VERSION = 1
 
 const props = withDefaults(defineProps<Props>(), {
   activeTab: 'all',
+  scrollKey: 'mtt-zone',
 })
 
 const router = useRouter()
@@ -80,6 +82,8 @@ const userInfoStore = useUserInfoStore()
 const displayPlatformDiamond = usePlatformDiamondVisibility()
 
 const expandedGroupMap = ref<Record<string, boolean>>(restoreExpandedGroupMap())
+const scrollContainerRef = ref<HTMLElement | null>(null)
+const scrollRestored = ref(false)
 const selectedClub = computed(() => userInfoStore.currentClub ?? userInfoStore.channelDefaultClub)
 const selectedClubId = computed(() => toSafeInt(selectedClub.value?.club_id))
 const selectedTribeId = computed(() =>
@@ -93,14 +97,51 @@ onMounted(() => {
   ticker = window.setInterval(() => {
     nowMs.value = Date.now()
   }, 1000)
+  void restoreScrollPosition()
 })
 
+onActivated(() => {
+  scrollRestored.value = false
+  void restoreScrollPosition()
+})
+
+onDeactivated(saveScrollPosition)
+
 onBeforeUnmount(() => {
+  saveScrollPosition()
   if (ticker !== null) {
     window.clearInterval(ticker)
     ticker = null
   }
 })
+
+watch(
+  () => mttListStore.records,
+  () => {
+    if (!scrollRestored.value) void restoreScrollPosition()
+  },
+  { flush: 'post' },
+)
+
+function saveScrollPosition(): void {
+  if (scrollContainerRef.value) {
+    mttListStore.saveScrollPosition(props.scrollKey, scrollContainerRef.value.scrollTop)
+  }
+}
+
+async function restoreScrollPosition(): Promise<void> {
+  await nextTick()
+  const container = scrollContainerRef.value
+  if (!container) return
+  const scrollTop = mttListStore.getScrollPosition(props.scrollKey)
+  requestAnimationFrame(() => {
+    container.scrollTop = scrollTop
+    scrollRestored.value =
+      scrollTop === 0 ||
+      container.scrollTop === scrollTop ||
+      container.scrollHeight - container.clientHeight >= scrollTop
+  })
+}
 
 const sourceRecords = computed<RawMttRecord[]>(() => mttListStore.records as RawMttRecord[])
 
@@ -156,10 +197,12 @@ const renderGroups = computed<MttRenderGroup[]>(() =>
 )
 
 function handleCardAction(item: MttItem): void {
+  saveScrollPosition()
   router.push({ name: 'mtt-detail', query: { id: String(item.id) } })
 }
 
 function handleCardClick(item: MttItem): void {
+  saveScrollPosition()
   router.push({ name: 'mtt-detail', query: { id: String(item.id) } })
 }
 
@@ -169,6 +212,11 @@ function handleViewAll(group: MttRenderGroup): void {
 }
 
 function restoreExpandedGroupMap(): Record<string, boolean> {
+  const storedMap = mttListStore.getExpandedGroupMap(props.scrollKey)
+  if (Object.keys(storedMap).length) {
+    return storedMap
+  }
+
   const cached = localStore.getItem<MttGroupExpandedCachePayload | null>(
     StorageKey.MTT_GROUP_EXPANDED_CACHE,
     null,
@@ -189,6 +237,7 @@ function restoreExpandedGroupMap(): Record<string, boolean> {
 }
 
 function persistExpandedGroupMap(): void {
+  mttListStore.saveExpandedGroupMap(props.scrollKey, expandedGroupMap.value)
   const payload: MttGroupExpandedCachePayload = {
     version: MTT_GROUP_EXPANDED_CACHE_VERSION,
     expandedMap: { ...expandedGroupMap.value },
@@ -507,7 +556,7 @@ function getDefaultGameIcon(category: MttCategory): string {
 </script>
 
 <template>
-  <section class="mtt-content">
+  <section ref="scrollContainerRef" class="mtt-content">
     <template v-if="renderGroups.length">
       <div v-for="group in renderGroups" :key="group.groupId" class="mtt-group">
         <div v-if="group.title || group.showViewAll" class="mtt-group__header">

@@ -123,7 +123,11 @@ function handleOpenCustomerService() {
       </HeaderBack>
       <ClubZoneQuickActions v-if="isChannelPackage" />
       <FilterTabbar v-if="showMttTabs" v-model="activeTab" :tabs="mttTabs" />
-      <MttContent :active-tab="activeTab" :class="{ 'mtt-content--no-tabs': !showMttTabs }" />
+      <MttContent
+        :active-tab="activeTab"
+        scroll-key="mtt-zone"
+        :class="{ 'mtt-content--no-tabs': !showMttTabs }"
+      />
     </div>
   </div>
   <MainBottomTab v-if="isChannelMenuVersionB" />

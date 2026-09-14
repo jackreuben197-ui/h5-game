@@ -16,6 +16,7 @@ import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { t } from '@/i18n'
 import { showToast } from 'vant'
+import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
 
 /* ===== props / emits ===== */
 export type MttJoinMode = 'apply' | 'rebuy' | 'addon'
@@ -42,6 +43,7 @@ const emit = defineEmits<{
 
 /* ===== 工具 ===== */
 const isDiamond = computed(() => (props.mtt?.gold_type ?? 1) === 4)
+const hideDiamondCharge = computed(() => isChannelDiamondFreeMode() && isDiamond.value)
 function isDiamondMtt() { return isDiamond.value }
 const currencyIcon = computed(() => (isDiamond.value ? iconDiamond : iconChips))
 
@@ -86,6 +88,10 @@ async function fetchWalletAndConfig() {
 
     // 钻石 MTT 不走俱乐部钱包，拉用户钻石余额（对齐 Unity ShowDiamond）
     if (isDiamond.value) {
+      if (hideDiamondCharge.value) {
+        await extra
+        return
+      }
       const [diamondRes] = await Promise.all([postUserDiamondsWalletApi(), extra])
       if (diamondRes.code === 0 && diamondRes.data) {
         diamondBalance.value = diamondRes.data.diamonds_wallet?.diamonds ?? 0
@@ -281,7 +287,7 @@ const canConfirm = computed(() => {
   const goldType = props.mtt?.gold_type ?? 1
   if (goldType === 3) return true // 记分牌：始终可点
   if (goldType === 1) return true // UC：允许超额（走充值流程）
-  if (goldType === 4) return feeBreakdown.value.total <= diamondBalance.value // 钻石：比对用户钻石余额
+  if (goldType === 4) return hideDiamondCharge.value || feeBreakdown.value.total <= diamondBalance.value
   if (!selectedWallet.value) return false
   return feeBreakdown.value.total <= selectedWallet.value.gold
 })
@@ -480,7 +486,7 @@ function handleRecharge() {
       </div>
 
       <!-- 余额 + 费用 -->
-      <div class="cost-section">
+      <div v-if="!hideDiamondCharge" class="cost-section">
         <div class="cost-balance-row">
           <img
             class="cost-refresh"

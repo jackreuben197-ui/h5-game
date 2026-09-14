@@ -22,6 +22,7 @@ import { showFailToast } from 'vant'
 import { showGameToast } from '@/components/Toast'
 import { buildRoomConfigPayload, parseRoomConfigToFormState } from './mttSections/payload'
 import { postOrgRoomClubCreateApi, postOrgCreateTemplateApi } from '@/api/cmsext'
+import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
 
 const formState = reactive<MttFormState>({ ...defaultMttFormState })
 const route = useRoute()
@@ -29,6 +30,7 @@ const router = useRouter()
 const appConfigStore = useAppConfigStore()
 const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
+const hideDiamondElements = isChannelDiamondFreeMode()
 
 // 俱乐部钻石余额
 const clubDiamondBalance = computed(() => {
@@ -534,7 +536,7 @@ async function onCreateTable() {
 
       <!-- Bottom action bar -->
       <div class="bottom-action-bar">
-        <div class="fee-info">
+        <div v-if="!hideDiamondElements" class="fee-info">
           <div class="fee-row">
             <span class="fee-label">{{ t('UIClub_FundRecharge_9jO4mlS6') }}:</span>
             <div v-if="createFee.isDiscount" class="fee-value-wrap">

@@ -10,6 +10,7 @@ import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { t } from '@/i18n'
+import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
 // 背景素材由 CSS 根据 data-theme 选择，切换主题时无需重建页面。
 const backgroundStyle = computed(() => ({
   '--club-edit-name-bg-dark': `url(${mainBgUrl})`,
@@ -19,6 +20,7 @@ const backgroundStyle = computed(() => ({
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
 const appConfigStore = useAppConfigStore()
+const hideDiamondElements = isChannelDiamondFreeMode()
 
 const nameInput = ref(String(userInfoStore.currentClub?.club_name || '').trim())
 const isSubmitting = ref(false)
@@ -81,7 +83,7 @@ const diamondBalance = computed(() => {
 })
 
 const hasEnoughDiamond = computed(() => {
-  return diamondBalance.value >= renameCost.value
+  return hideDiamondElements || diamondBalance.value >= renameCost.value
 })
 
 const remainingIntervalHours = computed(() => {
@@ -115,12 +117,12 @@ const canUpdateByInterval = computed(() => {
 const renameHintText = computed(() => {
   const price = renameRule.value.price
   const firstFreeText = renameRule.value.first_free === 1 ? t('UIClub_Text8') : t('UIClub_Text9')
-  const costText = t('UIClub_Text10') + price + t('UIMine_VIP_diamond')
+  const costText = hideDiamondElements ? '' : '，' + t('UIClub_Text10') + price + t('UIMine_VIP_diamond')
   const intervalText =
     renameRule.value.interval > 0
       ? '，' + t('UIClub_Text11') + renameRule.value.interval + t('UITimeHourTip')
       : ''
-  return `*${firstFreeText}，${costText}${intervalText}`
+  return `*${firstFreeText}${costText}${intervalText}`
 })
 
 const nameLength = computed(() => {
@@ -208,7 +210,7 @@ async function onConfirm(): Promise<void> {
           />
         </div>
 
-        <div class="wallet-row">
+        <div v-if="!hideDiamondElements" class="wallet-row">
           <div class="wallet-info">
             <img :src="imgDiamond" :alt="t('UIMine_VIP_diamond')" />
             <span class="wallet-label">{{ t('UIMineAllDiamond') }}:</span>
@@ -221,7 +223,7 @@ async function onConfirm(): Promise<void> {
       </section>
 
       <section class="footer-actions">
-        <p class="cost-line" :aria-label="t('UIClub_Name')">
+        <p v-if="!hideDiamondElements" class="cost-line" :aria-label="t('UIClub_Name')">
           <span>{{ t('UICommunityFundConsumeTip') }}</span>
           <img :src="imgDiamond" :alt="t('UIMine_VIP_diamond')" />
           <span class="cost-value">{{ renameCost }}</span>

@@ -30,6 +30,7 @@ import {
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { t } from '@/i18n'
+import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
 
 const backgroundStyle = computed(() => ({
   '--member-detail-bg-dark': `url(${mainBgUrl})`,
@@ -39,6 +40,7 @@ const backgroundStyle = computed(() => ({
 const route = useRoute()
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
+const hideDiamondElements = isChannelDiamondFreeMode()
 
 const context = computed(() => getMemberRouteContext(route))
 
@@ -745,7 +747,7 @@ onMounted(async () => {
             <span>{{ formatAmount(assetCredit) }}</span>
             <img :src="imgBalance" alt="" />
           </p>
-          <p>
+          <p v-if="!hideDiamondElements">
             <span>{{ formatCount(assetDiamond) }}</span>
             <img :src="imgDiamond" alt="" />
           </p>
@@ -866,7 +868,7 @@ onMounted(async () => {
             <span class="arrow"></span>
           </span>
         </button>
-        <button class="link-item" @click="onActionClick('vip')">
+        <button v-if="!hideDiamondElements" class="link-item" @click="onActionClick('vip')">
           <span class="link-item-main">
             <svg class="agent-link-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <rect

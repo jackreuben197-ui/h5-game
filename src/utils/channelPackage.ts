@@ -55,6 +55,18 @@ export function isChannelPackageHost(hostname: string = window.location.hostname
 }
 
 /**
+ * 渠道包钻石体系迁移到 UC 前的过渡开关。
+ *
+ * 开启后仅渠道包隐藏钻石钱包、账单和前端收费提示；官方包保持原有展示。
+ * 后续 UC 体系上线时只需关闭此开关，再由各业务入口切换到 UC 展示。
+ */
+export const CHANNEL_PACKAGE_DIAMOND_FREE_MODE = true
+
+export function isChannelDiamondFreeMode(hostname: string = window.location.hostname): boolean {
+  return CHANNEL_PACKAGE_DIAMOND_FREE_MODE && isChannelPackageHost(hostname)
+}
+
+/**
  * 将 localStorage 中的数据拷贝到主域名。
  * 通过主域名的 URL 参数传递数据，主域名页面读取后写入自己的 storage。
  */

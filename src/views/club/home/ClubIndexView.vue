@@ -151,12 +151,23 @@ const router = useRouter()
 const isChannelPackage = isChannelPackageHost()
 
 // 顶部右侧切换风格开关：和旧版保持一致。
-const activeTab = ref<GameTypeTabName>('all')
-const clubHeaderTab = ref<ClubHeaderTabName>('poker')
+const savedPokerTab = roomListStore.getActiveListTab('club-home-poker-filter')
+const activeTab = ref<GameTypeTabName>(
+  ['all', 'texas', 'omaha', 'sixPlus'].includes(savedPokerTab)
+    ? (savedPokerTab as GameTypeTabName)
+    : 'all',
+)
+const clubHeaderTab = ref<ClubHeaderTabName>(
+  mttListStore.getActiveListTab('club-home-section') === 'event' ? 'event' : 'poker',
+)
 const mttActiveTab = ref<MttTabName>('all')
 const sourceRecords = computed<RoomRecord[]>(() => roomListStore.records)
 const expandedMap = reactive<Record<string, boolean>>({})
-const expandedGroupMap = ref<Record<string, boolean>>({})
+const expandedGroupMap = ref<Record<string, boolean>>(
+  mttListStore.getExpandedGroupMap('club-home-mtt'),
+)
+const listScrollRef = ref<HTMLElement | null>(null)
+const listScrollRestored = ref(false)
 const announceExpanded = ref(false)
 const showSafetyGuardPopup = ref(false)
 const showClubNoticePopup = ref(false)
@@ -375,7 +386,7 @@ onMounted(() => {
     userInfoStore.setCurrentClub(userInfoStore.clubList[0] || null)
   }
 
-  void initializeClubIndex()
+  void initializeClubIndex().finally(() => restoreListScrollPosition())
 })
 
 async function initializeClubIndex(): Promise<void> {
@@ -412,11 +423,46 @@ async function initializeClubIndex(): Promise<void> {
 }
 
 onUnmounted(() => {
+  saveListScrollPosition()
   if (mttTicker !== null) {
     window.clearInterval(mttTicker)
     mttTicker = null
   }
 })
+
+function getListScrollKey(tab: ClubHeaderTabName = clubHeaderTab.value): string {
+  const listType = tab === 'event' ? 'mtt' : 'poker'
+  return `club-${selectedClubId.value || 'default'}-${listType}`
+}
+
+function saveListScrollPosition(tab: ClubHeaderTabName = clubHeaderTab.value): void {
+  const container = listScrollRef.value
+  if (!container) return
+  const key = getListScrollKey(tab)
+  if (tab === 'event') {
+    mttListStore.saveScrollPosition(key, container.scrollTop)
+  } else {
+    roomListStore.saveScrollPosition(key, container.scrollTop)
+  }
+}
+
+async function restoreListScrollPosition(): Promise<void> {
+  await nextTick()
+  const container = listScrollRef.value
+  if (!container) return
+  const key = getListScrollKey()
+  const scrollTop =
+    clubHeaderTab.value === 'event'
+      ? mttListStore.getScrollPosition(key)
+      : roomListStore.getScrollPosition(key)
+  requestAnimationFrame(() => {
+    container.scrollTop = scrollTop
+    listScrollRestored.value =
+      scrollTop === 0 ||
+      container.scrollTop === scrollTop ||
+      container.scrollHeight - container.clientHeight >= scrollTop
+  })
+}
 
 watch(
   () => selectedClubId.value,
@@ -439,6 +485,18 @@ watch(
     deep: false,
   },
 )
+
+watch(
+  [() => groupedRecords.value.length, () => renderGroups.value.length],
+  () => {
+    if (!listScrollRestored.value) void restoreListScrollPosition()
+  },
+  { flush: 'post' },
+)
+
+watch(activeTab, (tab) => {
+  roomListStore.saveActiveListTab('club-home-poker-filter', tab)
+})
 
 watch(
   () => showClubNoticePopup.value,
@@ -529,6 +587,7 @@ function buildGroupKey(room: RoomRecord): string {
 }
 
 async function handleTableClick(room: RoomRecord): Promise<void> {
+  saveListScrollPosition()
   try {
     if (!(await ensureExperienceSessionReady())) {
       throw new Error(t('UIClub_Fetch') + ' token ' + t('UIClub_Fail3'))
@@ -579,6 +638,7 @@ function handleClubHeaderTabClick(tab: ClubHeaderTabName): void {
     showFailToast(t('UIClub_Text17'))
     return
   }
+  saveListScrollPosition()
   if (
     (tab === 'event' && gameStore.sessionToken && currentJoinedClub.value && !isChannelPackage) ||
     isChannelPackage
@@ -586,6 +646,9 @@ function handleClubHeaderTabClick(tab: ClubHeaderTabName): void {
     mttListStore.bootstrapMttList()
   }
   clubHeaderTab.value = tab
+  mttListStore.saveActiveListTab('club-home-section', tab)
+  listScrollRestored.value = false
+  void restoreListScrollPosition()
 }
 
 function handleQuickActionClick(action: 'safety' | 'ranking'): void {
@@ -797,6 +860,7 @@ function handleMttCardAction(item: MttItem): void {
     requireRealUser(() => handleMttCardAction(item))
     return
   }
+  saveListScrollPosition()
   router.push({ name: 'mtt-detail', query: { id: String(item.id) } })
 }
 
@@ -805,11 +869,13 @@ function handleMttCardClick(item: MttItem): void {
     requireRealUser(() => handleMttCardClick(item))
     return
   }
+  saveListScrollPosition()
   router.push({ name: 'mtt-detail', query: { id: String(item.id) } })
 }
 
 function handleViewAll(group: MttRenderGroup): void {
   expandedGroupMap.value[group.groupId] = !(expandedGroupMap.value[group.groupId] === true)
+  mttListStore.saveExpandedGroupMap('club-home-mtt', expandedGroupMap.value)
 }
 
 function buildGroupsBySeries(
@@ -1259,7 +1325,7 @@ const handleBack = () => {
           :tabs="mttTabs"
         />
 
-        <section class="group-list">
+        <section ref="listScrollRef" class="group-list">
           <template v-if="renderGroups.length">
             <div v-for="group in renderGroups" :key="group.groupId" class="mtt-group">
               <div v-if="group.title || group.showViewAll" class="mtt-group__header">
@@ -1328,7 +1394,7 @@ const handleBack = () => {
           ]"
         />
 
-        <section class="group-list">
+        <section ref="listScrollRef" class="group-list">
           <PokerTableGroupCard
             v-for="group in groupedRecords"
             :key="group.groupKey"

@@ -12,6 +12,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
 import { resolveDiamondPriceValue } from '@/utils/diamondPriceConfig'
 import { t } from '@/i18n'
+import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
 
 const router = useRouter()
 
@@ -25,6 +26,7 @@ const backgroundStyle = computed(() => ({
 const gameStore = useGameStore()
 const userInfoStore = useUserInfoStore()
 const appConfigStore = useAppConfigStore()
+const hideDiamondElements = isChannelDiamondFreeMode()
 
 const inputName = ref('')
 const submitting = ref(false)
@@ -215,14 +217,14 @@ async function onSave(): Promise<void> {
         </div>
         <p class="input-hint">{{ t('UIMine_SetNick_InputTips') }}</p>
 
-        <div class="cost-row">
+        <div v-if="!hideDiamondElements" class="cost-row">
           <span class="label">{{ t('UIClub_FundRecharge_9jO4mlS6') }}</span>
           <img class="diamond" :src="iconDiamond" alt="diamond" />
           <span class="origin">{{ nicknameCost.original }}</span>
           <span class="current">{{ nicknameCost.current }}</span>
         </div>
 
-        <div class="cost-row balance-row">
+        <div v-if="!hideDiamondElements" class="cost-row balance-row">
           <span class="label">{{ t('UIMineAllDiamond') }}</span>
           <img class="diamond" :src="iconDiamond" alt="diamond" />
           <span class="balance">{{ displayUser.diamond }}</span>

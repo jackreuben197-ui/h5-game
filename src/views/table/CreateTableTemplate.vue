@@ -30,6 +30,7 @@ import {
 } from '@/api/cmsext'
 import { GameDialog } from '@/components/Dialog'
 import { requireRealUser } from '@/session/realUserGate'
+import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
 
 const formState = reactive<NlhFormState>({ ...defaultNlhFormState })
 const route = useRoute()
@@ -37,6 +38,7 @@ const router = useRouter()
 const appConfigStore = useAppConfigStore()
 const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
+const hideDiamondElements = isChannelDiamondFreeMode()
 
 // 俱乐部钻石余额
 const clubDiamondBalance = computed(() => {
@@ -630,7 +632,7 @@ function handleBack() {
 
         <!-- Bottom action bar -->
         <div class="bottom-action-bar">
-          <div class="fee-info">
+          <div v-if="!hideDiamondElements" class="fee-info">
             <div class="fee-row">
               <span class="fee-label">{{ t('UIClub_FundRecharge_9jO4mlS6') }}:</span>
               <div v-if="createFee.isDiscount" class="fee-value-wrap">

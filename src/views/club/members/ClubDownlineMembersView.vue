@@ -25,6 +25,7 @@ import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { t } from '@/i18n'
 import FundKeypad from '@/components/KeyBoard/FundKeypad.vue'
 import { useTheme } from '@/composables/useTheme'
+import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   '--downline-bg-dark': `url(${mainBgUrl})`,
@@ -48,6 +49,7 @@ interface DownlineMemberItem {
 
 const userInfoStore = useUserInfoStore()
 const { isDark } = useTheme()
+const hideDiamondElements = isChannelDiamondFreeMode()
 
 const loading = ref(false)
 const keyword = ref('')
@@ -83,7 +85,9 @@ const availableFundAssetTabs = computed<FundAssetTab[]>(() => {
     tabs.push('coin')
   }
   tabs.push('quota')
-  tabs.push('diamond')
+  if (!hideDiamondElements) {
+    tabs.push('diamond')
+  }
   return tabs
 })
 const agentCoinBalance = computed(() => toSafeNumber(userInfoStore.currentClub?.user_gold))
@@ -540,7 +544,7 @@ onMounted(async () => {
                 {{ formatUC(member.disposableCredit) }}/{{ formatUC(member.reviewCredit) }}
               </strong>
             </p>
-            <p class="asset-item">
+            <p v-if="!hideDiamondElements" class="asset-item">
               <img :src="imgDiamond" alt="diamond" />
               <span class="asset-label">{{ t('UIMine_VIP_diamond') }}</span>
               <strong class="asset-value">{{ member.diamond }}</strong>
@@ -573,6 +577,7 @@ onMounted(async () => {
             {{ t('UIClubTalbe_CreditAmount') }}
           </button>
           <button
+            v-if="!hideDiamondElements"
             type="button"
             class="fund-tab"
             :class="{ 'fund-tab--active': fundAssetTab === 'diamond' }"

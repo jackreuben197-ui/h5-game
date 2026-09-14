@@ -13,6 +13,7 @@ import type { OrgClubCreateRequest } from '@/api/models/org'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { resolveDiamondPriceValue } from '@/utils/diamondPriceConfig'
 import { t } from '@/i18n'
+import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
 // 主容器背景图：全页面共用一张底图。
 
 const backgroundStyle = computed(() => ({
@@ -22,6 +23,7 @@ const backgroundStyle = computed(() => ({
 
 const router = useRouter()
 const appConfig = useAppConfigStore()
+const hideDiamondElements = isChannelDiamondFreeMode()
 
 const clubName = ref('')
 const clubIntro = ref('')
@@ -146,7 +148,7 @@ async function onCreateClub(): Promise<void> {
           {{ isSubmitting ? t('UIClub_Text99') + "..." : t('UIGuild_CreateDes') }}
         </button>
 
-        <p class="cost-line" :aria-label="t('UIClub_Text100')">
+        <p v-if="!hideDiamondElements" class="cost-line" :aria-label="t('UIClub_Text100')">
           <span>{{ t('UIClub_Text101') }}</span>
           <img :src="imgDiamond" :alt="t('UIMine_VIP_diamond')" />
           <span class="cost-original">{{ createCostOriginal }}</span>

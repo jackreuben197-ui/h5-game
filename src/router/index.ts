@@ -9,7 +9,7 @@ import { useWalletStore } from '@/stores/wallet'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { pinia } from '@/stores/pinia'
 import { createLogger } from '@/utils/logger'
-import { isChannelPackageHost } from '@/utils/channelPackage'
+import { isChannelDiamondFreeMode, isChannelPackageHost } from '@/utils/channelPackage'
 import { preloadMainLayoutStyles, syncMainLayout } from '@/utils/mainLayout'
 import { syncPostAuthData } from '@/session/postAuthSync'
 import { clubRoutes } from './routes/club'
@@ -165,6 +165,10 @@ router.beforeEach((to, from) => {
 
   if (isChannelPackage && to.name === 'club') {
     return { name: 'club-index' }
+  }
+
+  if (isChannelDiamondFreeMode() && to.name === 'mine-shop') {
+    return { name: 'mine' }
   }
 
   if (to.meta.requiresAuth && !isRealUser && !to.meta.guestPreview) {

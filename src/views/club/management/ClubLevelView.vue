@@ -17,6 +17,7 @@ import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatDateTime } from '@/utils/time'
 import { t } from '@/i18n'
+import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
 
 const backgroundStyle = computed(() => ({
   '--club-level-bg-dark': `url(${mainBgUrl})`,
@@ -24,6 +25,7 @@ const backgroundStyle = computed(() => ({
 }))
 
 const userInfoStore = useUserInfoStore()
+const hideDiamondElements = isChannelDiamondFreeMode()
 const showUpgradeConfirm = ref(false)
 const loading = ref(false)
 const upgrading = ref(false)
@@ -60,16 +62,22 @@ const expiryText = computed(() =>
   currentLimitType.value === 1 ? t('UILevelForever') : levelExpireTime.value || '--',
 )
 const confirmText = computed(
-  () =>
-    t('UIClub_Confirm2') +
-    upgradeCost.value +
-    t('UIClub_Text96') +
-    ' Level ' +
-    targetLevel.value +
-    '（' +
-    durationText.value +
-    '）' +
-    t('UIClub_Text97'),
+  () => {
+    if (hideDiamondElements) {
+      return `${t('UIClub_Confirm2')} Level ${targetLevel.value}（${durationText.value}）${t('UIClub_Text97')}`
+    }
+    return (
+      t('UIClub_Confirm2') +
+      upgradeCost.value +
+      t('UIClub_Text96') +
+      ' Level ' +
+      targetLevel.value +
+      '（' +
+      durationText.value +
+      '）' +
+      t('UIClub_Text97')
+    )
+  },
 )
 
 function dotStyle(index: number): Record<string, string> {
@@ -117,7 +125,9 @@ async function confirmUpgrade(): Promise<void> {
       throw new Error(typeof fallback === 'string' ? fallback : t('UIClub_Fail6'))
     }
 
-    userInfoStore.syncUserDiamond(diamondBalance.value - chargedDiamond)
+    if (!hideDiamondElements) {
+      userInfoStore.syncUserDiamond(diamondBalance.value - chargedDiamond)
+    }
     userInfoStore.syncCurrentClubFields({ level: upgradedLevel })
     showUpgradeConfirm.value = false
     showSuccessToast(t('error0'))
@@ -188,7 +198,7 @@ onMounted(() => {
     <div class="club-level-content">
       <HeaderBack :title="t('UIGuid_Level')">
         <template #right>
-          <div class="club-level-diamond">
+          <div v-if="!hideDiamondElements" class="club-level-diamond">
             <img :src="imgDiamond" :alt="t('UIMine_VIP_diamond')" />
             <span>{{ diamondBalance }}</span>
           </div>
@@ -220,7 +230,7 @@ onMounted(() => {
             ></span>
           </div>
 
-          <div class="club-upgrade-cost">
+          <div v-if="!hideDiamondElements" class="club-upgrade-cost">
             <p>{{ t('UIClub_Text107') }}{{ targetLevel }}{{ t('UIClub_Club5') }}</p>
             <div class="club-upgrade-cost__value">
               <span class="club-upgrade-cost__badge">

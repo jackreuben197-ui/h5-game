@@ -94,7 +94,7 @@ onMounted(() => {
         <div class="about-logo">
           <img class="about-logo__fish" :src="imgFishLogo" alt="" />
           <div class="about-logo__text">
-            <p class="about-logo__title">U POKER</p>
+            <p class="about-logo__title">NEX-GAME</p>
             <p class="about-logo__subtitle">xypk.com</p>
           </div>
         </div>

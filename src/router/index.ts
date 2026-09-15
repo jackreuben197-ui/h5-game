@@ -6,6 +6,7 @@ import {
 } from 'vue-router'
 import { useGameStore } from '@/stores/game'
 import { useWalletStore } from '@/stores/wallet'
+import { useUserInfoStore } from '@/stores/userInfo'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { pinia } from '@/stores/pinia'
 import { createLogger } from '@/utils/logger'
@@ -113,6 +114,17 @@ const router = createRouter({
       },
     },
     {
+      path: '/match',
+      name: 'match-index',
+      component: () => import('@/views/mtt/MatchIndexView.vue'),
+      meta: {
+        requiresAuth: true,
+        guestPreview: true,
+        tabKey: 'mtt',
+        desktopLayout: 'content',
+      },
+    },
+    {
       path: '/mttList',
       name: 'mtt-list',
       component: () => import('@/views/mtt/mttList.vue'),
@@ -150,7 +162,7 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to, from) => {
+router.beforeEach(async (to, from) => {
   const gameStore = useGameStore(pinia)
   const token = gameStore.sessionToken
   const isRealUser = gameStore.isRealUser
@@ -162,6 +174,16 @@ router.beforeEach((to, from) => {
     hasToken: Boolean(token),
     isGuestAccount: gameStore.isGuestAccount,
   })
+
+  // h5_menu=1 的渠道包不再使用旧主页：/home 统一进入独立赛事页，
+  // 牌桌 Tab 使用 /gameList，因此不会和这个重定向冲突。
+  if (isChannelPackage && to.name === 'lobby') {
+    const userInfoStore = useUserInfoStore(pinia)
+    const channelClub = await userInfoStore.ensureChannelDefaultClub()
+    if (Number(channelClub?.h5_menu) === 1) {
+      return { name: 'match-index' }
+    }
+  }
 
   if (isChannelPackage && to.name === 'club') {
     return { name: 'club-index' }

@@ -11,8 +11,6 @@ import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServic
 import { showFailToast } from 'vant'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import ClubZoneQuickActions from '@/components/Club/ClubZoneQuickActions.vue'
-import MainBottomTab from '@/components/Tabbar/MainBottomTab.vue'
-import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 import { requireRealUser } from '@/session/realUserGate'
 import { ensureExperienceSession } from '@/session/experienceSession'
 
@@ -23,7 +21,6 @@ const mttListStore = useMttListStore()
 const userInfoStore = useUserInfoStore()
 const router = useRouter()
 const isChannelPackage = isChannelPackageHost()
-const { isVersionB: isChannelMenuVersionB } = useChannelBottomMenu()
 
 const selectedClub = computed(() => userInfoStore.currentClub ?? userInfoStore.channelDefaultClub)
 const selectedClubId = computed(() => toSafeInt(selectedClub.value?.club_id))
@@ -90,17 +87,13 @@ function handleOpenCustomerService() {
 </script>
 
 <template>
-  <div
-    class="mtt-list-page room-list-page themeType2"
-    :class="{ 'mtt-list-page--channel-menu-b': isChannelMenuVersionB }"
-    @back="handleBack"
-  >
+  <div class="mtt-list-page room-list-page themeType2" @back="handleBack">
     <div class="bg-overlay"></div>
 
     <div class="room-list-stage mtt-list-stage">
       <HeaderBack
-        :title="isChannelMenuVersionB ? t('UIClub_Text14') : t('UIHomeMttArea')"
-        :show-back="!isChannelMenuVersionB"
+        :title="t('UIHomeMttArea')"
+        show-back
         extra-padding
       >
         <template #right>
@@ -129,7 +122,6 @@ function handleOpenCustomerService() {
         :class="{ 'mtt-content--no-tabs': !showMttTabs }"
       />
     </div>
-    <MainBottomTab v-if="isChannelMenuVersionB" />
   </div>
 </template>
 
@@ -189,10 +181,6 @@ function handleOpenCustomerService() {
   flex: 1 1 auto;
   min-height: 0;
   max-height: none;
-}
-
-.mtt-list-page--channel-menu-b :deep(.mtt-content) {
-  padding-bottom: calc(env(safe-area-inset-bottom) + 2.5rem);
 }
 
 .mtt-list-page :deep(.filter-tabbar) {

@@ -25,6 +25,7 @@ import { useLoginModalStore } from '@/stores/loginModal'
 import { syncPostAuthData } from '@/session/postAuthSync'
 import LoginSession from '@/session/loginSession'
 import {
+  bootstrapCurrentSessionLists,
   ensureExperienceSession,
   logoutCurrentSession,
   suspendExperienceSessionInitialization,
@@ -485,6 +486,13 @@ async function runLoginTransaction(target: string, replacingExperienceAccount: b
     gameStore.isGuestAccount ||
     !gameStore.loginUserId.trim()
   ) {
+    throw new Error(t('UIClub_Text71'))
+  }
+
+  // 登录成功边界必须包含当前 user scope 的牌桌与赛事初始化。否则弹窗关闭时
+  // 页面仍可能显示 token 临时 scope 的空列表，要等切换页面才会被重新拉起。
+  await bootstrapCurrentSessionLists()
+  if (gameStore.sessionToken.trim() !== token || gameStore.isGuestAccount) {
     throw new Error(t('UIClub_Text71'))
   }
 

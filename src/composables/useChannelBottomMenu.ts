@@ -38,15 +38,17 @@ export function useChannelBottomMenu() {
   })
   const selectedClubId = computed(() => toSafeInt(channelClub.value?.club_id))
   const selectedTribeId = computed(() => toSafeInt(channelClub.value?.tribe_id))
+  // h5_menu 是渠道包配置，只认 /org/club/default 返回的渠道俱乐部；
+  // 登录后的当前俱乐部仅用于牌桌和比赛的可见性过滤，不能决定渠道菜单版本。
+  const h5Menu = computed(() => userInfoStore.channelDefaultClub?.h5_menu)
 
   // 俱乐部数据尚未到达时先保持默认版本 A，避免首屏导航闪变。
   const isVersionB = computed(
     () =>
       isChannelPackage &&
-      channelClub.value !== null &&
-      channelClub.value !== undefined &&
-      // Number(channelClub.value.h5_menu) !== 2,
-      Number(channelClub.value.h5_menu) == 1,
+      h5Menu.value !== null &&
+      h5Menu.value !== undefined &&
+      Number(h5Menu.value) === 1,
   )
 
   const hasPoker = computed(() =>

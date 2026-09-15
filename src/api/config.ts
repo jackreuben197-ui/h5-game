@@ -112,6 +112,7 @@ export async function postOnlineWithdrawTypeListApi(
   const response = await http.post<ApiResponse<OnlineWithdrawTypeListData>>(
     '/config/online_withdraw_type_list',
     payload,
+    { xClub: false } satisfies HttpRequestOptionsExt,
   )
   return response.data
 }
@@ -123,6 +124,7 @@ export async function postOnlineWithdrawDescriptionApi(
   const response = await http.post<ApiResponse<OnlineWithdrawDescriptionData>>(
     '/config/online_withdraw_description',
     payload,
+    { xClub: false } satisfies HttpRequestOptionsExt,
   )
   return response.data
 }

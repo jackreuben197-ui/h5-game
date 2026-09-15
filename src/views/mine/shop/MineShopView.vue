@@ -1383,7 +1383,11 @@ onBeforeUnmount(() => {
 
 .pay-channel.active .radio {
   border-color: rgba(249, 249, 249, 0.8);
-  background: radial-gradient(circle, rgba(var(--c-brand-rgb), 1) 46%, rgba(var(--c-brand-rgb), 0) 47%);
+  background: radial-gradient(
+    circle,
+    rgba(var(--c-brand-rgb), 1) 46%,
+    rgba(var(--c-brand-rgb), 0) 47%
+  );
 
   @include theme-light {
     border-color: var(--c-brand);

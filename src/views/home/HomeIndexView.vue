@@ -2,7 +2,6 @@
 import { usePlatformDiamondVisibility } from '@/composables/usePlatformDiamondVisibility'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from 'vue'
 import { useRouter } from 'vue-router'
-import { getUserClubApi } from '@/api/user'
 import { getCowboyRoomListApi } from '@/api/gc'
 import type { RoomRecord } from '@/api/models/roomcenter'
 import StorageKey from '@/constants/storageKey'
@@ -17,8 +16,8 @@ import { useHomeAnnouncement } from '@/composables/useHomeAnnouncement'
 import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
 import { filterVisibleMttRecords } from '@/utils/mttVisibility'
 import { showGameToast } from '@/components/Toast'
-import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
-import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
+import ChannelClubInfoPanel from '@/components/Club/ChannelClubInfoPanel.vue'
+import HomeTopBar from '@/components/HomeTopBar.vue'
 import { useGameStore } from '@/stores/game'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import PokerGameList from '@/views/home/gameList.vue'
@@ -36,8 +35,6 @@ const displayPlatformDiamond = usePlatformDiamondVisibility()
 const isChannelPackage = isChannelPackageHost()
 const { isVersionB: isChannelMenuVersionB } = useChannelBottomMenu()
 
-const loading = ref(false)
-const balanceVisible = ref(true)
 const noticeScrollRef = ref<HTMLElement | null>(null)
 const noticeItemRef = ref<HTMLElement | null>(null)
 const shouldScrollNotice = ref(false)
@@ -153,13 +150,6 @@ const noticeTrackStyle = computed<CSSProperties>(() => ({
   '--notice-distance': `${noticeDistancePx.value}px`,
   '--notice-duration': `${noticeDurationSec.value}s`,
 }))
-const clubNameText = computed(
-  () => toSafeString(currentClub.value?.club_name) || t('UILobby_Menu_menu_btn_club'),
-)
-
-const clubGoldText = computed(() =>
-  gameStore.isRealUser ? toSafeNumber(currentClub.value?.user_gold) / 100 : 0,
-)
 const pokerTablesText = computed(() => `${homeRoomStats.value.poker.tables}`)
 const pokerPlayersText = computed(() => `${homeRoomStats.value.poker.players}`)
 // const miniGamePlayersText = computed(() => `${homeRoomStats.value.miniGame.players}`)
@@ -197,24 +187,10 @@ function commitHomeContentMode(): void {
 }
 
 const currentJoinedClub = computed(() => userInfoStore.currentJoinedClub)
-const channelUserLevel = computed(() => toSafeInt(currentJoinedClub.value?.user_level))
-const canCreateChannelTable = computed(
-  () =>
-    isChannelPackage &&
-    Boolean(gameStore.isRealUser && currentJoinedClub.value) &&
-    channelUserLevel.value >= 1 &&
-    channelUserLevel.value <= 3,
-)
 const canManageChannelClub = computed(
   () => isChannelPackage && Boolean(gameStore.isRealUser && currentJoinedClub.value),
 )
-const showChannelFloatingActions = computed(
-  () => canCreateChannelTable.value || canManageChannelClub.value,
-)
-
-function toSafeString(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : ''
-}
+const showChannelFloatingActions = computed(() => canManageChannelClub.value)
 
 function toSafeNumber(value: unknown): number {
   const num = Number(value)
@@ -243,75 +219,9 @@ function goToMttList(): void {
   void router.push('/mttList')
 }
 
-function openGuestAuth(mode: 'login' | 'register'): void {
-  requireRealUser(undefined, { mode })
-}
-
 function goToClubDetail(): void {
   if (!requireRealUser(goToClubDetail)) return
   void router.push('/club/detail')
-}
-
-function goToCreateTable(): void {
-  if (!requireRealUser(goToCreateTable)) return
-  void router.push({
-    path: '/club/table/create',
-    query: { origin_type: 5, return_to: 'home' },
-  })
-}
-
-function toggleBalance(): void {
-  if (!requireRealUser(toggleBalance)) return
-  balanceVisible.value = !balanceVisible.value
-}
-
-async function refreshBalance(): Promise<void> {
-  if (!requireRealUser(refreshBalance)) return
-  try {
-    loading.value = true
-    await getUserClubApi()
-  } catch (error) {
-    const message = error instanceof Error ? error.message : t('UIHome_Fail')
-    showGameToast(message)
-  } finally {
-    loading.value = false
-  }
-}
-
-function goToRecharge(): void {
-  if (!requireRealUser(goToRecharge)) return
-  void router.push('/wallet')
-}
-function handleOpenEmail(): void {
-  const email = toSafeString(appConfigStore.globalConfig?.support_email)
-  window.open(`mailto:${email}`, '_blank')
-}
-
-function handleOpenTelegram(): void {
-  const raw = toSafeString(appConfigStore.globalConfig?.official_contact_address)
-  let telegramUrl = ''
-  try {
-    const parsed = JSON.parse(raw) as Record<string, unknown>
-    telegramUrl = toSafeString(parsed?.telegram)
-  } catch (error) {
-    console.warn('[home] parse official_contact_address failed:', error)
-  }
-  window.open(telegramUrl, '_blank')
-}
-
-function handleOpenCustomerService(): void {
-  if (!requireRealUser(handleOpenCustomerService)) return
-  const clubId = selectedClubId.value
-  if (clubId <= 0) {
-    showGameToast(t('UIClub_CurrentClubNo'))
-    return
-  }
-
-  openGlobalCustomerServiceChat({
-    imServiceType: 1,
-    clubId,
-    tribeId: selectedTribeId.value,
-  })
 }
 
 function openMiniGamePanel(): void {
@@ -636,25 +546,7 @@ onBeforeUnmount(() => {
     :class="{ 'home-page--mtt': homeContentReady && homeContentMode === 'mtt' }"
   >
     <!-- 0. 正式首页统一承载游客/真实账号；游客仅额外显示注册、登录入口。 -->
-    <div class="top-bar">
-      <span class="top-bar__logo">POKER</span>
-      <div v-if="!gameStore.isRealUser" class="top-bar__actions">
-        <button
-          class="top-bar__btn top-bar__btn--register"
-          type="button"
-          @click="openGuestAuth('register')"
-        >
-          {{ t('UILogin_TitleRegister') }}
-        </button>
-        <button
-          class="top-bar__btn top-bar__btn--login"
-          type="button"
-          @click="openGuestAuth('login')"
-        >
-          {{ t('UIGuild_MemberManagerSortByLastLoginTime') }}
-        </button>
-      </div>
-    </div>
+    <HomeTopBar />
 
     <!-- 1. 顶部俱乐部介绍轮播图 -->
     <div class="home-header">
@@ -684,78 +576,7 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- 3. 俱乐部控件 -->
-    <div class="club-panel">
-      <!-- 左侧：客服 + 余额 + 刷新 + 充值 -->
-      <div class="club-left">
-        <div class="club-service-row">
-          <span class="service-label"> {{ clubNameText }} </span>
-          <img
-            class="icon-sm icon-eye"
-            src="@/assets/icons/icon_eye_open.svg"
-            :alt="t('UIHome_Text') + '/' + t('UIHome_Text2')"
-            @click="toggleBalance"
-          />
-        </div>
-        <div class="club-balance-row">
-          <img
-            class="icon-sm"
-            src="@/assets/icons/icon_chips.png"
-            :alt="t('UIClub_CreateRoom31')"
-          />
-          <span v-if="loading" class="balance-amount">
-            <van-loading size="16" />
-          </span>
-          <span v-else class="balance-amount">
-            {{ balanceVisible ? clubGoldText : '****' }}
-          </span>
-          <svg
-            class="icon-sm icon-refresh"
-            xmlns="http://www.w3.org/2000/svg"
-            width="19"
-            height="19"
-            viewBox="0 0 19 19"
-            fill="none"
-            @click="refreshBalance"
-          >
-            <path
-              d="M9.22333 18.4467C4.12929 18.4467 0 14.3174 0 9.22333C0 4.12929 4.12929 0 9.22333 0C14.3174 0 18.4467 4.12929 18.4467 9.22333C18.4467 14.3174 14.3174 18.4467 9.22333 18.4467ZM13.669 13.9051C14.7823 12.8498 15.4836 11.4326 15.6471 9.90734C15.8106 8.38207 15.4257 6.84842 14.5613 5.58114C13.6969 4.31385 12.4095 3.39575 10.9298 2.9913C9.45006 2.58685 7.87467 2.72248 6.48585 3.37389L7.38512 4.99259C8.08695 4.68756 8.85365 4.56198 9.61612 4.62715C10.3786 4.69233 11.1128 4.94622 11.7527 5.36594C12.3926 5.78566 12.918 6.35802 13.2815 7.03142C13.645 7.70481 13.8352 8.45808 13.835 9.22333H11.068L13.669 13.9051ZM11.9608 15.0728L11.0615 13.4541C10.3597 13.7591 9.59301 13.8847 8.83055 13.8195C8.06808 13.7543 7.33382 13.5004 6.69394 13.0807C6.05407 12.661 5.5287 12.0886 5.16519 11.4152C4.80168 10.7418 4.61145 9.98858 4.61167 9.22333H7.37866L4.77769 4.54157C3.66433 5.59684 2.96308 7.01406 2.79958 8.53933C2.63608 10.0646 3.021 11.5982 3.88539 12.8655C4.74978 14.1328 6.03715 15.0509 7.51688 15.4554C8.9966 15.8598 10.572 15.7242 11.9608 15.0728Z"
-              fill="#ABABAB"
-            />
-          </svg>
-          <button class="recharge-btn" @click="goToRecharge">
-            {{ t('OpCodeString_RECHARGE') }}
-          </button>
-        </div>
-      </div>
-
-      <!-- 右侧：联系方式 -->
-      <div class="club-right">
-        <div class="contact-item" @click="handleOpenTelegram">
-          <AppSvgIcon class="contact-icon" name="telegram" title="Telegram" />
-          <span class="contact-label"> @game </span>
-        </div>
-        <div class="contact-item" @click="handleOpenEmail">
-          <AppSvgIcon
-            class="contact-icon"
-            name="contact-user"
-            :title="t('UISetting_SecurityBindEmailItem')"
-          />
-          <span class="contact-label"> {{ $txt('UISetting_SecurityBindEmailItem') }} </span>
-        </div>
-        <div
-          v-if="currentClub?.support_im_rid"
-          class="contact-item"
-          @click="handleOpenCustomerService"
-        >
-          <AppSvgIcon
-            class="contact-icon"
-            name="customer-service"
-            :title="'IM' + t('UIMineMain01')"
-          />
-          <span class="contact-label"> {{ $txt('UIMineMain01') }} </span>
-        </div>
-      </div>
-    </div>
+    <ChannelClubInfoPanel />
 
     <!-- 渠道包单类型直接展示列表；赛事和牌桌并存时展示专区入口。 -->
     <div class="home-swap-container" :aria-busy="!homeContentReady">
@@ -951,14 +772,6 @@ onBeforeUnmount(() => {
 
     <div v-if="showChannelFloatingActions" class="floating-action-area">
       <button
-        v-if="canCreateChannelTable"
-        class="create-table-btn"
-        type="button"
-        @click="goToCreateTable"
-      >
-        {{ t('UIGuild_CreateTable') }}
-      </button>
-      <button
         v-if="canManageChannelClub"
         class="floating-menu-btn"
         type="button"
@@ -1003,71 +816,6 @@ onBeforeUnmount(() => {
   min-height: 0;
   padding-bottom: 0;
   overflow: hidden;
-}
-
-.top-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.2rem 0 0;
-  flex-shrink: 0;
-}
-
-.top-bar__logo {
-  font-size: 0.54rem;
-  font-weight: 900;
-  color: #000;
-  text-shadow:
-    0.5px 0 0 currentColor,
-    -0.5px 0 0 currentColor,
-    0 0.5px 0 currentColor,
-    0 -0.5px 0 currentColor;
-  letter-spacing: 0.05rem;
-  font-family: 'HONOR Sans CN', sans-serif;
-}
-
-.top-bar__actions {
-  display: flex;
-  gap: 0.1rem;
-}
-
-.top-bar__btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.18rem 0.75rem;
-  border: 0;
-  border-radius: 0.56rem;
-  font-family: 'PingFang SC', sans-serif;
-  font-size: 0.34rem;
-  font-weight: 500;
-  white-space: nowrap;
-  cursor: pointer;
-
-  &:active {
-    opacity: 0.85;
-  }
-}
-
-.top-bar__btn--register {
-  color: rgba(0, 0, 0, 0.82);
-  background: rgba(174, 174, 174, 0.52);
-  box-shadow: 0.01rem 0.01rem 0.03rem rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(0.14rem);
-
-  @include theme-light {
-    color: #fff;
-  }
-}
-
-.top-bar__btn--login {
-  color: #fff;
-  background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
-  backdrop-filter: blur(0.55rem);
-
-  @include theme-light {
-    background: var(--c-brand);
-  }
 }
 
 .home-header {
@@ -1147,116 +895,6 @@ onBeforeUnmount(() => {
   }
 }
 
-.club-panel {
-  display: flex;
-  align-items: center;
-  background: #fff;
-  border-radius: 1rem;
-  padding: 0.1rem 0.6rem;
-  min-height: 1.54rem;
-  gap: 0;
-  border: 0.302px solid rgba(0, 0, 0, 0.16);
-  box-sizing: border-box;
-  box-shadow:
-    inset 1px 1px 0px 0px rgba(255, 255, 255, 0.35),
-    inset -1px -1px 0px 0px rgba(255, 255, 255, 0.35);
-}
-
-.club-left {
-  display: flex;
-  flex-direction: column;
-  gap: 0.12rem;
-  flex: 1;
-}
-
-.club-service-row {
-  display: flex;
-  align-items: center;
-  gap: 0.12rem;
-}
-
-.service-label {
-  font-size: 0.3rem;
-  color: #000;
-}
-
-.club-balance-row {
-  display: flex;
-  align-items: center;
-  gap: 0.12rem;
-}
-
-.icon-sm {
-  width: 0.4rem;
-  height: 0.4rem;
-  flex-shrink: 0;
-}
-
-.icon-eye {
-  width: 0.453rem;
-  height: 0.347rem;
-}
-.icon-eye,
-.icon-refresh {
-  cursor: pointer;
-  margin-right: 0.1rem;
-}
-
-.balance-amount {
-  font-size: 0.38rem;
-  color: #000;
-  font-weight: 500;
-  text-align: center;
-  min-width: 0.5rem;
-}
-
-.recharge-btn {
-  width: 1.3rem;
-  padding: 0.06rem 0rem;
-  background: #e7e7e7;
-  border: none;
-  border-radius: 1rem;
-  color: #000;
-  font-size: 0.28rem;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.club-right {
-  display: flex;
-  align-items: center;
-  gap: 0.28rem;
-}
-
-.contact-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.1rem;
-}
-
-.contact-icon {
-  width: 0.8rem;
-  height: 0.8rem;
-  border-radius: 50%;
-  box-sizing: border-box;
-  color: #0ca7ef;
-  background: #f7f8fa;
-
-  @include theme-light {
-    color: #000;
-  }
-}
-
-.contact-label {
-  font-size: 0.2rem;
-  color: #000;
-  text-align: center;
-  max-width: 1rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .home-mtt-content {
   padding: 0.1rem 0.38rem 0rem;
 
@@ -1594,24 +1232,6 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: flex-end;
   gap: 0.14rem;
-}
-
-.create-table-btn {
-  width: 3.1rem;
-  height: 0.94rem;
-  border: 0.0133rem solid rgba(242, 242, 242, 0.8);
-  border-radius: 0.6rem;
-  background-image: linear-gradient(168deg, #05e7ae 7.55%, #027a5c 71.92%);
-  color: #fbfbfb;
-  font-size: 0.34rem;
-  font-weight: 500;
-  box-shadow: 0 0.12rem 0.26rem rgba(0, 0, 0, 0.22);
-
-  @include theme-light {
-    border-color: transparent;
-    background: var(--c-brand);
-    box-shadow: 0 0.12rem 0.28rem rgba(var(--c-brand-rgb), 0.25);
-  }
 }
 
 .floating-menu-btn {

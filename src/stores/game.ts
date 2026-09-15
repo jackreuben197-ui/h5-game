@@ -4,7 +4,9 @@ import type { EnterTablePayload } from '@bridge-protocol'
 import StorageKey from '@/constants/storageKey'
 import { pushTokenClearToCocos, pushTokenToCocos } from '@/bridge/sync/tokenSync'
 import { useRoomListStore } from '@/stores/roomList'
+import { useMttListStore } from '@/stores/mttList'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { isChannelPackageHost } from '@/utils/channelPackage'
 import { dzpkPersistStorage, localStore } from '@/utils/localStore'
 
 interface GameState {
@@ -78,10 +80,11 @@ export const useGameStore = defineStore(
         this.loginAccount = payload.account
         this.loginNickname = payload.nickname
         this.loginUserId = payload.userId
-        // userId 真正就绪（从空 → 有值，或换号）时主动触发房间列表 bootstrap，
-        // 否则登录瞬间 setLoginUser({ userId: '' }) 会让 scope 卡在 guest。
+        // userId 真正就绪（从空 → 有值，或换号）时，两份动态列表都必须从
+        // token 临时 scope 切到 user scope，不能依赖进入某个页面后才补拉。
         if (payload.userId && payload.userId !== previousUserId) {
           useRoomListStore().bootstrapRoomList()
+          useMttListStore().bootstrapMttList()
         }
       },
       // 身份确认结果只在当前 SPA 会话内有效；token 变化或刷新页面后必须重新确认。
@@ -108,9 +111,14 @@ export const useGameStore = defineStore(
         this.loginUserId = ''
         this.syncedIdentityToken = ''
         this.setGuestAccount(false)
-        // 登录态清空时，同步清理全局共享缓存。
+        // 渠道俱乐部来自公开 default 接口，决定名称、Banner scope 和 h5_menu；
+        // token 失效或退出登录只应清理用户私有资料，不能让渠道页退回默认文案和旧菜单。
         const userInfoStore = useUserInfoStore()
-        userInfoStore.clearInfo()
+        if (isChannelPackageHost()) {
+          userInfoStore.clearPrivateInfo()
+        } else {
+          userInfoStore.clearInfo()
+        }
         // 退出登录时同步清理 dzpk_TOKEN。
         localStore.removeItem(StorageKey.TOKEN)
         localStore.removeItem(StorageKey.TOKEN_EXPIREAT)

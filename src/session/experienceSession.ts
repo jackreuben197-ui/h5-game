@@ -68,7 +68,7 @@ function hydrateSessionUser(userInfo: UserInfoData, account: string): void {
   gameStore.setLoginUser({ account, nickname, userId })
 }
 
-async function bootstrapResolvedSessionLists(): Promise<void> {
+export async function bootstrapCurrentSessionLists(): Promise<void> {
   await Promise.allSettled([
     ensureMultiLanguageTemplateLoaded(),
     useRoomListStore(pinia).bootstrapRoomList(),
@@ -113,13 +113,13 @@ async function runEnsureExperienceSession(revision: number): Promise<boolean> {
       hydrateSessionUser(userInfo, gameStore.loginAccount || 'experience')
       if (isExperienceUserInfo(userInfo)) {
         gameStore.markIdentitySynced(existingToken)
-        await bootstrapResolvedSessionLists()
+        await bootstrapCurrentSessionLists()
       } else {
         await syncPostAuthData()
         // 渠道版底部导航需要根据真实列表决定动态入口。身份未确认前不能由
         // Tab 组件抢跑；确认是真实账号后在会话层统一预热。
         if (isChannelPackageHost()) {
-          await bootstrapResolvedSessionLists()
+          await bootstrapCurrentSessionLists()
         }
       }
       return true
@@ -178,7 +178,7 @@ async function runEnsureExperienceSession(revision: number): Promise<boolean> {
   if (gameStore.sessionToken.trim() !== token) {
     return false
   }
-  await bootstrapResolvedSessionLists()
+  await bootstrapCurrentSessionLists()
   return true
 }
 
@@ -204,15 +204,15 @@ export function suspendExperienceSessionInitialization(): () => void {
  * 启动或体验 token 失效后的统一入口。并发调用只会发起一次体验登录请求。
  */
 export function ensureExperienceSession(): Promise<boolean> {
-  if (realAuthenticationDepth > 0) {
-    return Promise.resolve(false)
-  }
   const gameStore = useGameStore(pinia)
   const currentToken = gameStore.sessionToken.trim()
   // 身份确认结果与 token 绑定；同一会话内切换路由只复用结果，不再重复请求 user/info。
   if (currentToken && !gameStore.shouldSyncIdentity(currentToken)) {
     // 模板接口同样需要 token。即使身份已确认，也要经过统一入口补齐无缓存或上次失败的模板加载。
     return ensureMultiLanguageTemplateLoaded().then(() => true)
+  }
+  if (realAuthenticationDepth > 0) {
+    return Promise.resolve(false)
   }
   if (!ensurePromise) {
     const revision = experienceLoginRevision

@@ -11,6 +11,7 @@ const props = defineProps<{
   feeRate: number
   feeType?: number
   discount?: number
+  uniqueAmountEnabled?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -172,6 +173,7 @@ onUnmounted(() => {
 
             <!-- Option 1: Rounded -->
             <div
+              v-if="!props.uniqueAmountEnabled"
               class="option-card"
               :class="{ 'option-card--active': selectedOption === 1 }"
               @click="selectedOption = 1"
@@ -430,6 +432,7 @@ onUnmounted(() => {
 
 .options-container {
   display: flex;
+  justify-content: center;
   gap: 0.3rem;
   margin-bottom: 18.12px;
 }

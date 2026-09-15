@@ -5,6 +5,11 @@ import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
 import { t } from '@/i18n'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
+import { ensureExperienceSession } from '@/session/experienceSession'
+import { useMttListStore } from '@/stores/mttList'
+import { useRoomListStore } from '@/stores/roomList'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { useGameStore } from '@/stores/game'
 
 type TabIconKey =
   | 'home'
@@ -24,11 +29,11 @@ interface TabItem {
 }
 
 const isChannelPackage = isChannelPackageHost()
-const { isVersionB, hasMtt, hasMiniGame } = useChannelBottomMenu()
+const { isVersionB, hasPoker, hasMtt } = useChannelBottomMenu()
 
 // 版本 A：首页、充值、消息、我的。
-// 版本 B：首页、充值、我的始终展示，赛事 / 小游戏按可见数据动态展示。
-const tabs = computed<TabItem[]>(() => {
+// 版本 B：比赛、牌桌按可见数据动态展示；两者都没有时保留比赛作为默认入口。
+const candidateTabs = computed<TabItem[]>(() => {
   const middleTab: TabItem = isChannelPackage
     ? {
         key: 'wallet',
@@ -58,30 +63,23 @@ const tabs = computed<TabItem[]>(() => {
 
   if (isChannelPackage && isVersionB.value) {
     return [
-      {
-        key: 'poker',
-        label: t('UITabbarHome'),
-        path: '/home',
-        icon: 'home',
-      },
-      ...(hasMtt.value
+      ...(hasMtt.value || !hasPoker.value
         ? [
             {
               key: 'mtt' as const,
               label: t('UITabbarMatch'),
-              path: '/mttList',
+              path: '/match',
               icon: 'mtt' as const,
             },
           ]
         : []),
-      // 小游戏尚未接入，hasMiniGame 当前固定为 false。
-      ...(hasMiniGame.value
+      ...(hasPoker.value
         ? [
             {
-              key: 'miniGame' as const,
-              label: t('UIHomeMinigameArea'),
-              path: '/home',
-              icon: 'miniGame' as const,
+              key: 'poker' as const,
+              label: t('UITexasReport_Label_AllBarPZ'),
+              path: '/gameList',
+              icon: 'home' as const,
             },
           ]
         : []),
@@ -117,6 +115,14 @@ const tabs = computed<TabItem[]>(() => {
 const router = useRouter()
 const route = useRoute()
 const tabsStore = useMainTabsStore()
+const userInfoStore = useUserInfoStore()
+const roomListStore = useRoomListStore()
+const mttListStore = useMttListStore()
+const gameStore = useGameStore()
+// 动态菜单必须等俱乐部配置、牌桌和赛事三份数据全部稳定后一次性出现。
+const tabsReady = ref(true)
+const displayedTabs = ref<TabItem[]>([])
+const isStabilizingTabs = ref(isChannelPackage)
 // 当前激活项索引：用于驱动顶部凸起在当前 tab 数量间平滑移动。
 const activeTabKey = computed<MainTabKey>(() => {
   if (isVersionB.value && route.name === 'lobby') {
@@ -127,7 +133,7 @@ const activeTabKey = computed<MainTabKey>(() => {
 })
 
 const activeIndex = computed(() => {
-  const index = tabs.value.findIndex((item) => item.key === activeTabKey.value)
+  const index = displayedTabs.value.findIndex((item) => item.key === activeTabKey.value)
   return index >= 0 ? index : 0
 })
 
@@ -151,6 +157,45 @@ let animFrom = 0
 let animTo = 0
 let animStart: number | null = null
 let rafId: number | null = null
+let componentMounted = false
+let stabilizationRevision = 0
+
+const stableDynamicItems: Record<'mtt' | 'poker', TabItem> = {
+  mtt: {
+    key: 'mtt',
+    label: t('UITabbarMatch'),
+    path: '/match',
+    icon: 'mtt',
+  },
+  poker: {
+    key: 'poker',
+    label: t('UITexasReport_Label_AllBarPZ'),
+    path: '/gameList',
+    icon: 'home',
+  },
+}
+
+function resolveCommittedTabs(): TabItem[] {
+  if (!isChannelPackage || !tabsStore.committedChannelTabs.length) {
+    return candidateTabs.value.map((tab) => ({ ...tab }))
+  }
+  const itemMap = new Map(candidateTabs.value.map((tab) => [tab.key, tab]))
+  // 登录切换的中间态可能暂时没有牌桌/赛事，必须仍能还原已提交项。
+  return tabsStore.committedChannelTabs
+    .map((key) =>
+      itemMap.get(key) || (key === 'mtt' || key === 'poker' ? stableDynamicItems[key] : null),
+    )
+    .filter((tab): tab is TabItem => tab !== null)
+}
+
+displayedTabs.value = resolveCommittedTabs()
+
+function commitDisplayedTabs(nextTabs: TabItem[]): void {
+  displayedTabs.value = nextTabs.map((tab) => ({ ...tab }))
+  if (isChannelPackage) {
+    tabsStore.commitChannelTabs(nextTabs.map((tab) => tab.key))
+  }
+}
 
 function easeInOutQuart(t: number): number {
   if (t < 0.5) {
@@ -171,7 +216,7 @@ function indexToCenter(index: number): number {
   const { width } = getSvgSize()
   const inset = width * (TABBAR_SIDE_PADDING_REM / TABBAR_WIDTH_REM)
   const availableWidth = Math.max(width - inset * 2, 1)
-  const tabWidth = availableWidth / Math.max(tabs.value.length, 1)
+  const tabWidth = availableWidth / Math.max(displayedTabs.value.length, 1)
   return inset + tabWidth * index + tabWidth / 2
 }
 
@@ -186,7 +231,8 @@ function buildTabbarPath(bumpCenterX: number): string {
   const cornerRadius = bodyHeight / 2
   const inset = width * (TABBAR_SIDE_PADDING_REM / TABBAR_WIDTH_REM)
   const availableWidth = Math.max(width - inset * 2, 1)
-  const bumpWidth = (availableWidth / Math.max(tabs.value.length, 1)) * BUMP_WIDTH_IN_TAB
+  const bumpWidth =
+    (availableWidth / Math.max(displayedTabs.value.length, 1)) * BUMP_WIDTH_IN_TAB
   // 凸起中心约束按“tab 有效宽度”计算，避免首尾被圆角挤压导致偏移。
   const minCenter = inset + bumpWidth / 2
   const maxCenter = width - inset - bumpWidth / 2
@@ -272,6 +318,10 @@ function refreshPathByCurrentTab(): void {
   renderPath(indexToCenter(activeIndex.value))
 }
 
+// 首次 render 前先用设计尺寸生成一份路径，避免路由重建底栏时 SVG 的 d 为空。
+// 挂载后会再按真实 DOM 尺寸校正，因此背景不需要等待任何会话或列表接口。
+refreshPathByCurrentTab()
+
 function onTabClick(tab: TabItem): void {
   tabsStore.setActiveTab(tab.key)
   void router.push(tab.path)
@@ -282,18 +332,66 @@ function handleWindowResize(): void {
   refreshPathByCurrentTab()
 }
 
-watch([activeIndex, () => tabs.value.length], ([newIndex]) => {
+watch([activeIndex, () => displayedTabs.value.length], ([newIndex]) => {
   if (!svgRef.value) return
   startPathAnimation(newIndex)
 })
 
-onMounted(async () => {
+async function stabilizeDynamicTabs(): Promise<void> {
+  const revision = ++stabilizationRevision
+  isStabilizingTabs.value = true
+  if (isChannelPackage) {
+    await userInfoStore.ensureChannelDefaultClub()
+    if (Number(userInfoStore.channelDefaultClub?.h5_menu) === 1) {
+      const sessionReady = await ensureExperienceSession().catch((error) => {
+        console.warn('[main-bottom-tab] resolve session identity failed:', error)
+        return false
+      })
+      // 真实登录事务尚未完成时保留上一份完整快照。身份同步完成后
+      // syncedIdentityToken watcher 会使用最终 user scope 重新执行本流程。
+      if (!sessionReady) return
+      await Promise.allSettled([
+        roomListStore.bootstrapRoomList(),
+        mttListStore.bootstrapMttList(),
+      ])
+    }
+  }
+
+  if (!componentMounted || revision !== stabilizationRevision) return
+  commitDisplayedTabs(candidateTabs.value)
+  isStabilizingTabs.value = false
+  tabsReady.value = true
   await nextTick()
   refreshPathByCurrentTab()
+}
+
+// 登录、退出或体验账号切换时先冻结当前菜单；新身份的两份列表就绪后原子替换。
+watch(
+  [() => gameStore.sessionToken, () => gameStore.syncedIdentityToken],
+  () => {
+    if (!componentMounted || !isChannelPackage) return
+    isStabilizingTabs.value = true
+    void stabilizeDynamicTabs()
+  },
+  { flush: 'sync' },
+)
+
+watch(candidateTabs, (nextTabs) => {
+  if (!tabsReady.value || isStabilizingTabs.value) return
+  commitDisplayedTabs(nextTabs)
+})
+
+onMounted(() => {
+  componentMounted = true
   window.addEventListener('resize', handleWindowResize)
+  void nextTick().then(() => {
+    if (componentMounted) refreshPathByCurrentTab()
+  })
+  void stabilizeDynamicTabs()
 })
 
 onBeforeUnmount(() => {
+  componentMounted = false
   stopAnimation()
   window.removeEventListener('resize', handleWindowResize)
 })
@@ -321,7 +419,7 @@ onBeforeUnmount(() => {
 
     <div class="tabs-row">
       <button
-        v-for="tab in tabs"
+        v-for="tab in displayedTabs"
         :key="tab.key"
         type="button"
         class="tab-button"

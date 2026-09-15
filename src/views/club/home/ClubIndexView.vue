@@ -194,7 +194,8 @@ const selectedClubId = computed(() => toSafeInt(currentClub.value?.club_id))
 const selectedTribeId = computed(() => toSafeInt(currentClub.value?.tribe_id))
 
 const canCreateTable = computed(() => {
-  if (!gameStore.isRealUser) {
+  // 私域链接版本只保留俱乐部管理入口，不允许从俱乐部创建牌桌。
+  if (isChannelPackage || !gameStore.isRealUser) {
     return false
   }
   const userLevel = toSafeInt(currentJoinedClub.value?.user_level)

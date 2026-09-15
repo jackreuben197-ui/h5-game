@@ -231,9 +231,11 @@ export interface OnlineWithdrawTypeItem {
   name?: string
   image?: string
   type?: number // 1-数字钱包 2-API 3-手动
-  rate?: number
+  usdt_rate?: number // 1 USDT 可兑换的 UC 数量
   fee_rate?: number
   fee_type?: number // 0-无 1-俱乐部出 2-玩家出
+  user_withdraw_min?: number // 最小提现金额，单位为 0.01 UC
+  user_withdraw_max?: number // 最大提现金额，单位为 0.01 UC
   /** 通道说明（模板）；玩家保存的地址见 user_description */
   description?: string
   /** 玩家已保存的提现地址（服务端返回） */

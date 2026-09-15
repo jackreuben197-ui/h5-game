@@ -71,11 +71,20 @@ test('wallet store falls back to the public channel club for preview pricing', a
   try {
     const { useWalletStore } = await import('../src/stores/wallet.ts')
     const { calls } = await import(mockUrl)
-    await useWalletStore().loadPriceList()
+    const walletStore = useWalletStore()
+    await walletStore.loadPriceList()
 
     assert.equal(calls.length, 1)
     assert.equal(calls[0][0]?.club_id, 73)
     assert.equal(calls[0][1], 73)
+    assert.deepEqual(walletStore.calculateUsdtPrice(10_000, 2, 0.05, 2), {
+      apiPayPrice: 47.5,
+      totalUiPrice: 47.5,
+    })
+    assert.deepEqual(walletStore.calculateUsdtPrice(10_000, 2, 0.05, 1), {
+      apiPayPrice: 50,
+      totalUiPrice: 50,
+    })
   } finally {
     hooks.deregister()
   }

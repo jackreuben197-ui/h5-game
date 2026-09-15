@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { showToast } from 'vant'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
+import GameDialog from '@/components/Dialog/GameDialog.vue'
 import { t } from '@/i18n'
 import { postOnlineWithdrawTypeListApi, postOnlineWithdrawDescriptionApi } from '@/api/config'
 import { postTiquGoldApi } from '@/api/order'
@@ -29,9 +30,22 @@ const activeChannelId = ref<number | null>(null)
 const addressInput = ref('')
 const amount = ref('')
 const submitting = ref(false)
+const showWithdrawConfirm = ref(false)
+
+interface PendingWithdraw {
+  channel: OnlineWithdrawTypeItem & { id: number }
+  clubId: number
+  goldCents: number
+  address: string
+  payPrice: number
+  feeAmount: number
+}
+
+const pendingWithdraw = ref<PendingWithdraw | null>(null)
 
 /** Карточка «备注»: только user_description выбранной строки из списка (без черновика шита). */
 const mainWithdrawAccountShown = computed(() => withdrawUserDescription(selectedAddress.value))
+const selectedChannelName = computed(() => withdrawChannelLabel(selectedAddress.value))
 
 const sheetOpen = ref(false)
 const walletListExpanded = ref(false)
@@ -56,14 +70,8 @@ function applyLocalUserDescription(item: OnlineWithdrawTypeItem, text: string): 
   ;(item as Record<string, unknown>).user_description = text.trim()
 }
 
-/** В dropdown показываем только каналы, где уже есть user_description. */
-const withdrawPickerList = computed(() =>
-  savedAddresses.value.filter((a) => withdrawUserDescription(a).length > 0),
-)
-
-function addrLineLabel(addr: OnlineWithdrawTypeItem): string {
-  const saved = withdrawUserDescription(addr)
-  if (saved) return saved
+function withdrawChannelLabel(addr: OnlineWithdrawTypeItem | null | undefined): string {
+  if (!addr) return 'USDT'
   const name = (addr.name ?? '').trim()
   if (name) return name
   const desc = (addr.description ?? '').trim()
@@ -71,19 +79,46 @@ function addrLineLabel(addr: OnlineWithdrawTypeItem): string {
   return 'USDT'
 }
 
-/** Строка списка / триггер: при непустом user_description из API — показываем только его. */
 function withdrawPickerRowLabel(addr: OnlineWithdrawTypeItem): string {
-  const saved = withdrawUserDescription(addr)
-  if (saved) return saved
-  return addrLineLabel(addr)
+  return withdrawChannelLabel(addr)
 }
 
-/** Без выбора — USDT; с выбором и сохранённым адресом — только user_description из API. */
-const sheetPaymentLabel = computed(() => {
-  if (!selectedAddress.value) return 'USDT'
-  const saved = withdrawUserDescription(selectedAddress.value)
-  if (saved) return saved
-  return addrLineLabel(selectedAddress.value)
+const sheetPaymentLabel = computed(() => withdrawChannelLabel(selectedAddress.value))
+
+function formatAmount(value: number, maximumFractionDigits = 4): string {
+  return value.toLocaleString(undefined, {
+    useGrouping: false,
+    minimumFractionDigits: 0,
+    maximumFractionDigits,
+  })
+}
+
+function withdrawBounds(channel: OnlineWithdrawTypeItem | null | undefined): {
+  minCents: number
+  maxCents: number
+} {
+  const configuredMin = Number(channel?.user_withdraw_min)
+  const configuredMax = Number(channel?.user_withdraw_max)
+  return {
+    minCents: Number.isFinite(configuredMin) && configuredMin > 0 ? configuredMin : 100,
+    maxCents: Number.isFinite(configuredMax) && configuredMax > 0 ? configuredMax : 99999900,
+  }
+}
+
+const withdrawRangeText = computed(() => {
+  if (!selectedAddress.value) return ''
+  const { minCents, maxCents } = withdrawBounds(selectedAddress.value)
+  return `${t('UITribeRechargeUSDTShopRecycleRangeTip')}${formatAmount(minCents / 100)}-${formatAmount(maxCents / 100)}`
+})
+
+const selectedRateText = computed(() => {
+  const usdtRate = Number(selectedAddress.value?.usdt_rate)
+  return Number.isFinite(usdtRate) && usdtRate > 0 ? formatAmount(usdtRate) : ''
+})
+
+const withdrawConfirmFeeRate = computed(() => {
+  const feeRate = Number(pendingWithdraw.value?.channel.fee_rate)
+  return Number.isFinite(feeRate) ? formatAmount(feeRate * 100) : '0'
 })
 
 function withdrawClubPayload(): Record<string, number> {
@@ -121,6 +156,8 @@ watch(
     if (preview) {
       savedAddresses.value = []
       selectedAddress.value = null
+      activeChannelId.value = null
+      addressInput.value = ''
       return
     }
     if (Number(clubId) > 0) {
@@ -133,11 +170,17 @@ watch(
 async function loadSavedAddresses(): Promise<void> {
   if (props.preview) {
     savedAddresses.value = []
+    selectedAddress.value = null
+    activeChannelId.value = null
+    addressInput.value = ''
     return
   }
   const base = withdrawClubPayload()
   if (!('club_id' in base)) {
     savedAddresses.value = []
+    selectedAddress.value = null
+    activeChannelId.value = null
+    addressInput.value = ''
     return
   }
   const res = await postOnlineWithdrawTypeListApi(base)
@@ -148,6 +191,7 @@ async function loadSavedAddresses(): Promise<void> {
   if (list.length === 0) {
     selectedAddress.value = null
     activeChannelId.value = null
+    addressInput.value = ''
     return
   }
 
@@ -166,8 +210,10 @@ async function loadSavedAddresses(): Promise<void> {
     }
   }
 
-  selectedAddress.value = null
-  activeChannelId.value = null
+  const first = list[0]
+  selectedAddress.value = first
+  activeChannelId.value = first?.id ?? null
+  addressInput.value = withdrawUserDescription(first)
 }
 
 async function openSheet(): Promise<void> {
@@ -255,6 +301,18 @@ async function handleSubmit(): Promise<void> {
       return
     }
 
+    const { minCents, maxCents } = withdrawBounds(channel)
+    if (goldCents < minCents || goldCents > maxCents) {
+      showToast(
+        t(
+          'UIMineUSDTSheetInputMaxLimitTip',
+          formatAmount(minCents / 100),
+          formatAmount(maxCents / 100),
+        ),
+      )
+      return
+    }
+
     const savedTxt = withdrawUserDescription(channel)
     if (addrTrim !== savedTxt) {
       const saveRes = await postOnlineWithdrawDescriptionApi({
@@ -274,28 +332,52 @@ async function handleSubmit(): Promise<void> {
       }
     }
 
-    const payId = channel.id
-
-    const rate = Number(channel.rate)
+    const usdtRate = Number(channel.usdt_rate)
     const feeRate = channel.fee_rate ?? 0
     const feeType = channel.fee_type ?? 0
-    const chExtra = channel as Record<string, unknown>
-    const discount = typeof chExtra.discount === 'number' ? chExtra.discount : 0
 
-    if (!Number.isFinite(rate) || rate <= 0) {
+    if (!Number.isFinite(usdtRate) || usdtRate <= 0) {
       showToast(t('Wallet_Rate'))
       return
     }
 
-    const priceData = walletStore.calculateUsdtPrice(goldCents, rate, feeRate, feeType, discount)
+    const priceData = walletStore.calculateUsdtPrice(goldCents, usdtRate, feeRate, feeType)
+    const feeAmount = feeType === 2 ? (goldCents / 100 / usdtRate) * feeRate : 0
 
+    pendingWithdraw.value = {
+      channel: channel as OnlineWithdrawTypeItem & { id: number },
+      clubId: club.club_id,
+      goldCents,
+      address: addrTrim,
+      payPrice: priceData.apiPayPrice,
+      feeAmount: Number(feeAmount.toFixed(4)),
+    }
+    showWithdrawConfirm.value = true
+  } finally {
+    submitting.value = false
+  }
+}
+
+function cancelWithdrawConfirm(): void {
+  showWithdrawConfirm.value = false
+  pendingWithdraw.value = null
+}
+
+async function confirmWithdraw(): Promise<void> {
+  const withdraw = pendingWithdraw.value
+  if (!withdraw || submitting.value) return
+
+  showWithdrawConfirm.value = false
+  submitting.value = true
+  try {
     const withdrawRes = await postTiquGoldApi({
-      ...withdrawClubPayload(),
-      amount: goldCents,
+      club_id: withdraw.clubId,
+      amount: withdraw.goldCents,
       gold_type: 1,
-      pay_id: payId,
-      pay_price: priceData.apiPayPrice,
-      description: addrTrim,
+      pay_id: withdraw.channel.id,
+      pay_price: withdraw.payPrice,
+      description: withdraw.address,
+      use_usdt_rate: true,
     })
 
     if (withdrawRes.code !== 0) {
@@ -311,15 +393,15 @@ async function handleSubmit(): Promise<void> {
 
     // type 3 = 手动/撮合 — открываем чат с поддержкой
     // api_type из ответа не надёжен (может быть 0), поэтому смотрим на тип канала
-    const needsChat = channel.type === 3 || withdrawRes.data?.api_type === 3
+    const needsChat = withdraw.channel.type === 3 || withdrawRes.data?.api_type === 3
     if (needsChat) {
       const orderData: Record<string, unknown> = {
-        pay_type_name: channel.name ?? 'USDT',
-        pay_price: priceData.apiPayPrice,
-        address: addrTrim,
+        pay_type_name: withdraw.channel.name ?? 'USDT',
+        pay_price: withdraw.payPrice,
+        address: withdraw.address,
         order: {
-          gold_num: goldCents,
-          pay_price: priceData.apiPayPrice,
+          gold_num: withdraw.goldCents,
+          pay_price: withdraw.payPrice,
           order_no: (withdrawRes.data as Record<string, unknown>).order_no ?? '',
         },
       }
@@ -327,6 +409,7 @@ async function handleSubmit(): Promise<void> {
     }
   } finally {
     submitting.value = false
+    pendingWithdraw.value = null
   }
 }
 </script>
@@ -339,7 +422,7 @@ async function handleSubmit(): Promise<void> {
         <div class="wf__label">{{ $txt('Wallet_RecipientLabel') }}</div>
         <div class="wf__row">
           <div class="wf__input">
-            <span class="wf__input-native wf__input-native--static">USDT</span>
+            <span class="wf__input-native wf__input-native--static">{{ selectedChannelName }}</span>
           </div>
           <button type="button" class="wf__pill" @click="openSheet">
             <span>{{ $txt('Wallet_GoEdit') }}</span>
@@ -372,7 +455,7 @@ async function handleSubmit(): Promise<void> {
     <!-- Amount card -->
     <div class="wf__card">
       <div class="wf__balance">
-        <span class="wf__balance-label">{{ t('Wallet_AvailableUc', String(availableUc)) }}</span>
+        <span class="wf__balance-label">{{ t('Wallet_AvailableUc') }}: {{ availableUc }}</span>
       </div>
       <div class="wf__input">
         <input
@@ -384,13 +467,14 @@ async function handleSubmit(): Promise<void> {
         />
       </div>
       <div class="wf__rate">
-        <template v-if="selectedAddress?.rate">
-          {{ $txt('Wallet_RateWithValue', selectedAddress.rate) }}
+        <template v-if="selectedRateText">
+          {{ $txt('Wallet_RateWithValue', selectedRateText) }}
         </template>
         <template v-else>
           {{ $txt('Wallet_Rate') }}
         </template>
       </div>
+      <div v-if="withdrawRangeText" class="wf__rate">{{ withdrawRangeText }}</div>
     </div>
 
     <PrimaryButton
@@ -399,6 +483,33 @@ async function handleSubmit(): Promise<void> {
       @click="handleSubmit"
     />
   </div>
+
+  <GameDialog
+    v-model:show="showWithdrawConfirm"
+    :title="t('UITribeRechargeUSDTShopEnterWithdraw')"
+    :show-cancel-button="true"
+    :cancel-button-text="t('adaptation10013')"
+    :confirm-button-text="t('UI_Recharge_confirm')"
+    :confirm-button-disabled="submitting"
+    @cancel="cancelWithdrawConfirm"
+    @confirm="confirmWithdraw"
+  >
+    <div v-if="pendingWithdraw" class="wf__confirm">
+      <p v-if="pendingWithdraw.feeAmount > 0" class="wf__confirm-note">
+        {{ t('UIMine_WalletPlatform_fee_s') }}：{{
+          formatAmount(pendingWithdraw.feeAmount)
+        }}
+        USDT（{{ withdrawConfirmFeeRate }}%）
+      </p>
+      <p class="wf__confirm-note">
+        {{ t('UIMineMallUSDTShopPayDialogReferencePriceTip') }}1USDT={{
+          formatAmount(Number(pendingWithdraw.channel.usdt_rate))
+        }}UC
+      </p>
+      <strong class="wf__confirm-amount">{{ formatAmount(pendingWithdraw.payPrice) }} USDT</strong>
+      <span class="wf__confirm-label">{{ t('UITribeRechargeUSDTShopWithdrawGold') }}</span>
+    </div>
+  </GameDialog>
 
   <!-- Saved addresses sheet -->
   <Teleport to="body">
@@ -429,9 +540,9 @@ async function handleSubmit(): Promise<void> {
               <Transition name="wf-expand">
                 <div v-show="walletListExpanded" class="wf__fig-picker-body">
                   <div class="wf__addr-panel">
-                    <template v-if="withdrawPickerList.length > 0">
+                    <template v-if="savedAddresses.length > 0">
                       <button
-                        v-for="addr in withdrawPickerList"
+                        v-for="addr in savedAddresses"
                         :key="addr.id"
                         type="button"
                         class="wf__addr-row"
@@ -705,6 +816,32 @@ async function handleSubmit(): Promise<void> {
   @include theme-light {
     color: rgba(34, 34, 34, 0.7);
   }
+}
+
+.wf__confirm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.18rem;
+  color: #fff;
+  text-align: center;
+}
+
+.wf__confirm-note {
+  margin: 0;
+  font-size: 0.32rem;
+  line-height: 1.45;
+}
+
+.wf__confirm-amount {
+  margin-top: 0.12rem;
+  font-family: var(--wallet-font-num, 'SF Pro');
+  font-size: 0.68rem;
+  line-height: 1.2;
+}
+
+.wf__confirm-label {
+  font-size: 0.38rem;
 }
 
 /* Sheet overlay */

@@ -74,19 +74,15 @@ export const useWalletStore = defineStore('wallet', () => {
     goldPriceData.value = null
   }
 
-  function calculateUsdtPrice(goldCount: number, rate: number, feeRate: number, feeType = 0, discount = 0) {
-    const base = (goldCount / 100) * rate
-    let priceAfterDiscount = base * (1 - discount)
-    priceAfterDiscount = Math.round(priceAfterDiscount * 10000) / 10000
-
-    let total = priceAfterDiscount
+  function calculateUsdtPrice(goldCount: number, usdtRate: number, feeRate: number, feeType = 0) {
+    const base = usdtRate > 0 ? goldCount / 100 / usdtRate : 0
+    let total = base
     if (feeType === 2 && feeRate > 0) {
       const fee = base * feeRate
-      total = priceAfterDiscount + fee
-      total = Math.round(total * 10000) / 10000
+      total = base - fee
     }
 
-    const totalUiPrice = Number(total.toFixed(6))
+    const totalUiPrice = Number(Math.max(0, total).toFixed(4))
     const apiPayPrice = totalUiPrice
 
     return { apiPayPrice, totalUiPrice }

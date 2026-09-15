@@ -387,6 +387,7 @@ function shortName(name?: string): string {
   height: 0.78rem;
   border-radius: 0.425rem;
   background: rgba(249, 249, 249, 0.1);
+  color: #fff;
   position: absolute;
   left: 50%;
   top: 38%;

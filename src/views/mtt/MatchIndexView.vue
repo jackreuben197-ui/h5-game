@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import type { FilterTabOption } from '@/components/Tabbar/FilterTabbar.vue'
 import ChannelClubInfoPanel from '@/components/Club/ChannelClubInfoPanel.vue'
+import ChannelClubManageFloatingButton from '@/components/Club/ChannelClubManageFloatingButton.vue'
 import ClubIntroductionBar from '@/components/Club/ClubIntroductionBar.vue'
 import HomeBannerSwiper from '@/components/HomeBannerSwiper.vue'
 import HomeTopBar from '@/components/HomeTopBar.vue'
@@ -60,6 +61,7 @@ onMounted(() => {
       />
     </div>
 
+    <ChannelClubManageFloatingButton />
     <MainBottomTab />
   </div>
 </template>

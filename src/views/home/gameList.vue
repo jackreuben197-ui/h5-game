@@ -34,6 +34,7 @@ import { t } from '@/i18n'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import ClubZoneQuickActions from '@/components/Club/ClubZoneQuickActions.vue'
+import ChannelClubManageFloatingButton from '@/components/Club/ChannelClubManageFloatingButton.vue'
 import ChannelClubInfoPanel from '@/components/Club/ChannelClubInfoPanel.vue'
 import ClubIntroductionBar from '@/components/Club/ClubIntroductionBar.vue'
 import HomeBannerSwiper from '@/components/HomeBannerSwiper.vue'
@@ -510,6 +511,7 @@ function handleOpenCustomerService(): void {
         </div>
       </section>
     </div>
+    <ChannelClubManageFloatingButton v-if="!props.embedded" />
     <MainBottomTab v-if="isChannelMenuVersionB && !props.embedded" />
   </div>
 </template>

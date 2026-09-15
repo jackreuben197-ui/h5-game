@@ -428,7 +428,7 @@ function shortName(name?: string): string {
 }
 .seat-name {
   font-size: 0.3rem;
-  color: #e5e4e427;
+  color: #fff;
 }
 
 .seat-avatar.empty .seat-name {

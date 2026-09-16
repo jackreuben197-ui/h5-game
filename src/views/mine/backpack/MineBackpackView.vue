@@ -115,8 +115,7 @@ onMounted(() => {
 
 .mine-glass-page {
   position: relative;
-  height: var(--app-full-height, var(--app-viewport-height, 100dvh));
-  min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  height: 100dvh;
   padding: 0 0 0.8rem;
   color: #f3f3f3;
   background-color: var(--c-page);

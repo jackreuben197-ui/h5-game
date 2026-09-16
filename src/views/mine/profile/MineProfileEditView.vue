@@ -338,8 +338,7 @@ async function onConfirmGender(): Promise<void> {
 @use '@/styles/mixins' as *;
 
 .profile-edit-page {
-  height: var(--app-full-height, var(--app-viewport-height, 100dvh));
-  min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  height: 100dvh;
   padding-bottom: 0.8rem;
   color: #f9f9f9;
   background-color: var(--c-page);

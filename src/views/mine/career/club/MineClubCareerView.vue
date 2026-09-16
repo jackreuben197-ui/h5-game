@@ -488,8 +488,7 @@ onMounted(() => {
 
 .career-page {
   position: relative;
-  height: var(--app-full-height, var(--app-viewport-height, 100dvh));
-  min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  height: 100dvh;
   padding: 0 0 0.8rem;
   color: #f9f9f9;
   background-image: var(--career-bg-dark);

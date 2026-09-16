@@ -133,10 +133,14 @@ function persistHomeRoomStatsCache(stats: HomeZoneStats): void {
 
 const homeRoomStats = ref<HomeZoneStats>(restoreHomeRoomStatsCache() || createEmptyZoneStats())
 const currentClub = computed<ClubInfo | null>(() => {
+  // 渠道入口只能展示 default 接口锁定的俱乐部；持久化的 currentClub 也可能来自官方包。
+  if (isChannelPackage) {
+    return userInfoStore.channelDefaultClub
+  }
   if (userInfoStore.currentClub) {
     return userInfoStore.currentClub
   }
-  return userInfoStore.clubList[0] || (isChannelPackage ? userInfoStore.channelDefaultClub : null)
+  return userInfoStore.clubList[0] || null
 })
 const selectedClubId = computed(() => toSafeInt(currentClub.value?.club_id))
 const selectedTribeId = computed(() =>

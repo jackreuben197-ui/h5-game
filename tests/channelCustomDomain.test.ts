@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import {
   isChannelPackageHostname,
@@ -21,4 +22,19 @@ test('official and local preview hosts are not channel packages', () => {
   assert.equal(isChannelPackageHostname(mainDomain, mainDomain), false)
   assert.equal(isChannelPackageHostname('localhost', mainDomain), false)
   assert.equal(isChannelPackageHostname('127.0.0.1', mainDomain), false)
+})
+
+test('custom domain club stays scoped to the default API club', () => {
+  const storeSource = readFileSync(new URL('../src/stores/userInfo.ts', import.meta.url), 'utf8')
+  const homeSource = readFileSync(
+    new URL('../src/views/home/HomeIndexView.vue', import.meta.url),
+    'utf8',
+  )
+
+  assert.match(storeSource, /!subDomainInviteCode && isChannelPackageHost\(\)/)
+  assert.match(storeSource, /normalizeClubId\(this\.channelDefaultClub\?\.club_id\)/)
+  assert.match(
+    homeSource,
+    /if \(isChannelPackage\) \{\s*return userInfoStore\.channelDefaultClub/,
+  )
 })

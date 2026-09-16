@@ -127,6 +127,33 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       this.clubList = normalized
 
       const subDomainInviteCode = resolveInviteCode()
+      // 独立自定义域名没有邀请码前缀，必须用 default 接口返回的 club_id 固定当前俱乐部。
+      // 否则登录/体验账号的俱乐部列表会默认选中第一项，把页面重新渲染成官方包。
+      if (!subDomainInviteCode && isChannelPackageHost()) {
+        const channelClubId = normalizeClubId(this.channelDefaultClub?.club_id)
+        if (channelClubId) {
+          const targetClub = normalized.find(
+            (item) => normalizeClubId(item.club_id) === channelClubId,
+          )
+          if (targetClub) {
+            this.channelDefaultClub = {
+              ...this.channelDefaultClub,
+              ...targetClub,
+              diamond_room_switch:
+                targetClub.diamond_room_switch ?? this.channelDefaultClub?.diamond_room_switch,
+              h5_menu: targetClub.h5_menu ?? this.channelDefaultClub?.h5_menu,
+            }
+            channelDefaultClubLoaded = true
+            this.currentClubId = channelClubId
+          } else {
+            // 未加入自定义域名对应的俱乐部时，保留公开俱乐部配置用于游客页面，
+            // 但不能选中账号名下的其他俱乐部。
+            this.currentClubId = ''
+          }
+          return
+        }
+      }
+
       if (subDomainInviteCode) {
         const targetClub = normalized.find(
           (item) => item.invitation_code?.toLowerCase() === subDomainInviteCode.toLowerCase(),

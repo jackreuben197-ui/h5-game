@@ -1,5 +1,9 @@
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
+import {
+  isChannelPackageHostname,
+  isChannelSubdomainHostname,
+} from '@/utils/channelHost'
 export const CHANNEL_MAIN_DOMAIN = (import.meta.env.VITE_CHANNEL_MAIN_DOMAIN || '')
   .trim()
   .toLowerCase()
@@ -44,14 +48,7 @@ export function isChannelPackageHost(hostname: string = window.location.hostname
   // 渠道包联调：取消下面两行注释可强制按渠道域名处理。
   // void hostname
   if (TEST_CHANNEL_INVITE_CODE) return true
-  const normalizedHost = readString(hostname).toLowerCase()
-  if (!normalizedHost || !CHANNEL_MAIN_DOMAIN) {
-    return false
-  }
-
-  return (
-    normalizedHost !== CHANNEL_MAIN_DOMAIN && normalizedHost.endsWith(`.${CHANNEL_MAIN_DOMAIN}`)
-  )
+  return isChannelPackageHostname(readString(hostname), CHANNEL_MAIN_DOMAIN)
 }
 
 /**
@@ -155,7 +152,8 @@ export function extractInviteCodeFromSubdomain(
   // void hostname
   if (TEST_CHANNEL_INVITE_CODE) return TEST_CHANNEL_INVITE_CODE
   const normalizedHost = readString(hostname).toLowerCase()
-  if (!isChannelPackageHost(normalizedHost)) {
+  // 自定义域名也属于渠道包，但它没有可作为邀请码的主域名前缀。
+  if (!isChannelSubdomainHostname(normalizedHost, CHANNEL_MAIN_DOMAIN)) {
     return ''
   }
 

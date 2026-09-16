@@ -12,6 +12,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { getLocale, t } from '@/i18n'
 import { ROOM_ORIGIN_TYPE } from '@/utils/roomVisibility'
 import { isMttRecordVisible } from '@/utils/mttVisibility'
+import { resolveScrollHost } from '@/utils/scrollHost'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { useGameStore } from '@/stores/game'
 import {
@@ -130,14 +131,15 @@ watch(
 )
 
 function saveScrollPosition(): void {
-  if (scrollContainerRef.value) {
-    mttListStore.saveScrollPosition(props.scrollKey, scrollContainerRef.value.scrollTop)
+  const container = resolveScrollHost(scrollContainerRef.value)
+  if (container) {
+    mttListStore.saveScrollPosition(props.scrollKey, container.scrollTop)
   }
 }
 
 async function restoreScrollPosition(): Promise<void> {
   await nextTick()
-  const container = scrollContainerRef.value
+  const container = resolveScrollHost(scrollContainerRef.value)
   if (!container) return
   const scrollTop = mttListStore.getScrollPosition(props.scrollKey)
   requestAnimationFrame(() => {

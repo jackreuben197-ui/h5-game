@@ -47,7 +47,7 @@ onMounted(() => {
     <div class="bg-overlay"></div>
 
     <div class="match-stage">
-      <HomeTopBar standalone />
+      <HomeTopBar standalone sticky />
       <div class="match-banner">
         <HomeBannerSwiper :images="bannerImages" />
       </div>
@@ -55,6 +55,7 @@ onMounted(() => {
       <ChannelClubInfoPanel class="match-club-info" />
       <FilterTabbar v-if="showMttTabs" v-model="activeTab" :tabs="mttTabs" />
       <MttContent
+        embedded
         :active-tab="activeTab"
         scroll-key="match-tab"
         :class="{ 'match-content--no-tabs': !showMttTabs }"
@@ -82,6 +83,15 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior-y: contain;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .bg-overlay {
@@ -115,9 +125,10 @@ onMounted(() => {
 }
 
 .match-page :deep(.mtt-content) {
-  flex: 1 1 auto;
+  flex: 1 0 auto;
   min-height: 0;
   max-height: none;
+  overflow: visible;
   padding-bottom: calc(env(safe-area-inset-bottom) + 2.5rem);
 }
 

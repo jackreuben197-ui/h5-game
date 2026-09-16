@@ -39,6 +39,7 @@ import ChannelClubInfoPanel from '@/components/Club/ChannelClubInfoPanel.vue'
 import ClubIntroductionBar from '@/components/Club/ClubIntroductionBar.vue'
 import HomeBannerSwiper from '@/components/HomeBannerSwiper.vue'
 import HomeTopBar from '@/components/HomeTopBar.vue'
+import { resolveScrollHost } from '@/utils/scrollHost'
 import MainBottomTab from '@/components/Tabbar/MainBottomTab.vue'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
@@ -203,7 +204,7 @@ onDeactivated(saveScrollPosition)
 onBeforeUnmount(saveScrollPosition)
 
 function getScrollContainer(): HTMLElement | null {
-  if (!props.embedded) return groupListRef.value
+  if (!props.embedded) return resolveScrollHost(groupListRef.value)
   return pageRef.value?.closest<HTMLElement>('.main-layout-content') || null
 }
 
@@ -445,7 +446,7 @@ function handleOpenCustomerService(): void {
     <div v-if="!props.embedded" class="bg-overlay"></div>
 
     <div class="room-list-stage">
-      <HomeTopBar v-if="isChannelMenuVersionB && !props.embedded" standalone />
+      <HomeTopBar v-if="isChannelMenuVersionB && !props.embedded" standalone sticky />
       <HeaderBack
         v-else-if="!props.embedded"
         :title="t('UIHomePokerArea')"
@@ -603,7 +604,21 @@ function handleOpenCustomerService(): void {
   padding-left: 0;
 }
 
+.room-list-page--channel-menu-b .room-list-stage {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior-y: contain;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 .room-list-page--channel-menu-b .group-list {
+  flex: 1 0 auto;
+  overflow: visible;
   padding-bottom: calc(env(safe-area-inset-bottom) + 2.8rem);
 }
 

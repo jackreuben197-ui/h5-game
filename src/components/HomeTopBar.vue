@@ -3,8 +3,9 @@ import { t } from '@/i18n'
 import { requireRealUser } from '@/session/realUserGate'
 import { useGameStore } from '@/stores/game'
 
-withDefaults(defineProps<{ standalone?: boolean }>(), {
+const props = withDefaults(defineProps<{ standalone?: boolean; sticky?: boolean }>(), {
   standalone: false,
+  sticky: false,
 })
 
 const gameStore = useGameStore()
@@ -15,7 +16,13 @@ function openGuestAuth(mode: 'login' | 'register'): void {
 </script>
 
 <template>
-  <div class="home-top-bar" :class="{ 'home-top-bar--standalone': standalone }">
+  <div
+    class="home-top-bar"
+    :class="{
+      'home-top-bar--standalone': standalone,
+      'home-top-bar--sticky': props.sticky && !gameStore.isRealUser,
+    }"
+  >
     <div v-if="!gameStore.isRealUser" class="home-top-bar__actions">
       <button
         class="home-top-bar__btn home-top-bar__btn--register"
@@ -48,6 +55,16 @@ function openGuestAuth(mode: 'login' | 'register'): void {
   position: relative;
   z-index: 2;
   padding: calc(var(--app-content-safe-area-top, env(safe-area-inset-top)) + 0.6rem) 0.4rem 0;
+}
+
+.home-top-bar--sticky {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  padding-bottom: 0.24rem;
+  background: linear-gradient(180deg, rgba(34, 34, 34, 0.86) 62%, rgba(34, 34, 34, 0) 100%);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
 }
 
 .home-top-bar__actions {
@@ -90,5 +107,11 @@ function openGuestAuth(mode: 'login' | 'register'): void {
   border: 0.02rem solid rgba(249, 249, 249, 0.25);
   backdrop-filter: blur(8.5px);
   -webkit-backdrop-filter: blur(8.5px);
+}
+</style>
+
+<style lang="scss">
+:root[data-theme='light'] .home-top-bar--sticky {
+  background: linear-gradient(180deg, rgba(249, 249, 249, 0.88) 62%, rgba(249, 249, 249, 0) 100%);
 }
 </style>

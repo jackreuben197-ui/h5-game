@@ -185,8 +185,6 @@ function handleOpenCustomerService(): void {
 </template>
 
 <style scoped lang="scss">
-@use '@/styles/mixins' as *;
-
 .club-panel {
   display: flex;
   align-items: center;
@@ -297,10 +295,6 @@ function handleOpenCustomerService(): void {
   box-sizing: border-box;
   color: #0ca7ef;
   background: #f7f8fa;
-
-  @include theme-light {
-    color: #000;
-  }
 }
 
 .contact-label {

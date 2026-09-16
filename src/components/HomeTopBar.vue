@@ -39,8 +39,6 @@ function openGuestAuth(mode: 'login' | 'register'): void {
 </template>
 
 <style scoped lang="scss">
-@use '@/styles/mixins' as *;
-
 .home-top-bar {
   display: flex;
   align-items: center;
@@ -61,10 +59,6 @@ function openGuestAuth(mode: 'login' | 'register'): void {
   font-size: 0.54rem;
   font-weight: 900;
   letter-spacing: 0.05rem;
-
-  @include theme-light {
-    color: rgba(15, 8, 8, 0.82);
-  }
 }
 
 .home-top-bar__actions {
@@ -99,12 +93,6 @@ function openGuestAuth(mode: 'login' | 'register'): void {
   border: 0.02rem solid rgba(249, 249, 249, 0.15);
   backdrop-filter: blur(8.5px);
   -webkit-backdrop-filter: blur(8.5px);
-
-  @include theme-light {
-    background: rgba(255, 255, 255, 0.72);
-    color: rgba(15, 8, 8, 0.82);
-    border-color: rgba(0, 0, 0, 0.08);
-  }
 }
 
 .home-top-bar__btn--login {
@@ -113,10 +101,5 @@ function openGuestAuth(mode: 'login' | 'register'): void {
   border: 0.02rem solid rgba(249, 249, 249, 0.25);
   backdrop-filter: blur(8.5px);
   -webkit-backdrop-filter: blur(8.5px);
-
-  @include theme-light {
-    background: rgba(250, 43, 75, 0.92);
-    border-color: rgba(255, 255, 255, 0.4);
-  }
 }
 </style>

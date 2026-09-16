@@ -80,8 +80,6 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
-@use '@/styles/mixins' as *;
-
 .club-introduction {
   display: flex;
   align-items: center;
@@ -109,10 +107,6 @@ onBeforeUnmount(() => {
   height: 0.43rem;
   flex-shrink: 0;
   filter: brightness(0) invert(1);
-
-  @include theme-light {
-    filter: none;
-  }
 }
 
 .club-introduction__marquee {
@@ -128,10 +122,6 @@ onBeforeUnmount(() => {
   color: #f9f9f9;
   font-size: 0.28rem;
   white-space: nowrap;
-
-  @include theme-light {
-    color: var(--c-text);
-  }
 }
 
 .club-introduction__scroll {
@@ -160,10 +150,6 @@ onBeforeUnmount(() => {
   font-weight: 400;
   line-height: 0.6rem;
   white-space: nowrap;
-
-  @include theme-light {
-    color: var(--c-text);
-  }
 }
 
 @keyframes club-introduction-scroll {

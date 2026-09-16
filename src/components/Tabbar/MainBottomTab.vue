@@ -153,15 +153,6 @@ const channelClubId = computed(() =>
 // 娱乐场入口只在该俱乐部真的有游戏时出现；房间 / 赛事列表由会话层预热，这里只补娱乐场。
 const hasCasinoData = computed(() => channelClubId.value > 0 && casinoStore.gameRecords.length > 0)
 
-watch(
-  () => [isVersionB.value, channelClubId.value] as const,
-  ([versionB, clubId]) => {
-    if (!isChannelPackage || !versionB || clubId <= 0) return
-    if (casinoStore.gameRecords.length) return
-    void casinoStore.preloadCasinoData(clubId, false).catch(console.warn)
-  },
-  { immediate: true },
-)
 // 当前激活项索引：用于驱动顶部凸起在当前 tab 数量间平滑移动。
 const activeTabKey = computed<MainTabKey>(() => {
   if (isVersionB.value && route.name === 'lobby') {
@@ -398,6 +389,10 @@ async function stabilizeDynamicTabs(): Promise<void> {
       await Promise.allSettled([
         roomListStore.bootstrapRoomList(),
         mttListStore.bootstrapMttList(),
+        // 娱乐场入口也要等数据到位，否则它会在菜单定稿之后单独补进来。
+        channelClubId.value > 0
+          ? casinoStore.preloadCasinoData(channelClubId.value, false)
+          : Promise.resolve(),
       ])
     }
   }

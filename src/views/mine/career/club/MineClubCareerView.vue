@@ -12,6 +12,7 @@ import { formatUC } from '@/utils/roomVisibility'
 import { showGameToast } from '@/components/Toast'
 import { localStore } from '@/utils/localStore'
 import { userCache } from '@/utils/userCache'
+import { USER_STORE_CAREER } from '@/utils/indexedDB'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import { t, tJoin } from '@/i18n'
 

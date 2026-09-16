@@ -40,7 +40,6 @@ const boxList: BoxItem[] = [
   {
     key: 'club-career',
     icon: iconBoxClubT,
-    iconLight: iconBoxClubTLight,
     text: isChannelPackage ? t('UIData_KrVdD5WqB') : t('PageMineClubCareer'),
     route: '/mine/career/club',
   },

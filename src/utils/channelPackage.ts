@@ -416,7 +416,6 @@ export function buildChannelRegisterUrl(options?: {
   inviteCode?: string
   traceHash?: string
 }): string {
-  const currentUrl = new URL(window.location.href)
   const nextParams = new URLSearchParams()
   nextParams.set('mode', 'register')
   const inviteCode = readString(options?.inviteCode)
@@ -428,6 +427,5 @@ export function buildChannelRegisterUrl(options?: {
     nextParams.set('trace_hash', traceHash)
   }
 
-  // 邀请码只放在 ?i= 参数里，链接用当前页面 origin（无需拼子域名/硬编码域名）。
-  return `${currentUrl.origin}/#/?${nextParams.toString()}`
+  return `${buildChannelClubOrigin(inviteCode)}/#/?${nextParams.toString()}`
 }

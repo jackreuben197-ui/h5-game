@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 import { t } from '@/i18n'
 import { requireRealUser } from '@/session/realUserGate'
 import { useGameStore } from '@/stores/game'
@@ -8,6 +9,7 @@ withDefaults(defineProps<{ standalone?: boolean }>(), {
 })
 
 const gameStore = useGameStore()
+const { isVersionB } = useChannelBottomMenu()
 
 function openGuestAuth(mode: 'login' | 'register'): void {
   requireRealUser(undefined, { mode })
@@ -16,7 +18,7 @@ function openGuestAuth(mode: 'login' | 'register'): void {
 
 <template>
   <div class="home-top-bar" :class="{ 'home-top-bar--standalone': standalone }">
-    <span class="home-top-bar__logo">NEX-GAME</span>
+    <span v-if="!isVersionB && gameStore.isRealUser" class="home-top-bar__logo">NEX-GAME</span>
     <div v-if="!gameStore.isRealUser" class="home-top-bar__actions">
       <button
         class="home-top-bar__btn home-top-bar__btn--register"
@@ -68,12 +70,14 @@ function openGuestAuth(mode: 'login' | 'register'): void {
 .home-top-bar__actions {
   display: flex;
   gap: 0.14rem;
+  flex: 1;
 }
 
 .home-top-bar__btn {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: 1 1 0;
   min-width: 0;
   padding: 0.12rem 0.65rem;
   border: none;

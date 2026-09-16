@@ -1,4 +1,4 @@
-:root[data-theme='light'] .home-page {
+:root[data-theme='light'] :is(.home-page, .match-page) {
   .notice-bar {
     background: rgba(255, 255, 255, 1);
     border: 0.302px solid rgba(0, 0, 0, 0.16);
@@ -12,6 +12,23 @@
   .notice-label,
   .notice-track,
   .notice-item {
+    color: rgba(0, 0, 0, 1);
+  }
+
+  .club-introduction {
+    background: rgba(255, 255, 255, 1);
+    border: 0.302px solid rgba(0, 0, 0, 0.16);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    color: rgba(0, 0, 0, 1);
+  }
+
+  .club-introduction__icon {
+    filter: none;
+  }
+
+  .club-introduction__label,
+  .club-introduction__item {
     color: rgba(0, 0, 0, 1);
   }
 
@@ -52,19 +69,31 @@
     padding: 0.1rem 0.24rem;
   }
 
-  .top-bar__logo-text {
+  .home-top-bar__logo {
     color: rgba(0, 0, 0, 1);
   }
 
-  .top-bar__btn--register {
+  .home-top-bar__btn--register {
     background: linear-gradient(180deg, #808080 0%, #474747 100%);
     border-color: transparent;
     color: rgba(249, 249, 249, 1);
   }
 
-  .top-bar__btn--login {
+  .home-top-bar__btn--login {
     background: #07c09d;
     border-color: transparent;
     color: rgba(249, 249, 249, 1);
+  }
+}
+
+// Страница 比赛 версии B: собственный фон и подсветка, остальное берёт из блока выше.
+:root[data-theme='light'] .match-page {
+  color: rgba(0, 0, 0, 1);
+  background-image: url('@/assets/images/main_bg_light.webp');
+
+  .bg-overlay {
+    background:
+      radial-gradient(circle at 8% 4%, rgba(var(--c-brand-rgb), 0.2), transparent 30%),
+      radial-gradient(circle at 92% 9%, rgba(var(--c-brand-rgb), 0.14), transparent 26%);
   }
 }

@@ -7,6 +7,7 @@ export interface OpenGlobalCustomerServiceChatPayload {
   tribeId?: number
   supportUserId?: number
   orderMessage?: MatchSupportOrderMessagePayload
+  returnToCocosOnClose?: boolean
 }
 
 export interface MatchSupportOrderMessagePayload {
@@ -58,6 +59,7 @@ function preprocessOpenPayload(
     tribeId: toSafeInt(payload.tribeId),
     supportUserId: toSafeInt(payload.supportUserId),
     orderMessage: payload.orderMessage ? { ...payload.orderMessage } : undefined,
+    returnToCocosOnClose: payload.returnToCocosOnClose === true,
   }
 
   // 撮合订单客服有独立的 type 4 频道，不依赖俱乐部客服开关。
@@ -85,7 +87,7 @@ export function openGlobalCustomerServiceChat(
 ): void {
   const normalized = preprocessOpenPayload(payload)
   if (!listeners.size) {
-    // 登录后客服组件是异步挂载的；保留最近一次打开请求，避免首击丢失。
+    // 客服组件会在会话 token 就绪后异步挂载；保留最近一次打开请求，避免首击丢失。
     pendingPayload = normalized
     return
   }

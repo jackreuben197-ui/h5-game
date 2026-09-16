@@ -1,5 +1,6 @@
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
+import { isChannelPackageHostname, isChannelSubdomainHostname } from '@/utils/channelHost'
 import {
   isTelegramMiniAppEnv,
   readTelegramStartParam,
@@ -69,20 +70,7 @@ function readParam(
 
 export function isChannelPackageHost(hostname: string = window.location.hostname): boolean {
   if (TEST_CHANNEL_INVITE_CODE) return true
-  const labels = getHostLabels(hostname)
-  // 裸主域名 / localhost / 单段 host 不是邀请子域名
-  if (labels.length <= DEPLOY_APEX_LABEL_COUNT) {
-    return false
-  }
-  // 纯 IP（hostname 已去端口）不算渠道子域名
-  if (labels.every((label) => /^\d+$/.test(label))) {
-    return false
-  }
-  // www.<主域名> 之类保留前缀不是邀请码
-  if (RESERVED_SUBDOMAINS.has(labels[0])) {
-    return false
-  }
-  return true
+  return isChannelPackageHostname(readString(hostname), CHANNEL_MAIN_DOMAIN)
 }
 
 export function hasTelegramClubParam(): boolean {
@@ -258,7 +246,9 @@ export function extractInviteCodeFromSubdomain(
   hostname: string = window.location.hostname,
 ): string {
   if (TEST_CHANNEL_INVITE_CODE) return TEST_CHANNEL_INVITE_CODE
-  if (!isChannelPackageHost(hostname)) {
+  const normalizedHost = readString(hostname).toLowerCase()
+  // 自定义域名也属于渠道包，但它没有可作为邀请码的主域名前缀。
+  if (!isChannelSubdomainHostname(normalizedHost, CHANNEL_MAIN_DOMAIN)) {
     return ''
   }
   // 邀请码 = host 最前面的标签

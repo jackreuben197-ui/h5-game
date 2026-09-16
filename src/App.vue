@@ -11,12 +11,13 @@ import LoginModal from '@/views/login/LoginModal.vue'
 
 const gameStore = useGameStore()
 const loginModalStore = useLoginModalStore()
-const hasSession = computed(() => gameStore.isRealUser)
+const hasRealUserSession = computed(() => gameStore.isRealUser)
+const hasChatSession = computed(() => Boolean(gameStore.sessionToken.trim()))
 const isCocosTableAuthOverlay = computed(
   () => loginModalStore.context === H5_LOGIN_CONTEXT.TABLE_SITDOWN,
 )
 
-// 访客页不需要消息审核与客服完整业务包；登录态出现后再加载并挂载。
+// 消息审核仍仅对真实用户挂载；客服聊天支持持有体验 token 的游客。
 const GlobalMessageTodoNotice = defineAsyncComponent(
   () => import('@/components/GlobalMessageTodoNotice/GlobalMessageTodoNotice.vue'),
 )
@@ -38,10 +39,10 @@ const GlobalCustomerServiceChat = defineAsyncComponent(
   <TelegramClubJoinModal />
   <GameLaunchFallbackModal />
   <ExternalLinkFrame />
-  <Teleport v-if="hasSession" to="body">
+  <Teleport v-if="hasRealUserSession" to="body">
     <GlobalMessageTodoNotice />
   </Teleport>
-  <Teleport v-if="hasSession" to="body">
+  <Teleport v-if="hasChatSession" to="body">
     <GlobalCustomerServiceChat />
   </Teleport>
   <GlobalCsOrderFloat />

@@ -14,6 +14,7 @@ import type {
   ChatSupportMessageListChatData,
 } from '@/api/models/chat'
 import { Code, subscribeH5WsCode } from '@/bridge/ws'
+import { setH5Visible } from '@/bridge/channels/uiChannel'
 import { decodeSupportMessageNotify } from '@/bridge/ws/supportMessageNotify'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { useGameStore } from '@/stores/game'
@@ -76,6 +77,7 @@ interface GlobalChatContext {
   tribeId: number
   supportUserId: number
   orderMessage: MatchSupportOrderMessagePayload | null
+  returnToCocosOnClose: boolean
 }
 
 const chatContext = ref<GlobalChatContext>({
@@ -84,6 +86,7 @@ const chatContext = ref<GlobalChatContext>({
   tribeId: 0,
   supportUserId: 0,
   orderMessage: null,
+  returnToCocosOnClose: false,
 })
 
 let voiceTicker: number | null = null
@@ -283,6 +286,7 @@ function applyContext(payload: OpenGlobalCustomerServiceChatPayload): void {
     tribeId: toSafeInt(payload.tribeId),
     supportUserId: toSafeInt(payload.supportUserId),
     orderMessage: payload.orderMessage ? { ...payload.orderMessage } : null,
+    returnToCocosOnClose: payload.returnToCocosOnClose === true,
   }
 }
 
@@ -705,6 +709,7 @@ function openPanelByFloat(): void {
   chatContext.value.tribeId = 0
   chatContext.value.supportUserId = 0
   chatContext.value.orderMessage = null
+  chatContext.value.returnToCocosOnClose = false
   requestedClubMissing.value = false
   activeChannel.value = null
   void openPanel()
@@ -736,6 +741,10 @@ async function openPanel(): Promise<void> {
 function closePanel(): void {
   visible.value = false
   messagesReady.value = false
+  if (chatContext.value.returnToCocosOnClose) {
+    chatContext.value.returnToCocosOnClose = false
+    setH5Visible(false)
+  }
   voiceMode.value = false
   attachmentPanelVisible.value = false
   closeImagePreview()
@@ -1447,7 +1456,7 @@ function initWsListener(): void {
 
 function closeNoServicePopup(): void {
   noServiceVisible.value = false
-  visible.value = false
+  closePanel()
 }
 
 onMounted(() => {

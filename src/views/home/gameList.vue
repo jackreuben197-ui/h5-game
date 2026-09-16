@@ -23,8 +23,7 @@ import { useGameStore } from '@/stores/game'
 import { useRoomListStore } from '@/stores/roomList'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { localStore } from '@/utils/localStore'
-import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
-import { getRoomSeatedCount } from '@/utils/roomListSort'
+import { checkIsShowForClubAndTribe, getRoomPlayerCount } from '@/utils/roomVisibility'
 import serviceIcon from '@/assets/icons/icon_server.png'
 import walletIcon from '@/assets/icons/icon_wallet.png'
 import gameType6Plus from '@/assets/icons/game_type_6+.svg'
@@ -159,7 +158,10 @@ const groupedRecords = computed<RoomGroupViewModel[]>(() => {
 
   return Object.values(groupedMap)
     .map((group) => {
-      const playerCount = group.rooms.reduce((sum, room) => sum + getRoomSeatedCount(room), 0)
+      const playerCount = group.rooms.reduce(
+        (sum, room) => sum + getRoomPlayerCount(room),
+        0,
+      )
 
       return {
         ...group,
@@ -416,7 +418,6 @@ function handleRecharge(): void {
   void router.push('/wallet')
 }
 function handleOpenCustomerService(): void {
-  if (!requireRealUser(handleOpenCustomerService)) return
   const clubId = selectedClubId.value
   if (clubId <= 0) {
     showFailToast(t('UIClub_CurrentClubNo'))

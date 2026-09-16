@@ -35,6 +35,16 @@ function getOriginType(room: RoomRecord): number {
   return toSafeInt(room.origin_type)
 }
 
+// 房间详情包含用户列表时，它比汇总字段 roomers 更接近实时状态。
+// 游客首屏接口可能返回未刷新的 roomers，登录后的 WS 增量才会将其修正。
+export function getRoomPlayerCount(room: RoomRecord): number {
+  if (Array.isArray(room.users)) {
+    return room.users.length
+  }
+
+  return Math.max(0, toSafeInt(room.roomers))
+}
+
 function getRelateClubIds(room: RoomRecord): number[] {
   return toNumberList(room.relate_club_ids)
 }

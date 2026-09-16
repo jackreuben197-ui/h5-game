@@ -37,8 +37,12 @@ import { useGameStore } from '@/stores/game'
 import { useRoomListStore } from '@/stores/roomList'
 import type { ClubInfo } from '@/stores/userInfo'
 import { useUserInfoStore } from '@/stores/userInfo'
-import { checkIsShowForClubAndTribe, formatUC } from '@/utils/roomVisibility'
-import { isPrivateDomainMode } from '@/utils/channelPackage'
+import {
+  checkIsShowForClubAndTribe,
+  formatUC,
+  getRoomPlayerCount,
+} from '@/utils/roomVisibility'
+import { isChannelPackageHost, isPrivateDomainMode } from '@/utils/channelPackage'
 import { readClubListCache, writeClubListCache } from '@/utils/userClubListCache'
 import { getLocale, t, tJoin } from '@/i18n'
 import { requireRealUser } from '@/session/realUserGate'
@@ -192,10 +196,8 @@ function toSafeInt(value: unknown): number {
   return Math.floor(num)
 }
 
-function getRoomPlayers(room: RoomRecord): number {
-  return Number(room.roomers) || (Array.isArray(room.users) ? room.users.length : 0)
-}
-
+// 与首页 pokerTablesText / pokerPlayersText 一致：按俱乐部/联盟过滤共享牌桌列表，
+// 只统计扑克玩法（game_type <= 4），保证列表与进入俱乐部后看到的数据一致。
 function computeClubRoomStats(
   club: ClubInfo,
   records: RoomRecord[],
@@ -218,7 +220,7 @@ function computeClubRoomStats(
       return
     }
     tables += 1
-    players += getRoomPlayers(room)
+    players += getRoomPlayerCount(room)
   })
   return { tables, players, activeCount, chipsCount, roleText }
 }

@@ -26,7 +26,7 @@ import { t } from '@/i18n'
 import { localStore } from '@/utils/localStore'
 import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
 import { useHomeAnnouncement } from '@/composables/useHomeAnnouncement'
-import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
+import { checkIsShowForClubAndTribe, getRoomPlayerCount } from '@/utils/roomVisibility'
 import { filterVisibleMttRecords } from '@/utils/mttVisibility'
 import { showGameToast } from '@/components/Toast'
 import { useCasinoStore } from '@/stores/casino'
@@ -357,10 +357,14 @@ function persistHomeRoomStatsCache(stats: HomeZoneStats): void {
 
 const homeRoomStats = ref<HomeZoneStats>(restoreHomeRoomStatsCache() || createEmptyZoneStats())
 const currentClub = computed<ClubInfo | null>(() => {
+  // 渠道入口只能展示 default 接口锁定的俱乐部；持久化的 currentClub 也可能来自官方包。
+  if (isChannelPackage) {
+    return userInfoStore.channelDefaultClub
+  }
   if (userInfoStore.currentClub) {
     return userInfoStore.currentClub
   }
-  return userInfoStore.clubList[0] || (isChannelPackage ? userInfoStore.channelDefaultClub : null)
+  return userInfoStore.clubList[0] || null
 })
 const selectedClubId = computed(() => toSafeInt(currentClub.value?.club_id))
 const selectedTribeId = computed(() =>
@@ -507,10 +511,6 @@ function openMiniGamePanel(): void {
   showGameToast(t('UIClub_InDeve'))
 }
 
-function getRoomPlayers(room: RoomRecord): number {
-  return Number(room.roomers) || (Array.isArray(room.users) ? room.users.length : 0)
-}
-
 function classifyRoomToZone(room: RoomRecord): 'poker' | 'mahjong' | null {
   const gameType = Number(room.game_type)
   if (!Number.isFinite(gameType)) {
@@ -544,7 +544,7 @@ function refreshHomePokerMahjongStatsFromStore(): void {
     }
 
     nextStats[zone].tables += 1
-    const playersNum = getRoomPlayers(room)
+    const playersNum = getRoomPlayerCount(room)
     nextStats[zone].players += playersNum
   })
 

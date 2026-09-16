@@ -103,7 +103,6 @@ function handleOpenTelegram(): void {
 }
 
 function handleOpenCustomerService(): void {
-  if (!requireRealUser(handleOpenCustomerService)) return
   if (selectedClubId.value <= 0) {
     showGameToast(t('UIClub_CurrentClubNo'))
     return

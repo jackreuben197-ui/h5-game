@@ -42,6 +42,13 @@ export function getRoomPlayerCount(room: RoomRecord): number {
     return room.users.length
   }
 
+  // 座位占用比 roomers 准确：游客拿到的 roomers 可能是过期值。
+  const seatCount = toSafeInt(room.seat_count)
+  const emptySeat = Number(room.empty_seat)
+  if (seatCount > 0 && Number.isFinite(emptySeat) && emptySeat >= 0) {
+    return Math.max(0, seatCount - Math.floor(emptySeat))
+  }
+
   return Math.max(0, toSafeInt(room.roomers))
 }
 

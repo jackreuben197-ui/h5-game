@@ -35,9 +35,9 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { isPrivateDomainMode } from '@/utils/channelPackage'
 import { useCachedImage } from '@/utils/imageCache'
 import { localStore } from '@/utils/localStore'
-import { getRoomSeatedCount } from '@/utils/roomListSort'
 import {
   checkIsShowForClubAndTribe,
+  getRoomPlayerCount,
   ROOM_ORIGIN_TYPE,
 } from '@/utils/roomVisibility'
 import { getLocale, t } from '@/i18n'
@@ -320,7 +320,7 @@ const groupedRecords = computed<RoomGroupViewModel[]>(() => {
 
   return Object.values(groupedMap)
     .map((group) => {
-      const playerCount = group.rooms.reduce((sum, room) => sum + getRoomSeatedCount(room), 0)
+      const playerCount = group.rooms.reduce((sum, room) => sum + getRoomPlayerCount(room), 0)
 
       return {
         ...group,

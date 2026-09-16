@@ -25,6 +25,9 @@ const emit = defineEmits<{
 const walletStore = useWalletStore()
 
 // 0: exact amount, 1: rounded amount
+// Временно скрыта карточка «30 минут»: вернуть на true, чтобы показать её снова.
+const SHOW_ROUNDED_OPTION = false
+
 const selectedOption = ref(0)
 const isTimedOut = ref(false)
 let timer: number | null = null
@@ -148,7 +151,7 @@ onUnmounted(() => {
 
             <!-- Option 1: Rounded -->
             <div
-              v-if="!props.uniqueAmountEnabled"
+              v-if="SHOW_ROUNDED_OPTION && !props.uniqueAmountEnabled"
               class="option-card"
               :class="{ 'option-card--active': selectedOption === 1 }"
               @click="selectedOption = 1"

@@ -206,6 +206,7 @@ function isWithdrawAmountInRange(amount: number): boolean {
 }
 
 const canWithdraw = computed(() => {
+  if (props.preview) return true
   if (!selectedWithdrawType.value) return false
   const amt = parsedAmount.value
   if (amt <= 0) return false
@@ -227,7 +228,10 @@ function withdrawClubPayload(): Record<string, number> {
   if (Number.isFinite(directed) && directed > 0) {
     return { club_id: directed }
   }
-  const club = userInfoStore.currentClub ?? userInfoStore.clubList[0]
+  const club =
+    userInfoStore.currentClub ??
+    userInfoStore.clubList[0] ??
+    userInfoStore.channelDefaultClub
   const clubId = club?.club_id !== undefined ? Number(club.club_id) : NaN
   return Number.isFinite(clubId) && clubId > 0 ? { club_id: clubId } : {}
 }
@@ -235,7 +239,9 @@ function withdrawClubPayload(): Record<string, number> {
 function assertClub(): { club_id: number } | null {
   const p = withdrawClubPayload()
   if (!('club_id' in p)) {
-    showToast(t('error2005'))
+    if (!props.preview) {
+      showToast(t('error2005'))
+    }
     return null
   }
   return { club_id: Number(p.club_id) }
@@ -243,10 +249,6 @@ function assertClub(): { club_id: number } | null {
 
 // ─── API ─────────────────────────────────────────────────────────────────────
 async function fetchWithdrawTypes(): Promise<void> {
-  if (props.preview) {
-    withdrawTypes.value = []
-    return
-  }
   const club = assertClub()
   if (!club) return
   loadingWithdrawTypes.value = true
@@ -552,13 +554,27 @@ async function confirmWithdraw(): Promise<void> {
   }
 }
 
+function handleAddAccount(): void {
+  if (props.preview) {
+    emit('require-auth')
+    return
+  }
+  router.push(
+    isUsdt.value
+      ? '/wallet/add-usdt-account'
+      : isWallet.value
+        ? '/wallet/add-wallet-address'
+        : isWechat.value
+          ? '/wallet/add-wechat-account'
+          : isAlipay.value
+            ? '/wallet/add-alipay-account'
+            : '/wallet/add-bank-card',
+  )
+}
+
 watch(
-  [() => withdrawClubPayload().club_id, () => props.preview],
-  ([clubId, preview]) => {
-    if (preview) {
-      withdrawTypes.value = []
-      return
-    }
+  [() => withdrawClubPayload().club_id, () => props.clubId],
+  ([clubId]) => {
     if (Number(clubId) > 0) void fetchWithdrawTypes()
   },
   { immediate: true },
@@ -662,19 +678,7 @@ watch(filteredWithdrawTypes, (list) => {
           <button
             class="wf__add-btn"
             type="button"
-            @click="
-              router.push(
-                isUsdt
-                  ? '/wallet/add-usdt-account'
-                  : isWallet
-                    ? '/wallet/add-wallet-address'
-                    : isWechat
-                      ? '/wallet/add-wechat-account'
-                      : isAlipay
-                        ? '/wallet/add-alipay-account'
-                        : '/wallet/add-bank-card'
-              )
-            "
+            @click="handleAddAccount"
           >
             <span class="wf__add-btn-plus">+</span>
             <span>{{ tx('Wallet_AddAccount', 'Add Account') }}</span>

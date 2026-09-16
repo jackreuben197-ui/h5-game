@@ -43,6 +43,7 @@ export interface HttpRequestConfigExt extends InternalAxiosRequestConfig {
 }
 
 const REAL_USER_REQUIRED_ERROR = 'H5_REAL_USER_REQUIRED'
+const AUTH_REQUIRED_ERROR = 'H5_AUTH_REQUIRED'
 
 let authRedirecting = false
 const PRE_LOGIN_PATHS = [
@@ -236,7 +237,9 @@ http.interceptors.request.use(async (config) => {
   // 真正的服务端 401（带 token 被服务端拒绝）由 response 拦截器在调用 forceToLogin。
   if (!token && !isPreLoginRequest && !isGuestPreviewRequest(normalizedUrl)) {
     console.warn(`请求 ${requestUrl} 时没有登录，且不属于登录前接口，已被静默拒绝`)
-    return Promise.reject(new Error('未登录或登录已过期'))
+    const error = new Error('未登录或登录已过期') as Error & { code?: string }
+    error.code = AUTH_REQUIRED_ERROR
+    return Promise.reject(error)
   }
 
   // 响应拦截器用它判断返回值是否仍属于当前会话，避免旧 token 的 90010
@@ -284,7 +287,8 @@ http.interceptors.response.use(
     return response
   },
   (error: AxiosError<{ message?: string; code?: number }>) => {
-    if ((error as AxiosError & { code?: string }).code === REAL_USER_REQUIRED_ERROR) {
+    const localErrorCode = (error as AxiosError & { code?: string }).code
+    if (localErrorCode === REAL_USER_REQUIRED_ERROR || localErrorCode === AUTH_REQUIRED_ERROR) {
       return Promise.reject(error)
     }
     const businessCode = error.response?.data?.code

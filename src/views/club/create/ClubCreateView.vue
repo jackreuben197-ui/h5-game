@@ -16,6 +16,8 @@ import { useAppConfigStore } from '@/stores/appConfig'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { resolveDiamondPriceValue } from '@/utils/diamondPriceConfig'
 import { t } from '@/i18n'
+import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
+// 主容器背景图：全页面共用一张底图。
 
 const backgroundStyle = computed(() => ({
   '--club-create-bg-dark': `url(${mainBgUrl})`,
@@ -25,6 +27,7 @@ const backgroundStyle = computed(() => ({
 const router = useRouter()
 const appConfig = useAppConfigStore()
 const userInfoStore = useUserInfoStore()
+const hideDiamondElements = isChannelDiamondFreeMode()
 
 const userDisplayId = computed(() => userInfoStore.userInfo?.random_num ?? '--')
 
@@ -184,7 +187,7 @@ async function onCreateClub(): Promise<void> {
           {{ isSubmitting ? t('UIClub_Text99') + "..." : t('UIGuild_CreateDes') }}
         </button>
 
-        <p class="cost-line" :aria-label="t('UIClub_Text100')">
+        <p v-if="!hideDiamondElements" class="cost-line" :aria-label="t('UIClub_Text100')">
           <span>{{ t('UIClub_Text101') }}</span>
           <img :src="imgDiamond" :alt="t('UIMine_VIP_diamond')" />
           <span class="cost-original">{{ createCostOriginal }}</span>

@@ -18,10 +18,12 @@ import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
 import { t, tJoin, ucLabel } from '@/i18n'
+import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
 
 const userInfoStore = useUserInfoStore()
 const route = useRoute()
 const context = computed(() => getMemberRouteContext(route))
+const hideDiamondElements = isChannelDiamondFreeMode()
 
 const backgroundStyle = computed(() => ({
   '--agent-stats-bg-dark': `url(${mainBgUrl})`,
@@ -299,7 +301,7 @@ onBeforeUnmount(() => {
       <div class="coin">
         <div>{{ chips }} <img class="coin-icon" :src="imgChips" alt="" /></div>
         <div>{{ balance }} <img class="coin-icon" :src="imgBalance" alt="" /></div>
-        <div>{{ diamond }} <img class="coin-icon" :src="imgDiamond" alt="" /></div>
+        <div v-if="!hideDiamondElements">{{ diamond }} <img class="coin-icon" :src="imgDiamond" alt="" /></div>
       </div>
     </section>
 

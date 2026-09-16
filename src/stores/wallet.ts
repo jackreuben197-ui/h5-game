@@ -18,7 +18,8 @@ export const useWalletStore = defineStore('wallet', () => {
       return Number(clubIdOverride)
     }
     const userInfoStore = useUserInfoStore()
-    const currentClub = userInfoStore.currentClub ?? userInfoStore.clubList[0]
+    const currentClub =
+      userInfoStore.currentClub ?? userInfoStore.clubList[0] ?? userInfoStore.channelDefaultClub
     const clubId = Number(currentClub?.club_id)
     return Number.isFinite(clubId) && clubId > 0 ? clubId : undefined
   }
@@ -35,11 +36,14 @@ export const useWalletStore = defineStore('wallet', () => {
     }
 
     const requestVersion = ++priceListRequestVersion
-    const promise = postPropGoldPriceListApi({
-      club_id: clubId,
-      source_type: 2,
-      gold_types: [1],
-    }/*, clubId */).then((res) => {
+    const promise = postPropGoldPriceListApi(
+      {
+        club_id: clubId,
+        source_type: 2,
+        gold_types: [1],
+      },
+      clubId,
+    ).then((res) => {
       if (requestVersion !== priceListRequestVersion) return
 
       // All payment types (types 1 to 9) should be loaded and shown.
@@ -66,7 +70,29 @@ export const useWalletStore = defineStore('wallet', () => {
     goldPriceData.value = null
   }
 
-  function calculateUsdtPrice(goldCount: number, rate: number, feeRate: number, feeType = 0, discount = 0) {
+  function calculateUsdtPrice(goldCount: number, usdtRate: number, feeRate: number, feeType = 0) {
+    const base = usdtRate > 0 ? goldCount / 100 / usdtRate : 0
+    let total = base
+    if (feeType === 2 && feeRate > 0) {
+      const fee = base * feeRate
+      total = base - fee
+    }
+
+    const totalUiPrice = Number(Math.max(0, total).toFixed(4))
+    const apiPayPrice = totalUiPrice
+
+    return { apiPayPrice, totalUiPrice }
+  }
+
+  // 在线支付渠道用 pay_types.rate（1 UC = rate 支付币，与 usdt_rate 互为倒数），
+  // 手续费由玩家加付。USDT / 客服渠道走 usdt_rate，算法相反，见 calculateUsdtPrice。
+  function calculateOnlinePaymentPrice(
+    goldCount: number,
+    rate: number,
+    feeRate: number,
+    feeType = 0,
+    discount = 0,
+  ) {
     const base = (goldCount / 100) * rate
     let priceAfterDiscount = base * (1 - discount)
     priceAfterDiscount = Math.round(priceAfterDiscount * 10000) / 10000
@@ -386,6 +412,7 @@ export const useWalletStore = defineStore('wallet', () => {
     loadPriceList,
     clearPriceList,
     calculateUsdtPrice,
+    calculateOnlinePaymentPrice,
     calculateRechargeUsdtPrice,
     formatUsdtPrice,
     calculateCustomerServicePrice,

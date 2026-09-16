@@ -20,6 +20,7 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 import { formatUC } from '@/utils/roomVisibility'
 import { t } from '@/i18n'
+import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
 
 const backgroundStyle = computed(() => ({
   '--offline-players-bg-dark': `url(${mainBgUrl})`,
@@ -43,6 +44,7 @@ interface PlayerCard {
 const route = useRoute()
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
+const hideDiamondElements = isChannelDiamondFreeMode()
 
 const listMode = ref<ListMode>('members')
 const hideCurrentPlayers = ref(false)
@@ -348,7 +350,7 @@ onMounted(() => {
                 </p>
                 <p class="data-value">{{ row.credit }}/{{ row.creditLimit }}</p>
               </div>
-              <div class="data-item">
+              <div v-if="!hideDiamondElements" class="data-item">
                 <p class="data-label">
                   <img :src="imgDiamond" alt="" aria-hidden="true" />
                   <span>{{ t('UIMine_VIP_diamond') }}</span>

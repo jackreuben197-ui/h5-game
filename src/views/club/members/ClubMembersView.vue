@@ -36,6 +36,7 @@ import { toPlain, userCache } from '@/utils/userCache'
 import { t, tJoin } from '@/i18n'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
+import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
   '--club-members-bg-dark': `url(${mainBgUrl})`,
@@ -110,6 +111,7 @@ interface RecordTypeOption {
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
+const hideDiamondElements = isChannelDiamondFreeMode()
 const activeTab = ref<TabKey>('account')
 const searchKeyword = ref('')
 const activeRange = ref<RecordRangeKey>('today')
@@ -232,7 +234,9 @@ const isFounderOfCurrentClub = computed(
   () => toSafeNumber(userInfoStore.currentClub?.user_level) === 1,
 )
 const shouldShowCoinFundTab = computed(() => toSafeNumber(userInfoStore.currentClub?.tribe_id) > 0)
-const shouldShowDiamondFundTab = computed(() => isFounderOfCurrentClub.value)
+const shouldShowDiamondFundTab = computed(
+  () => !hideDiamondElements && isFounderOfCurrentClub.value,
+)
 const availableFundAssetTabs = computed<FundAssetTab[]>(() => {
   const tabs: FundAssetTab[] = []
   if (shouldShowCoinFundTab.value) {
@@ -311,14 +315,19 @@ const summaryTop = computed<SummaryItem[]>(() => [
   },
 ])
 
-const summaryBottom = computed<SummaryItem[]>(() => [
-  { label: t('UIClub_Member2'), value: clubFundSummary.value.membersCreditLimit, icon: 'balance' },
-  {
-    label: t('UIClub_FundDetail_ClubDiamond'),
-    value: clubFundSummary.value.clubDiamond,
-    icon: 'diamond',
-  },
-])
+const summaryBottom = computed<SummaryItem[]>(() => {
+  const items: SummaryItem[] = [
+    { label: t('UIClub_Member2'), value: clubFundSummary.value.membersCreditLimit, icon: 'balance' },
+  ]
+  if (!hideDiamondElements) {
+    items.push({
+      label: t('UIClub_FundDetail_ClubDiamond'),
+      value: clubFundSummary.value.clubDiamond,
+      icon: 'diamond',
+    })
+  }
+  return items
+})
 
 const recordRanges: RecordRangeItem[] = [
   { key: 'today', label: t('UIData_Today') },
@@ -1588,7 +1597,7 @@ onMounted(() => {
                 </div>
               </div>
 
-              <p class="member-diamond">
+              <p v-if="!hideDiamondElements" class="member-diamond">
                 <img :src="imgDiamond" alt="" aria-hidden="true" />
                 <span>{{ member.diamond }}</span>
               </p>

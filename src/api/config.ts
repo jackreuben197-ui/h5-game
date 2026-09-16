@@ -1,5 +1,4 @@
-import http from '@/api/http'
-import type { HttpRequestConfigExt } from '@/api/http'
+import http, { type HttpRequestOptionsExt } from '@/api/http'
 import type { ApiResponse } from '@/api/models/common'
 import type {
   BaseConfigCombineData,
@@ -28,6 +27,7 @@ export async function getMultiLanguageTemplateApi(): Promise<
   const response = await http.post<ApiResponse<MultiLanguageTemplateRecord[]>>(
     '/config/multi_language/template',
     {},
+    { allowGuestAccount: true } satisfies HttpRequestOptionsExt,
   )
   return response.data
 }
@@ -109,12 +109,10 @@ export async function postUserWhitelistInfoApi(
 export async function postOnlineWithdrawTypeListApi(
   payload: Record<string, unknown> = {},
 ): Promise<ApiResponse<OnlineWithdrawTypeListData>> {
-  // 该提现类型列表接口不需要携带 X-Club。
-  const requestOptions = { xClub: false } as HttpRequestConfigExt
   const response = await http.post<ApiResponse<OnlineWithdrawTypeListData>>(
     '/config/online_withdraw_type_list',
     payload,
-    requestOptions,
+    { xClub: false } satisfies HttpRequestOptionsExt,
   )
   return response.data
 }
@@ -126,6 +124,7 @@ export async function postOnlineWithdrawDescriptionApi(
   const response = await http.post<ApiResponse<OnlineWithdrawDescriptionData>>(
     '/config/online_withdraw_description',
     payload,
+    { xClub: false } satisfies HttpRequestOptionsExt,
   )
   return response.data
 }

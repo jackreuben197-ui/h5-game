@@ -1,6 +1,17 @@
 <script setup lang="ts">
 import { usePlatformDiamondVisibility } from '@/composables/usePlatformDiamondVisibility'
-import { computed, onMounted, reactive, ref, watch, type CSSProperties } from 'vue'
+import {
+  computed,
+  nextTick,
+  onActivated,
+  onBeforeUnmount,
+  onDeactivated,
+  onMounted,
+  reactive,
+  ref,
+  watch,
+  type CSSProperties,
+} from 'vue'
 import { useRouter } from 'vue-router'
 import { showFailToast } from 'vant'
 import { enterTable } from '@/bridge/core'
@@ -24,8 +35,14 @@ import { t } from '@/i18n'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 import { isPrivateDomainMode } from '@/utils/channelPackage'
 import ClubZoneQuickActions from '@/components/Club/ClubZoneQuickActions.vue'
+import ChannelClubManageFloatingButton from '@/components/Club/ChannelClubManageFloatingButton.vue'
+import ChannelClubInfoPanel from '@/components/Club/ChannelClubInfoPanel.vue'
+import ClubIntroductionBar from '@/components/Club/ClubIntroductionBar.vue'
+import HomeBannerSwiper from '@/components/HomeBannerSwiper.vue'
+import HomeTopBar from '@/components/HomeTopBar.vue'
 import MainBottomTab from '@/components/Tabbar/MainBottomTab.vue'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
+import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
 import { requireRealUser } from '@/session/realUserGate'
 import {
   ensureExperienceSession,
@@ -34,10 +51,12 @@ import {
 
 interface Props {
   embedded?: boolean
+  scrollKey?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   embedded: false,
+  scrollKey: 'poker-zone',
 })
 
 type GameTypeTabName = 'all' | 'texas' | 'omaha' | 'sixPlus'
@@ -72,10 +91,18 @@ const roomListStore = useRoomListStore()
 const userInfoStore = useUserInfoStore()
 const isChannelPackage = computed(() => isPrivateDomainMode())
 const { isVersionB: isChannelMenuVersionB } = useChannelBottomMenu()
+const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages()
 
 // 顶部右侧切换风格开关：和旧版保持一致。
-const activeTab = ref<GameTypeTabName>('all')
+const savedActiveTab = roomListStore.getActiveListTab(props.scrollKey)
+const activeTab = ref<GameTypeTabName>(
+  ['all', 'texas', 'omaha', 'sixPlus'].includes(savedActiveTab)
+    ? (savedActiveTab as GameTypeTabName)
+    : 'all',
+)
 const expandedMap = reactive<Record<string, boolean>>({})
+const pageRef = ref<HTMLElement | null>(null)
+const groupListRef = ref<HTMLElement | null>(null)
 const pageStyle = computed<CSSProperties>(() => ({
   '--tab-bg': `url(${tabBg})`,
 }))
@@ -151,12 +178,47 @@ const groupedRecords = computed<RoomGroupViewModel[]>(() => {
 })
 
 onMounted(() => {
+  if (!props.embedded && isChannelPackage) {
+    void fetchLobbyBannerImages().catch((error) => {
+      console.warn('[poker-list] fetch lobby banner failed:', error)
+    })
+  }
   void ensureExperienceSession()
     .catch((error) => {
       console.warn('[poker-list] resolve session identity failed:', error)
     })
-    .finally(() => bootstrapRoomList())
+    .finally(() => {
+      bootstrapRoomList()
+      void restoreScrollPosition()
+    })
 })
+
+onActivated(() => {
+  void restoreScrollPosition()
+})
+
+onDeactivated(saveScrollPosition)
+onBeforeUnmount(saveScrollPosition)
+
+function getScrollContainer(): HTMLElement | null {
+  if (!props.embedded) return groupListRef.value
+  return pageRef.value?.closest<HTMLElement>('.main-layout-content') || null
+}
+
+function saveScrollPosition(): void {
+  const container = getScrollContainer()
+  if (container) roomListStore.saveScrollPosition(props.scrollKey, container.scrollTop)
+}
+
+async function restoreScrollPosition(): Promise<void> {
+  await nextTick()
+  const container = getScrollContainer()
+  if (!container) return
+  const scrollTop = roomListStore.getScrollPosition(props.scrollKey)
+  requestAnimationFrame(() => {
+    container.scrollTop = scrollTop
+  })
+}
 
 // 进入页面先用缓存秒开，再静默刷新最新数据。
 function bootstrapRoomList(): void {
@@ -176,6 +238,10 @@ watch(
     deep: false,
   },
 )
+
+watch(activeTab, (tab) => {
+  roomListStore.saveActiveListTab(props.scrollKey, tab)
+})
 
 // 缓存分组展开状态，避免静默刷新后折叠状态丢失。
 function persistRoomGroupExpandedCache(): void {
@@ -236,6 +302,7 @@ function buildGroupKey(room: RoomRecord): string {
 }
 
 async function handleTableClick(room: RoomRecord): Promise<void> {
+  saveScrollPosition()
   try {
     if (!(await ensureExperienceSessionReady())) {
       throw new Error(t('UIClub_Fetch') + ' token ' + t('UIClub_Fail3'))
@@ -366,6 +433,7 @@ function handleOpenCustomerService(): void {
 
 <template>
   <div
+    ref="pageRef"
     class="room-list-page poker-zone-page themeType2"
     :class="{
       'room-list-page--embedded': props.embedded,
@@ -376,10 +444,11 @@ function handleOpenCustomerService(): void {
     <div v-if="!props.embedded" class="bg-overlay"></div>
 
     <div class="room-list-stage">
+      <HomeTopBar v-if="isChannelMenuVersionB && !props.embedded" standalone />
       <HeaderBack
-        v-if="!props.embedded"
-        :title="isChannelMenuVersionB ? 'POKER' : t('UIHomePokerArea')"
-        :show-back="!isChannelMenuVersionB"
+        v-else-if="!props.embedded"
+        :title="t('UIHomePokerArea')"
+        show-back
         extra-padding
         @back="handleBack"
       >
@@ -401,7 +470,14 @@ function handleOpenCustomerService(): void {
           </div>
         </template>
       </HeaderBack>
-      <ClubZoneQuickActions v-if="isChannelPackage && !props.embedded" />
+      <template v-if="isChannelPackage && isChannelMenuVersionB && !props.embedded">
+        <div class="channel-club-banner">
+          <HomeBannerSwiper :images="bannerImages" />
+        </div>
+        <ClubIntroductionBar standalone />
+        <ChannelClubInfoPanel class="channel-club-info" />
+      </template>
+      <ClubZoneQuickActions v-else-if="isChannelPackage && !props.embedded" />
       <GameTypeTabbar
         v-model="activeTab"
         :class="{ 'home-embedded-tabs': props.embedded }"
@@ -413,7 +489,7 @@ function handleOpenCustomerService(): void {
         ]"
       />
 
-      <section class="group-list">
+      <section ref="groupListRef" class="group-list">
         <PokerTableGroupCard
           v-for="group in groupedRecords"
           :key="group.groupKey"
@@ -432,8 +508,9 @@ function handleOpenCustomerService(): void {
         </div>
       </section>
     </div>
+    <ChannelClubManageFloatingButton v-if="!props.embedded" />
+    <MainBottomTab v-if="isChannelMenuVersionB && !props.embedded" />
   </div>
-  <MainBottomTab v-if="isChannelMenuVersionB && !props.embedded" />
 </template>
 
 <style scoped lang="scss">
@@ -480,6 +557,18 @@ function handleOpenCustomerService(): void {
   align-items: center;
   gap: 0.26rem;
   margin-right: 0.25rem;
+}
+
+.channel-club-banner {
+  flex: 0 0 auto;
+  margin: 0.12rem 0.38rem 0;
+  overflow: hidden;
+  border-radius: 0.8rem;
+}
+
+.channel-club-info {
+  flex: 0 0 auto;
+  margin: 0.24rem 0.38rem;
 }
 
 .group-list {

@@ -43,6 +43,8 @@ const ROOM_STATUS = {
 
 interface RoomListState {
   records: RoomRecord[]
+  scrollPositions: Record<string, number>
+  activeListTabs: Record<string, string>
 }
 
 const PENDING_SESSION_SCOPE = scopeForUser('0')
@@ -200,8 +202,27 @@ function schedulePersist(scope: RoomListScope, getRecords: () => RoomRecord[]): 
 export const useRoomListStore = defineStore('h5-room-list-store', {
   state: (): RoomListState => ({
     records: [],
+    scrollPositions: {},
+    activeListTabs: {},
   }),
   actions: {
+    saveScrollPosition(key: string, scrollTop: number): void {
+      if (!key) return
+      this.scrollPositions[key] = Math.max(0, Number(scrollTop) || 0)
+    },
+
+    getScrollPosition(key: string): number {
+      return Math.max(0, Number(this.scrollPositions[key]) || 0)
+    },
+
+    saveActiveListTab(key: string, tab: string): void {
+      if (key && tab) this.activeListTabs[key] = tab
+    },
+
+    getActiveListTab(key: string): string {
+      return this.activeListTabs[key] || ''
+    },
+
     bootstrapRoomList(): Promise<void> {
       cleanupLegacyLocalStorageOnce()
       if (isUnauthenticatedMode()) {

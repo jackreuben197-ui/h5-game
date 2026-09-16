@@ -51,12 +51,12 @@ let timer: number | null = null
 const showFullQr = ref(false)
 
 const priceData = computed(() => {
-  return walletStore.calculateUsdtPrice(
+  return walletStore.calculateOnlinePaymentPrice(
     props.goldCount,
     props.rate,
     props.feeRate,
     props.feeType || 0,
-    props.discount || 0
+    props.discount || 0,
   )
 })
 

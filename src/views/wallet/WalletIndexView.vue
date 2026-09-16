@@ -70,10 +70,21 @@ const directedClubId = computed(() => {
 const walletClub = computed(() => {
   if (directedClubId.value) {
     return (
-      userInfoStore.clubList.find((club) => Number(club.club_id) === directedClubId.value) ?? null
+      userInfoStore.clubList.find((club) => Number(club.club_id) === directedClubId.value) ??
+      (Number(userInfoStore.channelDefaultClub?.club_id) === directedClubId.value
+        ? userInfoStore.channelDefaultClub
+        : null)
     )
   }
-  return userInfoStore.currentClub ?? userInfoStore.clubList[0] ?? null
+  if (!gameStore.isRealUser) {
+    return userInfoStore.channelDefaultClub
+  }
+  return (
+    userInfoStore.currentClub ??
+    userInfoStore.clubList[0] ??
+    userInfoStore.channelDefaultClub ??
+    null
+  )
 })
 const walletClubId = computed(
   () => directedClubId.value ?? (Number(walletClub.value?.club_id) || undefined),
@@ -135,10 +146,11 @@ const customAmount = ref('')
 const usdtPopupOpen = ref(false)
 const usdtPopupProps = ref({
   goldCount: 0,
-  rate: 0,
+  usdtRate: 0,
   feeRate: 0,
   feeType: 0,
   discount: 0,
+  uniqueAmountEnabled: false,
 })
 const usdtUniqueAmount = ref<{ amount: number; priceId: number } | null>(null)
 
@@ -151,7 +163,7 @@ const rechargeResult = ref<any>(null)
 const csPopupOpen = ref(false)
 const csPopupProps = ref({
   goldCount: 0,
-  rate: 0,
+  usdtRate: 0,
   feeRate: 0,
   feeType: 0,
   discount: 0,
@@ -491,7 +503,8 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
     }
   } else if (orderType === 1) {
     // Standard USDT flow
-    usdtPopupProps.value.rate = (fullOrder as any).rate || (fullOrder as any).exchange_rate || 1
+    usdtPopupProps.value.usdtRate =
+      (fullOrder as any).usdt_rate || (fullOrder as any).exchange_rate || 1
     usdtDetailsPopupOpen.value = true
   } else {
     // 微信 / 支付宝 / 银行卡等在线支付（type 2、4-9）继续未完成订单
@@ -516,16 +529,20 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
 }
 
 watch(
-  [walletClubId, () => gameStore.isRealUser],
-  ([clubId, isRealUser]) => {
+  [walletClubId, () => gameStore.sessionToken, () => gameStore.isRealUser],
+  ([clubId, sessionToken, isRealUser]) => {
     walletStore.clearCsOrders()
-    if (!isRealUser) {
+    if (!sessionToken) {
       walletStore.clearPriceList()
       unfinishedOrder.value = null
       return
     }
     void walletStore.loadPriceList(clubId)
-    void refreshPendingCsOrder()
+    if (isRealUser) {
+      void refreshPendingCsOrder()
+    } else {
+      unfinishedOrder.value = null
+    }
   },
   { immediate: true },
 )
@@ -584,8 +601,8 @@ const presets = computed<Preset[]>(() => {
   }
   const list = hasPriceList ? selected!.price_list! : (walletStore.goldPriceData?.list ?? [])
 
-  const isUsdt = selected?.type !== 3
-  const rate = selected?.rate ?? 1
+  const isUsdt = selected?.type === 1
+  const usdtRate = selected?.usdt_rate ?? 1
   const feeRate = selected?.fee_rate ?? 0
   const feeType = selected?.fee_type ?? 0
   const discount = selected?.discount ?? 0
@@ -596,12 +613,17 @@ const presets = computed<Preset[]>(() => {
     let chipStr = (goldCount / 100).toLocaleString(undefined, { useGrouping: false })
     if (isUsdt) {
       chipStr = walletStore.formatUsdtPrice(
-        walletStore.calculateRechargeUsdtPrice(goldCount, rate, feeRate, feeType, discount)
+        walletStore.calculateRechargeUsdtPrice(goldCount, usdtRate, feeRate, feeType, discount)
           .totalUiPrice,
       )
     } else if (selected?.type === 3) {
       // Customer Service: show decimals
-      const csPrice = walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount)
+      const csPrice = walletStore.calculateCustomerServicePrice(
+        goldCount,
+        usdtRate,
+        feeRate,
+        discount,
+      )
       chipStr = csPrice.toLocaleString(undefined, {
         useGrouping: false,
         minimumFractionDigits: 2,
@@ -675,12 +697,12 @@ const displayPayAmount = computed(() => {
   if (selected?.type !== 3 && selected) {
     // USDT / 微信 / 支付宝 / 银行卡等在线支付
     const goldCount = amount * 100
-    const rate = selected.rate ?? 1
+    const usdtRate = selected.usdt_rate ?? 1
     const feeRate = selected.fee_rate ?? 0
     const feeType = selected.fee_type ?? 0
     const discount = selected.discount ?? 0
     return walletStore.formatUsdtPrice(
-      walletStore.calculateRechargeUsdtPrice(goldCount, rate, feeRate, feeType, discount)
+      walletStore.calculateRechargeUsdtPrice(goldCount, usdtRate, feeRate, feeType, discount)
         .totalUiPrice,
     )
   }
@@ -688,10 +710,15 @@ const displayPayAmount = computed(() => {
   if (selected?.type === 3) {
     // Customer Service: show decimals
     const goldCount = amount * 100
-    const rate = selected.rate ?? 1
+    const usdtRate = selected.usdt_rate ?? 1
     const feeRate = selected.fee_rate ?? 0
     const discount = selected.discount ?? 0
-    const csPrice = walletStore.calculateCustomerServicePrice(goldCount, rate, feeRate, discount)
+    const csPrice = walletStore.calculateCustomerServicePrice(
+      goldCount,
+      usdtRate,
+      feeRate,
+      discount,
+    )
     return csPrice.toLocaleString(undefined, {
       useGrouping: false,
       minimumFractionDigits: 2,
@@ -747,16 +774,17 @@ async function onPayClick() {
 
     usdtPopupProps.value = {
       goldCount,
-      rate: selectedPayType.rate ?? 1,
+      usdtRate: selectedPayType.usdt_rate ?? 1,
       feeRate: selectedPayType.fee_rate ?? 0,
       feeType: selectedPayType.fee_type ?? 0,
       discount: selectedPayType.discount ?? 0,
+      uniqueAmountEnabled: (selectedPayType.increase_interval ?? 0) > 0,
     }
     usdtPopupOpen.value = true
   } else if (selectedPayType?.type === 3) {
     csPopupProps.value = {
       goldCount: Number(selectedAmount.value) * 100,
-      rate: selectedPayType.rate ?? 1,
+      usdtRate: selectedPayType.usdt_rate ?? 1,
       feeRate: selectedPayType.fee_rate ?? 0,
       feeType: selectedPayType.fee_type ?? 0,
       discount: selectedPayType.discount ?? 0,
@@ -833,7 +861,7 @@ async function onCsSubmit() {
   const clubId = walletClubId.value
 
   let goldCount = csPopupProps.value.goldCount
-  const rate = selectedPayType.rate ?? 1
+  const usdtRate = selectedPayType.usdt_rate ?? 1
   const feeRate = selectedPayType.fee_rate ?? 0
   const feeType = selectedPayType.fee_type ?? 0
   const discount = selectedPayType.discount ?? 0
@@ -862,7 +890,7 @@ async function onCsSubmit() {
 
   // pay_price rule: discount > 0 takes priority (discount removes fee from pay_price);
   // only when discount = 0 and fee_type = 2 is the fee added to pay_price.
-  const basePrice = rate > 0 ? goldCount / 100 / rate : 0
+  const basePrice = usdtRate > 0 ? goldCount / 100 / usdtRate : 0
   const apiPayPrice =
     discount > 0
       ? Number((basePrice * (1 - discount)).toFixed(4))
@@ -881,6 +909,7 @@ async function onCsSubmit() {
         pay_id: selectedPayType.id,
         price_id: priceId,
         pay_price: apiPayPrice,
+        use_usdt_rate: true,
         pay_address: '',
         pay_address_save: false,
         // order_no: "",
@@ -951,7 +980,7 @@ async function onUsdtSubmit(type: number) {
   // 2. Calculate pay_price — fee only applied when fee_type === 2 (player pays)
   const priceData = walletStore.calculateRechargeUsdtPrice(
     goldCount,
-    selectedPayType.rate ?? 1,
+    selectedPayType.usdt_rate ?? 1,
     selectedPayType.fee_rate ?? 0,
     usdtPopupProps.value.feeType,
     selectedPayType.discount ?? 0,
@@ -967,6 +996,7 @@ async function onUsdtSubmit(type: number) {
         pay_id: selectedPayType.id,
         price_id: priceId,
         pay_price: priceData.apiPayPrice,
+        use_usdt_rate: true,
         pay_address: '',
         pay_address_save: false,
         order_no: '',
@@ -1119,7 +1149,7 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
     <CustomerServicePaymentPopup
       v-if="csPopupOpen"
       :gold-count="csPopupProps.goldCount"
-      :rate="csPopupProps.rate"
+      :rate="csPopupProps.usdtRate"
       :fee-rate="csPopupProps.feeRate"
       :fee-type="csPopupProps.feeType"
       :discount="csPopupProps.discount"
@@ -1130,10 +1160,11 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
     <UsdtPaymentPopup
       v-if="usdtPopupOpen"
       :gold-count="usdtPopupProps.goldCount"
-      :rate="usdtPopupProps.rate"
+      :rate="usdtPopupProps.usdtRate"
       :fee-rate="usdtPopupProps.feeRate"
       :fee-type="usdtPopupProps.feeType"
       :discount="usdtPopupProps.discount"
+      :unique-amount-enabled="usdtPopupProps.uniqueAmountEnabled"
       @close="usdtPopupOpen = false"
       @submit="onUsdtSubmit"
     />
@@ -1168,7 +1199,7 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
     <UsdtPaymentDetailsPopup
       v-if="usdtDetailsPopupOpen && rechargeResult"
       :order-data="rechargeResult"
-      :rate="usdtPopupProps.rate"
+      :rate="usdtPopupProps.usdtRate"
       :fee-rate="usdtPopupProps.feeRate"
       :fee-type="usdtPopupProps.feeType"
       :price="
@@ -1178,7 +1209,7 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
             Number(rechargeResult.amount) ||
             walletStore.calculateRechargeUsdtPrice(
               usdtPopupProps.goldCount,
-              usdtPopupProps.rate,
+              usdtPopupProps.usdtRate,
               usdtPopupProps.feeRate,
               usdtPopupProps.feeType,
               usdtPopupProps.discount,

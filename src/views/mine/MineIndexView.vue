@@ -19,7 +19,7 @@ import iconBoxSetting from '@/assets/icons/icon_box_setting.png'
 import iconShop from '@/assets/icons/icon_shop.png'
 import defaultAvatar from '@/assets/images/default_avatar.png'
 import ProfileCard from '@/components/ProfileCard/ProfileCard.vue'
-import { isPrivateDomainMode } from '@/utils/channelPackage'
+import { isChannelDiamondFreeMode, isPrivateDomainMode } from '@/utils/channelPackage'
 import { formatUC } from '@/utils/roomVisibility'
 import { requireRealUser } from '@/session/realUserGate'
 
@@ -27,6 +27,7 @@ const router = useRouter()
 const gameStore = useGameStore()
 const userInfoStore = useUserInfoStore()
 const isChannelPackage = isPrivateDomainMode()
+const hideDiamondElements = isChannelDiamondFreeMode()
 
 interface BoxItem {
   key: string
@@ -129,7 +130,7 @@ const displayUser = computed(() => {
   <div class="page-shell mine-page">
     <div class="title-bar main-primary-header">
       <div class="title">{{ t('UIMine_title') }}</div>
-      <div class="currency-info main-primary-currency" @click="goToMineShop">
+      <div v-if="!hideDiamondElements" class="currency-info main-primary-currency" @click="goToMineShop">
         <div class="icon-diamond">
           <img :src="iconDiamond" :alt="t('UIMine_VIP_diamond')" />
         </div>
@@ -151,12 +152,12 @@ const displayUser = computed(() => {
             <img class="icon-currency" :src="iconChip" alt="gold" />
             <div class="num">{{ formatUC(displayUser.gold) }}</div>
           </div>
-          <div class="currency">
+          <div v-if="!hideDiamondElements" class="currency">
             <img class="icon-currency" :src="iconDiamond" alt="diamond" />
             <div class="num">{{ displayUser.diamond.toLocaleString() }}</div>
           </div>
         </div>
-        <button class="button" type="button" @click="goToMineShop">
+        <button v-if="!hideDiamondElements" class="button" type="button" @click="goToMineShop">
           <div v-fit-text="{ maxLines: 1 }" class="text">{{ t('UIHappyShop_ActivityShop') }}</div>
           <div class="round-icon">
             <img :src="iconShop" alt="我的商城" />

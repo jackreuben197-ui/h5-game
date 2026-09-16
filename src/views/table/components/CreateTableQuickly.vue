@@ -42,6 +42,7 @@ import purpleBlur from '@/assets/images/purple_blur.png'
 import { t } from '@/i18n'
 import { useGameStore } from '@/stores/game'
 import { requireRealUser } from '@/session/realUserGate'
+import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
 
 const emit = defineEmits<{
   'edit-template': [roomConfig: Record<string, unknown>]
@@ -53,6 +54,7 @@ const userInfoStore = useUserInfoStore()
 const appConfigStore = useAppConfigStore()
 const gameStore = useGameStore()
 const { isDark } = useTheme()
+const hideDiamondElements = isChannelDiamondFreeMode()
 
 const formState = reactive<NlhFormState>({
   ...defaultNlhFormState,
@@ -910,7 +912,7 @@ async function onDeleteConfirm() {
 
       <!-- 底部收费 + 创建 -->
       <div class="quick-bottom-bar">
-        <div class="quick-fee">
+        <div v-if="!hideDiamondElements" class="quick-fee">
           <div class="quick-fee__row">
             <span class="quick-fee__label">{{ t('UIClub_FundRecharge_9jO4mlS6') }}:</span>
             <div class="quick-fee__original-wrap">

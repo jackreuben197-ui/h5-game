@@ -27,6 +27,7 @@ import type { RoomDetailData, RoomDetailRequest } from '@/api/models/roomcenter'
 import { isExperienceUserInfo } from '@/session/experienceIdentity'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { pinia } from '@/stores/pinia'
+import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
 
 const TRADER_ORDER_STATUS_APPROVED = 2
 
@@ -150,7 +151,12 @@ export function forwardLanguageChangedToCocos(locale: string): void {
 // 握手完成后将 globalConfig 同步给 Cocos。与 syncUser/syncRoomsList 相同机制：
 // 握手前调用时缓存，握手完成后随其他 pending 消息一起 flush。
 export function forwardGlobalConfigToCocos(config: GlobalConfigData): void {
-  const payload: SyncGlobalConfigPayload = { raw: config }
+  const payload: SyncGlobalConfigPayload = {
+    raw: {
+      ...config,
+      channel_package_diamond_free_mode: isChannelDiamondFreeMode(),
+    },
+  }
   queueSyncUntilHandshake(BRIDGE_ACTION.SYNC_GLOBAL_CONFIG, payload)
 }
 

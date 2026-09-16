@@ -1,41 +1,40 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import type { FilterTabOption } from '@/components/Tabbar/FilterTabbar.vue'
 import serviceIcon from '@/assets/icons/icon_server.png'
 import walletIcon from '@/assets/icons/icon_wallet.png'
-import clubDetailButtonIconDark from '@/assets/icons/img_club_detail_button.png'
-import clubDetailButtonIconLight from '@/assets/icons/img_club_detail_button_light.svg'
 import { useMttListStore } from '@/stores/mttList'
 import { useUserInfoStore } from '@/stores/userInfo'
-import { useGameStore } from '@/stores/game'
-import { theme } from '@/utils/theme'
 import { t } from '@/i18n'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 import { showFailToast } from 'vant'
+import { isChannelPackageHost } from '@/utils/channelPackage'
 import ClubZoneQuickActions from '@/components/Club/ClubZoneQuickActions.vue'
-import MainBottomTab from '@/components/Tabbar/MainBottomTab.vue'
-import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 import { requireRealUser } from '@/session/realUserGate'
 import { ensureExperienceSession } from '@/session/experienceSession'
 
+type MttTabName = 'all' | 'poker' | 'mahjong'
+
+const activeTab = ref<MttTabName>('all')
 const mttListStore = useMttListStore()
 const userInfoStore = useUserInfoStore()
-const gameStore = useGameStore()
 const router = useRouter()
-const { isChannelPackage, isVersionB } = useChannelBottomMenu()
-
-const clubDetailButtonIcon = computed(() =>
-  theme.value === 'light' ? clubDetailButtonIconLight : clubDetailButtonIconDark,
-)
-const canManageChannelClub = computed(
-  () => isChannelPackage && Boolean(gameStore.isRealUser && userInfoStore.currentJoinedClub),
-)
+const isChannelPackage = isChannelPackageHost()
 
 const selectedClub = computed(() => userInfoStore.currentClub ?? userInfoStore.channelDefaultClub)
 const selectedClubId = computed(() => toSafeInt(selectedClub.value?.club_id))
 const selectedTribeId = computed(() =>
   toSafeInt((selectedClub.value as Record<string, unknown> | null)?.tribe_id),
 )
+
+// 目前没有麻将赛事，暂时隐藏「全部 / 扑克赛事」切换 tab；恢复时改回 true 即可。
+const showMttTabs = false
+
+const mttTabs = computed<FilterTabOption[]>(() => [
+  { name: 'all', title: resolveLabel('UIMatch_GtO8YEdb', t('UIMatch_GtO8YEdb')) },
+  { name: 'poker', title: resolveLabel('UIHomePokerArea', t('UIMatchPokerTournament')) },
+])
 
 onMounted(() => {
   // 与首页共用同一个 MTT 数据源：先读缓存秒开，再静默刷新。
@@ -54,6 +53,14 @@ function toSafeInt(value: unknown): number {
   return Math.floor(num)
 }
 
+function resolveLabel(key: string, fallback: string): string {
+  const translated = t(key)
+  if (translated && translated !== key) {
+    return translated
+  }
+  return fallback
+}
+
 function handleBack() {
   router.push('/home')
 }
@@ -61,11 +68,6 @@ function handleBack() {
 function handleRecharge() {
   if (!requireRealUser(handleRecharge)) return
   void router.push('/wallet')
-}
-
-function goToClubDetail(): void {
-  if (!requireRealUser(goToClubDetail)) return
-  void router.push('/club/detail')
 }
 
 function handleOpenCustomerService() {
@@ -85,17 +87,13 @@ function handleOpenCustomerService() {
 </script>
 
 <template>
-  <div
-    class="mtt-list-page room-list-page themeType2"
-    :class="{ 'mtt-list-page--channel-menu-b': isVersionB }"
-    @back="handleBack"
-  >
+  <div class="mtt-list-page room-list-page themeType2" @back="handleBack">
     <div class="bg-overlay"></div>
 
     <div class="room-list-stage mtt-list-stage">
       <HeaderBack
-        :title="isVersionB ? t('UITabbarTournaments') : t('UIHomeMttArea')"
-        :show-back="!isVersionB"
+        :title="t('UIHomeMttArea')"
+        show-back
         extra-padding
       >
         <template #right>
@@ -117,23 +115,13 @@ function handleOpenCustomerService() {
         </template>
       </HeaderBack>
       <ClubZoneQuickActions v-if="isChannelPackage" />
-      <MttContent />
+      <FilterTabbar v-if="showMttTabs" v-model="activeTab" :tabs="mttTabs" />
+      <MttContent
+        :active-tab="activeTab"
+        scroll-key="mtt-zone"
+        :class="{ 'mtt-content--no-tabs': !showMttTabs }"
+      />
     </div>
-    <div
-      v-if="canManageChannelClub"
-      class="floating-action-area"
-      :class="{ 'floating-action-area--with-tabbar': isVersionB }"
-    >
-      <button
-        class="floating-menu-btn"
-        type="button"
-        :aria-label="t('UIClub_ClubManager')"
-        @click="goToClubDetail"
-      >
-        <img :src="clubDetailButtonIcon" alt="" />
-      </button>
-    </div>
-    <MainBottomTab v-if="isChannelPackage && isVersionB" />
   </div>
 </template>
 
@@ -150,29 +138,7 @@ function handleOpenCustomerService() {
 
   @include theme-light {
     color: var(--c-text);
-    background-image: url('@/assets/images/main_bg_light.webp');
-  }
-}
-
-@media (max-width: 599px) {
-  .mtt-list-page {
-    display: flex;
-    flex-direction: column;
-    height: var(--app-full-height, 100dvh);
-    min-height: var(--app-full-height, 100dvh);
-  }
-
-  .mtt-list-stage {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0;
-  }
-
-  .mtt-list-stage :deep(.mtt-content) {
-    flex: 1;
-    min-height: 0;
-    max-height: none;
+    background-image: url('@/assets/images/main_bg_light.png');
   }
 }
 
@@ -188,7 +154,10 @@ function handleOpenCustomerService() {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: none;
+  background:
+    radial-gradient(circle at 15% 92%, rgba(255, 173, 212, 0.32), transparent 34%),
+    radial-gradient(circle at 88% 84%, rgba(102, 227, 255, 0.28), transparent 34%),
+    radial-gradient(circle at 50% 56%, rgba(255, 255, 255, 0.12), transparent 48%);
 
   @include theme-light {
     background:
@@ -201,49 +170,17 @@ function handleOpenCustomerService() {
   display: flex;
   align-items: center;
   gap: 0.26rem;
-  margin-right: 0.25rem;
 }
 
-.floating-action-area {
-  position: fixed;
-  right: 0.48rem;
-  bottom: calc(0.6rem + env(safe-area-inset-bottom));
-  z-index: 23;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-
-  &--with-tabbar {
-    bottom: calc(2.82rem + env(safe-area-inset-bottom));
-  }
-}
-
-.floating-menu-btn {
-  width: 1.04rem;
-  height: 1.04rem;
-  padding: 0;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
+// tab 隐藏时列表不再有 tabbar 的外边距，补一点与 header 的间距。
+.mtt-list-page :deep(.mtt-content--no-tabs) {
+  margin-top: 0.3rem;
 }
 
 .mtt-list-page :deep(.mtt-content) {
   flex: 1 1 auto;
   min-height: 0;
   max-height: none;
-}
-
-.mtt-list-page--channel-menu-b :deep(.mtt-content) {
-  padding-bottom: calc(env(safe-area-inset-bottom) + 2.5rem);
 }
 
 .mtt-list-page :deep(.filter-tabbar) {
@@ -260,44 +197,6 @@ function handleOpenCustomerService() {
 
 .mtt-list-page :deep(.filter-tab__item--active) {
   @include theme-light {
-    border-color: #fff;
-    background: #fff;
-  }
-}
-</style>
-
-<style lang="scss">
-:root[data-theme='light'] .mtt-list-page {
-  --c-brand: #05c297;
-  --c-brand-rgb: 5, 194, 151;
-
-  color: rgba(15, 8, 8, 0.85);
-  background-image: url('@/assets/images/main_bg_light.webp');
-
-  .back-trigger,
-  .back-icon {
-    color: rgba(0, 0, 0, 1);
-  }
-
-  .title {
-    text-shadow: none;
-  }
-
-  .bg-overlay {
-    background:
-      radial-gradient(circle at 8% 4%, rgba(var(--c-brand-rgb), 0.2), transparent 30%),
-      radial-gradient(circle at 92% 9%, rgba(var(--c-brand-rgb), 0.14), transparent 26%);
-  }
-
-  .filter-tabbar {
-    background: rgba(134, 134, 134, 0.22);
-  }
-
-  .filter-tab__text {
-    color: rgba(15, 8, 8, 0.85);
-  }
-
-  .filter-tab__item--active {
     border-color: #fff;
     background: #fff;
   }

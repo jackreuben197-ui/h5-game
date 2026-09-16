@@ -33,6 +33,7 @@ import { useRoomListStore } from '@/stores/roomList'
 import { ROOM_ORIGIN_TYPE } from '@/utils/roomVisibility'
 import { formatRoomLeftAndTotalByUnity } from '@/utils/time'
 import { requireRealUser } from '@/session/realUserGate'
+import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
 
 const isLightTheme = computed(() => theme.value === 'light')
 const iconAdd = computed(() => (isLightTheme.value ? iconAddLight : iconAddDark))
@@ -45,6 +46,7 @@ const router = useRouter()
 const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
 const roomListStore = useRoomListStore()
+const hideDiamondElements = isChannelDiamondFreeMode()
 
 const INVITE_CODE_LENGTH = 7
 const inviteCode = ref<string[]>(Array(INVITE_CODE_LENGTH).fill(''))
@@ -568,7 +570,11 @@ watch(
     <!-- 顶部标题栏 -->
     <div class="title-bar main-primary-header">
       <div v-fit-text="{ maxLines: 1 }" class="title">{{ t('UIMessage_Default') }}</div>
-      <div class="currency-info main-primary-currency" @click="goToMineShop">
+      <div
+        v-if="!hideDiamondElements"
+        class="currency-info main-primary-currency"
+        @click="goToMineShop"
+      >
         <div class="icon-diamond">
           <img :src="iconDiamond" :alt="t('UIMine_VIP_diamond')" />
         </div>

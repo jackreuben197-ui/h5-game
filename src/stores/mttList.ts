@@ -45,6 +45,9 @@ interface MttListState {
   mttIdList: MttIdInfoRecord[]
   sngIdList: SngIdInfoRecord[]
   seriesList: MttSeriesInfoRecord[]
+  scrollPositions: Record<string, number>
+  activeListTabs: Record<string, string>
+  expandedGroupMaps: Record<string, Record<string, boolean>>
 }
 
 const MTT_LIST_CACHE_VERSION = 2
@@ -243,6 +246,9 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
     mttIdList: [],
     sngIdList: [],
     seriesList: [],
+    scrollPositions: {},
+    activeListTabs: {},
+    expandedGroupMaps: {},
   }),
   getters: {
     // 快速索引：match_id -> 可见性元数据（origin/relate）。
@@ -269,6 +275,32 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
     },
   },
   actions: {
+    saveScrollPosition(key: string, scrollTop: number): void {
+      if (!key) return
+      this.scrollPositions[key] = Math.max(0, Number(scrollTop) || 0)
+    },
+
+    getScrollPosition(key: string): number {
+      return Math.max(0, Number(this.scrollPositions[key]) || 0)
+    },
+
+    saveActiveListTab(key: string, tab: string): void {
+      if (key && tab) this.activeListTabs[key] = tab
+    },
+
+    getActiveListTab(key: string): string {
+      return this.activeListTabs[key] || ''
+    },
+
+    saveExpandedGroupMap(key: string, expandedMap: Record<string, boolean>): void {
+      if (!key) return
+      this.expandedGroupMaps[key] = { ...expandedMap }
+    },
+
+    getExpandedGroupMap(key: string): Record<string, boolean> {
+      return { ...(this.expandedGroupMaps[key] || {}) }
+    },
+
     // 对外统一入口：恢复缓存 + 会话内静默拉取一次。
     async bootstrapMttList(): Promise<void> {
       if (isUnauthenticatedMode()) {

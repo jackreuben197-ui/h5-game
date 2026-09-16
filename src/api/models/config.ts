@@ -231,7 +231,7 @@ export interface OnlineWithdrawTypeItem {
   name?: string
   image?: string
   type?: number           // 1-数字钱包 2-API 3-手动
-  rate?: number
+  usdt_rate?: number      // 1 USDT 可兑换的 UC 数量
   fee_rate?: number
   fee_type?: number       // 0-无 1-俱乐部出 2-玩家出
   account_type?: number   // 1=银行卡 3=alipay 0=客服

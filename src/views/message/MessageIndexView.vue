@@ -17,6 +17,7 @@ import iconBoxClub from '@/assets/icons/icon_club_shield.png'
 import iconBoxTribe from '@/assets/icons/icon_box_tribe.png'
 import { useGameStore } from '@/stores/game'
 import { requireRealUser } from '@/session/realUserGate'
+import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
 
 interface BoxItem {
   icon: string
@@ -28,6 +29,7 @@ interface BoxItem {
 
 const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
+const hideDiamondElements = isChannelDiamondFreeMode()
 
 const isLightTheme = computed(() => theme.value === 'light')
 const iconAdd = computed(() => (isLightTheme.value ? iconAddLight : iconAddDark))
@@ -148,7 +150,7 @@ watch(
   <div class="message-page">
     <div class="title-bar main-primary-header">
       <div class="title">{{ t('UIMine_MsgSystemContent') }}</div>
-      <div class="currency-info main-primary-currency" @click="goToMineShop">
+      <div v-if="!hideDiamondElements" class="currency-info main-primary-currency" @click="goToMineShop">
         <div class="icon-diamond">
           <img :src="iconDiamond" :alt="t('UIMine_VIP_diamond')" />
         </div>

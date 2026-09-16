@@ -261,8 +261,9 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
           return club
         } catch (error) {
           console.warn('[userInfo] ensureChannelDefaultClub failed:', error)
-          this.channelDefaultClub = null
-          return null
+          // 刷新时可能已从持久化状态恢复出有效渠道配置；网络抖动不能把名称、
+          // Banner scope 和 h5_menu 一起清空。loaded 保持 false，后续调用仍可重试。
+          return this.channelDefaultClub
         } finally {
           channelDefaultClubInFlight = null
         }

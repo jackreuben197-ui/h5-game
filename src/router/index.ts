@@ -6,10 +6,15 @@ import {
 } from 'vue-router'
 import { useGameStore } from '@/stores/game'
 import { useWalletStore } from '@/stores/wallet'
+import { useUserInfoStore } from '@/stores/userInfo'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { pinia } from '@/stores/pinia'
 import { createLogger } from '@/utils/logger'
-import { isPrivateDomainMode } from '@/utils/channelPackage'
+import {
+  isChannelDiamondFreeMode,
+  isChannelPackageHost,
+  isPrivateDomainMode,
+} from '@/utils/channelPackage'
 import { preloadMainLayoutStyles, syncMainLayout } from '@/utils/mainLayout'
 import { syncPostAuthData } from '@/session/postAuthSync'
 import { clubRoutes } from './routes/club'
@@ -33,7 +38,8 @@ function walletRouteClubId(to: RouteLocationNormalized): number | undefined {
 }
 
 function preloadWalletPriceList(to: RouteLocationNormalized): true {
-  if (!useGameStore(pinia).isRealUser) {
+  // 首次进入时体验会话可能仍在领取 token；页面会监听 token 并在就绪后补拉。
+  if (!useGameStore(pinia).sessionToken.trim()) {
     return true
   }
   const walletStore = useWalletStore(pinia)
@@ -156,6 +162,17 @@ const router = createRouter({
       meta: { requiresAuth: false, desktopLayout: 'content' },
     },
     {
+      path: '/match',
+      name: 'match-index',
+      component: () => import('@/views/mtt/MatchIndexView.vue'),
+      meta: {
+        requiresAuth: true,
+        guestPreview: true,
+        tabKey: 'mtt',
+        desktopLayout: 'content',
+      },
+    },
+    {
       path: '/mttList',
       name: 'mtt-list',
       component: () => import('@/views/mtt/mttList.vue'),
@@ -193,7 +210,7 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to, from) => {
+router.beforeEach(async (to, from) => {
   const gameStore = useGameStore(pinia)
   const token = gameStore.sessionToken
   const isRealUser = gameStore.isRealUser
@@ -211,8 +228,22 @@ router.beforeEach((to, from) => {
     return { name: 'lobby' }
   }
 
+  // h5_menu=1 的渠道包不再使用旧主页：/home 统一进入独立赛事页，
+  // 牌桌 Tab 使用 /gameList，因此不会和这个重定向冲突。
+  if (isChannelPackage && to.name === 'lobby') {
+    const userInfoStore = useUserInfoStore(pinia)
+    const channelClub = await userInfoStore.ensureChannelDefaultClub()
+    if (Number(channelClub?.h5_menu) === 1) {
+      return { name: 'match-index' }
+    }
+  }
+
   if (isChannelPackage && to.name === 'club') {
     return { name: 'club-index' }
+  }
+
+  if (isChannelDiamondFreeMode() && to.name === 'mine-shop') {
+    return { name: 'mine' }
   }
 
   if (to.meta.requiresAuth && !isRealUser && !to.meta.guestPreview) {

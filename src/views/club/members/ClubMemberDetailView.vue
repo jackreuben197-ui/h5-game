@@ -35,6 +35,7 @@ import {
 import mainBgUrl from '@/assets/images/img_table_setting_bg.png'
 import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 import { t, tJoin, ucLabel } from '@/i18n'
+import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
 
 const backgroundStyle = computed(() => ({
   '--member-detail-bg-dark': `url(${mainBgUrl})`,
@@ -45,6 +46,7 @@ const route = useRoute()
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
 const { isLight } = useTheme()
+const hideDiamondElements = isChannelDiamondFreeMode()
 
 const statsSwitcherIcon = computed(() => (isLight.value ? imgStatsSwitcherLight : imgStatsSwitcher))
 
@@ -763,7 +765,7 @@ onMounted(() => {
             <span>{{ formatAmount(assetCredit) }}</span>
             <img :src="imgBalance" alt="" />
           </p>
-          <p>
+          <p v-if="!hideDiamondElements">
             <span>{{ formatCount(assetDiamond) }}</span>
             <img :src="imgDiamond" alt="" />
           </p>
@@ -875,7 +877,7 @@ onMounted(() => {
             <span class="arrow"></span>
           </span>
         </button>
-        <button class="link-item" @click="onActionClick('vip')">
+        <button v-if="!hideDiamondElements" class="link-item" @click="onActionClick('vip')">
           <span class="link-item-main">
             <svg class="agent-link-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <rect

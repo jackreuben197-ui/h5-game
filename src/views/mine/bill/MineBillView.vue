@@ -25,9 +25,11 @@ import { useGameStore } from '@/stores/game'
 import { userCache } from '@/utils/userCache'
 import { USER_STORE_BILL_DATA } from '@/utils/indexedDB'
 import { formatDateTime } from '@/utils/time'
+import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
 
 const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
+const hideDiamondElements = isChannelDiamondFreeMode()
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -62,7 +64,7 @@ const tabGoldTypes = [
     },
     value: 4,
   },
-] as const
+].filter((item) => !hideDiamondElements || item.value !== 4)
 
 const activeTab = ref(1)
 const loading = ref(false)

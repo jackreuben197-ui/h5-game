@@ -84,6 +84,7 @@ const selectedPaymentAccount = ref<PaymentInfo | null>(null)
 
 const showWithdrawConfirmModal = ref(false)
 const withdrawConfirmAmount = ref(0)
+const withdrawConfirmPayPrice = ref(0)
 
 // ─── Computed ────────────────────────────────────────────────────────────────
 function isBankcardWithdrawType(wt: OnlineWithdrawTypeItem): boolean {
@@ -150,6 +151,26 @@ const availablePaymentChannels = computed(() =>
 const handlingFeeRate = computed(() => {
   return selectedWithdrawType.value?.fee_rate ?? 0
 })
+
+// 渠道按 usdt_rate 结算时用 UC / 汇率；没有汇率的渠道（银行卡、支付宝、客服）保持原样。
+const selectedUsdtRate = computed(() => {
+  const rate = Number(selectedWithdrawType.value?.usdt_rate)
+  return Number.isFinite(rate) && rate > 0 ? rate : 0
+})
+
+function resolveWithdrawPayPrice(amount: number): number {
+  const wt = selectedWithdrawType.value
+  const feeRate = wt?.fee_rate ?? 0
+  if (selectedUsdtRate.value > 0) {
+    return walletStore.calculateUsdtPrice(
+      Math.round(amount * 100),
+      selectedUsdtRate.value,
+      feeRate,
+      wt?.fee_type ?? 0,
+    ).apiPayPrice
+  }
+  return amount * (1 - feeRate)
+}
 const parsedAmount = computed(() => {
   const v = parseFloat(withdrawAmount.value.replace(',', '.').trim())
   return Number.isFinite(v) && v > 0 ? v : 0
@@ -157,7 +178,7 @@ const parsedAmount = computed(() => {
 
 const calculatedWithdrawAmountAfterFee = computed(() => {
   if (!parsedAmount.value) return 0
-  return parsedAmount.value * (1 - handlingFeeRate.value)
+  return resolveWithdrawPayPrice(parsedAmount.value)
 })
 
 const withdrawRange = computed(() => {
@@ -455,6 +476,7 @@ function handleWithdraw(): void {
     return
   }
   withdrawConfirmAmount.value = parsedAmount.value
+  withdrawConfirmPayPrice.value = resolveWithdrawPayPrice(parsedAmount.value)
   showWithdrawConfirmModal.value = true
 }
 
@@ -467,11 +489,8 @@ async function confirmWithdraw(): Promise<void> {
 
   const amount = parsedAmount.value
   const amountCents = Math.round(amount * 100)
-  const rate = wt.rate ?? 1
-  const feeRate = wt.fee_rate ?? 0
-  const baseValue = amount * rate
-  const fee = baseValue * feeRate
-  const payPrice = baseValue - fee
+  const usdtRate = selectedUsdtRate.value
+  const payPrice = resolveWithdrawPayPrice(amount)
   const legalTender = Math.round(payPrice * 100)
   const isCsType =
     isCustomerCare.value ||
@@ -490,6 +509,7 @@ async function confirmWithdraw(): Promise<void> {
         pay_price: payPrice,
         legal_tender: legalTender,
         payment_type_id: paymentTypeId,
+        ...(usdtRate > 0 ? { use_usdt_rate: true } : {}),
         ...withdrawClubPayload(),
       },
       { suppressBusinessCodes: [20066, 90016] },
@@ -771,7 +791,7 @@ watch(filteredWithdrawTypes, (list) => {
   <WithdrawConfirmModal
     :show="showWithdrawConfirmModal"
     :original-amount="withdrawConfirmAmount"
-    :calculated-amount="withdrawConfirmAmount * (1 - handlingFeeRate)"
+    :calculated-amount="withdrawConfirmPayPrice"
     @close="showWithdrawConfirmModal = false"
     @confirm="confirmWithdraw"
   />

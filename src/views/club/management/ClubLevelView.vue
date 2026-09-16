@@ -12,6 +12,7 @@ import mainBgLightUrl from '@/assets/images/main_bg_light.webp'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { showFailToast, showSuccessToast } from 'vant'
 import { t, tJoin } from '@/i18n'
+import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
 
 // 主容器背景图：全页面共用一张底图。
 const backgroundStyle = computed(() => ({
@@ -20,6 +21,7 @@ const backgroundStyle = computed(() => ({
 }))
 
 const userInfoStore = useUserInfoStore()
+const hideDiamondElements = isChannelDiamondFreeMode()
 const showUpgradeConfirm = ref(false)
 const loading = ref(false)
 const currentLevel = ref(1)
@@ -92,8 +94,11 @@ const levelDesc = computed(() => {
 const diamondBalance = computed(() => Number(userInfoStore.currentClub?.user_gold || 0))
 
 const confirmText = computed(() => {
-  const cost = tJoin(t('UIClub_Confirm'), upgradeCost.value, t('UICommunityFundDiamondBuyType'))
   const duration = tJoin(levelDuration.value, t('UIHappyShop_ActivityShopDay'))
+  if (hideDiamondElements) {
+    return `${t('UIClub_Confirm2')} Level ${targetLevel.value} (${duration})?`
+  }
+  const cost = tJoin(t('UIClub_Confirm'), upgradeCost.value, t('UICommunityFundDiamondBuyType'))
   return `${cost} Level ${targetLevel.value} (${duration})?`
 })
 
@@ -144,7 +149,7 @@ onMounted(() => {
     <div class="club-members">
       <HeaderBack :title="t('UIGuid_Level')">
         <template #right>
-          <div class="club-level-diamond">
+          <div v-if="!hideDiamondElements" class="club-level-diamond">
             <img :src="imgDiamond" :alt="t('UIMine_VIP_diamond')" />
             <span>{{ diamondBalance }}</span>
           </div>
@@ -187,7 +192,7 @@ onMounted(() => {
             />
           </div>
 
-          <div class="club-upgrade-cost">
+          <div v-if="!hideDiamondElements" class="club-upgrade-cost">
             <p>{{ tJoin(t('UIClub_Text107'), targetLevel, t('UIClub_Club5')) }}</p>
             <div class="club-upgrade-cost__value">
               <span class="club-upgrade-cost__badge">

@@ -31,6 +31,13 @@ const mockUrl = moduleUrl(`
   export const resolveInviteCode = () => '';
   export const isTelegramMiniAppEnv = () => Boolean(globalThis.window.__H5_TG_MINI_APP__);
   export const syncPostAuthData = async () => {};
+  let templatesLoaded = false;
+  export const ensureMultiLanguageTemplateLoaded = async () => {
+    if (templatesLoaded) return;
+    templatesLoaded = true;
+    calls.push('templates');
+  };
+  export const resetTemplateMock = () => { templatesLoaded = false };
 `)
 const stubs: Record<string, string> = {
   '@/session/experienceIdentity': new URL('../src/session/experienceIdentity.ts', import.meta.url).href,
@@ -38,7 +45,8 @@ const stubs: Record<string, string> = {
   '@/constants/storageKey': moduleUrl('export default {}'),
 }
 for (const name of ['api/user', 'session/postAuthSync', 'i18n', 'stores/pinia', 'stores/game',
-  'stores/mttList', 'stores/roomList', 'stores/userInfo', 'utils/localStore', 'utils/environment', 'utils/channelPackage']) {
+  'stores/mttList', 'stores/roomList', 'stores/userInfo', 'utils/localStore', 'utils/environment',
+  'utils/channelPackage', 'utils/multiLanguageTemplate']) {
   stubs[`@/${name}`] = mockUrl
 }
 const hooks = registerHooks({
@@ -47,7 +55,7 @@ const hooks = registerHooks({
   },
 })
 const { ensureExperienceSession } = await import('../src/session/experienceSession.ts')
-const { game, calls } = await import(mockUrl)
+const { game, calls, resetTemplateMock } = await import(mockUrl)
 hooks.deregister()
 
 for (const telegram of [false, true]) {
@@ -57,9 +65,10 @@ for (const telegram of [false, true]) {
     try {
       Object.assign(game, { sessionToken: '', loginUserId: '', syncedIdentityToken: '', isGuestAccount: false })
       calls.length = 0
+      resetTemplateMock()
       assert.equal(await ensureExperienceSession(), true)
       assert.equal(game.isGuestAccount, true)
-      assert.deepEqual(calls, ['experience-login', 'user-info', 'rooms', 'mtt'])
+      assert.deepEqual(calls, ['experience-login', 'user-info', 'templates', 'rooms', 'mtt'])
       // 路由再次调用时不重复领取；模拟刷新重新校验仍复用已领取的体验 token。
       await ensureExperienceSession()
       assert.equal(calls.filter((call: string) => call === 'experience-login').length, 1)

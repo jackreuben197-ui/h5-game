@@ -50,7 +50,7 @@ function resolveContentStyleGroups(path: string): ContentStyleGroup[] {
   if (path === '/createTable' || path === '/createMtt' || path === '/club/table/create') {
     return ['table']
   }
-  if (path === '/gameList' || path === '/mttList') return []
+  if (path === '/gameList' || path === '/match' || path === '/mttList') return []
   if (path.startsWith('/mtt/detail')) return ['mtt']
   if (path.startsWith('/message/') || path === '/mine/bill' || path === '/mine/message-board') {
     return ['message']

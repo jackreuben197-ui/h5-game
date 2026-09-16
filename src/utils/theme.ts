@@ -14,8 +14,8 @@ export type ThemeName = 'light' | 'dark'
 export const DEFAULT_THEME_MODE: ThemeMode = 'system'
 
 const THEME_COLOR_META: Record<ThemeName, string> = {
-  dark: '#c487a8',
-  light: '#f3f4f6',
+  dark: '#222627',
+  light: '#f3f5f7',
 }
 
 const themeMode = ref<ThemeMode>(DEFAULT_THEME_MODE)

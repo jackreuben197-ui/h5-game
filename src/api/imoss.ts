@@ -16,7 +16,11 @@ export interface ImossUploadRuntimeConfig {
  * 构建 imoss 上传请求的 axios config
  * 通过 request-level baseURL 覆盖实例默认值，避免修改 http.defaults.baseURL 带来的全局副作用
  */
-function buildImossUploadConfig(runtime: ImossUploadRuntimeConfig = {}): { baseURL: string; headers: Record<string, string> } {
+function buildImossUploadConfig(runtime: ImossUploadRuntimeConfig = {}): {
+  baseURL: string
+  headers: Record<string, string>
+  allowGuestAccount: boolean
+} {
   const baseURL = runtime.base_url
     ? runtime.base_url.replace(/\/$/, '') + '/api'
     : '/api'
@@ -25,6 +29,7 @@ function buildImossUploadConfig(runtime: ImossUploadRuntimeConfig = {}): { baseU
     headers: {
       Osskey: runtime.oss_key || '',
     },
+    allowGuestAccount: true,
   }
 }
 

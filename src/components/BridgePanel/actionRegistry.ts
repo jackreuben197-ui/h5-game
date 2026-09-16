@@ -26,7 +26,10 @@ function normalizeSupportChatPayload(
 
 export const bridgeActionRegistry: Record<string, BridgeActionHandler> = {
   supportChat: (payload) => {
-    openGlobalCustomerServiceChat(normalizeSupportChatPayload(payload.props))
+    openGlobalCustomerServiceChat({
+      ...normalizeSupportChatPayload(payload.props),
+      returnToCocosOnClose: payload.ensureVisible === true,
+    })
   },
 }
 

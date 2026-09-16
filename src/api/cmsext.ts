@@ -275,7 +275,9 @@ export async function postCmsExtImServiceListApi(
   payload: CmsExtImServiceListRequest = {} as CmsExtImServiceListRequest
 ): Promise<ApiResponse<CmsExtImServiceListResponseData>> {
   const endpoint = '/cmsext/im/service/list'
-  const response = await http.post<ApiResponse<CmsExtImServiceListResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<CmsExtImServiceListResponseData>>(endpoint, payload, {
+    allowGuestAccount: true,
+  })
   return response.data
 }
 

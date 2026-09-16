@@ -71,7 +71,6 @@ function handleRecharge() {
 }
 
 function handleOpenCustomerService() {
-  if (!requireRealUser(handleOpenCustomerService)) return
   const clubId = selectedClubId.value
   if (clubId <= 0) {
     showFailToast(t('UIClub_CurrentClubNo'))

@@ -419,7 +419,6 @@ function handleRecharge(): void {
   void router.push('/wallet')
 }
 function handleOpenCustomerService(): void {
-  if (!requireRealUser(handleOpenCustomerService)) return
   const clubId = selectedClubId.value
   if (clubId <= 0) {
     showFailToast(t('UIClub_CurrentClubNo'))

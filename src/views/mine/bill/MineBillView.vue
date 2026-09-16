@@ -24,10 +24,11 @@ import { useGameStore } from '@/stores/game'
 import { userCache } from '@/utils/userCache'
 import { USER_STORE_BILL_DATA } from '@/utils/indexedDB'
 import { formatDateTime } from '@/utils/time'
-import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
+import { isChannelDiamondFreeMode, isChannelPackageHost } from '@/utils/channelPackage'
 
 const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
+const isChannelPackage = isChannelPackageHost()
 const hideDiamondElements = isChannelDiamondFreeMode()
 
 // 主容器背景图：全页面共用一张底图。
@@ -44,6 +45,7 @@ const tabGoldTypes = [
   { label: t('UIClub_Table'), value: 3 },
   { label: t('UIMine_VIP_diamond'), value: 4 },
 ].filter((item) => !hideDiamondElements || item.value !== 4)
+  .filter((item) => !isChannelPackage || (item.value !== 2 && item.value !== 3))
 
 const activeTab = ref(1)
 const loading = ref(false)
@@ -712,7 +714,7 @@ onMounted(() => {
     <div class="content-wrap">
       <p class="hint">{{ t('UIGuildtThreeMonthDataTip') }}</p>
 
-      <div class="bill-tabs">
+      <div class="bill-tabs" :class="{ 'bill-tabs--single': tabGoldTypes.length === 1 }">
         <button
           v-for="item in tabGoldTypes"
           :key="item.value"
@@ -885,7 +887,9 @@ onMounted(() => {
 
 .mine-glass-page {
   position: relative;
-  height: 100%;
+  height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  box-sizing: border-box;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 0 0 0.8rem;
@@ -923,6 +927,10 @@ onMounted(() => {
   padding: 0 0.2rem;
   justify-content: space-between;
   overflow-x: auto;
+}
+
+.bill-tabs--single {
+  justify-content: center;
 }
 
 .tab {

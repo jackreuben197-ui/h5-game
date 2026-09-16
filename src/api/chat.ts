@@ -121,7 +121,9 @@ export async function postChatSupportChannelListApi(
   payload: ChatSupportChannelListRequest = {} as ChatSupportChannelListRequest
 ): Promise<ApiResponse<ChatSupportChannelListResponseData>> {
   const endpoint = '/chat/support/channel/list'
-  const response = await http.post<ApiResponse<ChatSupportChannelListResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<ChatSupportChannelListResponseData>>(endpoint, payload, {
+    allowGuestAccount: true,
+  })
   return response.data
 }
 
@@ -130,7 +132,9 @@ export async function postChatSupportMessageListApi(
   payload: ChatSupportMessageListRequest = {} as ChatSupportMessageListRequest
 ): Promise<ApiResponse<ChatSupportMessageListResponseData>> {
   const endpoint = '/chat/support/message/list'
-  const response = await http.post<ApiResponse<ChatSupportMessageListResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<ChatSupportMessageListResponseData>>(endpoint, payload, {
+    allowGuestAccount: true,
+  })
   return response.data
 }
 
@@ -139,7 +143,9 @@ export async function postChatSupportMessageReadApi(
   payload: ChatSupportMessageReadRequest = {} as ChatSupportMessageReadRequest
 ): Promise<ApiResponse<ChatSupportMessageReadResponseData>> {
   const endpoint = '/chat/support/message/read'
-  const response = await http.post<ApiResponse<ChatSupportMessageReadResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<ChatSupportMessageReadResponseData>>(endpoint, payload, {
+    allowGuestAccount: true,
+  })
   return response.data
 }
 
@@ -148,6 +154,8 @@ export async function postChatSupportMessageSendApi(
   payload: ChatSupportMessageSendRequest = {} as ChatSupportMessageSendRequest
 ): Promise<ApiResponse<ChatSupportMessageSendResponseData>> {
   const endpoint = '/chat/support/message/send'
-  const response = await http.post<ApiResponse<ChatSupportMessageSendResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<ChatSupportMessageSendResponseData>>(endpoint, payload, {
+    allowGuestAccount: true,
+  })
   return response.data
 }

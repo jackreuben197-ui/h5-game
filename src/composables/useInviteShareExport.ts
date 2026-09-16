@@ -1,5 +1,7 @@
 import { nextTick, ref, type Ref } from 'vue'
 
+const INVITE_EXPORT_ID = 'invite-share-export'
+
 interface InviteShareExportOptions {
   target: Ref<HTMLElement | null>
   onError?: (error: unknown) => void
@@ -20,7 +22,7 @@ function createCaptureTarget(source: HTMLElement): { host: HTMLDivElement; targe
     background: '#242424',
     pointerEvents: 'none',
   })
-  target.classList.add('invite-share-export')
+  target.id = INVITE_EXPORT_ID
   Object.assign(target.style, { width: '100%', maxWidth: 'none', height: 'auto', transform: 'none' })
   target.querySelectorAll('[data-invite-export-ignore]').forEach((element) => element.remove())
   host.appendChild(target)

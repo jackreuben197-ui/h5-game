@@ -2464,7 +2464,7 @@ onMounted(async () => {
   overflow: hidden;
 }
 
-:global(.invite-share-export) {
+:global(#invite-share-export) {
   min-height: 0 !important;
   overflow: hidden !important;
   border: 0 !important;
@@ -2473,30 +2473,56 @@ onMounted(async () => {
   box-shadow: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+  filter: none !important;
   transform: none !important;
+  color: #f9f9f9 !important;
 }
 
-:global(.invite-share-export::before),
-:global(.invite-share-export::after) {
+:global(#invite-share-export::before),
+:global(#invite-share-export::after),
+:global(#invite-share-export *::before),
+:global(#invite-share-export *::after) {
+  display: none !important;
+  content: none !important;
+}
+
+:global(#invite-share-export *) {
+  animation: none !important;
+  transition: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+  -webkit-mask: none !important;
+  mask: none !important;
+  mix-blend-mode: normal !important;
+}
+
+:global(#invite-share-export .game-dialog__card-bg-gradient),
+:global(#invite-share-export .game-dialog__card-bg-texture),
+:global(#invite-share-export .game-dialog__card-bg-shadow) {
   display: none !important;
 }
 
-:global(.invite-share-export *),
-:global(.invite-share-export *::before),
-:global(.invite-share-export *::after) {
-  animation: none !important;
-  transition: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+:global(#invite-share-export .invite-modal__body) {
+  background: #2e3132 !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
 }
 
-:global(.invite-share-export .game-dialog__body) {
+:global(#invite-share-export .invite-modal__id-tag) {
+  background: rgba(255, 255, 255, 0.72) !important;
+  color: #222 !important;
+}
+
+:global(#invite-share-export .game-dialog__body) {
   max-height: none !important;
   overflow: visible !important;
+  color: #f9f9f9 !important;
 }
 
-:global(.invite-share-export .invite-modal__head h3) {
+:global(#invite-share-export .invite-modal__head h3) {
   padding-left: 0 !important;
+  color: #f9f9f9 !important;
 }
 
 :global(.invite-game-dialog .game-dialog__card) {

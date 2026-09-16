@@ -714,7 +714,7 @@ onMounted(() => {
     <div class="content-wrap">
       <p class="hint">{{ t('UIGuildtThreeMonthDataTip') }}</p>
 
-      <div class="bill-tabs" :class="{ 'bill-tabs--single': tabGoldTypes.length === 1 }">
+      <div v-if="tabGoldTypes.length > 1" class="bill-tabs">
         <button
           v-for="item in tabGoldTypes"
           :key="item.value"
@@ -927,10 +927,6 @@ onMounted(() => {
   padding: 0 0.2rem;
   justify-content: space-between;
   overflow-x: auto;
-}
-
-.bill-tabs--single {
-  justify-content: center;
 }
 
 .tab {

@@ -23,7 +23,7 @@ import { useGameStore } from '@/stores/game'
 import { useRoomListStore } from '@/stores/roomList'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { localStore } from '@/utils/localStore'
-import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
+import { checkIsShowForClubAndTribe, getRoomPlayerCount } from '@/utils/roomVisibility'
 import serviceIcon from '@/assets/icons/icon_server.png'
 import walletIcon from '@/assets/icons/icon_wallet.png'
 import gameType6Plus from '@/assets/icons/game_type_6+.png'
@@ -158,11 +158,10 @@ const groupedRecords = computed<RoomGroupViewModel[]>(() => {
 
   return Object.values(groupedMap)
     .map((group) => {
-      const playerCount = group.rooms.reduce((sum, room) => {
-        const roomPlayers =
-          Number(room.roomers) || (Array.isArray(room.users) ? room.users.length : 0)
-        return sum + roomPlayers
-      }, 0)
+      const playerCount = group.rooms.reduce(
+        (sum, room) => sum + getRoomPlayerCount(room),
+        0,
+      )
 
       return {
         ...group,

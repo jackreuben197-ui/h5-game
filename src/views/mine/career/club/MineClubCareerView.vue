@@ -13,6 +13,7 @@ import { showGameToast } from '@/components/Toast'
 import { localStore } from '@/utils/localStore'
 import { userCache } from '@/utils/userCache'
 import { USER_STORE_CAREER } from '@/utils/indexedDB'
+import { isChannelPackageHost } from '@/utils/channelPackage'
 import { t } from '@/i18n'
 
 const CAREER_CLUB_STORE_KEY = 'CAREER_SELECTED_CLUB_ID'
@@ -21,6 +22,7 @@ const CAREER_CLUB_ALL = 'all'
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
+const pageTitle = isChannelPackageHost() ? t('UIData_KrVdD5WqB') : t('PageMineClubCareer')
 
 // 背景素材由 CSS 根据 data-theme 选择，切换主题时无需重建页面。
 const backgroundStyle = computed(() => ({
@@ -372,7 +374,7 @@ onMounted(() => {
 <template>
   <div class="page-shell career-page" :style="backgroundStyle" @click="closePopup">
     <div class="page-top"></div>
-    <HeaderBack :title="t('PageMineClubCareer')" extra-padding>
+    <HeaderBack :title="pageTitle" extra-padding>
       <template #right>
         <div class="action-wrap">
           <TopActionButton

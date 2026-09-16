@@ -1,9 +1,6 @@
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
-import {
-  isChannelPackageHostname,
-  isChannelSubdomainHostname,
-} from '@/utils/channelHost'
+import { isChannelPackageHostname, isChannelSubdomainHostname } from '@/utils/channelHost'
 export const CHANNEL_MAIN_DOMAIN = (import.meta.env.VITE_CHANNEL_MAIN_DOMAIN || '')
   .trim()
   .toLowerCase()

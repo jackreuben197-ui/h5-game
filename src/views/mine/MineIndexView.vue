@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -41,12 +41,12 @@ interface BoxItem {
   route: string
 }
 
-const boxList = ref<BoxItem[]>([
+const boxList: BoxItem[] = [
   {
     key: 'club-career',
     icon: iconBoxClubT,
     iconLight: iconBoxClubTLight,
-    text: t('PageMineClubCareer'),
+    text: isChannelPackage ? t('UIData_KrVdD5WqB') : t('PageMineClubCareer'),
     route: '/mine/career/club',
   },
   {
@@ -91,7 +91,7 @@ const boxList = ref<BoxItem[]>([
     text: t('UIMine_btn_setting'),
     route: '/mine/settings',
   },
-])
+].filter((item) => !isChannelPackage || item.key !== 'friends-career')
 
 function goToNextPage(path: string): void {
   if (path === '/mine/settings') {

@@ -13,7 +13,7 @@ import { t } from '@/i18n'
 import { localStore } from '@/utils/localStore'
 import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
 import { useHomeAnnouncement } from '@/composables/useHomeAnnouncement'
-import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
+import { checkIsShowForClubAndTribe, getRoomPlayerCount } from '@/utils/roomVisibility'
 import { filterVisibleMttRecords } from '@/utils/mttVisibility'
 import { showGameToast } from '@/components/Toast'
 import ChannelClubInfoPanel from '@/components/Club/ChannelClubInfoPanel.vue'
@@ -291,10 +291,6 @@ function openMiniGamePanel(): void {
   // })
 }
 
-function getRoomPlayers(room: RoomRecord): number {
-  return Number(room.roomers) || (Array.isArray(room.users) ? room.users.length : 0)
-}
-
 function classifyRoomToZone(room: RoomRecord): 'poker' | 'mahjong' | null {
   const gameType = Number(room.game_type)
   if (!Number.isFinite(gameType)) {
@@ -328,7 +324,7 @@ function refreshHomePokerMahjongStatsFromStore(): void {
     }
 
     nextStats[zone].tables += 1
-    const playersNum = getRoomPlayers(room)
+    const playersNum = getRoomPlayerCount(room)
     nextStats[zone].players += playersNum
   })
 

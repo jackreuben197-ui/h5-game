@@ -5,7 +5,7 @@ import { postOrgClubDefaultApi } from '@/api/org'
 import StorageKey from '@/constants/storageKey'
 import { dzpkPersistStorage } from '@/utils/localStore'
 import {
-  CHANNEL_MAIN_DOMAIN,
+  resolveChannelMainDomain,
   copyStorageToMainDomain,
   extractInviteCodeFromSubdomain,
   isChannelPackageHost,
@@ -31,7 +31,7 @@ function normalizeClubId(value: unknown): string {
 
 function resolveSafariBaseUrl(hostname: string): string {
   const normalizedHostname = hostname.trim().toLowerCase()
-  if (!normalizedHostname || normalizedHostname === CHANNEL_MAIN_DOMAIN) {
+  if (!normalizedHostname || normalizedHostname === resolveChannelMainDomain(normalizedHostname)) {
     return ''
   }
   return normalizedHostname

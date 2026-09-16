@@ -1,5 +1,6 @@
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
+import { appConfig } from '@/utils/appConfig'
 import { isChannelPackageHostname, isChannelSubdomainHostname } from '@/utils/channelHost'
 import {
   isTelegramMiniAppEnv,
@@ -68,9 +69,31 @@ function readParam(
   return readString(hashParams.get(key))
 }
 
+// 主域名：优先取运行时 config.json（按环境部署），否则退回当前 host 的末三段。
+// 构建期的 VITE_CHANNEL_MAIN_DOMAIN 对所有环境只有一个值，在轮换的预览域名上会失效，
+// 于是主域名本身会被判成渠道包，并向 /org/club/default 发出 base_url 查询。
+export function resolveChannelMainDomain(hostname: string = window.location.hostname): string {
+  const configured = readString(appConfig.channelMainDomain).toLowerCase()
+  return configured || getChannelMainDomain(hostname)
+}
+
+// 纯 IP 不是渠道域名：主域名缺省时会退化成「自身末三段」，127.0.0.1 会被当成 0.0.1 的子域名。
+function isNumericHost(hostname: string): boolean {
+  const labels = getHostLabels(hostname)
+  return labels.length > 0 && labels.every((label) => /^\d+$/.test(label))
+}
+
+function isReservedOrNumericHost(hostname: string): boolean {
+  return RESERVED_SUBDOMAINS.has(getHostLabels(hostname)[0] || '') || isNumericHost(hostname)
+}
+
 export function isChannelPackageHost(hostname: string = window.location.hostname): boolean {
   if (TEST_CHANNEL_INVITE_CODE) return true
-  return isChannelPackageHostname(readString(hostname), CHANNEL_MAIN_DOMAIN)
+  const normalizedHost = readString(hostname).toLowerCase()
+  if (isReservedOrNumericHost(normalizedHost)) {
+    return false
+  }
+  return isChannelPackageHostname(normalizedHost, resolveChannelMainDomain(normalizedHost))
 }
 
 export function hasTelegramClubParam(): boolean {
@@ -248,7 +271,10 @@ export function extractInviteCodeFromSubdomain(
   if (TEST_CHANNEL_INVITE_CODE) return TEST_CHANNEL_INVITE_CODE
   const normalizedHost = readString(hostname).toLowerCase()
   // 自定义域名也属于渠道包，但它没有可作为邀请码的主域名前缀。
-  if (!isChannelSubdomainHostname(normalizedHost, CHANNEL_MAIN_DOMAIN)) {
+  if (isReservedOrNumericHost(normalizedHost)) {
+    return ''
+  }
+  if (!isChannelSubdomainHostname(normalizedHost, resolveChannelMainDomain(normalizedHost))) {
     return ''
   }
   // 邀请码 = host 最前面的标签

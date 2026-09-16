@@ -244,8 +244,8 @@ async function onSave(): Promise<void> {
 @use '@/styles/mixins' as *;
 
 .nickname-page {
-  height: 100dvh;
-  min-height: 100dvh;
+  height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
   display: flex;
   flex-direction: column;
   color: #f9f9f9;

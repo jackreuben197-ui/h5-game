@@ -18,8 +18,8 @@ importers:
         specifier: git+ssh://git@github.com/jackreuben197-ui/h5-cc-bridge.git#dev_merge_0901
         version: https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/45a63faef893ec260e83b4813360e9473ba415c0
       '@silenthill/h5-cc-i18n':
-        specifier: github:jackreuben197-ui/h5-cc-i18n#dev_merge_0901
-        version: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/b3a53f5af4b43c17ab3d3a9d11b36f64a2df2c42
+        specifier: github:jackreuben197-ui/h5-cc-i18n#dev_merge_0915
+        version: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/5f9bafb10f262953bf77f36cf1b705f83439f1c2
       '@vueuse/core':
         specifier: ^14.2.1
         version: 14.2.1(vue@3.5.32(typescript@6.0.2))
@@ -1064,8 +1064,8 @@ packages:
     resolution: {gitHosted: true, integrity: sha512-S+LRE5UAVbbDjGTJJkllw8cmvb5OcUQYG2SpVFcIfQGmh0I7WFznGtdvWkxiL82Hj6+sDTQTkCCmgU7oWdiirQ==, tarball: https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/45a63faef893ec260e83b4813360e9473ba415c0}
     version: 0.1.0
 
-  '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/b3a53f5af4b43c17ab3d3a9d11b36f64a2df2c42':
-    resolution: {gitHosted: true, integrity: sha512-fHp3nCh7/Yqsc4AznJSilljOohkx2bONZc8yEIXYm58ppRvNe0joXAXikuJZMeFiInFuo+peuda3p4xJ7aBFVw==, tarball: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/b3a53f5af4b43c17ab3d3a9d11b36f64a2df2c42}
+  '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/5f9bafb10f262953bf77f36cf1b705f83439f1c2':
+    resolution: {gitHosted: true, integrity: sha512-MLm3ixbjCt0Ll63/1FDkFIyS2lV/dNXIK3hCrj16fiv6zKbWlpwWoNemJAfVlRMlxmqUxhpenRAf3QfzsZN5WQ==, tarball: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/5f9bafb10f262953bf77f36cf1b705f83439f1c2}
     version: 1.0.0
 
   '@tybys/wasm-util@0.10.1':
@@ -3497,7 +3497,7 @@ snapshots:
 
   '@silenthill/h5-cc-bridge@https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/45a63faef893ec260e83b4813360e9473ba415c0': {}
 
-  '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/b3a53f5af4b43c17ab3d3a9d11b36f64a2df2c42': {}
+  '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/5f9bafb10f262953bf77f36cf1b705f83439f1c2': {}
 
   '@tybys/wasm-util@0.10.1':
     dependencies:

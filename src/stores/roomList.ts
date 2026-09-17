@@ -229,7 +229,7 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
           bootstrappingScope = ''
           // 同步期间身份发生切换时，按当前 scope 再补一次，旧结果已由各阶段的
           // scope 校验丢弃。
-          if (activeScope && activeScope !== bootstrappedScope) {
+          if (scope !== activeScope && activeScope && activeScope !== bootstrappedScope) {
             void this.bootstrapRoomList()
           }
         })

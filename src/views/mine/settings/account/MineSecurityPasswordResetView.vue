@@ -183,6 +183,10 @@ function closeOverlay(): void {
 
 .security-password-page {
   height: 100dvh;
+  html[data-channel-package='1'] & {
+    height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+    min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  }
   position: relative;
   overflow: hidden;
   color: #fff;

@@ -131,6 +131,10 @@ function handleOpenCustomerService() {
   position: relative;
   height: 100dvh;
   min-height: 100dvh;
+  html[data-channel-package='1'] & {
+    height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+    min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  }
   color: #fff;
   overflow: hidden;
   background: url('@/assets/images/main_bg.webp') center / cover no-repeat;

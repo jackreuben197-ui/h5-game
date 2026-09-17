@@ -31,12 +31,6 @@ import ImageUploadSheet from '@/components/ImageUploadSheet/ImageUploadSheet.vue
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 import GameDialog from '@/components/Dialog/GameDialog.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
-import {
-  buildChannelAgentInviteUrl,
-  buildChannelClubInviteUrl,
-  buildChannelRegisterUrl,
-  isChannelPackageHost,
-} from '@/utils/channelPackage'
 import { generateQrCodeUrl } from '@/utils/qrcode'
 import { formatUC } from '@/utils/roomVisibility'
 import { showFailToast, showSuccessToast } from 'vant'
@@ -97,7 +91,6 @@ const clubMemberCount = computed(
 const cachedClub = computed(() => userInfoStore.currentClub)
 const currentClubGold = computed(() => Number(cachedClub.value?.user_gold ?? 0))
 const currentClubCredit = computed(() => Number(cachedClub.value?.user_credit ?? 0))
-const isChannelPackage = isChannelPackageHost()
 
 const quickActions = computed<QuickActionItem[]>(() => {
   if (canManageClub.value) {
@@ -985,26 +978,20 @@ async function confirmDeleteClub(): Promise<void> {
 }
 
 async function generateInviteQrCode(): Promise<void> {
-  const clubInviteCode = String(displayClub.value?.invitation_code || '').trim()
-  const finalLink = isAgent.value
-    ? buildChannelAgentInviteUrl(agentInviteCode.value, clubInviteCode)
-    : isChannelPackage
-      ? buildChannelClubInviteUrl(clubInviteCode)
-      : buildChannelRegisterUrl({ inviteCode: clubInviteCode })
-
-  if (!finalLink || !clubInviteCode || (isAgent.value && !agentInviteCode.value)) {
-    imgInviteQr.value = ''
-    return
-  }
+  const origin = window.location.origin
+  const agentParams = new URLSearchParams({ mode: 'register', i: agentInviteCode.value })
+  const url = isAgent.value && agentInviteCode.value
+    ? `${origin}/#/?${agentParams.toString()}`
+    : origin
 
   try {
-    imgInviteQr.value = await generateQrCodeUrl(finalLink, { size: 720, margin: 2 })
+    imgInviteQr.value = await generateQrCodeUrl(url, { size: 720, margin: 2 })
   } catch (error) {
     console.error('generateInviteQrCode error', error)
   }
 }
 
-async function fetchAgentInviteCode(): Promise<void> {
+async function fetchAgentShareInfo(): Promise<void> {
   agentInviteCode.value = ''
   agentShareNickname.value = ''
   agentShareRandomId.value = ''
@@ -1026,7 +1013,7 @@ async function fetchAgentInviteCode(): Promise<void> {
     })
 
     if (Number(response.code) !== 0 || !response.data) {
-      console.error('fetchAgentInviteCode API error', response.msg)
+      console.error('fetchAgentShareInfo API error', response.msg)
       return
     }
 
@@ -1036,13 +1023,13 @@ async function fetchAgentInviteCode(): Promise<void> {
     agentShareNickname.value = String(response.data.user_info?.nickname || '').trim()
     agentShareRandomId.value = String(response.data.user_info?.random_id || '').trim()
   } catch (error) {
-    console.error('fetchAgentInviteCode error', error)
+    console.error('fetchAgentShareInfo error', error)
   }
 }
 
 onMounted(async () => {
   await refreshClubDetail()
-  await fetchAgentInviteCode()
+  await fetchAgentShareInfo()
   await generateInviteQrCode()
 })
 </script>

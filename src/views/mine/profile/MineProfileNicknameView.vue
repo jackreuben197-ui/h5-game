@@ -246,6 +246,10 @@ async function onSave(): Promise<void> {
 .nickname-page {
   height: 100dvh;
   min-height: 100dvh;
+  html[data-channel-package='1'] & {
+    height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+    min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  }
   display: flex;
   flex-direction: column;
   color: #f9f9f9;

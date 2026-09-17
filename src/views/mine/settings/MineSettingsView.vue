@@ -254,6 +254,10 @@ function onLogoutCancel(): void {
 
 .mine-glass-page {
   height: 100dvh;
+  html[data-channel-package='1'] & {
+    height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+    min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  }
   overflow-y: auto;
   padding: 0 0 0.8rem;
   color: #f9f9f9;

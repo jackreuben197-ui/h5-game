@@ -54,9 +54,11 @@ const GlobalCustomerServiceChat = defineAsyncComponent(
   pointer-events: none;
 }
 
-/* 渠道包独立页面：三星浏览器可能把 100dvh 算短；只补足背景，不缩短正常页面。 */
+/* 渠道包独立页：让实际带背景的根容器覆盖应用视口。 */
 html[data-channel-package='1']:not([data-main-layout='primary'])
-  #app > .h5-route-host > * {
-  min-height: max(100dvh, var(--app-full-height, var(--app-viewport-height, 100dvh)));
+  #app .h5-route-host .page-shell,
+html[data-channel-package='1']:not([data-main-layout='primary'])
+  #app > .h5-route-host > :not(.page-shell) {
+  min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
 }
 </style>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import ava1 from '@/assets/images/wallet/avatars/ava1.png'
@@ -139,7 +139,11 @@ watch(
     }
   },
 )
-const activePreset = ref(0)
+const NO_PRESET = -2
+const CUSTOM_PRESET = -1
+
+const activePreset = ref(NO_PRESET)
+const payCtaRef = ref<HTMLElement | null>(null)
 const activeMethod = ref(0)
 const keypadOpen = ref(false)
 const customAmount = ref('')
@@ -189,7 +193,7 @@ const onlinePopupInitialData = ref({
 })
 
 function handleOnlineSuccess() {
-  activePreset.value = 0
+  activePreset.value = NO_PRESET
   customAmount.value = ''
 }
 
@@ -569,24 +573,13 @@ const methods = computed<PaymentMethod[]>(() =>
   })),
 )
 
-// Watch for method changes to handle methods without price lists
 watch(
   activeMethod,
-  (newIdx) => {
-    const selected = filteredPayTypes.value[newIdx] as any
-    const hasPriceIds = (selected?.price_ids?.length ?? 0) > 0
-    const hasPriceList = (selected?.price_list?.length ?? 0) > 0
-
-    if (selected && !hasPriceIds && !hasPriceList) {
-      activePreset.value = -1 // Default to custom amount
-    } else {
-      activePreset.value = 0 // Default to first preset
-    }
+  () => {
+    activePreset.value = NO_PRESET
   },
   { immediate: true },
 )
-
-// if pay_type have no price_ids or price_list then empty tile will show and default is custom amount tile will show.
 
 // feeType: 0=none, 1=club pays, 2=player pays — only apply surcharge when player pays
 // Removed local calculation and formatting functions, using walletStore instead.
@@ -679,15 +672,40 @@ function onKeypadSubmit(v: number): void {
   }
   customAmount.value = String(v)
   keypadOpen.value = false
-  activePreset.value = -1
+  activePreset.value = CUSTOM_PRESET
+  scrollPayCtaIntoView()
 }
 
+const hasSelection = computed(() => activePreset.value !== NO_PRESET)
+
 const selectedAmount = computed(() => {
-  if (activePreset.value === -1) {
+  if (activePreset.value === NO_PRESET) {
+    return '0'
+  }
+  if (activePreset.value === CUSTOM_PRESET) {
     return customAmount.value || '0'
   }
   return presets.value[activePreset.value]?.amount || '0'
 })
+
+function scrollPayCtaIntoView(): void {
+  void nextTick(() => {
+    const el = payCtaRef.value
+    const scroller = el?.closest('.wallet-scrollable') as HTMLElement | null
+    if (!el || !scroller) return
+    const clearance = parseFloat(getComputedStyle(scroller).paddingBottom) || 0
+    const overflow =
+      el.getBoundingClientRect().bottom + clearance - scroller.getBoundingClientRect().bottom
+    if (overflow > 1) {
+      scroller.scrollBy({ top: overflow, behavior: 'smooth' })
+    }
+  })
+}
+
+function onPresetSelect(index: number): void {
+  activePreset.value = index
+  scrollPayCtaIntoView()
+}
 
 const displayPayAmount = computed(() => {
   const payTypes = filteredPayTypes.value
@@ -729,11 +747,21 @@ const displayPayAmount = computed(() => {
   return selectedAmount.value
 })
 
+const payButtonText = computed(() =>
+  hasSelection.value
+    ? `${t('UIMineMallUSDTShop_PromptlyRechargeTip')} ${displayPayAmount.value}`
+    : t('UIMineMallUSDTShop_PromptlyRechargeTip'),
+)
+
 const tabLabels = computed(() => [t('Wallet_Deposit'), t('Wallet_Withdraw')])
 
 async function onPayClick() {
+  if (!hasSelection.value) return
   if (!requireRealUser(resumeWalletPayAfterLogin)) return
-  if (activePreset.value === -1 && !isDepositAmountInRange(Number(selectedAmount.value))) {
+  if (
+    activePreset.value === CUSTOM_PRESET &&
+    !isDepositAmountInRange(Number(selectedAmount.value))
+  ) {
     showDepositRangeError()
     return
   }
@@ -799,7 +827,8 @@ async function onPayClick() {
       feeType: selectedPayType.fee_type ?? 0,
       discount: selectedPayType.discount ?? 0,
       payId: selectedPayType.id ?? 0,
-      priceId: activePreset.value === -1 ? 0 : presets.value[activePreset.value]?.id ?? 0,
+      priceId:
+        activePreset.value === CUSTOM_PRESET ? 0 : (presets.value[activePreset.value]?.id ?? 0),
     }
     onlinePopupInitialData.value = {
       step: 1,
@@ -865,7 +894,8 @@ async function onCsSubmit() {
   const feeRate = selectedPayType.fee_rate ?? 0
   const feeType = selectedPayType.fee_type ?? 0
   const discount = selectedPayType.discount ?? 0
-  let priceId = activePreset.value === -1 ? 0 : (presets.value[activePreset.value]?.id ?? 0)
+  let priceId =
+    activePreset.value === CUSTOM_PRESET ? 0 : (presets.value[activePreset.value]?.id ?? 0)
 
   // 1. Unique-amount channel: server adjusts amount with a tail for payment matching
   if ((selectedPayType.increase_interval ?? 0) > 0) {
@@ -937,7 +967,7 @@ async function onCsSubmit() {
       openCsOrderChat()
       void refreshPendingCsOrder()
 
-      activePreset.value = 0
+      activePreset.value = NO_PRESET
       customAmount.value = ''
     } else if (res.code === 20066 || res.code === 90016) {
       showToast(t('Wallet_OrderUnderReview'))
@@ -968,7 +998,8 @@ async function onUsdtSubmit(type: number) {
       ? usdtPopupProps.value.goldCount
       : Math.floor(usdtPopupProps.value.goldCount / 100) * 100
 
-  let priceId = activePreset.value === -1 ? 0 : (presets.value[activePreset.value]?.id ?? 0)
+  let priceId =
+    activePreset.value === CUSTOM_PRESET ? 0 : (presets.value[activePreset.value]?.id ?? 0)
 
   // The unique amount is fetched before the popup so the user can see its tail.
   if (type === 0 && usdtUniqueAmount.value) {
@@ -1013,7 +1044,7 @@ async function onUsdtSubmit(type: number) {
       usdtDetailsPopupOpen.value = true
 
       // Reset selection state after success
-      activePreset.value = 0
+      activePreset.value = NO_PRESET
       customAmount.value = ''
     } else if (res.code === 20066) {
       // User has unfinished orders
@@ -1103,7 +1134,7 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
               <PresetAmountGrid
                 :presets="presets"
                 :active-index="activePreset"
-                @select="activePreset = $event"
+                @select="onPresetSelect"
                 @custom="onCustom"
               />
             </div>
@@ -1114,9 +1145,10 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
               @select="activeMethod = $event"
             />
 
-            <div class="pay-cta-wrapper">
+            <div ref="payCtaRef" class="pay-cta-wrapper">
               <PrimaryButton
-                :text="`${t('UIMineMallUSDTShop_PromptlyRechargeTip')} ${displayPayAmount}`"
+                :text="payButtonText"
+                :disabled="!hasSelection"
                 class="pay-cta"
                 @click="onPayClick"
               />

@@ -78,7 +78,7 @@ withDefaults(defineProps<Props>(), {
   box-shadow: 0.9px 1.1px 1.8px rgba(0, 0, 0, 0.25);
 
   @include theme-light-own {
-    background: rgba(123, 251, 202, 1);
+    background: var(--wallet-l-surface-soft);
     background-blend-mode: normal;
     border-color: rgba(242, 242, 242, 0.3);
     box-shadow: none;
@@ -92,6 +92,12 @@ withDefaults(defineProps<Props>(), {
   @include theme-light-own {
     background: var(--wallet-l-surface-soft);
   }
+}
+
+.tile--custom.tile--active {
+  justify-content: center;
+  gap: 0;
+  padding: 0.48rem 0.275rem 0.285rem;
 }
 
 .tile__head {
@@ -123,9 +129,24 @@ withDefaults(defineProps<Props>(), {
   }
 }
 
-.tile--active .tile__amount {
+.tile--active .tile__amount,
+.tile--active .tile__custom-label {
+  color: #fa2b4b;
+
   @include theme-light-own {
-    color: var(--wallet-l-text);
+    color: #fa2b4b;
+  }
+}
+
+.tile--active .tile__chip {
+  background: #fa2b4b;
+
+  :deep(.chip__amount) {
+    color: #f9f9f9;
+  }
+
+  @include theme-light-own {
+    box-shadow: none;
   }
 }
 

@@ -14,7 +14,7 @@ interface Props {
 }
 
 withDefaults(defineProps<Props>(), {
-  activeIndex: 0,
+  activeIndex: -2,
 })
 
 const emit = defineEmits<{
@@ -36,6 +36,7 @@ const emit = defineEmits<{
     <AmountTile
       amount=""
       custom
+      :active="activeIndex === -1"
       @click="emit('custom')"
     />
   </div>

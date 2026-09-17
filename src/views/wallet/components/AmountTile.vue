@@ -21,6 +21,17 @@ withDefaults(defineProps<Props>(), {
     class="tile"
     :class="{ 'tile--active': active, 'tile--custom': custom }"
   >
+    <span
+      v-if="active"
+      class="tile__check"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path d="M5 12.5 10 17.5 19 7" />
+      </svg>
+    </span>
     <template v-if="custom">
       <span class="tile__custom-label">{{ $txt('Wallet_CustomAmount') }}</span>
     </template>
@@ -45,6 +56,7 @@ withDefaults(defineProps<Props>(), {
 @use '@/styles/mixins' as *;
 
 .tile {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -52,6 +64,7 @@ withDefaults(defineProps<Props>(), {
   aspect-ratio: 1 / 1;
   padding: 0.48rem 0.275rem 0.285rem;
   background: rgba(0, 0, 0, 0.12);
+  border: 0.04rem solid transparent;
   border-radius: 0.64rem;
   width: 100%;
   min-width: 0;
@@ -64,24 +77,18 @@ withDefaults(defineProps<Props>(), {
 }
 
 .tile--active {
-  justify-content: flex-end;
-  gap: 0.523rem; /* 19.601px */
-  padding: 0.25rem 0.276rem 0.286rem; /* 9.4px 10.34px 10.716px */
-  border-radius: 0.78rem; /* 29.219px */
-  background: radial-gradient(
-    47.75% 48.13% at 41.94% 52.55%,
-    rgba(37, 49, 107, 0.5) 0%,
-    rgba(16, 16, 16, 0.5) 100%
-  );
-  background-blend-mode: soft-light;
-  border: 0.134px solid rgba(242, 242, 242, 0.3);
-  box-shadow: 0.9px 1.1px 1.8px rgba(0, 0, 0, 0.25);
+  background: rgba(122, 16, 32, 0.45);
+  border-color: #fa2b4b;
+  box-shadow:
+    0 0 0.16rem rgba(250, 43, 75, 0.9),
+    0 0 0.48rem rgba(250, 43, 75, 0.45);
 
   @include theme-light-own {
-    background: rgba(0, 0, 0, 0.11);
-    background-blend-mode: normal;
-    border-color: rgba(0, 0, 0, 0.1);
-    box-shadow: none;
+    background: rgba(250, 43, 75, 0.1);
+    border-color: #fa2b4b;
+    box-shadow:
+      0 0 0.12rem rgba(250, 43, 75, 0.55),
+      0 0 0.4rem rgba(250, 43, 75, 0.28);
   }
 }
 
@@ -95,17 +102,33 @@ withDefaults(defineProps<Props>(), {
 }
 
 .tile--custom.tile--active {
-  justify-content: center;
-  gap: 0;
-  padding: 0.48rem 0.275rem 0.285rem;
-  background: radial-gradient(
-    47.75% 48.13% at 41.94% 52.55%,
-    rgba(37, 49, 107, 0.5) 0%,
-    rgba(16, 16, 16, 0.5) 100%
-  );
+  background: rgba(122, 16, 32, 0.45);
 
   @include theme-light-own {
-    background: rgba(0, 0, 0, 0.11);
+    background: rgba(250, 43, 75, 0.1);
+  }
+}
+
+.tile__check {
+  position: absolute;
+  top: 0.13rem;
+  right: 0.13rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #fa2b4b;
+
+  svg {
+    width: 0.3rem;
+    height: 0.3rem;
+    fill: none;
+    stroke: #f9f9f9;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 }
 
@@ -135,15 +158,6 @@ withDefaults(defineProps<Props>(), {
 
   @include theme-light-own {
     color: var(--wallet-l-text);
-  }
-}
-
-.tile--active .tile__amount,
-.tile--active .tile__custom-label {
-  color: #fa2b4b;
-
-  @include theme-light-own {
-    color: #fa2b4b;
   }
 }
 

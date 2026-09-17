@@ -102,16 +102,21 @@ function normalizeApiBase(raw: string): string {
   return /\/api$/i.test(value) ? value : `${value}/api`
 }
 
-// 探测某个基础地址是否可达：no-cors 只判断「服务器是否有响应」，network/DNS/超时失败视为不可用。
+// 探测某个基础地址是否可达：针对公开接口验证响应状态。
 async function probeApiBase(base: string, timeoutMs = 2500): Promise<boolean> {
   if (typeof fetch === 'undefined') {
+    return false
+  }
+  const normalized = normalizeApiBase(base)
+  if (!/^https?:\/\//i.test(normalized)) {
     return false
   }
   const controller = typeof AbortController !== 'undefined' ? new AbortController() : null
   const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null
   try {
-    await fetch(base, { method: 'GET', mode: 'no-cors', cache: 'no-store', signal: controller?.signal })
-    return true
+    const probeUrl = `${normalized}/config/before/login/config`
+    const res = await fetch(probeUrl, { method: 'GET', cache: 'no-store', signal: controller?.signal })
+    return res.ok || (res.status > 0 && res.status < 500)
   } catch {
     return false
   } finally {
@@ -138,20 +143,37 @@ async function resolveTestApiBase(): Promise<string> {
  * 生产/测试环境返回 initAppConfig 解析好的 resolvedApiBase（测试环境为探测后的可用地址）。
  */
 export function resolveApiBaseUrl(): string {
-  if (import.meta.env.DEV) {
-    return import.meta.env.VITE_API_BASE_URL || '/api'
+  if (Boolean(import.meta.env?.DEV)) {
+    return import.meta.env?.VITE_API_BASE_URL || '/api'
   }
-  return (
+  const raw =
     resolvedApiBase ||
     appConfig.baseApi ||
     appConfig.apiDomains[0] ||
-    import.meta.env.VITE_API_BASE_URL ||
+    import.meta.env?.VITE_API_BASE_URL ||
     TEST_API_FALLBACK
-  )
+
+  const normalized = normalizeApiBase(raw)
+
+  // 生产/测试部署下，前端可能部署在独立域名 (如 prvw-game.trackyourchoice.com)。
+  // 如果 normalized 为相对路径 (如 "/api" 或 "")，直接发请求会打到前端 Host 导致 404。
+  // 必须确保非 DEV 环境返回完整的绝对 API 域名 (以 http:// 或 https:// 开头)。
+  if (!/^https?:\/\//i.test(normalized)) {
+    const fallback = import.meta.env?.VITE_API_BASE_URL || TEST_API_FALLBACK
+    if (/^https?:\/\//i.test(fallback)) {
+      return normalizeApiBase(fallback)
+    }
+  }
+
+  return normalized
 }
 
 // 当前生效的「绝对」基础地址（不含 DEV 的 /api 代理分支），供推导渠道主域名等使用。
 export function getActiveApiBase(): string {
+  const currentBase = resolveApiBaseUrl()
+  if (/^https?:\/\//i.test(currentBase)) {
+    return currentBase
+  }
   return (
     resolvedApiBase ||
     (appConfig.isTest ? appConfig.apiDomains[0] : appConfig.baseApi) ||

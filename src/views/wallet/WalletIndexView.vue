@@ -1298,7 +1298,7 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   overscroll-behavior: contain;
-  padding-bottom: calc(env(safe-area-inset-bottom) + 3.2rem);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 0.4rem);
 }
 
 .wallet-screen--channel .wallet-scrollable,

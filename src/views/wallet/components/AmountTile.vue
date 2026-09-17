@@ -78,9 +78,9 @@ withDefaults(defineProps<Props>(), {
   box-shadow: 0.9px 1.1px 1.8px rgba(0, 0, 0, 0.25);
 
   @include theme-light-own {
-    background: var(--wallet-l-surface-soft);
+    background: rgba(0, 0, 0, 0.11);
     background-blend-mode: normal;
-    border-color: rgba(242, 242, 242, 0.3);
+    border-color: rgba(0, 0, 0, 0.1);
     box-shadow: none;
   }
 }
@@ -98,6 +98,15 @@ withDefaults(defineProps<Props>(), {
   justify-content: center;
   gap: 0;
   padding: 0.48rem 0.275rem 0.285rem;
+  background: radial-gradient(
+    47.75% 48.13% at 41.94% 52.55%,
+    rgba(37, 49, 107, 0.5) 0%,
+    rgba(16, 16, 16, 0.5) 100%
+  );
+
+  @include theme-light-own {
+    background: rgba(0, 0, 0, 0.11);
+  }
 }
 
 .tile__head {

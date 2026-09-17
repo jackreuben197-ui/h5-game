@@ -197,6 +197,14 @@ async function forceToLogin(expectedToken = ''): Promise<void> {
 }
 
 http.interceptors.request.use(async (config) => {
+  try {
+    const { configReady, resolveApiBaseUrl } = await import('@/utils/appConfig')
+    await configReady
+    config.baseURL = resolveApiBaseUrl()
+  } catch (error) {
+    console.warn('[http] await configReady failed:', error)
+  }
+
   const extConfig = config as HttpRequestConfigExt
   const gameStore = useGameStore(pinia)
   const configuredToken = extConfig.authToken

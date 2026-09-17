@@ -1494,6 +1494,10 @@ onMounted(async () => {
 
 .club-detail-bg {
   height: 100dvh;
+  html[data-channel-package='1'] & {
+    height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+    min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  }
   background-image: var(--club-detail-bg-dark);
   background-size: cover;
 

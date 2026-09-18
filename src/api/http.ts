@@ -197,10 +197,13 @@ async function forceToLogin(expectedToken = ''): Promise<void> {
 }
 
 http.interceptors.request.use(async (config) => {
+  const usesDefaultBaseURL = !config.baseURL || config.baseURL === http.defaults.baseURL
   try {
     const { configReady, resolveApiBaseUrl } = await import('@/utils/appConfig')
     await configReady
-    config.baseURL = resolveApiBaseUrl()
+    if (usesDefaultBaseURL) {
+      config.baseURL = resolveApiBaseUrl()
+    }
   } catch (error) {
     console.warn('[http] await configReady failed:', error)
   }

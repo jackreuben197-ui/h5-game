@@ -970,65 +970,57 @@ async function onImageUpload(event: Event): Promise<void> {
 
   imageUploading.value = true
 
-  const runtime = await resolveUploadRuntime()
-  if (!runtime) {
-    imageUploading.value = false
-    input.value = ''
-    return
-  }
-  const formData = new FormData()
-  formData.append('file', file)
-  formData.append('fileType', '1')
-  formData.append('check_code', md5(await file.arrayBuffer()))
+  try {
+    const runtime = await resolveUploadRuntime()
+    if (!runtime) return
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('fileType', '1')
+    formData.append('check_code', md5(await file.arrayBuffer()))
 
-  const uploadResponse = await postImossGameClientUploadImageApi(
-    formData as unknown as Parameters<typeof postImossGameClientUploadImageApi>[0],
-    runtime,
-  )
-  if (
-    getResponseCode(uploadResponse as unknown as Record<string, unknown>) !== 0 ||
-    !uploadResponse.data
-  ) {
-    imageUploading.value = false
-    showFailToast(uploadResponse.message || t('UIGlobalCustomerServiceChat_Fail2'))
-    input.value = ''
-    return
-  }
+    const uploadResponse = await postImossGameClientUploadImageApi(
+      formData as unknown as Parameters<typeof postImossGameClientUploadImageApi>[0],
+      runtime,
+    )
+    if (
+      getResponseCode(uploadResponse as unknown as Record<string, unknown>) !== 0 ||
+      !uploadResponse.data
+    ) {
+      showFailToast(uploadResponse.message || t('UIGlobalCustomerServiceChat_Fail2'))
+      return
+    }
 
-  const url = pickFileUrl(uploadResponse.data)
-  if (!url) {
-    imageUploading.value = false
-    input.value = ''
-    return
-  }
+    const url = pickFileUrl(uploadResponse.data)
+    if (!url) return
 
-  const sendResponse = await postChatSupportMessageSendApi({
-    tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || 0,
-    club_id: resolveEffectiveClubId(channel),
-    to_user_id: resolveToUserId(channel),
-    im_service_type: resolveEffectiveImServiceType(channel),
-    msg_type: 2,
-    url,
-    file_size: Number(file.size || 0),
-    thumb_url: uploadResponse.data.smfileUrl,
-    file_name: String(file.name || '').trim(),
-  })
-
-  if (sendResponse.code === 0) {
-    messages.value.push({
+    const sendResponse = await postChatSupportMessageSendApi({
+      tribe_id: Number(channel.tribe_id || chatContext.value.tribeId || 0) || 0,
+      club_id: resolveEffectiveClubId(channel),
+      to_user_id: resolveToUserId(channel),
+      im_service_type: resolveEffectiveImServiceType(channel),
       msg_type: 2,
       url,
+      file_size: Number(file.size || 0),
       thumb_url: uploadResponse.data.smfileUrl,
-      user_send: resolveOutgoingMessageUserSend(channel),
-      local_time: Math.floor(Date.now() / 1000),
-      time_token: Number(sendResponse.data?.time_token || Date.now()),
+      file_name: String(file.name || '').trim(),
     })
-    scrollToBottom()
-    // await fetchMessages({ setRead: true })
-  }
 
-  imageUploading.value = false
-  input.value = ''
+    if (sendResponse.code === 0) {
+      messages.value.push({
+        msg_type: 2,
+        url,
+        thumb_url: uploadResponse.data.smfileUrl,
+        user_send: resolveOutgoingMessageUserSend(channel),
+        local_time: Math.floor(Date.now() / 1000),
+        time_token: Number(sendResponse.data?.time_token || Date.now()),
+      })
+      scrollToBottom()
+      // await fetchMessages({ setRead: true })
+    }
+  } finally {
+    imageUploading.value = false
+    input.value = ''
+  }
 }
 
 function ensureMediaSupport(): boolean {

@@ -25,11 +25,11 @@ import { useGameStore } from '@/stores/game'
 import { userCache } from '@/utils/userCache'
 import { USER_STORE_BILL_DATA } from '@/utils/indexedDB'
 import { formatDateTime } from '@/utils/time'
-import { isChannelDiamondFreeMode, isChannelPackageHost } from '@/utils/channelPackage'
+import { isChannelDiamondFreeMode, isPrivateDomainMode } from '@/utils/channelPackage'
 
 const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
-const isChannelPackage = isChannelPackageHost()
+const isChannelPackage = isPrivateDomainMode()
 const hideDiamondElements = isChannelDiamondFreeMode()
 
 // 主容器背景图：全页面共用一张底图。
@@ -755,7 +755,9 @@ onMounted(() => {
       </div>
 
       <section v-if="activeTab !== 3" class="glass-card total-card">
-        <div v-if="activeTab === 1" class="label">{{ t('Page_MineBill_UCTotalAmount') }}</div>
+        <div v-if="activeTab === 1" class="label">
+          {{ isChannelPackage ? t('Page_MineBill_UCTotalAmount') : t('UIMineAllUC') }}
+        </div>
         <div v-else-if="activeTab === 2" class="label">{{ t('UIMineAllClub') }}</div>
         <div v-else-if="activeTab === 4" class="label">{{ t('UIMineAllDiamond') }}</div>
         <div class="amount-row">

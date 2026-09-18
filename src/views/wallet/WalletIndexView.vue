@@ -1083,6 +1083,7 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
     :style="{ backgroundImage: `url(${mainBgUrl})` }"
   >
     <HeaderBack
+      v-if="!isChannelPackage"
       :title="t('Wallet_Title')"
       :show-back="!isChannelMenuVersionB"
       extra-padding
@@ -1304,6 +1305,10 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
 .wallet-screen--channel .wallet-scrollable,
 .wallet-fixed-deposit-shell--channel :deep(.deposit-scrollable) {
   padding-bottom: calc(env(safe-area-inset-bottom) + 3.2rem);
+}
+
+.wallet-screen--channel .wallet-screen__content-top {
+  margin-top: calc(env(safe-area-inset-top, 0px) + 0.35rem);
 }
 
 .wallet-screen__content-top {

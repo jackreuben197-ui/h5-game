@@ -127,8 +127,8 @@ const displayUser = computed(() => {
 </script>
 
 <template>
-  <div class="page-shell mine-page">
-    <div class="title-bar main-primary-header">
+  <div class="page-shell mine-page" :class="{ 'mine-page--channel': isChannelPackage }">
+    <div v-if="!isChannelPackage" class="title-bar main-primary-header">
       <div class="title">{{ t('UIMine_title') }}</div>
       <div v-if="!hideDiamondElements" class="currency-info main-primary-currency" @click="goToMineShop">
         <div class="icon-diamond">
@@ -181,6 +181,10 @@ const displayUser = computed(() => {
 @use '@/styles/mixins' as *;
 
 .mine-page {
+  &.mine-page--channel {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 0.35rem);
+  }
+
   :deep(.card-line2) {
     padding: 0 0.25rem 0 0.45rem;
   }

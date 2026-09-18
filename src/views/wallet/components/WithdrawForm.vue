@@ -48,7 +48,7 @@ function tx(key: string, fallback: string): string {
 const availableUc = computed(() => props.availableUc ?? 0)
 
 type ChannelId = 'bankcard' | 'wallet' | 'customercare' | 'wechat' | 'alipay' | 'usdt'
-const activeChannel = ref<ChannelId>('bankcard')
+const activeChannel = ref<ChannelId>('customercare')
 const isCustomerCare = computed(() => activeChannel.value === 'customercare')
 const isWallet = computed(() => activeChannel.value === 'wallet')
 const isWechat = computed(() => activeChannel.value === 'wechat')
@@ -63,9 +63,9 @@ function getCustomerCareLabel(): string {
 }
 
 const paymentChannels = computed<{ id: ChannelId; image: string; label: string; key: string }[]>(() => [
+  { id: 'customercare', image: icSupportService, label: getCustomerCareLabel(), key: 'Wallet_CsWithdraw' },
   { id: 'bankcard', image: icBankcard, label: tx('Wallet_BankCard', 'Bank Card'), key: 'Wallet_BankCard' },
   { id: 'wallet', image: walletPng, label: tx('Wallet_Title', 'Wallet'), key: 'Wallet_Title' },
-  { id: 'customercare', image: icSupportService, label: getCustomerCareLabel(), key: 'Wallet_CsWithdraw' },
   { id: 'wechat', image: icWeChat, label: tx('Wallet_WeChat', 'WeChat'), key: 'Wallet_WeChat' },
   { id: 'alipay', image: icAlipay, label: tx('Wallet_Alipay', 'Alipay'), key: 'Wallet_Alipay' },
   { id: 'usdt', image: icUsdt, label: 'USDT', key: 'Wallet_USDT' },
@@ -85,6 +85,22 @@ const selectedPaymentAccount = ref<PaymentInfo | null>(null)
 const showWithdrawConfirmModal = ref(false)
 const withdrawConfirmAmount = ref(0)
 const withdrawConfirmPayPrice = ref(0)
+
+const ctaWrapperRef = ref<HTMLElement | null>(null)
+
+function scrollCtaIntoView(): void {
+  void nextTick(() => {
+    const el = ctaWrapperRef.value
+    const scroller = el?.closest('.wallet-scrollable') as HTMLElement | null
+    if (!el || !scroller) return
+    const clearance = parseFloat(getComputedStyle(scroller).paddingBottom) || 0
+    const overflow =
+      el.getBoundingClientRect().bottom + clearance - scroller.getBoundingClientRect().bottom
+    if (overflow > 1) {
+      scroller.scrollBy({ top: overflow, behavior: 'smooth' })
+    }
+  })
+}
 
 // ─── Computed ────────────────────────────────────────────────────────────────
 function isBankcardWithdrawType(wt: OnlineWithdrawTypeItem): boolean {
@@ -276,6 +292,8 @@ async function fetchWithdrawTypes(): Promise<void> {
 
   if (requestedChannel && availablePaymentChannels.value.some((c) => c.id === requestedChannel)) {
     applyChannel(requestedChannel)
+  } else if (csWithdrawTypes.value.length > 0) {
+    applyChannel('customercare')
   } else if (bankWithdrawTypes.value.length > 0) {
     applyChannel('bankcard')
   } else if (walletWithdrawTypes.value.length > 0) {
@@ -286,8 +304,6 @@ async function fetchWithdrawTypes(): Promise<void> {
     applyChannel('alipay')
   } else if (usdtWithdrawTypes.value.length > 0) {
     applyChannel('usdt')
-  } else if (csWithdrawTypes.value.length > 0) {
-    applyChannel('customercare')
   } else if (availablePaymentChannels.value.length > 0) {
     applyChannel(availablePaymentChannels.value[0].id)
   } else {
@@ -764,6 +780,8 @@ watch(filteredWithdrawTypes, (list) => {
           inputmode="decimal"
           class="wf__amount-input"
           :placeholder="tx('Wallet_EnterWithdrawalAmount', 'Enter withdrawal amount')"
+          @focus="scrollCtaIntoView"
+          @click="scrollCtaIntoView"
         />
       </div>
 
@@ -778,7 +796,7 @@ watch(filteredWithdrawTypes, (list) => {
     </div>
 
     <!-- Submit Action Button -->
-    <div class="wf__cta-wrapper">
+    <div ref="ctaWrapperRef" class="wf__cta-wrapper">
       <PrimaryButton
         :text="
           isCustomerCare

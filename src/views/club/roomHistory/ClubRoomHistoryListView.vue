@@ -17,6 +17,7 @@ import { getLocale, t } from '@/i18n'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
+import { isChannelPackageHost } from '@/utils/channelPackage'
 import {
   addMonths,
   dateBoundaryTimestamp,
@@ -76,7 +77,11 @@ function toSafeNumber(value: unknown): number {
   return Number.isFinite(numberValue) ? numberValue : 0
 }
 
+const isChannelPackage = isChannelPackageHost()
+
 function resolveInitialCurrency(): CurrencyTab {
+  if (isChannelPackage) return 1
+
   const stored = Number(
     localStore.getItem<number | string>(StorageKey.GUILD_RECORD_FILTER, 3),
   )
@@ -555,7 +560,7 @@ onMounted(() => {
   >
     <HeaderBack :title="t('UIClubTable_TableRecords')" />
     <div class="club-room-history">
-      <div class="coin-tabs">
+      <div v-if="!isChannelPackage" class="coin-tabs">
         <button
           type="button"
           class="coin-tab"

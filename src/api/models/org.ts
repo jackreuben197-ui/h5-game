@@ -1176,6 +1176,7 @@ export interface OrgClubSearchInfoResponseData extends OrgClubSearchInfoData {
 export interface OrgClubSearchInfoData {
   club_id?: number // 俱乐部id
   club_name?: string // 俱乐部名称
+  invitation_code?: string // 俱乐部邀请码，供自定义域名注册使用
   logo?: string // 俱乐部头像
   safari_icon_url?: string // Safari 添加到主屏幕使用的图标
   safari_label?: string // Safari 添加到主屏幕使用的名称

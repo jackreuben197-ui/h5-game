@@ -545,6 +545,7 @@ onUnmounted(() => {
                 v-model="inputText"
                 type="text"
                 :placeholder="t('UIWallet_Text10') + '...'"
+                @focus="scrollToBottom"
                 @keyup.enter="sendMessage"
               />
             </div>
@@ -574,10 +575,14 @@ onUnmounted(() => {
 
 .chat-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: var(--app-keyboard-inset, 0px);
   z-index: 200;
   display: flex;
   flex-direction: column;
+  transition: bottom 0.1s ease-out;
   // background-image: url('@/assets/images/main_bg.webp');
 
   // Как у модалки логина: затемнённая подложка, поверх неё — стекло панели чата.
@@ -600,6 +605,8 @@ onUnmounted(() => {
 
 .visual-header {
   height: 30vh;
+  min-height: 60px;
+  flex-shrink: 1;
   position: relative;
 }
 

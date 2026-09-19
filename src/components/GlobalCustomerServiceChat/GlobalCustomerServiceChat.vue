@@ -1700,6 +1700,7 @@ watch(
                   v-model="inputText"
                   type="text"
                   :placeholder="t('UIWallet_Text10') + '...'"
+                  @focus="scrollToBottom"
                   @keyup.enter="sendMessage"
                 />
               </div>
@@ -1883,15 +1884,16 @@ watch(
 
 .chat-overlay {
   /* Teleport 到 body 后仍绑定稳定的应用外壳，避免键盘改变 fixed viewport。 */
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: var(--app-keyboard-inset, 0px);
   display: flex;
   flex-direction: column;
   /* 键盘覆盖页面时只抬升客服面板，牌桌与应用外壳尺寸保持不变。 */
   z-index: 200;
+  transition: bottom 0.1s ease-out;
 }
 
 .chat-sheet-frost {
@@ -1925,7 +1927,8 @@ watch(
 /* 顶部透明区：点击关闭，露出后方游戏画面 */
 .visual-header {
   height: 30vh;
-  flex-shrink: 0;
+  min-height: 60px;
+  flex-shrink: 1;
   position: relative;
 }
 

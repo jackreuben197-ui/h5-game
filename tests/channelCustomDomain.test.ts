@@ -26,7 +26,7 @@ test('official and local preview hosts are not channel packages', () => {
   assert.equal(isChannelPackageHostname('127.0.0.1', mainDomain), false)
 })
 
-test('platform domain config distinguishes official and qr-code hosts', () => {
+test('both platform domain types are official and type 2 generates invite subdomains', () => {
   const mainDomains = parseActivePlatformDomains(
     '{"data":[{"id":3,"domain":"fanuf.maintest71.com","domain_type":2,"status":"active"}]}',
     2,
@@ -39,7 +39,10 @@ test('platform domain config distinguishes official and qr-code hosts', () => {
   assert.deepEqual(mainDomains, ['fanuf.maintest71.com'])
   assert.deepEqual(qrCodeDomains, ['fbdgqp.tet982m32.com'])
   assert.equal(isChannelPackageHostname('fanuf.maintest71.com', mainDomains), false)
-  assert.equal(isChannelPackageHostname('fbdgqp.tet982m32.com', mainDomains), true)
+  assert.equal(
+    isChannelPackageHostname('fbdgqp.tet982m32.com', [...mainDomains, ...qrCodeDomains]),
+    false,
+  )
   assert.equal(isChannelPackageHostname('club-code.fbdgqp.tet982m32.com', mainDomains), true)
   assert.equal(
     findConfiguredBaseDomain('club-code.fbdgqp.tet982m32.com', qrCodeDomains),

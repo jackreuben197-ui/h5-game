@@ -223,17 +223,22 @@ const loadingText = computed(() =>
 )
 
 function handleDone(): void {
-  props.emitPanelEvent('done')
+  // closePanel 会关闭本地面板并回传一次 panelEvent，避免同一事件重复发送。
   props.closePanel('done')
 }
 
-function handleRebuy(): void {
-  props.emitPanelEvent('rebuy')
-  props.closePanel('rebuy')
+async function handleRebuy(): Promise<void> {
+  // 淘汰后的重购仍在赛事详情页完成；确保底层路由指向当前赛事。
+  try {
+    if (matchId.value) {
+      await router.replace({ name: 'mtt-detail', query: { id: String(matchId.value) } })
+    }
+  } finally {
+    props.closePanel('rebuy')
+  }
 }
 
 function handleConfirm(): void {
-  props.emitPanelEvent('confirm')
   props.closePanel('confirm')
 }
 

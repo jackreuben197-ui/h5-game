@@ -12,7 +12,11 @@ interface PlatformDomainGlobalConfig {
   plat_domain_main_info?: unknown
 }
 
-let platformMainDomains: string[] = []
+// 历史官方入口兼容：该域名未包含在测试环境 plat_domain_main_info 中，
+// 但仍是有效官方包入口，必须避免按俱乐部自定义 CNAME 查询。
+const BUILT_IN_OFFICIAL_DOMAINS = ['test2-game.awanptest.com']
+
+let platformMainDomains: string[] = [...BUILT_IN_OFFICIAL_DOMAINS]
 let platformQrCodeDomains: string[] = []
 
 // 渠道包联调时可临时启用：
@@ -33,8 +37,19 @@ function readString(value: unknown): string {
 }
 
 export function configurePlatformDomains(config: PlatformDomainGlobalConfig | null | undefined): void {
-  platformMainDomains = parseActivePlatformDomains(config?.plat_domain_main_info, 2)
-  platformQrCodeDomains = parseActivePlatformDomains(config?.plat_domain_qrcode_info, 1)
+  const typeOneDomains = parseActivePlatformDomains(config?.plat_domain_qrcode_info, 1)
+  const typeTwoDomains = parseActivePlatformDomains(config?.plat_domain_main_info, 2)
+
+  // 两种平台域名本身都属于官方包；只有其下的邀请码子域名按渠道包处理。
+  platformMainDomains = Array.from(
+    new Set([
+      ...BUILT_IN_OFFICIAL_DOMAINS,
+      ...typeOneDomains,
+      ...typeTwoDomains,
+    ]),
+  )
+  // domain_type=2 专门用于生成俱乐部邀请二维码链接。
+  platformQrCodeDomains = typeTwoDomains
 }
 
 export function getPlatformMainDomains(): readonly string[] {

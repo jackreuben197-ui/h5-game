@@ -5,10 +5,11 @@ import { postOrgClubDefaultApi } from '@/api/org'
 import StorageKey from '@/constants/storageKey'
 import { dzpkPersistStorage } from '@/utils/localStore'
 import {
-  CHANNEL_MAIN_DOMAIN,
   copyStorageToMainDomain,
   extractInviteCodeFromSubdomain,
   isChannelPackageHost,
+  isOfficialPackageHost,
+  isPlatformQrCodeHost,
   resolveInviteCode,
 } from '@/utils/channelPackage'
 
@@ -28,7 +29,11 @@ function normalizeClubId(value: unknown): string {
 
 function resolveSafariBaseUrl(hostname: string): string {
   const normalizedHostname = hostname.trim().toLowerCase()
-  if (!normalizedHostname || normalizedHostname === CHANNEL_MAIN_DOMAIN) {
+  if (
+    !normalizedHostname ||
+    isOfficialPackageHost(normalizedHostname) ||
+    isPlatformQrCodeHost(normalizedHostname)
+  ) {
     return ''
   }
   return normalizedHostname
@@ -209,7 +214,7 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       // 普通本地开发无需请求渠道俱乐部；但渠道包模拟同样运行在 localhost
       // （Cocos 预览通常是 :7456），此时必须按测试邀请码正常初始化。
       if (hostname === 'localhost' && !isChannelPackageHost(hostname)) return null
-      // 旧渠道域名 xxx.{CHANNEL_MAIN_DOMAIN} 必须继续按邀请码查询，不能当成自定义域名。
+      // “邀请码.二维码域名”必须按邀请码查询，不能当成俱乐部独立 CNAME 域名。
       const channelInviteCode = extractInviteCodeFromSubdomain(hostname)
       const baseUrl = channelInviteCode ? '' : resolveSafariBaseUrl(hostname)
       const inviteCode = channelInviteCode || (baseUrl ? '' : resolveInviteCode(hostname))

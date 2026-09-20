@@ -64,10 +64,6 @@ cacheAgentInviteCodeIfPresent()
 // 启动时从 URL 恢复可能的存储数据，子域名跳转主域名时使用。
 restoreStorageFromUrl()
 
-if (typeof document !== 'undefined' && isChannelPackageHost()) {
-  document.documentElement.setAttribute('data-channel-package', '1')
-}
-
 const debugConsoleEnabled =
   import.meta.env.DEV || ['true', '1', 'yes', 'on'].includes(import.meta.env.VITE_DEBUG_CONSOLE || '')
 
@@ -162,6 +158,7 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
   }
 
   setupRem()
+  document.documentElement.toggleAttribute('data-channel-package', isChannelPackageHost())
   stopNativeMenuGuard = setupNativeMenuGuard()
   stopNativeDragGuard = setupNativeDragGuard()
 

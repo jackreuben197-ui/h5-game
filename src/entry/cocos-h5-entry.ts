@@ -1,17 +1,47 @@
 import { mountH5App, unmountH5App } from '../main'
+import { useAppConfigStore } from '../stores/appConfig'
+import { pinia } from '../stores/pinia'
 import { recordDebugEvent } from '../utils/debugCapture'
 
 recordDebugEvent('[boot]', 'cocos h5 entry loaded', {
   href: typeof window !== 'undefined' ? window.location.href : '',
 })
 
+let mountRevision = 0
+let mountTask: Promise<void> | null = null
+
+async function preparePlatformDomains(): Promise<void> {
+  const appConfigStore = useAppConfigStore(pinia)
+  await appConfigStore.ensureGuestGlobalConfig()
+  if (!appConfigStore.globalConfig) {
+    await appConfigStore.restorePublicConfigCache()
+  }
+}
+
 const host = {
   mount(container = '#app'): void {
     recordDebugEvent('[boot]', 'mount requested', { container })
-    mountH5App(container)
+    if (mountTask) return
+    const revision = ++mountRevision
+    mountTask = preparePlatformDomains()
+      .catch((error) => {
+        console.warn('[boot] prepare platform domains failed:', error)
+      })
+      .then(() => {
+        if (revision === mountRevision) {
+          mountH5App(container)
+        }
+      })
+      .finally(() => {
+        if (revision === mountRevision) {
+          mountTask = null
+        }
+      })
   },
   unmount(): void {
     recordDebugEvent('[boot]', 'unmount requested')
+    mountRevision += 1
+    mountTask = null
     unmountH5App()
   },
 }

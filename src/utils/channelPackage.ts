@@ -1,9 +1,20 @@
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
-import { isChannelPackageHostname, isChannelSubdomainHostname } from '@/utils/channelHost'
-export const CHANNEL_MAIN_DOMAIN = (import.meta.env.VITE_CHANNEL_MAIN_DOMAIN || '')
-  .trim()
-  .toLowerCase()
+import {
+  findConfiguredBaseDomain,
+  isChannelPackageHostname,
+  isConfiguredDomainHostname,
+  parseActivePlatformDomains,
+} from '@/utils/channelHost'
+
+interface PlatformDomainGlobalConfig {
+  plat_domain_qrcode_info?: unknown
+  plat_domain_main_info?: unknown
+}
+
+let platformMainDomains: string[] = []
+let platformQrCodeDomains: string[] = []
+
 // 渠道包联调时可临时启用：
 const TEST_CHANNEL_INVITE_CODE = ''
 // const TEST_CHANNEL_INVITE_CODE = 'ksGuBmMk'
@@ -19,6 +30,44 @@ interface ParsedQueryParams {
 
 function readString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
+}
+
+export function configurePlatformDomains(config: PlatformDomainGlobalConfig | null | undefined): void {
+  platformMainDomains = parseActivePlatformDomains(config?.plat_domain_main_info, 2)
+  platformQrCodeDomains = parseActivePlatformDomains(config?.plat_domain_qrcode_info, 1)
+}
+
+export function getPlatformMainDomains(): readonly string[] {
+  return platformMainDomains
+}
+
+export function getPlatformQrCodeDomains(): readonly string[] {
+  return platformQrCodeDomains
+}
+
+export function isOfficialPackageHost(hostname: string = window.location.hostname): boolean {
+  const normalizedHost = readString(hostname).toLowerCase()
+  return platformMainDomains.includes(normalizedHost)
+}
+
+export function isPlatformQrCodeHost(hostname: string = window.location.hostname): boolean {
+  return isConfiguredDomainHostname(readString(hostname), platformQrCodeDomains)
+}
+
+function getPrimaryPlatformMainDomain(): string {
+  return platformMainDomains[0] || ''
+}
+
+function pickPlatformQrCodeDomain(): string {
+  if (!platformQrCodeDomains.length) return ''
+  const index = Math.floor(Math.random() * platformQrCodeDomains.length)
+  return platformQrCodeDomains[index] || platformQrCodeDomains[0] || ''
+}
+
+function appendHashQuery(baseUrl: string, params: URLSearchParams): string {
+  const query = params.toString()
+  if (!query) return baseUrl
+  return baseUrl.includes('/#/?') ? `${baseUrl}&${query}` : `${baseUrl}/#/?${query}`
 }
 
 function getHashQueryParams(hashValue: string): URLSearchParams {
@@ -45,7 +94,7 @@ export function isChannelPackageHost(hostname: string = window.location.hostname
   // 渠道包联调：取消下面两行注释可强制按渠道域名处理。
   // void hostname
   if (TEST_CHANNEL_INVITE_CODE) return true
-  return isChannelPackageHostname(readString(hostname), CHANNEL_MAIN_DOMAIN)
+  return isChannelPackageHostname(readString(hostname), platformMainDomains)
 }
 
 /**
@@ -65,6 +114,12 @@ export function isChannelDiamondFreeMode(hostname: string = window.location.host
  * 通过主域名的 URL 参数传递数据，主域名页面读取后写入自己的 storage。
  */
 export function copyStorageToMainDomain(): void {
+  const mainDomain = getPrimaryPlatformMainDomain()
+  if (!mainDomain) {
+    console.warn('[channelPackage] platform main domain is unavailable; skip redirect')
+    return
+  }
+
   const items: Record<string, string> = {}
 
   // 读取 localStorage
@@ -82,7 +137,7 @@ export function copyStorageToMainDomain(): void {
   // 或其他业务写入的 localStorage。
   Object.keys(items).forEach((key) => localStorage.removeItem(key))
   const currentUrl = new URL(window.location.href)
-  const targetUrl = `${currentUrl.protocol}//${CHANNEL_MAIN_DOMAIN}/#/`
+  const targetUrl = `${currentUrl.protocol}//${mainDomain}/#/`
   // 将数据编码到 URL 参数中
   if (Object.keys(items).length > 0) {
     try {
@@ -149,12 +204,16 @@ export function extractInviteCodeFromSubdomain(
   // void hostname
   if (TEST_CHANNEL_INVITE_CODE) return TEST_CHANNEL_INVITE_CODE
   const normalizedHost = readString(hostname).toLowerCase()
-  // 自定义域名也属于渠道包，但它没有可作为邀请码的主域名前缀。
-  if (!isChannelSubdomainHostname(normalizedHost, CHANNEL_MAIN_DOMAIN)) {
+  // 二维码域名和历史主域名都兼容“邀请码.域名”的分享结构；俱乐部独立
+  // CNAME 域名没有邀请码前缀，继续由 /org/club/default 的 base_url 解析。
+  const baseDomain =
+    findConfiguredBaseDomain(normalizedHost, platformQrCodeDomains) ||
+    findConfiguredBaseDomain(normalizedHost, platformMainDomains)
+  if (!baseDomain || normalizedHost === baseDomain) {
     return ''
   }
 
-  const suffix = `.${CHANNEL_MAIN_DOMAIN}`
+  const suffix = `.${baseDomain}`
   const withoutSuffix = normalizedHost.slice(0, -suffix.length)
   const firstLabel = withoutSuffix.split('.')[0] || ''
   return readString(firstLabel)
@@ -244,12 +303,17 @@ export function shouldOpenRegisterMode(): boolean {
 export function buildChannelClubInviteUrl(clubInviteCode?: string): string {
   const currentUrl = new URL(window.location.href)
   const normalizedClubCode = readString(clubInviteCode)
-  if (!normalizedClubCode || !CHANNEL_MAIN_DOMAIN) {
+  if (!normalizedClubCode) {
     return currentUrl.origin
   }
 
-  const port = currentUrl.port ? `:${currentUrl.port}` : ''
-  return `${currentUrl.protocol}//${normalizedClubCode}.${CHANNEL_MAIN_DOMAIN}${port}`
+  const qrCodeDomain = pickPlatformQrCodeDomain()
+  if (!qrCodeDomain) {
+    const params = new URLSearchParams({ invite_code: normalizedClubCode })
+    return `${currentUrl.origin}/#/?${params.toString()}`
+  }
+
+  return `${currentUrl.protocol}//${normalizedClubCode}.${qrCodeDomain}`
 }
 
 export function buildChannelAgentInviteUrl(
@@ -266,7 +330,7 @@ export function buildChannelAgentInviteUrl(
     mode: 'register',
     i: normalizedCode,
   })
-  return `${clubInviteUrl}/#/?${params.toString()}`
+  return appendHashQuery(clubInviteUrl, params)
 }
 
 export function buildChannelRegisterUrl(options?: {
@@ -285,5 +349,6 @@ export function buildChannelRegisterUrl(options?: {
     nextParams.set('trace_hash', traceHash)
   }
 
-  return `${currentUrl.protocol}//${inviteCode}.${currentUrl.hostname}/#/?${nextParams.toString()}`
+  const baseUrl = inviteCode ? buildChannelClubInviteUrl(inviteCode) : currentUrl.origin
+  return appendHashQuery(baseUrl, nextParams)
 }

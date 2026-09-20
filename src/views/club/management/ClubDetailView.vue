@@ -32,6 +32,10 @@ import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 import GameDialog from '@/components/Dialog/GameDialog.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { generateQrCodeUrl } from '@/utils/qrcode'
+import {
+  buildChannelAgentInviteUrl,
+  buildChannelClubInviteUrl,
+} from '@/utils/channelPackage'
 import { formatUC } from '@/utils/roomVisibility'
 import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
@@ -978,11 +982,10 @@ async function confirmDeleteClub(): Promise<void> {
 }
 
 async function generateInviteQrCode(): Promise<void> {
-  const origin = window.location.origin
-  const agentParams = new URLSearchParams({ mode: 'register', i: agentInviteCode.value })
+  const clubInviteCode = String(displayClub.value?.invitation_code || '').trim()
   const url = isAgent.value && agentInviteCode.value
-    ? `${origin}/#/?${agentParams.toString()}`
-    : origin
+    ? buildChannelAgentInviteUrl(agentInviteCode.value, clubInviteCode)
+    : buildChannelClubInviteUrl(clubInviteCode)
 
   try {
     imgInviteQr.value = await generateQrCodeUrl(url, { size: 720, margin: 2 })

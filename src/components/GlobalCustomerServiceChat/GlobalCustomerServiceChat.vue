@@ -670,7 +670,14 @@ async function markAsRead(timeToken?: number): Promise<void> {
   })
 }
 
+function handleInputEvent(): void {
+  if (window.scrollX !== 0 || window.scrollY !== 0) {
+    window.scrollTo(0, 0)
+  }
+}
+
 function scrollToBottom(): Promise<void> {
+  handleInputEvent()
   return nextTick().then(() => {
     if (!messageContainer.value) return
     messageContainer.value.scrollTop = messageContainer.value.scrollHeight
@@ -1500,7 +1507,11 @@ watch(
       <div class="chat-container">
         <div class="visual-header" @click="closePanel"></div>
         <div class="chat-main-body">
-          <div class="agent-floating-card" role="tablist" :aria-label="t('UIGlobalCustomerServiceChat_Text2')">
+          <div
+            class="agent-floating-card"
+            role="tablist"
+            :aria-label="t('UIGlobalCustomerServiceChat_Text2')"
+          >
             <button
               v-for="channel in availableChannels"
               :key="`${channel.club_id}-${channel.user_id}`"
@@ -1701,6 +1712,8 @@ watch(
                   type="text"
                   :placeholder="t('UIWallet_Text10') + '...'"
                   @focus="scrollToBottom"
+                  @input="handleInputEvent"
+                  @keyup="handleInputEvent"
                   @keyup.enter="sendMessage"
                 />
               </div>
@@ -1894,6 +1907,7 @@ watch(
   /* 键盘覆盖页面时只抬升客服面板，牌桌与应用外壳尺寸保持不变。 */
   z-index: 200;
   transition: bottom 0.1s ease-out;
+  overflow: hidden;
 }
 
 .chat-sheet-frost {
@@ -1930,6 +1944,15 @@ watch(
   min-height: 60px;
   flex-shrink: 1;
   position: relative;
+  transition:
+    height 0.2s ease,
+    min-height 0.2s ease;
+}
+
+:root[data-keyboard-open='1'] .visual-header,
+html[data-keyboard-open='1'] .visual-header {
+  height: 0 !important;
+  min-height: 0 !important;
 }
 
 /* 玻璃质感主体：半透明深色磨砂 + 渐变描边，透出后方背景 */

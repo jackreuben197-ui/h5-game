@@ -223,11 +223,14 @@ async function checkOrderStatus() {
   const orderNo = firstOrder.order?.order_no || firstOrder.order_no
 
   try {
-    const res = await postClubFundOrderListApi({
-      order_no: orderNo,
-      my_order: true,
-      limit: 1
-    }, clubId)
+    const res = await postClubFundOrderListApi(
+      {
+        order_no: orderNo,
+        my_order: true,
+        limit: 1,
+      },
+      clubId,
+    )
 
     if (res.code === 0 && res.data?.list?.length) {
       const order = res.data.list[0]
@@ -254,8 +257,12 @@ async function loadMessages() {
     })
     if (res.code === 0 && res.data?.list) {
       const newList = res.data.list.reverse()
-      if (newList.length !== messages.value.length ||
-          (newList.length > 0 && newList[newList.length-1].time_token !== messages.value[messages.value.length-1]?.time_token)) {
+      if (
+        newList.length !== messages.value.length ||
+        (newList.length > 0 &&
+          newList[newList.length - 1].time_token !==
+            messages.value[messages.value.length - 1]?.time_token)
+      ) {
         // Only stick to bottom on the first load or when the user is already
         // near the bottom — don't yank them down while they scroll history.
         const stick = isInitialLoad || isNearBottom()
@@ -350,7 +357,14 @@ function isNearBottom(threshold = 80) {
   return el.scrollHeight - el.scrollTop - el.clientHeight < threshold
 }
 
+function handleInputEvent() {
+  if (window.scrollX !== 0 || window.scrollY !== 0) {
+    window.scrollTo(0, 0)
+  }
+}
+
 function scrollToBottom() {
+  handleInputEvent()
   nextTick(() => {
     if (messageContainer.value) {
       messageContainer.value.scrollTop = messageContainer.value.scrollHeight
@@ -454,23 +468,53 @@ onUnmounted(() => {
           <div ref="messageContainer" class="messages-wrap">
             <div class="messages-inner">
               <template v-for="(item, idx) in timeline" :key="idx">
-                <div
-                  v-if="item.kind === 'order'"
-                  class="message-row message-row--self"
-                >
+                <div v-if="item.kind === 'order'" class="message-row message-row--self">
                   <div class="bubble-wrapper">
                     <div class="transaction-bubble">
                       <div class="bubble-content">
-                        <p>{{ labelsFor(item.od.orderType).user }}：{{ userInfoStore.userInfo?.user.nickname }} / ID：{{ userInfoStore.userInfo?.user.un_id }}</p>
-                        <p>{{ labelsFor(item.od.orderType).coin }}：{{ (item.od.gold_num || item.od.order?.gold_num || 0) / 100 }}</p>
-                        <p>{{ labelsFor(item.od.orderType).amount }}：{{ item.od.pay_price || item.od.order?.pay_price || item.od.order?.amount || item.od.amount || 0 }}</p>
-                        <p>{{ labelsFor(item.od.orderType).payType }}：{{ item.od.usdt_address?.name || item.od.pay_type_name || t('UIWallet_Text3') }}</p>
-                        <p>{{ t('UIWallet_Text8') }}：{{ item.od.order_no || item.od.order?.order_no }}</p>
-                        <p>{{ t('UIWallet_Text9') }}：{{ orderTimeText(item.od.create_time || item.od.order?.create_time) }}</p>
+                        <p>
+                          {{ labelsFor(item.od.orderType).user }}：{{
+                            userInfoStore.userInfo?.user.nickname
+                          }}
+                          / ID：{{ userInfoStore.userInfo?.user.un_id }}
+                        </p>
+                        <p>
+                          {{ labelsFor(item.od.orderType).coin }}：{{
+                            (item.od.gold_num || item.od.order?.gold_num || 0) / 100
+                          }}
+                        </p>
+                        <p>
+                          {{ labelsFor(item.od.orderType).amount }}：{{
+                            item.od.pay_price ||
+                            item.od.order?.pay_price ||
+                            item.od.order?.amount ||
+                            item.od.amount ||
+                            0
+                          }}
+                        </p>
+                        <p>
+                          {{ labelsFor(item.od.orderType).payType }}：{{
+                            item.od.usdt_address?.name ||
+                            item.od.pay_type_name ||
+                            t('UIWallet_Text3')
+                          }}
+                        </p>
+                        <p>
+                          {{ t('UIWallet_Text8') }}：{{
+                            item.od.order_no || item.od.order?.order_no
+                          }}
+                        </p>
+                        <p>
+                          {{ t('UIWallet_Text9') }}：{{
+                            orderTimeText(item.od.create_time || item.od.order?.create_time)
+                          }}
+                        </p>
                       </div>
                     </div>
                     <div class="bubble-footer">
-                      <span>{{ orderClockText(item.od.create_time || item.od.order?.create_time) }}</span>
+                      <span>{{
+                        orderClockText(item.od.create_time || item.od.order?.create_time)
+                      }}</span>
                       <svg width="7.226" height="7.226" viewBox="0 0 8 8" fill="none">
                         <ellipse
                           cx="2.93052"
@@ -497,21 +541,51 @@ onUnmounted(() => {
                   class="message-row"
                   :class="{ 'message-row--self': item.msg.user_send || item.msg.msg_type === 6 }"
                 >
-                  <div class="bubble-wrapper" :class="{ 'bubble-wrapper--self': item.msg.user_send }">
+                  <div
+                    class="bubble-wrapper"
+                    :class="{ 'bubble-wrapper--self': item.msg.user_send }"
+                  >
                     <div v-if="item.msg.msg_type === 6" class="transaction-bubble">
                       <div class="bubble-content">
-                        <p>{{ txLabels(item.msg).user }}：{{ item.msg.transaction?.user_info || `${userInfoStore.userInfo?.user.nickname} / ID：${userInfoStore.userInfo?.user.un_id}` }}</p>
-                        <p>{{ txLabels(item.msg).coin }}：{{ item.msg.transaction?.amount || 0 }}</p>
-                        <p>{{ txLabels(item.msg).amount }}：{{ item.msg.transaction?.pay_price || 0 }}</p>
-                        <p>{{ txLabels(item.msg).payType }}：{{ item.msg.transaction?.type_name || '客服撮合' }}</p>
+                        <p>
+                          {{ txLabels(item.msg).user }}：{{
+                            item.msg.transaction?.user_info ||
+                            `${userInfoStore.userInfo?.user.nickname} / ID：${userInfoStore.userInfo?.user.un_id}`
+                          }}
+                        </p>
+                        <p>
+                          {{ txLabels(item.msg).coin }}：{{ item.msg.transaction?.amount || 0 }}
+                        </p>
+                        <p>
+                          {{ txLabels(item.msg).amount }}：{{
+                            item.msg.transaction?.pay_price || 0
+                          }}
+                        </p>
+                        <p>
+                          {{ txLabels(item.msg).payType }}：{{
+                            item.msg.transaction?.type_name || '客服撮合'
+                          }}
+                        </p>
                         <p>{{ t('UIWallet_Text8') }}：{{ item.msg.transaction?.order_no }}</p>
-                        <p>{{ t('UIWallet_Text9') }}：{{ orderTimeText(item.msg.transaction?.timestamp) }}</p>
+                        <p>
+                          {{ t('UIWallet_Text9') }}：{{
+                            orderTimeText(item.msg.transaction?.timestamp)
+                          }}
+                        </p>
                       </div>
                     </div>
-                    <div v-else-if="item.msg.msg_type === 1" class="text-bubble" :class="{ 'text-bubble--self': item.msg.user_send }">
+                    <div
+                      v-else-if="item.msg.msg_type === 1"
+                      class="text-bubble"
+                      :class="{ 'text-bubble--self': item.msg.user_send }"
+                    >
                       {{ item.msg.text }}
                     </div>
-                    <div v-else-if="item.msg.msg_type === 2" class="image-bubble" :class="{ 'image-bubble--self': item.msg.user_send }">
+                    <div
+                      v-else-if="item.msg.msg_type === 2"
+                      class="image-bubble"
+                      :class="{ 'image-bubble--self': item.msg.user_send }"
+                    >
                       <img :src="item.msg.url" alt="image" @click="openUrl(item.msg.url)" />
                     </div>
 
@@ -519,8 +593,20 @@ onUnmounted(() => {
                       <span>{{ formatTime(item.msg.local_time || item.msg.time_token) }}</span>
                       <template v-if="item.msg.user_send || item.msg.msg_type === 6">
                         <svg width="7.226" height="7.226" viewBox="0 0 8 8" fill="none">
-                          <ellipse cx="2.93052" cy="2.91963" rx="2.38865" ry="2.42647" stroke="#05c297" stroke-width="0.955458"/>
-                          <path d="M4.63672 4.65283L6.68413 6.73266" stroke="#05c297" stroke-width="0.955458" stroke-linecap="round"/>
+                          <ellipse
+                            cx="2.93052"
+                            cy="2.91963"
+                            rx="2.38865"
+                            ry="2.42647"
+                            stroke="#05c297"
+                            stroke-width="0.955458"
+                          />
+                          <path
+                            d="M4.63672 4.65283L6.68413 6.73266"
+                            stroke="#05c297"
+                            stroke-width="0.955458"
+                            stroke-linecap="round"
+                          />
                         </svg>
                         <span class="sender-name">{{ userInfoStore.userInfo?.user.nickname }}</span>
                       </template>
@@ -546,6 +632,8 @@ onUnmounted(() => {
                 type="text"
                 :placeholder="t('UIWallet_Text10') + '...'"
                 @focus="scrollToBottom"
+                @input="handleInputEvent"
+                @keyup="handleInputEvent"
                 @keyup.enter="sendMessage"
               />
             </div>
@@ -583,6 +671,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   transition: bottom 0.1s ease-out;
+  overflow: hidden;
   // background-image: url('@/assets/images/main_bg.webp');
 
   // Как у модалки логина: затемнённая подложка, поверх неё — стекло панели чата.
@@ -608,6 +697,15 @@ onUnmounted(() => {
   min-height: 60px;
   flex-shrink: 1;
   position: relative;
+  transition:
+    height 0.2s ease,
+    min-height 0.2s ease;
+}
+
+:root[data-keyboard-open='1'] .visual-header,
+html[data-keyboard-open='1'] .visual-header {
+  height: 0 !important;
+  min-height: 0 !important;
 }
 
 .chat-main-body {
@@ -643,7 +741,6 @@ onUnmounted(() => {
   -webkit-backdrop-filter: blur(8.5px);
   pointer-events: none;
   z-index: 1;
-
 }
 
 .chat-main-body::before {
@@ -652,9 +749,18 @@ onUnmounted(() => {
   inset: 0;
   border-radius: inherit;
   padding: 0.0255rem;
-  background: linear-gradient(180deg, rgba(242, 242, 242, 0.40) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.50) 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  background: linear-gradient(
+    180deg,
+    rgba(242, 242, 242, 0.4) 0%,
+    rgba(255, 255, 255, 0) 50%,
+    rgba(255, 255, 255, 0.5) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -703,9 +809,18 @@ onUnmounted(() => {
   inset: 0;
   border-radius: inherit;
   padding: 0.0255rem;
-  background: linear-gradient(180deg, rgba(242, 242, 242, 0.40) 0%, rgba(255, 255, 255, 0) 50%, rgba(255, 255, 255, 0.50) 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  background: linear-gradient(
+    180deg,
+    rgba(242, 242, 242, 0.4) 0%,
+    rgba(255, 255, 255, 0) 50%,
+    rgba(255, 255, 255, 0.5) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -742,7 +857,6 @@ onUnmounted(() => {
   height: 36.6px;
   pointer-events: none;
   color: rgba(255, 255, 255, 0.83);
-
 }
 
 .agent-avatar {
@@ -770,7 +884,6 @@ onUnmounted(() => {
   font-weight: 500;
   margin-top: -0.24rem;
   white-space: nowrap;
-
 }
 
 .messages-wrap {
@@ -820,8 +933,8 @@ onUnmounted(() => {
   align-items: flex-start;
   gap: 6.093px;
   border-radius: 23.457px;
-  background: #1F9816;
-  color: #F9F9F9;
+  background: #1f9816;
+  color: #f9f9f9;
 }
 
 .bubble-content p {
@@ -850,7 +963,6 @@ onUnmounted(() => {
   font-weight: 400;
   line-height: 100%;
   letter-spacing: 0.195px;
-
 }
 
 .sender-name {
@@ -870,7 +982,7 @@ onUnmounted(() => {
 }
 
 .text-bubble--self {
-  background: #1F9816;
+  background: #1f9816;
   border-radius: 20px 20px 4px 20px;
 
   @include theme-light-own {
@@ -884,7 +996,6 @@ onUnmounted(() => {
   border-radius: 12px;
   padding: 4px;
   max-width: 200px;
-
 }
 
 .image-bubble img {
@@ -936,7 +1047,6 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 4.2px;
-
 }
 
 .input-bar-wrap input {
@@ -986,7 +1096,6 @@ onUnmounted(() => {
   cursor: pointer;
   flex-shrink: 0;
 
-
   &:active {
     opacity: 0.8;
   }
@@ -1004,7 +1113,6 @@ onUnmounted(() => {
   cursor: pointer;
   flex-shrink: 0;
   color: #f3f3f3;
-
 
   &:active {
     opacity: 0.8;

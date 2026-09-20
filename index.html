@@ -516,6 +516,18 @@
           }, 200)
         })
 
+        document.addEventListener('input', function (event) {
+          if (window.__H5_KEYBOARD_OPEN__ && isTextInput(event.target)) {
+            resetBrowserScroll()
+          }
+        }, true)
+
+        document.addEventListener('keyup', function (event) {
+          if (window.__H5_KEYBOARD_OPEN__ && isTextInput(event.target)) {
+            resetBrowserScroll()
+          }
+        }, true)
+
         function bindKeyboardGeometryEvents() {
           if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', updateKeyboardLayout, { passive: true })

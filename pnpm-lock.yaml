@@ -12,8 +12,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0(vue@3.5.32(typescript@6.0.2))
       '@silenthill/agreement-web':
-        specifier: git+ssh://git@github.com/jackreuben197-ui/agreement-web.git#dev_refactor_0827
-        version: https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/7513d338fdb1f94cbd74f49536a198ccd56bafd2
+        specifier: git+ssh://git@github.com/jackreuben197-ui/agreement-web.git#dev_refactor_0921
+        version: https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/6bb45f3c40796edb2477c8b7c8bef3d351cf4ab1
       '@silenthill/h5-cc-bridge':
         specifier: git+ssh://git@github.com/jackreuben197-ui/h5-cc-bridge.git#dev_merge_0901
         version: https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/45a63faef893ec260e83b4813360e9473ba415c0
@@ -1056,8 +1056,8 @@ packages:
   '@rolldown/pluginutils@1.0.0-rc.2':
     resolution: {integrity: sha512-izyXV/v+cHiRfozX62W9htOAvwMo4/bXKDrQ+vom1L1qRuexPock/7VZDAhnpHCLNejd3NJ6hiab+tO0D44Rgw==}
 
-  '@silenthill/agreement-web@https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/7513d338fdb1f94cbd74f49536a198ccd56bafd2':
-    resolution: {gitHosted: true, integrity: sha512-RDEyTfdzQ2/aeckeijnuAB4CSNUXtHuOMNvvZ244jGGaG3oVYK34301ptKHzHJOHYiTJR24QaMNH/qxxBFJ9hw==, tarball: https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/7513d338fdb1f94cbd74f49536a198ccd56bafd2}
+  '@silenthill/agreement-web@https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/6bb45f3c40796edb2477c8b7c8bef3d351cf4ab1':
+    resolution: {gitHosted: true, integrity: sha512-YQGVCH/prOhQ9mD7rrDZNj/j+r5XNxysgLrooCchf+3pGqSkFUVNAi9VfIs2S0QYkXelOG8D9KsnD/xER18l8w==, tarball: https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/6bb45f3c40796edb2477c8b7c8bef3d351cf4ab1}
     version: 1.0.0
 
   '@silenthill/h5-cc-bridge@https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/45a63faef893ec260e83b4813360e9473ba415c0':
@@ -3491,7 +3491,7 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.0-rc.2': {}
 
-  '@silenthill/agreement-web@https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/7513d338fdb1f94cbd74f49536a198ccd56bafd2':
+  '@silenthill/agreement-web@https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/6bb45f3c40796edb2477c8b7c8bef3d351cf4ab1':
     dependencies:
       google-protobuf: 3.21.4
 

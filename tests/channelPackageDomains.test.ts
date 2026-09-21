@@ -42,22 +42,22 @@ test('runtime platform domains drive package classification and invite URLs', ()
   assert.equal(channelPackage.isChannelPackageHost('fanuf.maintest71.com'), false)
   assert.equal(channelPackage.isChannelPackageHost('test2-game.awanptest.com'), false)
   assert.equal(channelPackage.isChannelPackageHost('fbdgqp.tet982m32.com'), false)
-  assert.equal(channelPackage.extractInviteCodeFromSubdomain('club123.fanuf.maintest71.com'), 'club123')
+  assert.equal(channelPackage.extractInviteCodeFromSubdomain('club123.fbdgqp.tet982m32.com'), 'club123')
   assert.equal(
     channelPackage.buildChannelClubInviteUrl('club123'),
-    'https://club123.fanuf.maintest71.com',
+    'https://club123.fbdgqp.tet982m32.com',
   )
   assert.equal(
     channelPackage.buildChannelAgentInviteUrl('agent456', 'club123'),
-    'https://club123.fanuf.maintest71.com/#/?mode=register&i=agent456',
+    'https://club123.fbdgqp.tet982m32.com/#/?mode=register&i=agent456',
   )
 })
 
 test('missing qr-code domains keep the invite code in a hash parameter', () => {
   channelPackage.configurePlatformDomains({
-    plat_domain_main_info: '{"data":[]}',
-    plat_domain_qrcode_info:
-      '{"data":[{"domain":"fbdgqp.tet982m32.com","domain_type":1,"status":"active"}]}',
+    plat_domain_main_info:
+      '{"data":[{"domain":"fanuf.maintest71.com","domain_type":2,"status":"active"}]}',
+    plat_domain_qrcode_info: '{"data":[]}',
   })
 
   assert.equal(

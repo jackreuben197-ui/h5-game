@@ -26,7 +26,7 @@ test('official and local preview hosts are not channel packages', () => {
   assert.equal(isChannelPackageHostname('127.0.0.1', mainDomain), false)
 })
 
-test('both platform domain types are official and type 2 generates invite subdomains', () => {
+test('both platform domain types are official and type 1 generates invite subdomains', () => {
   const mainDomains = parseActivePlatformDomains(
     '{"data":[{"id":3,"domain":"fanuf.maintest71.com","domain_type":2,"status":"active"}]}',
     2,

@@ -48,8 +48,8 @@ export function configurePlatformDomains(config: PlatformDomainGlobalConfig | nu
       ...typeTwoDomains,
     ]),
   )
-  // domain_type=2 专门用于生成俱乐部邀请二维码链接。
-  platformQrCodeDomains = typeTwoDomains
+  // domain_type=1 专门用于生成俱乐部邀请二维码链接。
+  platformQrCodeDomains = typeOneDomains
 }
 
 export function getPlatformMainDomains(): readonly string[] {

@@ -312,6 +312,10 @@ onMounted(() => {
 .club-mtt-detail-page {
   position: relative;
   height: 100dvh;
+  html[data-channel-package='1'] & {
+    height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+    min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  }
   padding: 0 0 0.8rem;
   color: #f9f9f9;
   background-image: var(--mtt-detail-bg-dark);

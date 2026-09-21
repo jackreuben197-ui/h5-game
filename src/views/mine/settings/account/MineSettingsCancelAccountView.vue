@@ -295,6 +295,10 @@ onBeforeUnmount(() => {
 <style scoped lang="scss">
 .cancel-account-page {
   height: 100dvh;
+  html[data-channel-package='1'] & {
+    height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+    min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  }
   display: flex;
   flex-direction: column;
   // padding-top: calc(env(safe-area-inset-top) + 0.48rem);

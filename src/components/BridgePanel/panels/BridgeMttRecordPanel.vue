@@ -387,6 +387,26 @@ interface BlindRow {
   blinds: string
   ante: string
   duration: string
+  marker: string
+  markerColor: string
+}
+
+// 与赛事概况的盲注页保持一致；同一级别有多个标记时按客户端覆盖顺序展示。
+function resolveBlindMarker(level: number): { text: string; color: string } {
+  const addonBegin = Number(mtt.value?.addon_begin_bl ?? 0)
+  const addonEnd = Number(mtt.value?.addon_end_bl ?? 0)
+  const maxRebuy = Number(mtt.value?.max_rebuy_bl ?? 0)
+
+  if (level === addonEnd && addonEnd > 0) {
+    return { text: t('MTT_Blind_Deadline_add_cl'), color: '#FFC706' }
+  }
+  if (level === addonBegin && addonBegin > 0) {
+    return { text: t('MTT_Blind_Deadline_add_op'), color: '#80CD10' }
+  }
+  if (level === maxRebuy && maxRebuy > 0) {
+    return { text: t('MTT_Blind_Deadline_to_buy'), color: '#FF4368' }
+  }
+  return { text: '', color: '' }
 }
 
 const blindRows = computed<BlindRow[]>(() => {
@@ -394,11 +414,14 @@ const blindRows = computed<BlindRow[]>(() => {
   const currentBlindLevel = Number(more.value?.bl ?? 0)
   return levels.map((item, index) => {
     const level = index + 1
+    const marker = resolveBlindMarker(level)
     return {
       level: currentBlindLevel > 0 && currentBlindLevel === level ? `▶${level}` : String(level),
       blinds: `${formatBlindUnit(item.sb)}/${formatBlindUnit(item.sb * 2)}`,
       ante: formatBlindUnit(item.ante),
       duration: durationText.value,
+      marker: marker.text,
+      markerColor: marker.color,
     }
   })
 })
@@ -734,7 +757,20 @@ onUnmounted(() => {
             :label="t('UITexasReport_Text_BlindLevelTip')"
             :flex="1"
             align="center"
-          />
+          >
+            <template #default="{ row }">
+              <div class="mrp__level-cell">
+                <span>{{ row.level }}</span>
+                <span
+                  v-if="row.marker"
+                  class="mrp__level-marker"
+                  :style="{ color: row.markerColor }"
+                >
+                  {{ row.marker }}
+                </span>
+              </div>
+            </template>
+          </GameTableColumn>
           <GameTableColumn
             prop="blinds"
             :label="t('UITexasReport_Label_AllBarMZ')"
@@ -1175,5 +1211,23 @@ onUnmounted(() => {
   font-size: 0.24rem;
   color: rgba(255, 255, 255, 0.5);
   line-height: 1.3;
+}
+
+/* 盲注级别及截止买入/增购标记 */
+.mrp__level-cell {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.04rem;
+}
+
+.mrp__level-marker {
+  max-width: 100%;
+  font-size: 0.22rem;
+  line-height: 1.2;
+  text-align: center;
+  white-space: normal;
+  word-break: break-word;
 }
 </style>

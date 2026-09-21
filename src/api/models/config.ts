@@ -26,6 +26,9 @@ export interface HomeAnnouncementConfig {
 
 // /config/global/config 响应 data。
 export interface GlobalConfigData {
+  // 平台域名配置 JSON：data 中 domain_type=1 为二维码域名，2 为官方主域名。
+  plat_domain_qrcode_info?: string | Record<string, unknown>
+  plat_domain_main_info?: string | Record<string, unknown>
   support_email?: string
   // 官方联系方式 JSON 字符串，结构如 {"telegram":"https://t.me/...","facebook":"...","instagram":"...","youtube":"...","twitter":"..."}
   official_contact_address?: string

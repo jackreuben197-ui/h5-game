@@ -5,10 +5,11 @@ import { postOrgClubDefaultApi } from '@/api/org'
 import StorageKey from '@/constants/storageKey'
 import { dzpkPersistStorage } from '@/utils/localStore'
 import {
-  resolveChannelMainDomain,
   copyStorageToMainDomain,
   extractInviteCodeFromSubdomain,
   isChannelPackageHost,
+  isOfficialPackageHost,
+  isPlatformQrCodeHost,
   isPrivateDomainMode,
   resolveInviteCode,
 } from '@/utils/channelPackage'
@@ -31,7 +32,11 @@ function normalizeClubId(value: unknown): string {
 
 function resolveSafariBaseUrl(hostname: string): string {
   const normalizedHostname = hostname.trim().toLowerCase()
-  if (!normalizedHostname || normalizedHostname === resolveChannelMainDomain(normalizedHostname)) {
+  if (
+    !normalizedHostname ||
+    isOfficialPackageHost(normalizedHostname) ||
+    isPlatformQrCodeHost(normalizedHostname)
+  ) {
     return ''
   }
   return normalizedHostname
@@ -225,7 +230,7 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
         channelDefaultClubLoaded = false
         return null
       }
-      // 旧渠道域名 xxx.{CHANNEL_MAIN_DOMAIN} 必须继续按邀请码查询，不能当成自定义域名。
+      // “邀请码.二维码域名”必须按邀请码查询，不能当成俱乐部独立 CNAME 域名。
       const channelInviteCode = extractInviteCodeFromSubdomain(hostname)
       const baseUrl = channelInviteCode ? '' : resolveSafariBaseUrl(hostname)
       // 主域名既不是渠道子域名也解析不出自定义域名，不发默认俱乐部请求。

@@ -39,13 +39,13 @@ import imgAvatarAddLight from '@/assets/icons/avatar_add_badge_light.svg'
 import NumericKeypad from '@/components/KeyBoard/NumericKeypad.vue'
 import GameDialog from '@/components/Dialog/GameDialog.vue'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { generateQrCodeUrl } from '@/utils/qrcode'
 import {
   buildChannelAgentInviteUrl,
   buildChannelClubInviteUrl,
   buildChannelRegisterUrl,
   isPrivateDomainMode,
 } from '@/utils/channelPackage'
-import { generateQrCodeUrl } from '@/utils/qrcode'
 import { formatUC } from '@/utils/roomVisibility'
 import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
@@ -688,7 +688,7 @@ async function onSettingClick(item: SettingItem): Promise<void> {
   if (item.label === t('UIClub_Invite')) {
     inviteShareImage.value = ''
     if (isAgent.value && !agentInviteCode.value) {
-      await fetchAgentInviteCode()
+      await fetchAgentShareInfo()
       await generateInviteQrCode()
     }
     showInvitePopup.value = true
@@ -1079,13 +1079,16 @@ async function generateInviteQrCode(): Promise<void> {
     }
   }
 
-  const finalLink = isAgent.value
-    ? buildChannelAgentInviteUrl(agentInviteCode.value, clubInviteCode)
+  const safariBaseUrl = String(
+    currentClub.safari_base_url || userInfoStore.currentClub?.safari_base_url || '',
+  ).trim()
+  const finalLink = isAgent.value && agentInviteCode.value
+    ? buildChannelAgentInviteUrl(agentInviteCode.value, clubInviteCode, safariBaseUrl)
     : isChannelPackage
-      ? buildChannelClubInviteUrl(clubInviteCode)
-      : buildChannelRegisterUrl({ inviteCode: clubInviteCode })
+      ? buildChannelClubInviteUrl(clubInviteCode, safariBaseUrl)
+      : buildChannelRegisterUrl({ inviteCode: clubInviteCode, safariBaseUrl })
 
-  if (!finalLink || !clubInviteCode || (isAgent.value && !agentInviteCode.value)) {
+  if (!finalLink || (!clubInviteCode && !safariBaseUrl)) {
     imgInviteQr.value = ''
     return
   }
@@ -1097,7 +1100,7 @@ async function generateInviteQrCode(): Promise<void> {
   }
 }
 
-async function fetchAgentInviteCode(): Promise<void> {
+async function fetchAgentShareInfo(): Promise<void> {
   agentInviteCode.value = ''
   agentShareNickname.value = ''
   agentShareRandomId.value = ''
@@ -1119,7 +1122,7 @@ async function fetchAgentInviteCode(): Promise<void> {
     })
 
     if (Number(response.code) !== 0 || !response.data) {
-      console.error('fetchAgentInviteCode API error', response.msg)
+      console.error('fetchAgentShareInfo API error', response.msg)
       return
     }
 
@@ -1129,13 +1132,13 @@ async function fetchAgentInviteCode(): Promise<void> {
     agentShareNickname.value = String(response.data.user_info?.nickname || '').trim()
     agentShareRandomId.value = String(response.data.user_info?.random_id || '').trim()
   } catch (error) {
-    console.error('fetchAgentInviteCode error', error)
+    console.error('fetchAgentShareInfo error', error)
   }
 }
 
 onMounted(async () => {
   await refreshClubDetail()
-  await fetchAgentInviteCode()
+  await fetchAgentShareInfo()
   await prefetchAgentInvitationLink()
   await generateInviteQrCode()
 })
@@ -1575,6 +1578,10 @@ onMounted(async () => {
 
 .club-detail-bg {
   height: 100dvh;
+  html[data-channel-package='1'] & {
+    height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+    min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  }
   background-image: var(--club-detail-bg-dark);
   background-size: cover;
   background-position: center;

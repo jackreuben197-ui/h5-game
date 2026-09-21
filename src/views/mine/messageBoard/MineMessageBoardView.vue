@@ -66,6 +66,10 @@ async function submitMessage(): Promise<void> {
 <style scoped lang="scss">
 .mine-glass-page {
   height: 100dvh;
+  html[data-channel-package='1'] & {
+    height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+    min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  }
   color: #f3f3f3;
   background-size: cover;
   background-position: center;

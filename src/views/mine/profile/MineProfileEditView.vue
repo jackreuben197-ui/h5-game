@@ -301,6 +301,10 @@ async function onConfirmGender(): Promise<void> {
 .profile-edit-page {
   position: relative;
   height: 100dvh;
+  html[data-channel-package='1'] & {
+    height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+    min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  }
   padding-bottom: 0.8rem;
   color: #f9f9f9;
   background-size: cover;

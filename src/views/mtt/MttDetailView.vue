@@ -598,6 +598,10 @@ async function handleEnterTable(rid: number): Promise<void> {
 .mtt-detail-page {
   position: relative;
   height: 100dvh;
+  html[data-channel-package='1'] & {
+    height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+    min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  }
   color: var(--c-text);
   background: url('@/assets/images/main_bg.webp') center / cover no-repeat;
   display: flex;

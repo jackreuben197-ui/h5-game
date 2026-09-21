@@ -917,8 +917,11 @@ onMounted(() => {
 
 .mine-glass-page {
   position: relative;
-  height: var(--app-full-height, var(--app-viewport-height, 100dvh));
-  min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  height: 100dvh;
+  html[data-channel-package='1'] & {
+    height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+    min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  }
   box-sizing: border-box;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;

@@ -177,6 +177,10 @@ function closeOverlay(): void {
 #app > .security-password-page {
   height: 100dvh;
   padding-top: calc(var(--app-viewport-safe-area-top, env(safe-area-inset-top)) + 0.42rem);
+  html[data-channel-package='1'] & {
+    height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+    min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  }
   position: relative;
   background-size: cover;
   background-position: center;

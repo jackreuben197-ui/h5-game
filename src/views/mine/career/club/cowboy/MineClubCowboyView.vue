@@ -346,6 +346,10 @@ onMounted(() => {
 .cowboy-page {
   position: relative;
   height: 100dvh;
+  html[data-channel-package='1'] & {
+    height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+    min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  }
   overflow-y: auto;
   overflow-x: hidden;
   padding: 0 0 0.8rem;

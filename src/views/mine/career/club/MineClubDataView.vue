@@ -1260,6 +1260,10 @@ onBeforeUnmount(() => {
 .club-data-page {
   position: relative;
   height: 100dvh;
+  html[data-channel-package='1'] & {
+    height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+    min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  }
   overflow-y: auto;
   padding: 0 0 0.72rem;
   color: #f9f9f9;

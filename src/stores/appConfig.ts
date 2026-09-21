@@ -17,6 +17,7 @@ import {
   replacePublicCacheEntries,
 } from '@/utils/indexedDB'
 import { localStore } from '@/utils/localStore'
+import { configurePlatformDomains } from '@/utils/channelPackage'
 
 interface AppConfigState {
   globalConfig: GlobalConfigData | null
@@ -108,6 +109,7 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
   actions: {
     setGlobalConfig(config: GlobalConfigData): void {
       this.globalConfig = config
+      configurePlatformDomains(config)
       void persistGlobalConfig(config, StorageKey.APP_CONFIG_CACHE)
         .catch((error) => {
           console.warn('[appConfig] persist app_config cache failed:', error)
@@ -188,6 +190,7 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
 
       if (globalConfig) {
         this.globalConfig = globalConfig
+        configurePlatformDomains(globalConfig)
       }
       if (diamondConfig) {
         this.diamondConfig = diamondConfig

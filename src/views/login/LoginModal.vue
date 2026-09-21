@@ -22,6 +22,7 @@ import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
 import { useGameStore } from '@/stores/game'
 import { useLoginModalStore } from '@/stores/loginModal'
+import { useUserInfoStore } from '@/stores/userInfo'
 import { syncPostAuthData } from '@/session/postAuthSync'
 import LoginSession from '@/session/loginSession'
 import {
@@ -53,6 +54,7 @@ import {
   shouldOpenRegisterMode,
   resolveAgentInviteCode,
   clearAgentInviteCodeCache,
+  isChannelPackageHost,
 } from '@/utils/channelPackage'
 import ProtocolView from './components/ProtocolView.vue'
 
@@ -513,7 +515,12 @@ async function runLoginTransaction(target: string, replacingExperienceAccount: b
 
 async function handleRegister(target: string) {
   const agentCode = resolveAgentInviteCode()
-  const effectiveInviteCode = agentCode || inviteCodeFromChannel.value || resolveInviteCode()
+  const linkInviteCode = agentCode || inviteCodeFromChannel.value || resolveInviteCode()
+  // 自定义域名没有邀请码子域名前缀，使用渠道俱乐部默认接口返回的邀请码。
+  const channelClub = !linkInviteCode && isChannelPackageHost()
+    ? await useUserInfoStore().ensureChannelDefaultClub()
+    : null
+  const effectiveInviteCode = linkInviteCode || String(channelClub?.invitation_code || '').trim()
   const effectiveTraceHash = traceHashFromChannel.value || resolveTraceHash() || agentCode
   const password = md5(form.password.trim())
   const baseExtra: Record<string, string | number> = {}

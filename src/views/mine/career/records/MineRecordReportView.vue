@@ -96,6 +96,10 @@ async function submitReport(): Promise<void> {
 .record-report-page {
   position: relative;
   height: 100dvh;
+  html[data-channel-package='1'] & {
+    height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+    min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  }
   padding: 0 0 2.2rem;
   color: #f9f9f9;
   background-size: cover;

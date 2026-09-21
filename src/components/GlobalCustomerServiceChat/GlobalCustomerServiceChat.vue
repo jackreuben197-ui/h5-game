@@ -842,13 +842,33 @@ function pickFileUrl(rawData: unknown): string {
 }
 
 function parseMessageExtra(message: ChatSupportMessageListChatData): Record<string, unknown> {
-  const extra = String(message.extra || '').trim()
-  if (!extra) return {}
-  try {
-    return JSON.parse(extra) as Record<string, unknown>
-  } catch {
-    return {}
+  for (const extra of [message.extra, message.extra_info, message.extraInfo]) {
+    if (extra && typeof extra === 'object' && !Array.isArray(extra)) {
+      return extra as Record<string, unknown>
+    }
+    if (typeof extra !== 'string' || !extra.trim()) continue
+    try {
+      const parsed: unknown = JSON.parse(extra)
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>
+      }
+    } catch {
+      // 尝试下一种 IM 字段名。
+    }
   }
+  return {}
+}
+
+function resolveOrderSubType(message: ChatSupportMessageListChatData): number {
+  const subType = Number(message.sub_type || message.subType || 0)
+  return subType || (Number(message.msg_type || 0) === 6 ? 1 : 0)
+}
+
+function isSupportOrderMessage(message: ChatSupportMessageListChatData): boolean {
+  const type = Number(message.msg_type || 0)
+  const subType = resolveOrderSubType(message)
+  // 客服记录接口使用 6；IM 原始消息使用 gameSupport=19。
+  return (type === 6 || type === 19) && (subType === 1 || subType === 2)
 }
 
 function formatOrderValue(value: unknown): string {
@@ -870,7 +890,8 @@ function formatOrderTimestamp(value: unknown): string {
 
 function formatSupportOrderMessage(message: ChatSupportMessageListChatData): string {
   const extra = parseMessageExtra(message)
-  const isRecharge = Number(message.sub_type || 1) === 1
+  if (!Object.keys(extra).length && message.text) return message.text
+  const isRecharge = resolveOrderSubType(message) === 1
   const rows = isRecharge
     ? [
         [t('UIRechargeUCChatRecord1'), extra.user_info],
@@ -890,7 +911,8 @@ function formatSupportOrderMessage(message: ChatSupportMessageListChatData): str
         [t('UIMine_WalletFlow_SQSJ'), formatOrderTimestamp(extra.timestamp)],
       ]
 
-  return rows.map(([label, value]) => `${label}：${formatOrderValue(value)}`).join('\n')
+  const title = t(isRecharge ? 'Wallet_OrdersDeposit' : 'Wallet_OrdersWithdraw')
+  return [title, ...rows.map(([label, value]) => `${label}：${formatOrderValue(value)}`)].join('\n')
 }
 
 const displayMessages = computed<ChatSupportMessageListChatData[]>(() => {
@@ -902,7 +924,7 @@ const displayMessages = computed<ChatSupportMessageListChatData[]>(() => {
     !!orderNo &&
     messages.value.some(
       (message) =>
-        Number(message.msg_type || 0) === 6 &&
+        isSupportOrderMessage(message) &&
         String(parseMessageExtra(message).order_no || '').trim() === orderNo,
     )
   if (alreadyIncluded) return messages.value
@@ -933,10 +955,12 @@ function resolveImageThumbUrl(message: ChatSupportMessageListChatData): string {
   if (directThumb) return directThumb
 
   const extra = parseMessageExtra(message)
-  const extraThumb = String(extra.thumb_url || extra.thumbUrl || '').trim()
+  const extraThumb = String(
+    extra.thumb_url || extra.thumbUrl || extra.smallImageUrl || extra.middleImageUrl || '',
+  ).trim()
   if (extraThumb) return extraThumb
 
-  return String(message.url || '').trim()
+  return resolveImageOriginalUrl(message)
 }
 
 function resolveImageOriginalUrl(message: ChatSupportMessageListChatData): string {
@@ -950,6 +974,60 @@ function resolveImageOriginalUrl(message: ChatSupportMessageListChatData): strin
     if (value) return value
   }
   return ''
+}
+
+function resolveAttachmentUrl(message: ChatSupportMessageListChatData): string {
+  const extra = parseMessageExtra(message)
+  const raw = String(message.url || extra.fileUrl || extra.videoUrl || extra.url || '').trim()
+  if (!raw) return ''
+  try {
+    const url = new URL(raw, window.location.href)
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : ''
+  } catch {
+    return ''
+  }
+}
+
+function resolveVideoThumbUrl(message: ChatSupportMessageListChatData): string {
+  const extra = parseMessageExtra(message)
+  return String(message.thumb_url || extra.videoThumbUrl || extra.video_thumb_url || '').trim()
+}
+
+function resolveFileName(message: ChatSupportMessageListChatData): string {
+  const extra = parseMessageExtra(message)
+  const name = String(message.file_name || extra.fileName || extra.file_name || '').trim()
+  if (name) return name
+  const url = resolveAttachmentUrl(message)
+  if (url) {
+    try {
+      return decodeURIComponent(new URL(url).pathname.split('/').pop() || '') || 'File'
+    } catch {
+      // 无法解码时使用通用名称。
+    }
+  }
+  return 'File'
+}
+
+function hasFileContent(message: ChatSupportMessageListChatData): boolean {
+  const extra = parseMessageExtra(message)
+  return !!(
+    resolveAttachmentUrl(message) ||
+    String(message.file_name || extra.fileName || extra.file_name || '').trim()
+  )
+}
+
+function formatFileSize(message: ChatSupportMessageListChatData): string {
+  const extra = parseMessageExtra(message)
+  const bytes = Number(message.file_size ?? extra.fileSize ?? extra.file_size)
+  if (!Number.isFinite(bytes) || bytes <= 0) return ''
+  const units = ['B', 'KB', 'MB', 'GB']
+  let size = bytes
+  let unit = 0
+  while (size >= 1024 && unit < units.length - 1) {
+    size /= 1024
+    unit++
+  }
+  return `${size.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`
 }
 
 function openImagePreview(message: ChatSupportMessageListChatData): void {
@@ -1389,7 +1467,7 @@ function isPayloadForActiveChannel(payload: {
 
 function canRenderWsMessage(payload: { msgType: number; text: string; url: string }): boolean {
   if (payload.msgType === 1) return !!String(payload.text || '').trim()
-  if (payload.msgType === 2 || payload.msgType === 3) return !!String(payload.url || '').trim()
+  if ([2, 3, 4, 5, 11].includes(payload.msgType)) return !!String(payload.url || '').trim()
   return false
 }
 
@@ -1404,7 +1482,7 @@ function appendWsMessageToBottom(payload: {
   messages.value.push({
     msg_type: Number(payload.msgType || 0),
     text: payload.msgType === 1 ? String(payload.text || '') : undefined,
-    url: payload.msgType === 2 || payload.msgType === 3 ? String(payload.url || '') : undefined,
+    url: [2, 3, 4, 5, 11].includes(payload.msgType) ? String(payload.url || '') : undefined,
     user_send: payload.userSend,
     local_time: Number(payload.localTime || 0) || undefined,
     time_token: Number(payload.timeToken || Date.now()),
@@ -1595,7 +1673,7 @@ watch(
                   </button>
 
                   <button
-                    v-else-if="msg.msg_type === 3"
+                    v-else-if="msg.msg_type === 3 || msg.msg_type === 11"
                     type="button"
                     class="voice-message"
                     :class="{
@@ -1633,13 +1711,67 @@ watch(
                     <span class="voice-message-time">{{ formatVoiceDuration(msg.duration) }}</span>
                   </button>
 
+                  <div v-else-if="msg.msg_type === 4" class="video-bubble">
+                    <video
+                      v-if="resolveAttachmentUrl(msg)"
+                      :src="resolveAttachmentUrl(msg)"
+                      :poster="resolveVideoThumbUrl(msg) || undefined"
+                      controls
+                      playsinline
+                      preload="none"
+                    ></video>
+                    <span v-else>{{ t('Video') }}</span>
+                    <span v-if="msg.text" class="attachment-caption">{{ msg.text }}</span>
+                  </div>
+
+                  <a
+                    v-else-if="msg.msg_type === 5 && resolveAttachmentUrl(msg)"
+                    class="text-bubble file-bubble"
+                    :class="{ 'text-bubble--self': isSelfMessage(msg) }"
+                    :href="resolveAttachmentUrl(msg)"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <span class="file-name">{{ resolveFileName(msg) }}</span>
+                    <span v-if="formatFileSize(msg)" class="file-size">{{ formatFileSize(msg) }}</span>
+                    <span v-if="msg.text" class="attachment-caption">{{ msg.text }}</span>
+                  </a>
+
                   <div
-                    v-else-if="msg.msg_type === 6"
+                    v-else-if="msg.msg_type === 5 && hasFileContent(msg)"
+                    class="text-bubble file-bubble"
+                    :class="{ 'text-bubble--self': isSelfMessage(msg) }"
+                  >
+                    <span class="file-name">{{ resolveFileName(msg) }}</span>
+                    <span v-if="formatFileSize(msg)" class="file-size">{{ formatFileSize(msg) }}</span>
+                  </div>
+
+                  <div
+                    v-else-if="isSupportOrderMessage(msg)"
                     class="text-bubble support-order-bubble"
                     :class="{ 'text-bubble--self': isSelfMessage(msg) }"
                   >
                     {{ formatSupportOrderMessage(msg) }}
                   </div>
+
+                  <div
+                    v-else-if="msg.text"
+                    class="text-bubble"
+                    :class="{ 'text-bubble--self': isSelfMessage(msg) }"
+                  >
+                    {{ msg.text }}
+                  </div>
+
+                  <a
+                    v-else-if="resolveAttachmentUrl(msg)"
+                    class="text-bubble file-bubble"
+                    :class="{ 'text-bubble--self': isSelfMessage(msg) }"
+                    :href="resolveAttachmentUrl(msg)"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <span class="file-name">{{ resolveFileName(msg) }}</span>
+                  </a>
 
                   <div
                     v-else
@@ -2233,6 +2365,46 @@ html[data-keyboard-open='1'] .visual-header {
 
 .support-order-bubble {
   white-space: pre-line;
+}
+
+.video-bubble {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  max-width: 4.8rem;
+  color: #fff;
+}
+
+.video-bubble video {
+  display: block;
+  width: 100%;
+  max-height: 5rem;
+  border-radius: 0.16rem;
+  background: #000;
+}
+
+.file-bubble {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+  max-width: 4.8rem;
+  color: inherit;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.file-name {
+  font-weight: 600;
+}
+
+.file-size {
+  font-size: 0.26rem;
+  opacity: 0.7;
+}
+
+.attachment-caption {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .image-bubble {

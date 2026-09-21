@@ -1,7 +1,13 @@
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
 import { appConfig } from '@/utils/appConfig'
-import { isChannelPackageHostname, isChannelSubdomainHostname } from '@/utils/channelHost'
+import {
+  findConfiguredBaseDomain,
+  isChannelPackageHostname,
+  isChannelSubdomainHostname,
+  isConfiguredDomainHostname,
+  parseActivePlatformDomains,
+} from '@/utils/channelHost'
 import {
   isTelegramMiniAppEnv,
   readTelegramStartParam,
@@ -18,9 +24,19 @@ const RESERVED_SUBDOMAINS = new Set(['www'])
 // 与 index.html 的 TG_MINI_APP_PARAM 保持一致。
 const TG_MINI_APP_PARAM = 'tg_mini_app'
 
-export const CHANNEL_MAIN_DOMAIN = (import.meta.env.VITE_CHANNEL_MAIN_DOMAIN || '')
-  .trim()
-  .toLowerCase()
+interface PlatformDomainGlobalConfig {
+  plat_domain_qrcode_info?: unknown
+  plat_domain_main_info?: unknown
+}
+
+// 历史官方入口兼容：该域名未包含在测试环境 plat_domain_main_info 中，
+// 但仍是有效官方包入口，必须避免按俱乐部自定义 CNAME 查询。
+const BUILT_IN_OFFICIAL_DOMAINS = ['test2-game.awanptest.com']
+
+let platformMainDomains: string[] = [...BUILT_IN_OFFICIAL_DOMAINS]
+let platformOfficialMainDomains: string[] = []
+let platformQrCodeDomains: string[] = []
+
 // 渠道包联调时可临时启用：
 const TEST_CHANNEL_INVITE_CODE = ''
 // const TEST_CHANNEL_INVITE_CODE = 'ksGuBmMk'
@@ -47,6 +63,86 @@ interface ParsedQueryParams {
 
 function readString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
+}
+
+function normalizeDomainOrigin(value: unknown, fallbackProtocol: string): string {
+  const rawDomain = readString(value)
+  if (!rawDomain) return ''
+
+  try {
+    const url = new URL(
+      rawDomain.includes('://') ? rawDomain : `${fallbackProtocol}//${rawDomain}`,
+    )
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return ''
+    return url.origin
+  } catch {
+    return ''
+  }
+}
+
+export function configurePlatformDomains(config: PlatformDomainGlobalConfig | null | undefined): void {
+  const typeOneDomains = parseActivePlatformDomains(config?.plat_domain_qrcode_info, 1)
+  const typeTwoDomains = parseActivePlatformDomains(config?.plat_domain_main_info, 2)
+
+  // 两种平台域名本身都属于官方包；只有其下的邀请码子域名按渠道包处理。
+  platformMainDomains = Array.from(
+    new Set([
+      ...BUILT_IN_OFFICIAL_DOMAINS,
+      ...typeOneDomains,
+      ...typeTwoDomains,
+    ]),
+  )
+  platformOfficialMainDomains = typeTwoDomains
+  // domain_type=1 专门用于生成俱乐部邀请二维码链接。
+  platformQrCodeDomains = typeOneDomains
+}
+
+function findPlatformBaseDomain(hostname: string): string {
+  return (
+    findConfiguredBaseDomain(hostname, platformQrCodeDomains) ||
+    findConfiguredBaseDomain(hostname, platformMainDomains)
+  )
+}
+
+export function getPlatformMainDomains(): readonly string[] {
+  return platformMainDomains
+}
+
+export function getPlatformQrCodeDomains(): readonly string[] {
+  return platformQrCodeDomains
+}
+
+export function isOfficialPackageHost(hostname: string = window.location.hostname): boolean {
+  const normalizedHost = readString(hostname).toLowerCase()
+  if (!normalizedHost) return false
+  if (findPlatformBaseDomain(normalizedHost)) {
+    return platformMainDomains.includes(normalizedHost)
+  }
+  return normalizedHost === resolveChannelMainDomain(normalizedHost)
+}
+
+export function isPlatformQrCodeHost(hostname: string = window.location.hostname): boolean {
+  return isConfiguredDomainHostname(readString(hostname), platformQrCodeDomains)
+}
+
+function resolvePlatformRedirectDomain(hostname: string): string {
+  const qrCodeBaseDomain = findConfiguredBaseDomain(hostname, platformQrCodeDomains)
+  if (qrCodeBaseDomain) {
+    return platformOfficialMainDomains[0] || qrCodeBaseDomain
+  }
+  return findConfiguredBaseDomain(hostname, platformMainDomains) || getChannelMainDomain(hostname)
+}
+
+function pickPlatformQrCodeDomain(): string {
+  if (!platformQrCodeDomains.length) return ''
+  const index = Math.floor(Math.random() * platformQrCodeDomains.length)
+  return platformQrCodeDomains[index] || platformQrCodeDomains[0] || ''
+}
+
+function appendHashQuery(baseUrl: string, params: URLSearchParams): string {
+  const query = params.toString()
+  if (!query) return baseUrl
+  return baseUrl.includes('/#/?') ? `${baseUrl}&${query}` : `${baseUrl}/#/?${query}`
 }
 
 function getHashQueryParams(hashValue: string): URLSearchParams {
@@ -93,7 +189,10 @@ export function isChannelPackageHost(hostname: string = window.location.hostname
   if (isReservedOrNumericHost(normalizedHost)) {
     return false
   }
-  return isChannelPackageHostname(normalizedHost, resolveChannelMainDomain(normalizedHost))
+  const mainDomains = findPlatformBaseDomain(normalizedHost)
+    ? platformMainDomains
+    : resolveChannelMainDomain(normalizedHost)
+  return isChannelPackageHostname(normalizedHost, mainDomains)
 }
 
 export function hasTelegramClubParam(): boolean {
@@ -188,6 +287,13 @@ export function isChannelDiamondFreeMode(hostname: string = window.location.host
  * 通过主域名的 URL 参数传递数据，主域名页面读取后写入自己的 storage。
  */
 export function copyStorageToMainDomain(): void {
+  const currentUrl = new URL(window.location.href)
+  const mainDomain = resolvePlatformRedirectDomain(currentUrl.hostname)
+  if (!mainDomain) {
+    console.warn('[channelPackage] platform main domain is unavailable; skip redirect')
+    return
+  }
+
   const items: Record<string, string> = {}
 
   // 读取 localStorage
@@ -204,10 +310,9 @@ export function copyStorageToMainDomain(): void {
   // 只清理由本次跳转迁移的登录数据，不能清空同源下 Cocos、Telegram
   // 或其他业务写入的 localStorage。
   Object.keys(items).forEach((key) => localStorage.removeItem(key))
-  const currentUrl = new URL(window.location.href)
   // 与 buildChannelClubInviteUrl 一致：保留端口，否则本地 / 非 80 端口部署会跳到打不开的地址。
   const portSuffix = currentUrl.port ? `:${currentUrl.port}` : ''
-  const targetUrl = `${currentUrl.protocol}//${getChannelMainDomain()}${portSuffix}/#/`
+  const targetUrl = `${currentUrl.protocol}//${mainDomain}${portSuffix}/#/`
   const params = collectTelegramHandoffParams()
   // 将数据编码到 URL 参数中
   if (Object.keys(items).length > 0) {
@@ -270,10 +375,20 @@ export function extractInviteCodeFromSubdomain(
 ): string {
   if (TEST_CHANNEL_INVITE_CODE) return TEST_CHANNEL_INVITE_CODE
   const normalizedHost = readString(hostname).toLowerCase()
-  // 自定义域名也属于渠道包，但它没有可作为邀请码的主域名前缀。
   if (isReservedOrNumericHost(normalizedHost)) {
     return ''
   }
+  // 二维码域名和历史主域名都兼容“邀请码.域名”的分享结构；俱乐部独立
+  // CNAME 域名没有邀请码前缀，继续由 /org/club/default 的 base_url 解析。
+  const baseDomain = findPlatformBaseDomain(normalizedHost)
+  if (baseDomain) {
+    if (normalizedHost === baseDomain) {
+      return ''
+    }
+    const withoutSuffix = normalizedHost.slice(0, -(baseDomain.length + 1))
+    return readString(withoutSuffix.split('.')[0] || '')
+  }
+  // 自定义域名也属于渠道包，但它没有可作为邀请码的主域名前缀。
   if (!isChannelSubdomainHostname(normalizedHost, resolveChannelMainDomain(normalizedHost))) {
     return ''
   }
@@ -375,11 +490,26 @@ export function shouldOpenRegisterMode(): boolean {
   return parseInviteParamsFromLocation().mode === 'register'
 }
 
-function buildChannelClubOrigin(inviteCode?: string): string {
+function buildChannelClubOrigin(inviteCode?: string, safariBaseUrl?: string): string {
   const currentUrl = new URL(window.location.href)
+  const customDomainOrigin = normalizeDomainOrigin(safariBaseUrl, currentUrl.protocol)
+  if (customDomainOrigin) {
+    return customDomainOrigin
+  }
+
   const code = readString(inviteCode)
   if (!code) {
     return currentUrl.origin
+  }
+
+  const portSuffix = currentUrl.port ? `:${currentUrl.port}` : ''
+  if (findPlatformBaseDomain(currentUrl.hostname)) {
+    const qrCodeDomain = pickPlatformQrCodeDomain()
+    if (!qrCodeDomain) {
+      const params = new URLSearchParams({ invite_code: code })
+      return `${currentUrl.origin}/#/?${params.toString()}`
+    }
+    return `${currentUrl.protocol}//${code}.${qrCodeDomain}${portSuffix}`
   }
 
   let baseHost = currentUrl.hostname
@@ -387,34 +517,35 @@ function buildChannelClubOrigin(inviteCode?: string): string {
   if (mainDomain && isChannelPackageHost(currentUrl.hostname)) {
     baseHost = mainDomain
   }
-  const portSuffix = currentUrl.port ? `:${currentUrl.port}` : ''
   return `${currentUrl.protocol}//${code}.${baseHost}${portSuffix}`
 }
 
-export function buildChannelClubInviteUrl(inviteCode?: string): string {
-  return `${buildChannelClubOrigin(inviteCode)}${INVITE_LANDING_HASH}`
+export function buildChannelClubInviteUrl(inviteCode?: string, safariBaseUrl?: string): string {
+  const baseUrl = buildChannelClubOrigin(inviteCode, safariBaseUrl)
+  return baseUrl.includes('/#/') ? baseUrl : `${baseUrl}${INVITE_LANDING_HASH}`
 }
-
 
 export function buildChannelAgentInviteUrl(
   agentInviteCode: string,
   clubInviteCode?: string,
+  safariBaseUrl?: string,
 ): string {
   const normalizedCode = readString(agentInviteCode)
   if (!normalizedCode) {
-    return buildChannelClubInviteUrl(clubInviteCode)
+    return buildChannelClubInviteUrl(clubInviteCode, safariBaseUrl)
   }
 
   const params = new URLSearchParams({
     mode: 'register',
     i: normalizedCode,
   })
-  return `${buildChannelClubOrigin(clubInviteCode)}/#/?${params.toString()}`
+  return appendHashQuery(buildChannelClubOrigin(clubInviteCode, safariBaseUrl), params)
 }
 
 export function buildChannelRegisterUrl(options?: {
   inviteCode?: string
   traceHash?: string
+  safariBaseUrl?: string
 }): string {
   const nextParams = new URLSearchParams()
   nextParams.set('mode', 'register')
@@ -427,5 +558,5 @@ export function buildChannelRegisterUrl(options?: {
     nextParams.set('trace_hash', traceHash)
   }
 
-  return `${buildChannelClubOrigin(inviteCode)}/#/?${nextParams.toString()}`
+  return appendHashQuery(buildChannelClubOrigin(inviteCode, options?.safariBaseUrl), nextParams)
 }

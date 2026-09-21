@@ -496,6 +496,10 @@ function onShare(): void {
 <style scoped lang="scss">
 .hand-detail-page {
   height: 100dvh;
+  html[data-channel-package='1'] & {
+    height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+    min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  }
   // padding-top: calc(env(safe-area-inset-top) + 0.46rem);
   padding: 0 0 calc(env(safe-area-inset-bottom) + 2.2rem);
   color: #f9f9f9;

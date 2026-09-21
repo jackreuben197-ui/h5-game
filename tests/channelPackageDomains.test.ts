@@ -70,6 +70,28 @@ test('missing qr-code domains keep the invite code in a hash parameter', () => {
   )
 })
 
+test('club custom domain takes priority over platform qr-code domains', () => {
+  channelPackage.configurePlatformDomains({
+    plat_domain_main_info:
+      '{"data":[{"domain":"fanuf.maintest71.com","domain_type":2,"status":"active"}]}',
+    plat_domain_qrcode_info:
+      '{"data":[{"domain":"fbdgqp.tet982m32.com","domain_type":1,"status":"active"}]}',
+  })
+
+  assert.equal(
+    channelPackage.buildChannelClubInviteUrl('club123', 'club-short.example.com'),
+    'https://club-short.example.com',
+  )
+  assert.equal(
+    channelPackage.buildChannelAgentInviteUrl(
+      'agent456',
+      'club123',
+      'https://club-short.example.com/path',
+    ),
+    'https://club-short.example.com/#/?mode=register&i=agent456',
+  )
+})
+
 test.after(() => {
   if (previousWindow) Object.defineProperty(globalThis, 'window', previousWindow)
   else Reflect.deleteProperty(globalThis, 'window')

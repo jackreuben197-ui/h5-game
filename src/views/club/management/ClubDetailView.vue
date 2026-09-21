@@ -983,9 +983,12 @@ async function confirmDeleteClub(): Promise<void> {
 
 async function generateInviteQrCode(): Promise<void> {
   const clubInviteCode = String(displayClub.value?.invitation_code || '').trim()
+  const safariBaseUrl = String(
+    displayClub.value?.safari_base_url || userInfoStore.currentClub?.safari_base_url || '',
+  ).trim()
   const url = isAgent.value && agentInviteCode.value
-    ? buildChannelAgentInviteUrl(agentInviteCode.value, clubInviteCode)
-    : buildChannelClubInviteUrl(clubInviteCode)
+    ? buildChannelAgentInviteUrl(agentInviteCode.value, clubInviteCode, safariBaseUrl)
+    : buildChannelClubInviteUrl(clubInviteCode, safariBaseUrl)
 
   try {
     imgInviteQr.value = await generateQrCodeUrl(url, { size: 720, margin: 2 })

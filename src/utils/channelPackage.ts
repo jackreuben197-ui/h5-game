@@ -36,6 +36,21 @@ function readString(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
 }
 
+function normalizeDomainOrigin(value: unknown, fallbackProtocol: string): string {
+  const rawDomain = readString(value)
+  if (!rawDomain) return ''
+
+  try {
+    const url = new URL(
+      rawDomain.includes('://') ? rawDomain : `${fallbackProtocol}//${rawDomain}`,
+    )
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return ''
+    return url.origin
+  } catch {
+    return ''
+  }
+}
+
 export function configurePlatformDomains(config: PlatformDomainGlobalConfig | null | undefined): void {
   const typeOneDomains = parseActivePlatformDomains(config?.plat_domain_qrcode_info, 1)
   const typeTwoDomains = parseActivePlatformDomains(config?.plat_domain_main_info, 2)
@@ -315,8 +330,16 @@ export function shouldOpenRegisterMode(): boolean {
   return parseInviteParamsFromLocation().mode === 'register'
 }
 
-export function buildChannelClubInviteUrl(clubInviteCode?: string): string {
+export function buildChannelClubInviteUrl(
+  clubInviteCode?: string,
+  safariBaseUrl?: string,
+): string {
   const currentUrl = new URL(window.location.href)
+  const customDomainOrigin = normalizeDomainOrigin(safariBaseUrl, currentUrl.protocol)
+  if (customDomainOrigin) {
+    return customDomainOrigin
+  }
+
   const normalizedClubCode = readString(clubInviteCode)
   if (!normalizedClubCode) {
     return currentUrl.origin
@@ -334,9 +357,10 @@ export function buildChannelClubInviteUrl(clubInviteCode?: string): string {
 export function buildChannelAgentInviteUrl(
   agentInviteCode: string,
   clubInviteCode?: string,
+  safariBaseUrl?: string,
 ): string {
   const normalizedCode = readString(agentInviteCode)
-  const clubInviteUrl = buildChannelClubInviteUrl(clubInviteCode)
+  const clubInviteUrl = buildChannelClubInviteUrl(clubInviteCode, safariBaseUrl)
   if (!normalizedCode) {
     return clubInviteUrl
   }

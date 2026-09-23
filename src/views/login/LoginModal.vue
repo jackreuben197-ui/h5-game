@@ -667,13 +667,8 @@ function applyChannelInviteContext(): void {
   inviteCodeFromChannel.value = resolveInviteCode()
   traceHashFromChannel.value = resolveTraceHash() || resolveAgentInviteCode()
 
-  if (shouldOpenRegisterMode()) {
-    if (pageMode.value === 'login') {
-      pageMode.value = 'register'
-    }
-    if (!loginModalStore.visible) {
-      loginModalStore.open({ mode: 'register' })
-    }
+  if (shouldOpenRegisterMode() && pageMode.value === 'login') {
+    pageMode.value = 'register'
   }
 }
 </script>

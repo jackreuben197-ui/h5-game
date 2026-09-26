@@ -291,7 +291,7 @@ http.interceptors.response.use(
       void forceToLogin(requestConfig.sessionTokenSnapshot)
       return Promise.reject(new Error('登录已失效，请重新登录'))
     }
-    // 业务码非 0：弹出多语言错误提示。
+    // 业务码非 0：仅在存在多语言文案时弹出错误提示。
     if (businessCode !== undefined && businessCode !== 0 && !suppressToast) {
       showGameToast(translateBusinessCode(Number(businessCode), response.data?.message))
     }

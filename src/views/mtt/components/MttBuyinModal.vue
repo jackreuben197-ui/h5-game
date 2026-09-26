@@ -44,6 +44,7 @@ const emit = defineEmits<{
 /* ===== 工具 ===== */
 const isDiamond = computed(() => (props.mtt?.gold_type ?? 1) === 4)
 const hideDiamondCharge = computed(() => isChannelDiamondFreeMode() && isDiamond.value)
+const hideDiamondRecordFee = computed(() => isChannelDiamondFreeMode())
 function isDiamondMtt() { return isDiamond.value }
 const currencyIcon = computed(() => (isDiamond.value ? iconDiamond : iconChips))
 
@@ -499,7 +500,7 @@ function handleRecharge() {
           <span class="cost-balance-num">{{ fmtMoney(walletBalance) }}</span>
           <img class="cost-add" :src="iconAdd" alt="" />
         </div>
-        <div class="cost-detail">
+        <div v-if="!hideDiamondRecordFee" class="cost-detail">
           <span class="cost-label">{{ t('UITexasJLF') }}</span>
           <div class="cost-item">
             <img class="cost-item-icon" :src="iconDiamond" alt="" />

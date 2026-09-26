@@ -264,10 +264,15 @@ http.interceptors.response.use(
       void forceToLogin(requestConfig.sessionTokenSnapshot)
       return Promise.reject(new Error('登录已失效，请重新登录'))
     }
-    // 业务码非 0：弹出多语言错误提示。
+    // 业务码非 0：仅在存在多语言文案时弹出错误提示。
     if (businessCode !== undefined && businessCode !== 0 && !suppressToast) {
-      const msg = t(`ServerErrorCode_${businessCode}`) || `error: ${businessCode}`
-      showGameToast(msg)
+      // const msg = t(`ServerErrorCode_${businessCode}`) || `error: ${businessCode}`
+      const errorKey = `ServerErrorCode_${businessCode}`
+      const msg = t(errorKey)
+      // i18n 未匹配时会回退为 key 本身，此时不向用户暴露内部错误码。
+      if (msg && msg !== errorKey) {
+        showGameToast(msg)
+      }
     }
     return response
   },

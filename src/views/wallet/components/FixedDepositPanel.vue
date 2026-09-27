@@ -42,6 +42,7 @@ const avatarUrl = computed(
 function goDetails(): void {
   void router.push({ path: '/wallet/details', query: route.query })
 }
+
 </script>
 
 <template>

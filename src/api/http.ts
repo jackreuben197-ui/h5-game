@@ -8,8 +8,7 @@ import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { pinia } from '@/stores/pinia'
 import router from '@/router'
-import { showGameToast } from '@/components/Toast'
-import { resolveApiErrorText, translateBusinessCode } from '@/utils/apiError'
+import { resolveGameToastMessage, showGameToast } from '@/components/Toast'
 import LoginSession from '@/session/loginSession'
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
@@ -293,7 +292,7 @@ http.interceptors.response.use(
     }
     // 业务码非 0：仅在存在多语言文案时弹出错误提示。
     if (businessCode !== undefined && businessCode !== 0 && !suppressToast) {
-      showGameToast(translateBusinessCode(Number(businessCode), response.data?.message))
+      showGameToast(`ServerErrorCode_${businessCode}`)
     }
     return response
   },
@@ -314,7 +313,12 @@ http.interceptors.response.use(
       showFailToast('已提交加入申请，等待审核')
       return Promise.reject(error)
     }
-    showFailToast(resolveApiErrorText(error))
+    const toastMessage = resolveGameToastMessage(
+      backendMessage || error.message || '请求失败，请稍后再试',
+    )
+    if (toastMessage) {
+      showFailToast(toastMessage)
+    }
     return Promise.reject(error)
   },
 )

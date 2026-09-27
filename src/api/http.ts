@@ -8,8 +8,7 @@ import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { pinia } from '@/stores/pinia'
 import router from '@/router'
-import { showGameToast } from '@/components/Toast'
-import { t } from '@/i18n'
+import { resolveGameToastMessage, showGameToast } from '@/components/Toast'
 import LoginSession from '@/session/loginSession'
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
@@ -266,13 +265,7 @@ http.interceptors.response.use(
     }
     // 业务码非 0：仅在存在多语言文案时弹出错误提示。
     if (businessCode !== undefined && businessCode !== 0 && !suppressToast) {
-      // const msg = t(`ServerErrorCode_${businessCode}`) || `error: ${businessCode}`
-      const errorKey = `ServerErrorCode_${businessCode}`
-      const msg = t(errorKey)
-      // i18n 未匹配时会回退为 key 本身，此时不向用户暴露内部错误码。
-      if (msg && msg !== errorKey) {
-        showGameToast(msg)
-      }
+      showGameToast(`ServerErrorCode_${businessCode}`)
     }
     return response
   },
@@ -288,7 +281,12 @@ http.interceptors.response.use(
     }
 
     const backendMessage = error.response?.data?.message
-    showFailToast(backendMessage || error.message || '请求失败，请稍后再试')
+    const toastMessage = resolveGameToastMessage(
+      backendMessage || error.message || '请求失败，请稍后再试',
+    )
+    if (toastMessage) {
+      showFailToast(toastMessage)
+    }
     return Promise.reject(error)
   },
 )

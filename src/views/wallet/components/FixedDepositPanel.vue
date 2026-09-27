@@ -11,6 +11,7 @@ import TagPill from '@/components/wallet/TagPill.vue'
 import GlassButton from '@/components/Button/GlassButton.vue'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import GameDialog from '@/components/Dialog/GameDialog.vue'
+import { resolveGameToastMessage } from '@/components/Toast'
 import { t } from '@/i18n'
 import { useUserInfoStore, type ClubInfo } from '@/stores/userInfo'
 import { formatUC } from '@/utils/roomVisibility'
@@ -100,7 +101,10 @@ async function onConfirmDeposit(): Promise<void> {
         overlayClass: 'fixed-deposit-review-overlay',
       })
     } else {
-      showFailToast(res.message || t('H5Deposit_Failed'))
+      const toastMessage = resolveGameToastMessage(res.message || t('H5Deposit_Failed'))
+      if (toastMessage) {
+        showFailToast(toastMessage)
+      }
     }
   } catch (e) {
     console.error('Fixed deposit failed', e)

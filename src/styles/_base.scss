@@ -65,6 +65,8 @@ body,
   width: 100%;
   min-height: 100%;
   margin: 0;
+  // 允许页面正常单指滚动，但不把双击/双指手势交给浏览器做页面缩放。
+  touch-action: pan-x pan-y;
 }
 
 html {

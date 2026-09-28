@@ -9,7 +9,11 @@ import { createLogger } from '@/utils/logger'
 //
 // 表结构（单一 db room_list_shared）：
 //   - rooms：rid(string) → RoomRecord & { __wsUpdateTime }（全局共享）
-//   - scopes：scope_key(string) → ScopeMeta { rids, lastNotifyTs, lastFullFetchAt, version }
+//   - scopes：scope_key(string) → ScopeMeta
+//     { rids, participatedRids, lastNotifyTs, lastFullFetchAt, version }
+//
+// participation_status 是用户维度的数据，不能只跟随全局共享的 rooms 记录，
+// 否则切换账号后同一 rid 会沿用上一个用户的参与状态。
 //
 // 升级数据结构时把 DB_VERSION + 1；旧用户下次 open 触发 onupgradeneeded 补建 store。
 
@@ -20,7 +24,7 @@ const DB_VERSION = 1
 const STORE_ROOMS = 'rooms'
 const STORE_SCOPES = 'scopes'
 
-export const ROOM_LIST_DATA_VERSION = 4
+export const ROOM_LIST_DATA_VERSION = 5
 
 // scope_key 形如 'guest' 或 'user_${uid}'。
 export type RoomListScope = string
@@ -28,6 +32,7 @@ export type RoomListScope = string
 export interface ScopeMeta {
   version: number
   rids: string[]
+  participatedRids: string[]
   lastNotifyTs: number
   lastFullFetchAt: number
 }

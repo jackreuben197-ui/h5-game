@@ -303,6 +303,9 @@ export interface RoomcenterFriendRoomRecord {
   blind_level?: string | number
   blindtable_type_name?: string
   users?: Array<Record<string, unknown>>
+  start_time?: string | number | null
+  create_time?: string | number | null
+  participation_status?: number
   [key: string]: unknown
 }
 

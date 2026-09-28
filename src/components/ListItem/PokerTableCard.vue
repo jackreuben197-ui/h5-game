@@ -11,6 +11,7 @@ import iconMushroom from '@/assets/icons/table_icon_mushroom.png'
 import iconSquid from '@/assets/icons/table_icon_squid.png'
 import type { RoomRecord, RoomUser } from '@/api/models/roomcenter'
 import { formatRoomLeftAndTotalByUnity } from '@/utils/time'
+import { isRoomParticipated } from '@/utils/roomListSort'
 import { t } from '@/i18n'
 
 interface Props {
@@ -113,7 +114,7 @@ const iconMap: Record<number, string> = {
 }
 const chipsIcon = computed(() => iconMap[Number(props.room.gold_type)] ?? iconBalance)
 
-const showParticipation = computed(() => Number(props.room.participation_status) === 1)
+const showParticipation = computed(() => isRoomParticipated(props.room))
 
 // 买入文案：根据最小倍率和小盲计算。
 const bringInText = computed(() => {

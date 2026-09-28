@@ -21,6 +21,10 @@ import LoginSession from '@/session/loginSession'
 import { useGameStore } from '@/stores/game'
 import { useRoomListStore } from '@/stores/roomList'
 import { ROOM_ORIGIN_TYPE } from '@/utils/roomVisibility'
+import {
+  compareRoomRecordsForDisplay,
+  isRoomParticipated,
+} from '@/utils/roomListSort'
 import { formatRoomLeftAndTotalByUnity } from '@/utils/time'
 import { requireRealUser } from '@/session/realUserGate'
 import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
@@ -82,6 +86,8 @@ interface FriendRoomListItem {
   blindtable_type_name?: string
   users?: Array<Record<string, unknown>>
   start_time?: string | number | null
+  create_time?: string | number | null
+  participation_status?: number
   origin_type?: number
   [key: string]: unknown
 }
@@ -169,22 +175,6 @@ function getRoomRid(room: Pick<FriendRoomListItem, 'rid'>): string {
   return String(room.rid ?? '').trim()
 }
 
-function getRoomStartTimestamp(room: Pick<FriendRoomListItem, 'start_time'>): number {
-  const raw = room.start_time
-  if (typeof raw === 'number' && Number.isFinite(raw)) {
-    return raw > 1e12 ? raw : raw * 1000
-  }
-
-  if (typeof raw === 'string') {
-    const ts = Date.parse(raw)
-    if (Number.isFinite(ts)) {
-      return ts
-    }
-  }
-
-  return 0
-}
-
 function normalizeFriendRoomRecord(
   record: RoomcenterFriendRoomRecord | RoomRecord,
 ): FriendRoomListItem {
@@ -236,14 +226,26 @@ function mergeFriendRooms(
     const rid = getRoomRid(room)
     if (!rid) return
     const prev = roomMap.get(rid)
-    roomMap.set(rid, prev ? { ...prev, ...room } : room)
+    if (!prev) {
+      roomMap.set(rid, room)
+      return
+    }
+
+    // 两个接口任意一个确认参与过都要保留；共享牌桌详情里的 0 不能覆盖
+    // friend/rooms 返回的用户态 1。
+    const participated = isParticipated(prev) || isParticipated(room)
+    roomMap.set(rid, {
+      ...prev,
+      ...room,
+      participation_status: participated ? 1 : 0,
+    })
   })
 
-  return Array.from(roomMap.values()).sort((a, b) => {
-    const timeDiff = getRoomStartTimestamp(b) - getRoomStartTimestamp(a)
-    if (timeDiff !== 0) return timeDiff
-    return toSafeNumber(b.rid) - toSafeNumber(a.rid)
-  })
+  // 与首页/俱乐部牌桌共用排序：参与过未满桌 > 新创建未满桌 >
+  // 参与过满桌 > 其他满桌，同级按创建时间倒序。
+  return Array.from(roomMap.values()).sort((a, b) =>
+    compareRoomRecordsForDisplay(a as RoomRecord, b as RoomRecord),
+  )
 }
 
 const friendRooms = computed<FriendRoomListItem[]>(() => {
@@ -480,7 +482,7 @@ function getFeatureIcons(room: FriendRoomListItem): FeatureIconItem[] {
   return result
 }
 function isParticipated(room: FriendRoomListItem): boolean {
-  return room.participation_status == 1
+  return isRoomParticipated(room as RoomRecord)
 }
 function getRoomSeatRatio(room: FriendRoomListItem): string {
   const seatCount = toSafeNumber(room.seat_count)

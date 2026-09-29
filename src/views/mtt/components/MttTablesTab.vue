@@ -24,10 +24,12 @@ const props = defineProps<{
   matchId: number
   roomList: RoomcenterMttRoomRecord[]
   loading: boolean
+  finished: boolean
 }>()
 
 const emit = defineEmits<{
   refresh: []
+  load: []
   enterTable: [rid: number]
 }>()
 
@@ -120,7 +122,9 @@ function handleRowClick(row: Record<string, unknown>): void {
     <GameTable
       :data="tableList"
       :loading="loading"
+      :finished="finished"
       height="7.2rem"
+      @load="emit('load')"
       @row-click="handleRowClick"
     >
       <GameTableColumn

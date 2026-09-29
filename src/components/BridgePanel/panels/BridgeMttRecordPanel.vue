@@ -5,7 +5,6 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { GameTable, GameTableColumn } from '@/components/Table'
 import defaultAvatar from '@/assets/icons/icon_mtt_avatar.png'
 import chipIcon from '@/assets/icons/icon_chips.png'
-import arrowIcon from '@/assets/icons/wallet/ic_arrow_left.svg'
 import { getLocale, t } from '@/i18n'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import { formatDateTime, toUnixSeconds } from '@/utils/time'
@@ -47,8 +46,14 @@ const hunterData = ref<RoomcenterMttHunterRanksData | null>(null)
 const rewardData = ref<RoomcenterMttRealPrize | null>(null)
 const roomList = ref<RoomcenterMttRoomRecord[]>([])
 
-const playersLoading = ref(false)
+const MTT_LIST_PAGE_SIZE = 50
+
+const rankLoading = ref(false)
+const hunterLoading = ref(false)
+const rankFinished = ref(false)
+const hunterFinished = ref(false)
 const tablesLoading = ref(false)
+const tablesFinished = ref(false)
 const rewardsLoading = ref(false)
 const playerRequestCode = ref<number | null>(null)
 
@@ -63,10 +68,6 @@ const loadedTabs = ref(new Set<TableTab>(['players']))
 // ── countdown timer ───────────────────────────────────────────────────────────
 const timerTick = ref(0)
 let timerInterval: ReturnType<typeof setInterval> | null = null
-
-// ── pagination (players, 20/page — mirrors Unity _ranksLimit = 20) ─────────
-const PAGE_SIZE = 20
-const playersPage = ref(1)
 
 // ── data shortcuts ────────────────────────────────────────────────────────────
 const mtt = computed(() => detailData.value?.mtt)
@@ -203,6 +204,12 @@ const elapsedLabel = computed(() => fmtHHMMSS(elapsedSeconds.value))
 
 // ── players tab ───────────────────────────────────────────────────────────────
 const showHunterMode = computed(() => (mtt.value?.hunter_on ?? 0) === 1)
+const playersLoading = computed(() =>
+  playerMode.value === 'hunter' ? hunterLoading.value : rankLoading.value,
+)
+const playersFinished = computed(() =>
+  playerMode.value === 'hunter' ? hunterFinished.value : rankFinished.value,
+)
 const showPlayerNullTips = computed(
   () => playerRequestCode.value === 10001 && !playersLoading.value,
 )
@@ -252,16 +259,6 @@ const allPlayers = computed<PlayerRow[]>(() => {
   })
 })
 
-const totalPages = computed(() => Math.max(1, Math.ceil(allPlayers.value.length / PAGE_SIZE)))
-
-const pagedPlayers = computed(() => {
-  const start = (playersPage.value - 1) * PAGE_SIZE
-  return allPlayers.value.slice(start, start + PAGE_SIZE)
-})
-
-watch(playerMode, () => {
-  playersPage.value = 1
-})
 watch(showHunterMode, (on) => {
   if (!on && playerMode.value === 'hunter') playerMode.value = 'rank'
 })
@@ -431,56 +428,97 @@ async function loadDetail(): Promise<void> {
   }
 }
 
-async function loadRanks(): Promise<void> {
+async function loadRanks(reset = true): Promise<void> {
   if (!matchId.value) return
-  playersLoading.value = true
+  if (rankLoading.value || (!reset && rankFinished.value)) return
+
+  const offset = reset ? 0 : (rankData.value?.records?.length ?? 0)
+  rankLoading.value = true
   playerRequestCode.value = null
   try {
     const res = await postRoomcenterMttRanksApi(
       matchId.value,
-      { limit: 200, offset: 0 },
+      { limit: MTT_LIST_PAGE_SIZE, offset },
       { suppressBusinessCodes: [10001] },
     )
     const code = Number(res.code ?? -1)
     if (code === 0 && res.data) {
-      rankData.value = res.data
+      const records = Array.isArray(res.data.records) ? res.data.records : []
+      rankData.value = {
+        ...res.data,
+        records: reset ? records : [...(rankData.value?.records ?? []), ...records],
+      }
+      rankFinished.value = records.length < MTT_LIST_PAGE_SIZE
       if (res.data.alive !== undefined && detailData.value)
         detailData.value = { ...detailData.value, alive: res.data.alive }
       if (res.data.total !== undefined && detailData.value)
         detailData.value = { ...detailData.value, enter_total: res.data.total }
     } else {
+      rankFinished.value = true
       playerRequestCode.value = Number.isFinite(code) ? code : -1
     }
+  } catch {
+    rankFinished.value = true
   } finally {
-    playersLoading.value = false
+    rankLoading.value = false
   }
 }
 
-async function loadHunterRanks(): Promise<void> {
+async function loadHunterRanks(reset = true): Promise<void> {
   if (!matchId.value || !showHunterMode.value) return
+  if (hunterLoading.value || (!reset && hunterFinished.value)) return
+
+  const offset = reset ? 0 : (hunterData.value?.records?.length ?? 0)
+  hunterLoading.value = true
   try {
     const res = await postRoomcenterMttHunterRanksApi(
       matchId.value,
-      { limit: 200, offset: 0 },
+      { limit: MTT_LIST_PAGE_SIZE, offset },
       { suppressBusinessCodes: [10001] },
     )
-    if (res.code === 0 && res.data) hunterData.value = res.data
+    if (res.code === 0 && res.data) {
+      const records = Array.isArray(res.data.records) ? res.data.records : []
+      hunterData.value = {
+        ...res.data,
+        records: reset ? records : [...(hunterData.value?.records ?? []), ...records],
+      }
+      hunterFinished.value = records.length < MTT_LIST_PAGE_SIZE
+    } else {
+      hunterFinished.value = true
+    }
   } catch {
-    /* ignore */
+    hunterFinished.value = true
+  } finally {
+    hunterLoading.value = false
   }
 }
 
-async function loadRooms(): Promise<void> {
+function loadMorePlayers(): void {
+  if (playerMode.value === 'hunter') void loadHunterRanks(false)
+  else void loadRanks(false)
+}
+
+async function loadRooms(reset = true): Promise<void> {
   if (!matchId.value) return
+  if (tablesLoading.value || (!reset && tablesFinished.value)) return
+
+  const offset = reset ? 0 : roomList.value.length
   tablesLoading.value = true
   try {
     const res = await postRoomcenterMttRoomsApi(
       matchId.value,
-      { limit: 200, offset: 0 },
+      { limit: MTT_LIST_PAGE_SIZE, offset },
       { suppressBusinessToast: true },
     )
-    if (res.code === 0 && res.data)
-      roomList.value = Array.isArray(res.data.records) ? res.data.records : []
+    if (res.code === 0 && res.data) {
+      const records = Array.isArray(res.data.records) ? res.data.records : []
+      roomList.value = reset ? records : [...roomList.value, ...records]
+      tablesFinished.value = records.length < MTT_LIST_PAGE_SIZE
+    } else {
+      tablesFinished.value = true
+    }
+  } catch {
+    tablesFinished.value = true
   } finally {
     tablesLoading.value = false
   }
@@ -652,7 +690,12 @@ onUnmounted(() => {
         </div>
 
         <!-- 玩家表格 -->
-        <GameTable :data="pagedPlayers" :loading="playersLoading">
+        <GameTable
+          :data="allPlayers"
+          :loading="playersLoading"
+          :finished="playersFinished"
+          @load="loadMorePlayers"
+        >
           <GameTableColumn prop="rank" :label="t('UI_Rank')" :flex="1" align="center" />
           <GameTableColumn prop="name" :label="t('UITexasReport_player')" :flex="2" align="center">
             <template #default="{ row }">
@@ -691,7 +734,12 @@ onUnmounted(() => {
 
       <!-- ─ 牌桌 ─ -->
       <div v-else-if="activeTab === 'tables'" class="mrp__tab-panel">
-        <GameTable :data="tableRows" :loading="tablesLoading">
+        <GameTable
+          :data="tableRows"
+          :loading="tablesLoading"
+          :finished="tablesFinished"
+          @load="loadRooms(false)"
+        >
           <GameTableColumn
             prop="tableNo"
             :label="t('UITexasReport_Text_DeskNumTip')"
@@ -780,39 +828,6 @@ onUnmounted(() => {
           />
         </GameTable>
       </div>
-    </div>
-
-    <!-- ── 分页滑块（仅名次Tab，固定底部）── -->
-    <div v-if="activeTab === 'players' && totalPages >= 1" class="mrp__page-bar-content">
-      <div class="mrp__page-bar">
-        <img
-          :src="arrowIcon"
-          alt=""
-          class="mrp__page-arrow"
-          type="button"
-          :disabled="playersPage <= 1"
-          @click="playersPage = Math.max(1, playersPage - 1)"
-        />
-
-        <div class="mrp__page-slider-wrap">
-          <VanSlider
-            :model-value="playersPage"
-            :min="1"
-            :max="totalPages"
-            :step="1"
-            @update:model-value="playersPage = Number($event)"
-          />
-        </div>
-        <img
-          :src="arrowIcon"
-          alt=""
-          class="mrp__page-arrow mrp__page-arrow-right"
-          type="button"
-          :disabled="playersPage >= totalPages"
-          @click="playersPage = Math.min(totalPages, playersPage + 1)"
-        />
-      </div>
-      <div class="mrp__page-info">{{ playersPage }} / {{ totalPages }}</div>
     </div>
   </section>
 </template>
@@ -1026,66 +1041,6 @@ onUnmounted(() => {
   border-bottom: 1px solid #fff;
 }
 
-/* 分页滑块栏（固定底部） */
-.mrp__page-bar-content {
-  background: rgba(0, 0, 0, 0.15);
-  padding: 0.3rem 0.32rem 0.5rem;
-}
-.mrp__page-bar {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.2rem;
-}
-
-.mrp__page-arrow {
-  flex-shrink: 0;
-  width: 0.7rem;
-  height: 0.7rem;
-  padding: 0.24rem;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.16);
-
-  &:disabled {
-    opacity: 0.25;
-    cursor: default;
-  }
-}
-.mrp__page-arrow-right {
-  rotate: 180deg;
-}
-
-.mrp__page-slider-wrap {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.12rem;
-  margin: 0 0.3rem;
-}
-
-.mrp__page-info {
-  font-size: 0.26rem;
-  color: #fff;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-
-.mrp__page-slider-wrap :deep(.van-slider) {
-  height: 0.12rem;
-  background: rgba(255, 255, 255, 0.3);
-  //   margin: 0 0.1rem;
-}
-
-.mrp__page-slider-wrap :deep(.van-slider__button) {
-  width: 0.56rem;
-  height: 0.56rem;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  background: rgba(198, 176, 186, 0.9);
-  backdrop-filter: blur(100px) saturate(1.5);
-  -webkit-backdrop-filter: blur(100px) saturate(1.5);
-  box-shadow: none;
-}
 :deep(.game-table__row) {
   background: rgba($color: #000000, $alpha: 0.1);
 }

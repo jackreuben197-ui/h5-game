@@ -3,6 +3,7 @@ import { getUserClubApi, getUserInfoApi } from '@/api/user'
 import {
   forwardDiamondConfigToCocos,
   forwardGlobalConfigToCocos,
+  forwardPrivateUcChargeConfigToCocos,
   forwardUserClubToCocos,
 } from '@/bridge/sync/h5BusinessSync'
 import StorageKey from '@/constants/storageKey'
@@ -15,7 +16,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { localStore } from '@/utils/localStore'
 import { ensureMultiLanguageTemplateLoaded } from '@/utils/multiLanguageTemplate'
 import { readClubListCache } from '@/utils/userClubListCache'
-import { isChannelPackageHost } from '@/utils/channelPackage'
+import { getPrivateUcChargeConfigs, isChannelPackageHost } from '@/utils/channelPackage'
 
 let inFlightToken = ''
 let inFlightPromise: Promise<PostAuthProfileSyncResult> | null = null
@@ -51,6 +52,11 @@ export function syncPostAuthData(): Promise<PostAuthSyncResult> {
     })
   }
 
+  const isPrivateUcPackage = isChannelPackageHost()
+  forwardPrivateUcChargeConfigToCocos(
+    isPrivateUcPackage ? getPrivateUcChargeConfigs() : [],
+  )
+
   // WS 保活独立于资料同步：同一 token 已同步过时，仍允许刷新/路由切换兜底恢复 WS。
   const wsReady = LoginSession.EnsureWS()
     .then(() => true)
@@ -84,6 +90,7 @@ async function runPostAuthSync(token: string): Promise<PostAuthProfileSyncResult
   const gameStore = useGameStore(pinia)
   const appConfigStore = useAppConfigStore(pinia)
   const userInfoStore = useUserInfoStore(pinia)
+  const isPrivateUcPackage = isChannelPackageHost()
 
   // 体验账号退出时会清理用户状态。真实账号同步前重新加载渠道公开配置，
   // 保证 diamond_room_switch、h5_menu 等 CMS 字段在登录切换后仍然存在。
@@ -162,16 +169,19 @@ async function runPostAuthSync(token: string): Promise<PostAuthProfileSyncResult
         console.warn('[post-auth-sync] sync global config failed:', error)
       }),
 
-    postDiamondConfigApi({})
-      .then((res) => {
-        if (res.code === 0 && res.data) {
-          appConfigStore.setDiamondConfig(res.data)
-          forwardDiamondConfigToCocos(appConfigStore.diamondConfig)
-        }
-      })
-      .catch((error) => {
-        console.warn('[post-auth-sync] sync diamond config failed:', error)
-      }),
+    // 私域版本后续改拉独立 UC 收费列表；接口提供前不再请求钻石收费列表。
+    isPrivateUcPackage
+      ? Promise.resolve()
+      : postDiamondConfigApi({})
+        .then((res) => {
+          if (res.code === 0 && res.data) {
+            appConfigStore.setDiamondConfig(res.data)
+            forwardDiamondConfigToCocos(appConfigStore.diamondConfig)
+          }
+        })
+        .catch((error) => {
+          console.warn('[post-auth-sync] sync diamond config failed:', error)
+        }),
 
     ensureMultiLanguageTemplateLoaded().catch((error) => {
       console.warn('[post-auth-sync] sync multi-language template failed:', error)

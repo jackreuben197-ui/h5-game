@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import imgDiamond from '@/assets/icons/icon_diamond.png'
+import imgChips from '@/assets/icons/icon_chips.png'
 import { postOrgChangeClubDataApi } from '@/api/org'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { useUserInfoStore } from '@/stores/userInfo'
@@ -10,7 +11,14 @@ import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { t } from '@/i18n'
-import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
+import {
+  getPrivateUcChargePrice,
+  isChannelDiamondFreeMode,
+  isChannelPackageHost,
+  isPrivateUcChargeVisible,
+  PRIVATE_UC_FEE_TYPE,
+} from '@/utils/channelPackage'
+import { formatUC } from '@/utils/roomVisibility'
 // 背景素材由 CSS 根据 data-theme 选择，切换主题时无需重建页面。
 const backgroundStyle = computed(() => ({
   '--club-edit-name-bg-dark': `url(${mainBgUrl})`,
@@ -21,6 +29,8 @@ const router = useRouter()
 const userInfoStore = useUserInfoStore()
 const appConfigStore = useAppConfigStore()
 const hideDiamondElements = isChannelDiamondFreeMode()
+const isPrivateUcPackage = isChannelPackageHost()
+const chargeIcon = isPrivateUcPackage ? imgChips : imgDiamond
 
 const nameInput = ref(String(userInfoStore.currentClub?.club_name || '').trim())
 const isSubmitting = ref(false)
@@ -63,6 +73,13 @@ function parseUpdateClubNameConfig(raw: unknown): UpdateClubNameConfig {
 }
 
 const renameRule = computed(() => {
+  if (isPrivateUcPackage) {
+    return {
+      interval: 0,
+      first_free: 2,
+      price: getPrivateUcChargePrice(PRIVATE_UC_FEE_TYPE.CLUB_NAME),
+    }
+  }
   return parseUpdateClubNameConfig(appConfigStore.globalConfig?.update_club_name_config)
 })
 
@@ -77,9 +94,21 @@ const renameCost = computed(() => {
   return renameRule.value.price
 })
 
+const showPrivateUcCharge = computed(() => {
+  return isPrivateUcPackage && isPrivateUcChargeVisible(renameCost.value)
+})
+
+const showChargeElements = computed(() => {
+  return !hideDiamondElements || showPrivateUcCharge.value
+})
+
 const diamondBalance = computed(() => {
   const value = Number(userInfoStore.userInfo?.user?.diamonds ?? 0)
   return Number.isFinite(value) && value > 0 ? value : 0
+})
+
+const ucBalance = computed(() => {
+  return formatUC(Number(userInfoStore.currentClub?.user_gold ?? 0))
 })
 
 const hasEnoughDiamond = computed(() => {
@@ -117,7 +146,13 @@ const canUpdateByInterval = computed(() => {
 const renameHintText = computed(() => {
   const price = renameRule.value.price
   const firstFreeText = renameRule.value.first_free === 1 ? t('UIClub_Text8') : t('UIClub_Text9')
-  const costText = hideDiamondElements ? '' : '，' + t('UIClub_Text10') + price + t('UIMine_VIP_diamond')
+  const costText = isPrivateUcPackage
+    ? showPrivateUcCharge.value
+      ? '，' + t('UIClub_Text10') + price + ' UC'
+      : ''
+    : hideDiamondElements
+      ? ''
+      : '，' + t('UIClub_Text10') + price + t('UIMine_VIP_diamond')
   const intervalText =
     renameRule.value.interval > 0
       ? '，' + t('UIClub_Text11') + renameRule.value.interval + t('UITimeHourTip')
@@ -134,7 +169,7 @@ const canConfirm = computed(() => {
 })
 
 function goRecharge(): void {
-  void router.push('/mine/shop')
+  void router.push(isPrivateUcPackage ? '/wallet' : '/mine/shop')
 }
 
 async function onConfirm(): Promise<void> {
@@ -210,11 +245,13 @@ async function onConfirm(): Promise<void> {
           />
         </div>
 
-        <div v-if="!hideDiamondElements" class="wallet-row">
+        <div v-if="showChargeElements" class="wallet-row">
           <div class="wallet-info">
-            <img :src="imgDiamond" :alt="t('UIMine_VIP_diamond')" />
-            <span class="wallet-label">{{ t('UIMineAllDiamond') }}:</span>
-            <span class="wallet-value">{{ diamondBalance }}</span>
+            <img :src="chargeIcon" :alt="isPrivateUcPackage ? 'UC' : t('UIMine_VIP_diamond')" />
+            <span class="wallet-label">
+              {{ isPrivateUcPackage ? t('UIMine_UserInfoSettingNick_coin_left') : t('UIMineAllDiamond') + ':' }}
+            </span>
+            <span class="wallet-value">{{ isPrivateUcPackage ? ucBalance : diamondBalance }}</span>
           </div>
           <button type="button" class="recharge-btn" @click="goRecharge">
             {{ t('UIHappyShop_ToRechange') }}
@@ -223,9 +260,13 @@ async function onConfirm(): Promise<void> {
       </section>
 
       <section class="footer-actions">
-        <p v-if="!hideDiamondElements" class="cost-line" :aria-label="t('UIClub_Name')">
+        <p
+          v-if="showChargeElements"
+          class="cost-line"
+          :aria-label="t('UIClub_Name')"
+        >
           <span>{{ t('UICommunityFundConsumeTip') }}</span>
-          <img :src="imgDiamond" :alt="t('UIMine_VIP_diamond')" />
+          <img :src="chargeIcon" :alt="isPrivateUcPackage ? 'UC' : t('UIMine_VIP_diamond')" />
           <span class="cost-value">{{ renameCost }}</span>
         </p>
 

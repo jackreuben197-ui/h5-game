@@ -10,6 +10,7 @@ import {
   type SyncGlobalConfigPayload,
   type SyncLanguagePayload,
   type SyncCurrentClubPayload,
+  type SyncPrivateUcChargeConfigPayload,
   type SyncRoomsListPayload,
   type SyncUserClubPayload,
   type SyncUserPayload,
@@ -163,6 +164,14 @@ export function forwardDiamondConfigToCocos(config: DiamondConfigMap | null): vo
   if (!config) return
   const payload: SyncDiamondConfigPayload = { raw: config }
   queueSyncUntilHandshake(BRIDGE_ACTION.SYNC_DIAMOND_CONFIG, payload)
+}
+
+// 私域 UC 收费配置由 H5 维护并下发；items 中没有的收费类型由 Cocos 保持隐藏。
+export function forwardPrivateUcChargeConfigToCocos(
+  items: SyncPrivateUcChargeConfigPayload['items'],
+): void {
+  const payload: SyncPrivateUcChargeConfigPayload = { items }
+  queueSyncUntilHandshake(BRIDGE_ACTION.SYNC_PRIVATE_UC_CHARGE_CONFIG, payload)
 }
 
 // 订阅 proto 138（钻石变动）和 141（UC/金豆变动），更新本地 userInfo 并重新同步给 Cocos。

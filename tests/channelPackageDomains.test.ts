@@ -31,6 +31,22 @@ const hooks = registerHooks({
 const channelPackage = await import('../src/utils/channelPackage.ts')
 hooks.deregister()
 
+test('private UC config publishes all nine defined fee types with zero prices hidden', () => {
+  assert.deepEqual(channelPackage.getPrivateUcChargeConfigs(), [
+    { feeType: 1, price: 0 },
+    { feeType: 2, price: 0 },
+    { feeType: 3, price: 0 },
+    { feeType: 4, price: 0 },
+    { feeType: 5, price: 0 },
+    { feeType: 6, price: 0 },
+    { feeType: 7, price: 0 },
+    { feeType: 8, price: 0 },
+    { feeType: 9, price: 0 },
+  ])
+  assert.equal(channelPackage.CHANNEL_PACKAGE_UC_CHARGE_ENABLED, false)
+  assert.equal(channelPackage.isPrivateUcChargeVisible(0, 'club.example.com'), false)
+})
+
 test('runtime platform domains drive package classification and invite URLs', () => {
   channelPackage.configurePlatformDomains({
     plat_domain_main_info:

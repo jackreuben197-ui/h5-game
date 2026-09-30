@@ -16,7 +16,13 @@ import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { t } from '@/i18n'
 import { showToast } from 'vant'
-import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
+import {
+  getPrivateUcChargePrice,
+  isChannelDiamondFreeMode,
+  isChannelPackageHost,
+  isPrivateUcChargeVisible,
+  PRIVATE_UC_FEE_TYPE,
+} from '@/utils/channelPackage'
 
 /* ===== props / emits ===== */
 export type MttJoinMode = 'apply' | 'rebuy' | 'addon'
@@ -44,7 +50,8 @@ const emit = defineEmits<{
 /* ===== 工具 ===== */
 const isDiamond = computed(() => (props.mtt?.gold_type ?? 1) === 4)
 const hideDiamondCharge = computed(() => isChannelDiamondFreeMode() && isDiamond.value)
-const hideDiamondRecordFee = computed(() => isChannelDiamondFreeMode())
+const isPrivateUcPackage = isChannelPackageHost()
+const recordFeeIcon = isPrivateUcPackage ? iconChips : iconDiamond
 function isDiamondMtt() { return isDiamond.value }
 const currencyIcon = computed(() => (isDiamond.value ? iconDiamond : iconChips))
 
@@ -264,6 +271,16 @@ interface RecordFeeResult {
 }
 
 const recordFee = computed<RecordFeeResult>(() => {
+  if (isPrivateUcPackage) {
+    const price = getPrivateUcChargePrice(PRIVATE_UC_FEE_TYPE.MTT_RECORD)
+    return {
+      show: isPrivateUcChargeVisible(price),
+      original: price,
+      final: price,
+      hasDiscount: false,
+      showTip: false,
+    }
+  }
   const cfg = recordFeeConfig.value
   const HIDDEN: RecordFeeResult = { show: false, original: 0, final: 0, hasDiscount: false, showTip: false }
   if (!cfg || cfg.status !== 1) return HIDDEN
@@ -499,10 +516,10 @@ function handleRecharge() {
           <span class="cost-balance-num">{{ fmtMoney(walletBalance) }}</span>
           <img class="cost-add" :src="iconAdd" alt="" />
         </div>
-        <div v-if="!hideDiamondRecordFee" class="cost-detail">
+        <div v-if="recordFee.show" class="cost-detail">
           <span class="cost-label">{{ t('UITexasJLF') }}</span>
           <div class="cost-item">
-            <img class="cost-item-icon" :src="iconDiamond" alt="" />
+            <img class="cost-item-icon" :src="recordFeeIcon" :alt="isPrivateUcPackage ? 'UC' : ''" />
             <!-- 报名费暂不显示 -->
             <!-- <span v-if="isFreeJoin" class="cost-item-free">FREE</span> -->
             <!-- <span v-else class="cost-item-value">{{ feeBreakdown.displayTotal }}</span> -->

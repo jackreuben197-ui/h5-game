@@ -27,6 +27,20 @@
     overflow: hidden;
   }
 
+  html[data-main-layout='content']
+    .room-list-page--channel-menu-b:not(.room-list-page--embedded)
+    .room-list-stage {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    overscroll-behavior-y: contain;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
   html[data-main-layout='content'] .room-list-page .page-back-header {
     width: 100%;
     height: 112px;
@@ -95,6 +109,15 @@
     padding: 0 0 50px;
     overflow-x: hidden;
     overflow-y: auto;
+  }
+
+  html[data-main-layout='content']
+    .room-list-page--channel-menu-b:not(.room-list-page--embedded)
+    .group-list {
+    flex: 1 0 auto;
+    max-height: none;
+    overflow: visible;
+    padding-bottom: calc(env(safe-area-inset-bottom) + 2.8rem);
   }
 
   html[data-main-layout='content'] .room-list-page .group-item {

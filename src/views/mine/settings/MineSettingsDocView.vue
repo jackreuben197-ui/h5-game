@@ -5,7 +5,7 @@ import { showFailToast } from 'vant'
 import { postMiscArtiCleInfoApi } from '@/api/misc'
 import { getLocale } from '@/i18n'
 import mainBgUrl from '@/assets/images/main_bg.webp'
-import imgFishLogo from '@/assets/images/img_fish_browser_logo.png'
+import imgFishLogo from '@/assets/icons/NEX-GAME.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import { t, toServerLang } from '@/i18n'
 
@@ -127,7 +127,7 @@ onMounted(() => {
 
 .content-wrap {
   padding: 0 0.4533rem 1.2rem;
-  margin-top: 0.62rem;
+  margin-top: 0.1rem;
 }
 
 .about-logo {
@@ -135,6 +135,7 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 0.15rem;
+  margin-top: -0.8rem;
   margin-bottom: 0.8rem;
 }
 
@@ -147,6 +148,7 @@ onMounted(() => {
   display: inline-flex;
   flex-direction: column;
   align-items: flex-end;
+  margin-top: -1.1rem;
 }
 
 .about-logo__title {

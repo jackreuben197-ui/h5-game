@@ -28,7 +28,7 @@ import icGlobe from '@/assets/icons/ic_globe.svg'
 import icCheckbox from '@/assets/icons/ic_checkbox.png'
 import icUncheckbox from '@/assets/icons/ic_uncheckbox.png'
 import imgTextLogo from '@/assets/images/img_text_logo.png'
-import imgFishLogo from '@/assets/images/img_fish_logo.png'
+import imgFishLogo from '@/assets/icons/NEX-GAME.png'
 import { showGameToast } from '@/components/Toast'
 import { ApiBusinessError } from '@/utils/apiError'
 import { LOGIN_FAILED_CODE, resolveLoginErrorText } from './loginErrorText'
@@ -979,6 +979,7 @@ function consumePhoneAreaSelection(): void {
   display: inline-flex;
   flex-direction: column;
   align-items: flex-end;
+  margin-top: -1.1rem;
 }
 
 .logo-hero__title {

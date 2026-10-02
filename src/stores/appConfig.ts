@@ -17,7 +17,7 @@ import {
   replacePublicCacheEntries,
 } from '@/utils/indexedDB'
 import { localStore } from '@/utils/localStore'
-import { configurePlatformDomains } from '@/utils/channelPackage'
+import { configurePlatformDomains, isChannelPackageHost } from '@/utils/channelPackage'
 
 interface AppConfigState {
   globalConfig: GlobalConfigData | null
@@ -183,15 +183,21 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
         })
     },
     async restorePublicConfigCache(): Promise<void> {
-      const [globalConfig, diamondConfig] = await Promise.all([
-        restoreGlobalConfig(StorageKey.APP_CONFIG_CACHE),
-        restoreDiamondConfig(StorageKey.DIAMOND_CONFIG_CACHE),
-      ])
+      // 必须先恢复全局域名配置，才能准确判断当前是否为渠道包。
+      const globalConfig = await restoreGlobalConfig(StorageKey.APP_CONFIG_CACHE)
 
       if (globalConfig) {
         this.globalConfig = globalConfig
         configurePlatformDomains(globalConfig)
       }
+
+      // 私域版本改用独立 UC 收费配置，不能再恢复旧的钻石收费缓存。
+      if (isChannelPackageHost()) {
+        this.diamondConfig = null
+        return
+      }
+
+      const diamondConfig = await restoreDiamondConfig(StorageKey.DIAMOND_CONFIG_CACHE)
       if (diamondConfig) {
         this.diamondConfig = diamondConfig
       }

@@ -28,17 +28,23 @@ const props = defineProps<{
   rankData: RoomcenterMttRanksData | null
   hunterData: RoomcenterMttHunterRanksData | null
   loading: boolean
+  rankFinished: boolean
+  hunterFinished: boolean
   playerRequestCode: number | null
 }>()
 
 const emit = defineEmits<{
   refresh: [mode: PlayersMode]
+  load: [mode: PlayersMode]
 }>()
 
 const mode = ref<PlayersMode>('rank')
 
 const showHunterMode = computed(() => (props.data?.mtt?.hunter_on ?? 0) === 1)
 const showPlayerNullTips = computed(() => props.playerRequestCode === 10001 && !props.loading)
+const finished = computed(() =>
+  mode.value === 'hunter' ? props.hunterFinished : props.rankFinished,
+)
 
 const isDiamond = computed(() => (props.data?.mtt?.gold_type ?? 1) === 4)
 
@@ -208,7 +214,14 @@ watch(showHunterMode, (enabled) => {
     </div>
 
     <!-- 玩家表格 -->
-    <GameTable :data="playerList" :loading="loading" height="7.2rem" @row-click="handleRowClick">
+    <GameTable
+      :data="playerList"
+      :loading="loading"
+      :finished="finished"
+      height="7.2rem"
+      @load="emit('load', mode)"
+      @row-click="handleRowClick"
+    >
       <GameTableColumn prop="rank" :label="t('UI_Rank')" :flex="1" align="center" />
       <GameTableColumn prop="name" :label="t('UITexasReport_player')" :flex="2" align="center">
         <template #default="{ row }">

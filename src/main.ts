@@ -35,6 +35,7 @@ import { clearMainLayout } from './utils/mainLayout'
 import { useGameStore } from './stores/game'
 import { useUserInfoStore } from './stores/userInfo'
 import { applySafariWebAppConfig } from './utils/safariWebApp'
+import { setupViewportZoomGuard } from './utils/viewportZoomGuard'
 import {
   cacheAgentInviteCodeIfPresent,
   isPrivateDomainMode,
@@ -57,6 +58,7 @@ let stopCcStorageProxy: (() => void) | null = null
 let stopCurrentClubSync: (() => void) | null = null
 let stopNativeMenuGuard: (() => void) | null = null
 let stopNativeDragGuard: (() => void) | null = null
+let stopViewportZoomGuard: (() => void) | null = null
 let stopDailyH5DisplayPanel: (() => void) | null = null
 let stopExperienceSessionLifecycle: (() => void) | null = null
 // 启动即接管主题：恢复持久化模式 + 监听系统明暗变化（首帧由 index.html 内联脚本防闪烁）。
@@ -161,6 +163,7 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
 
   setupRem()
   document.documentElement.toggleAttribute('data-channel-package', isPrivateDomainMode())
+  stopViewportZoomGuard = setupViewportZoomGuard()
   stopNativeMenuGuard = setupNativeMenuGuard()
   stopNativeDragGuard = setupNativeDragGuard()
 
@@ -255,6 +258,8 @@ export function unmountH5App(): void {
   stopNativeMenuGuard = null
   stopNativeDragGuard?.()
   stopNativeDragGuard = null
+  stopViewportZoomGuard?.()
+  stopViewportZoomGuard = null
   stopDailyH5DisplayPanel?.()
   stopDailyH5DisplayPanel = null
   stopTokenRefreshLoop()

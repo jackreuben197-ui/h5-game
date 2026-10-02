@@ -65,12 +65,19 @@ let detailRequest: Promise<void> | null = null
 const navigatingToRecharge = ref(false)
 
 /* ===== 各 tab 子数据（提升到父级管理，跨 tab 切换时数据保留） ===== */
-const playersLoading = ref(false)
+const MTT_LIST_PAGE_SIZE = 50
+
+const rankLoading = ref(false)
+const hunterLoading = ref(false)
+const playersLoading = computed(() => rankLoading.value || hunterLoading.value)
+const rankFinished = ref(false)
+const hunterFinished = ref(false)
 const rankData = ref<RoomcenterMttRanksData | null>(null)
 const hunterData = ref<RoomcenterMttHunterRanksData | null>(null)
 const playerRequestCode = ref<number | null>(null)
 
 const tablesLoading = ref(false)
+const tablesFinished = ref(false)
 const roomList = ref<RoomcenterMttRoomRecord[]>([])
 
 const rewardsLoading = ref(false)
@@ -167,95 +174,131 @@ function emptyHunterData(): RoomcenterMttHunterRanksData {
   return { total: 0, sb: 0, limit: 0, offset: 0, records: [] }
 }
 
-async function loadRankList(): Promise<void> {
+async function loadRankList(reset = true): Promise<void> {
   if (!matchId.value) {
     rankData.value = emptyRankData()
+    rankFinished.value = true
     playerRequestCode.value = null
     return
   }
+  if (rankLoading.value || (!reset && rankFinished.value)) return
+
+  const offset = reset ? 0 : (rankData.value?.records?.length ?? 0)
+  rankLoading.value = true
   try {
     const response = await postRoomcenterMttRanksApi(
       matchId.value,
-      { limit: 200, offset: 0 },
+      { limit: MTT_LIST_PAGE_SIZE, offset },
       { suppressBusinessCodes: [10001] },
     )
     const code = Number(response.code ?? -1)
     if (Number(response.code) === 0 && response.data) {
-      rankData.value = response.data
+      const records = Array.isArray(response.data.records) ? response.data.records : []
+      rankData.value = {
+        ...response.data,
+        records: reset ? records : [...(rankData.value?.records ?? []), ...records],
+      }
+      rankFinished.value = records.length < MTT_LIST_PAGE_SIZE
       // 同步 alive / total 到 detailData，供其他 tab 共享
       syncRankDataToDetail(response.data)
       playerRequestCode.value = null
       return
     }
-    rankData.value = emptyRankData()
+    if (reset) rankData.value = emptyRankData()
+    rankFinished.value = true
     playerRequestCode.value = Number.isFinite(code) ? code : -1
   } catch {
-    rankData.value = emptyRankData()
+    if (reset) rankData.value = emptyRankData()
+    rankFinished.value = true
     playerRequestCode.value = null
+  } finally {
+    rankLoading.value = false
   }
 }
 
-async function loadHunterList(): Promise<void> {
+async function loadHunterList(reset = true): Promise<void> {
   const hunterOn = (detailData.value?.mtt?.hunter_on ?? 0) === 1
   if (!matchId.value || !hunterOn) {
     hunterData.value = emptyHunterData()
+    hunterFinished.value = true
     playerRequestCode.value = null
     return
   }
+  if (hunterLoading.value || (!reset && hunterFinished.value)) return
+
+  const offset = reset ? 0 : (hunterData.value?.records?.length ?? 0)
+  hunterLoading.value = true
   try {
     const response = await postRoomcenterMttHunterRanksApi(
       matchId.value,
-      { limit: 200, offset: 0 },
+      { limit: MTT_LIST_PAGE_SIZE, offset },
       { suppressBusinessCodes: [10001] },
     )
     const code = Number(response.code ?? -1)
     if (Number(response.code) === 0 && response.data) {
-      hunterData.value = response.data
+      const records = Array.isArray(response.data.records) ? response.data.records : []
+      hunterData.value = {
+        ...response.data,
+        records: reset ? records : [...(hunterData.value?.records ?? []), ...records],
+      }
+      hunterFinished.value = records.length < MTT_LIST_PAGE_SIZE
       playerRequestCode.value = null
       return
     }
-    hunterData.value = emptyHunterData()
+    if (reset) hunterData.value = emptyHunterData()
+    hunterFinished.value = true
     playerRequestCode.value = Number.isFinite(code) ? code : -1
   } catch {
-    hunterData.value = emptyHunterData()
+    if (reset) hunterData.value = emptyHunterData()
+    hunterFinished.value = true
     playerRequestCode.value = null
+  } finally {
+    hunterLoading.value = false
   }
 }
 
 async function loadPlayersData(mode: 'rank' | 'hunter' = 'rank'): Promise<void> {
-  playersLoading.value = true
   const hunterOn = (detailData.value?.mtt?.hunter_on ?? 0) === 1
-  try {
-    // 始终加载排名数据；hunter 模式下同时加载猎人榜
-    const tasks: Promise<void>[] = [loadRankList()]
-    if (mode === 'hunter' || hunterOn) {
-      tasks.push(loadHunterList())
-    }
-    await Promise.all(tasks)
-  } finally {
-    playersLoading.value = false
+  // 始终加载排名数据；hunter 模式下同时加载猎人榜
+  const tasks: Promise<void>[] = [loadRankList(true)]
+  if (mode === 'hunter' || hunterOn) {
+    tasks.push(loadHunterList(true))
   }
+  await Promise.all(tasks)
 }
 
-async function loadRoomsData(): Promise<void> {
+function loadMorePlayers(mode: 'rank' | 'hunter'): void {
+  if (mode === 'hunter') void loadHunterList(false)
+  else void loadRankList(false)
+}
+
+async function loadRoomsData(reset = true): Promise<void> {
   if (!matchId.value) {
     roomList.value = []
+    tablesFinished.value = true
     return
   }
+  if (tablesLoading.value || (!reset && tablesFinished.value)) return
+
+  const offset = reset ? 0 : roomList.value.length
   tablesLoading.value = true
   try {
     const response = await postRoomcenterMttRoomsApi(
       matchId.value,
-      { limit: 200, offset: 0 },
+      { limit: MTT_LIST_PAGE_SIZE, offset },
       { suppressBusinessToast: true },
     )
     if (Number(response.code) === 0 && response.data) {
-      roomList.value = Array.isArray(response.data.records) ? response.data.records : []
+      const records = Array.isArray(response.data.records) ? response.data.records : []
+      roomList.value = reset ? records : [...roomList.value, ...records]
+      tablesFinished.value = records.length < MTT_LIST_PAGE_SIZE
       return
     }
-    roomList.value = []
+    if (reset) roomList.value = []
+    tablesFinished.value = true
   } catch {
-    roomList.value = []
+    if (reset) roomList.value = []
+    tablesFinished.value = true
   } finally {
     tablesLoading.value = false
   }
@@ -543,8 +586,11 @@ async function handleEnterTable(rid: number): Promise<void> {
         :rank-data="rankData"
         :hunter-data="hunterData"
         :loading="playersLoading"
+        :rank-finished="rankFinished"
+        :hunter-finished="hunterFinished"
         :player-request-code="playerRequestCode"
         @refresh="handlePlayersRefresh"
+        @load="loadMorePlayers"
       />
       <MttRewardsTab
         v-else-if="activeTab === 'rewards'"
@@ -560,7 +606,9 @@ async function handleEnterTable(rid: number): Promise<void> {
         :match-id="matchId"
         :room-list="roomList"
         :loading="tablesLoading"
+        :finished="tablesFinished"
         @refresh="loadRoomsData"
+        @load="loadRoomsData(false)"
         @enter-table="handleEnterTable"
       />
       <MttBlindsTab v-else-if="activeTab === 'blinds'" :data="detailData" :match-id="matchId" />

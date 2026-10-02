@@ -1,4 +1,5 @@
 import StorageKey from '@/constants/storageKey'
+import type { PrivateUcChargeConfigItem, PrivateUcFeeType } from '@bridge-protocol'
 import { localStore } from '@/utils/localStore'
 import { appConfig } from '@/utils/appConfig'
 import {
@@ -70,9 +71,7 @@ function normalizeDomainOrigin(value: unknown, fallbackProtocol: string): string
   if (!rawDomain) return ''
 
   try {
-    const url = new URL(
-      rawDomain.includes('://') ? rawDomain : `${fallbackProtocol}//${rawDomain}`,
-    )
+    const url = new URL(rawDomain.includes('://') ? rawDomain : `${fallbackProtocol}//${rawDomain}`)
     if (url.protocol !== 'http:' && url.protocol !== 'https:') return ''
     return url.origin
   } catch {
@@ -80,17 +79,15 @@ function normalizeDomainOrigin(value: unknown, fallbackProtocol: string): string
   }
 }
 
-export function configurePlatformDomains(config: PlatformDomainGlobalConfig | null | undefined): void {
+export function configurePlatformDomains(
+  config: PlatformDomainGlobalConfig | null | undefined,
+): void {
   const typeOneDomains = parseActivePlatformDomains(config?.plat_domain_qrcode_info, 1)
   const typeTwoDomains = parseActivePlatformDomains(config?.plat_domain_main_info, 2)
 
   // 两种平台域名本身都属于官方包；只有其下的邀请码子域名按渠道包处理。
   platformMainDomains = Array.from(
-    new Set([
-      ...BUILT_IN_OFFICIAL_DOMAINS,
-      ...typeOneDomains,
-      ...typeTwoDomains,
-    ]),
+    new Set([...BUILT_IN_OFFICIAL_DOMAINS, ...typeOneDomains, ...typeTwoDomains]),
   )
   platformOfficialMainDomains = typeTwoDomains
   // domain_type=1 专门用于生成俱乐部邀请二维码链接。
@@ -271,12 +268,71 @@ function collectTelegramHandoffParams(): URLSearchParams {
 }
 
 /**
- * 渠道包钻石体系迁移到 UC 前的过渡开关。
+ * 渠道包不再使用钻石体系。
  *
- * 开启后仅渠道包隐藏钻石钱包、账单和前端收费提示；官方包保持原有展示。
- * 后续 UC 体系上线时只需关闭此开关，再由各业务入口切换到 UC 展示。
+ * 开启后仅渠道包隐藏钻石钱包、账单，以及尚未配置私域 UC 收费的功能；
+ * 已纳入私域 UC 收费的业务入口自行切换为 UC 展示。
  */
 export const CHANNEL_PACKAGE_DIAMOND_FREE_MODE = true
+
+// 私域 UC 收费总开关：关闭后 H5 / Cocos 一起隐藏 1～9 的收费金额和 UC 图标。
+export const CHANNEL_PACKAGE_UC_CHARGE_ENABLED = false
+
+export const PRIVATE_UC_FEE_TYPE = {
+  CLUB_NAME: 1,
+  REPLAY_COLLECT: 2,
+  MTT_RECORD: 3,
+  NICKNAME: 4,
+  ADD_TIME: 5,
+  VIEW_PUBLIC_CARDS: 6,
+  NORMAL_TABLE_RECORD: 7,
+  VIEW_ONE_PLAYER: 8,
+  VIEW_ALL_PLAYERS: 9,
+} as const satisfies Record<string, PrivateUcFeeType>
+
+// 私域 UC 收费定义共 1～9；不在这 9 类中的原钻石收费仍由各端保持隐藏。
+const DEFINED_PRIVATE_UC_FEE_TYPES: PrivateUcFeeType[] = [
+  PRIVATE_UC_FEE_TYPE.CLUB_NAME,
+  PRIVATE_UC_FEE_TYPE.REPLAY_COLLECT,
+  PRIVATE_UC_FEE_TYPE.MTT_RECORD,
+  PRIVATE_UC_FEE_TYPE.NICKNAME,
+  PRIVATE_UC_FEE_TYPE.ADD_TIME,
+  PRIVATE_UC_FEE_TYPE.VIEW_PUBLIC_CARDS,
+  PRIVATE_UC_FEE_TYPE.NORMAL_TABLE_RECORD,
+  PRIVATE_UC_FEE_TYPE.VIEW_ONE_PLAYER,
+  PRIVATE_UC_FEE_TYPE.VIEW_ALL_PLAYERS,
+]
+
+// 服务端接口接入前，1～9 的临时价格统一为 0；价格为 0 时两端都隐藏收费与 UC 图标。
+const PRIVATE_UC_PRICE_BY_FEE_TYPE: Record<PrivateUcFeeType, number> = {
+  [PRIVATE_UC_FEE_TYPE.CLUB_NAME]: 0,
+  [PRIVATE_UC_FEE_TYPE.REPLAY_COLLECT]: 0,
+  [PRIVATE_UC_FEE_TYPE.MTT_RECORD]: 0,
+  [PRIVATE_UC_FEE_TYPE.NICKNAME]: 0,
+  [PRIVATE_UC_FEE_TYPE.ADD_TIME]: 0,
+  [PRIVATE_UC_FEE_TYPE.VIEW_PUBLIC_CARDS]: 0,
+  [PRIVATE_UC_FEE_TYPE.NORMAL_TABLE_RECORD]: 0,
+  [PRIVATE_UC_FEE_TYPE.VIEW_ONE_PLAYER]: 0,
+  [PRIVATE_UC_FEE_TYPE.VIEW_ALL_PLAYERS]: 0,
+}
+
+export function getPrivateUcChargeConfigs(): PrivateUcChargeConfigItem[] {
+  return DEFINED_PRIVATE_UC_FEE_TYPES.map((feeType) => ({
+    feeType,
+    price: CHANNEL_PACKAGE_UC_CHARGE_ENABLED ? PRIVATE_UC_PRICE_BY_FEE_TYPE[feeType] : 0,
+  }))
+}
+
+export function getPrivateUcChargePrice(feeType: PrivateUcFeeType): number {
+  return getPrivateUcChargeConfigs().find((item) => item.feeType === feeType)?.price ?? 0
+}
+
+export function isPrivateUcChargeVisible(
+  price: number,
+  hostname: string = window.location.hostname,
+): boolean {
+  return isChannelPackageHost(hostname) && Number.isFinite(price) && price > 0
+}
 
 export function isChannelDiamondFreeMode(hostname: string = window.location.hostname): boolean {
   return CHANNEL_PACKAGE_DIAMOND_FREE_MODE && isChannelPackageHost(hostname)

@@ -12,6 +12,7 @@ import {
   ROOM_CHANGE_TYPE,
   type WsRoomChangeNotifyPayload,
 } from '@/bridge/ws/roomChangeNotify'
+import { decodeHoldemPacket } from '@/bridge/ws/holdemPacket'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { isPrivateDomainMode } from '@/utils/channelPackage'
@@ -25,8 +26,9 @@ import {
   writeScopeMeta,
   type RoomListScope,
 } from '@/utils/roomListCache'
-import { sortRoomRecordsForDisplay } from '@/utils/roomListSort'
+import { isRoomParticipated, sortRoomRecordsForDisplay } from '@/utils/roomListSort'
 import { createLogger } from '@/utils/logger'
+import { ServerMessageSeated } from '@holdem-pb'
 
 const log = createLogger('[roomList]')
 
@@ -61,6 +63,7 @@ const roomDetailLoadingRidSet = new Set<string>()
 
 let stopRoomChangeNotifyListener: (() => void) | null = null
 let stopClubMemberChangeListeners: (() => void) | null = null
+let stopSelfSeatedListener: (() => void) | null = null
 
 // IndexedDB 写入防抖：WS 高频 patch 时只在静默期落盘。
 // 200ms 兼顾「连续多条 WS 合并写一次」和「DevTools 能尽快观察到变化」。
@@ -175,6 +178,8 @@ async function flushPersist(scope: RoomListScope, records: RoomRecord[]): Promis
   await writeScopeMeta(scope, {
     version: ROOM_LIST_DATA_VERSION,
     rids: entries.map(([rid]) => rid),
+    // 参与状态属于当前登录用户，必须随 scope 单独保存，不能依赖全局 rooms 表。
+    participatedRids: records.filter(isRoomParticipated).map(safeRid).filter(Boolean),
     lastNotifyTs,
     lastFullFetchAt: Date.now(),
   })
@@ -238,6 +243,7 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
       const scope = resolveScope()
       this.ensureRoomChangeNotifyListener()
       this.ensureClubMemberChangeListeners()
+      this.ensureSelfSeatedListener()
       log.debug('bootstrap scope:', scope, 'active:', activeScope, 'bootstrapped:', bootstrappedScope)
 
       if (scope !== activeScope) {
@@ -282,15 +288,25 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
       if (scope !== activeScope) return
 
       const hasLocalCache =
-        meta && meta.version === ROOM_LIST_DATA_VERSION && Array.isArray(meta.rids) && meta.rids.length > 0
+        meta &&
+        meta.version === ROOM_LIST_DATA_VERSION &&
+        Array.isArray(meta.rids) &&
+        Array.isArray(meta.participatedRids) &&
+        meta.rids.length > 0
 
       if (hasLocalCache) {
         lastNotifyTs = Number(meta!.lastNotifyTs || 0)
         const cached = await loadRoomsByRids<RoomRecord>(meta!.rids)
         if (scope !== activeScope) return
         if (cached.length) {
+          const participatedRids = new Set(meta!.participatedRids)
+          // 房间基础信息全局共享，参与状态按当前用户 scope 恢复，避免切号串数据。
+          const scopedRecords = cached.map((room) => ({
+            ...room,
+            participation_status: participatedRids.has(safeRid(room)) ? 1 : 0,
+          }))
           // 先把缓存灌入内存，让 UI 秒开；重排一次兜底旧缓存的顺序。
-          this.records = sortRoomRecordsForDisplay(cached)
+          this.records = sortRoomRecordsForDisplay(scopedRecords)
         }
         await this.hotSync(scope, meta!.rids)
         return
@@ -314,6 +330,7 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
         await writeScopeMeta(scope, {
           version: ROOM_LIST_DATA_VERSION,
           rids: [],
+          participatedRids: [],
           lastNotifyTs,
           lastFullFetchAt: Date.now(),
         })
@@ -460,6 +477,8 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
 
       const current = list[index] as RoomRecord & { __wsUpdateTime?: number }
       const users = Array.isArray(payload.users) ? payload.users : current.users
+      const participated =
+        isRoomParticipated(current) || this.includesCurrentUser(users) ? 1 : 0
       list[index] = {
         ...current,
         status,
@@ -467,6 +486,7 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
         hand_num: Number(payload.hand_num ?? current.hand_num ?? 0),
         users,
         roomers: Array.isArray(users) ? users.length : current.roomers,
+        participation_status: participated,
         relate_club_ids: payload.relate_club_ids ?? current.relate_club_ids ?? [],
         relate_tribe_club_list:
           payload.relate_tribe_club_list ?? current.relate_tribe_club_list ?? [],
@@ -569,6 +589,8 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
           seat: item.seat,
         }))
         : []
+      const participated =
+        isRoomParticipated(currentRoom) || this.includesCurrentUser(users) ? 1 : 0
 
       currentList[index] = {
         ...currentRoom,
@@ -577,6 +599,7 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
         hand_num: Number(roomChange.hand_num || 0),
         users,
         roomers: users.length,
+        participation_status: participated,
         relate_club_ids: roomChange.relate_club_ids || [],
         relate_tribe_club_list: roomChange.relate_tribe_club_list || [],
         __wsUpdateTime: nextTimestamp,
@@ -619,6 +642,34 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
       this.persistRoomListCache()
     },
 
+    includesCurrentUser(users: RoomRecord['users']): boolean {
+      if (!Array.isArray(users) || !users.length) return false
+      const currentUserId = String(useGameStore().loginUserId || '').trim()
+      if (!currentUserId) return false
+      return users.some((user) => {
+        const record = user as Record<string, unknown>
+        return String(record.id ?? '').trim() === currentUserId
+      })
+    },
+
+    // 对齐 Unity GameRoomComponent.OnSelfSitDown：坐下成功后立即把当前牌桌标记为参与过。
+    // ROOM_CHANGE_NOTIFY 的精简结构不含 participation_status，不能等待它来修正。
+    markRoomParticipated(rid: number | string): void {
+      const roomRid = String(rid ?? '').trim()
+      if (!roomRid) return
+
+      const currentList = this.records.slice()
+      const index = currentList.findIndex((item) => safeRid(item) === roomRid)
+      if (index < 0 || isRoomParticipated(currentList[index])) return
+
+      currentList[index] = {
+        ...currentList[index],
+        participation_status: 1,
+      }
+      this.records = sortRoomRecordsForDisplay(currentList)
+      this.persistRoomListCache()
+    },
+
     // 不触发持久化的内部版本，供批量调用方在循环结束后统一 flush。
     upsertRoomRecordInternal(room: RoomRecord, updateTimestamp = 0): void {
       const roomRid = safeRid(room)
@@ -633,7 +684,7 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
       const index = currentList.findIndex((item) => safeRid(item) === roomRid)
       if (index >= 0) {
         const currentRoom = currentList[index] as RoomRecord & { __wsUpdateTime?: number }
-        currentList[index] = {
+        const mergedRoom: RoomRecord & { __wsUpdateTime?: number } = {
           ...currentRoom,
           ...nextRoom,
           __wsUpdateTime: Math.max(
@@ -641,6 +692,12 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
             Number(nextRoom.__wsUpdateTime || 0),
           ) || undefined,
         }
+        // 活跃牌桌内“参与过”是单向状态。坐下后的 HTTP/WS 详情可能仍短暂返回 0，
+        // 不允许它把本地刚确认的 1 覆盖掉。
+        if (isRoomParticipated(currentRoom) || isRoomParticipated(nextRoom)) {
+          mergedRoom.participation_status = 1
+        }
+        currentList[index] = mergedRoom
       } else {
         currentList.push(nextRoom)
       }
@@ -671,6 +728,21 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
           this.runInitialSync(scope)
         },
       )
+    },
+
+    ensureSelfSeatedListener(): void {
+      if (stopSelfSeatedListener) return
+      stopSelfSeatedListener = subscribeH5WsCode(Code.MSG_D_SEATED, (message) => {
+        const packet = decodeHoldemPacket(message.rawBuffer)
+        if (!packet?.roomId) return
+        try {
+          const seated = ServerMessageSeated.deserializeBinary(packet.body)
+          if (Number(seated.getStatus()) !== 0) return
+          this.markRoomParticipated(packet.roomId)
+        } catch (error) {
+          log.warn('decode self seated response failed', error)
+        }
+      })
     },
   },
 })

@@ -15,8 +15,8 @@ importers:
         specifier: git+ssh://git@github.com/jackreuben197-ui/agreement-web.git#dev_refactor_0921
         version: https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/6bb45f3c40796edb2477c8b7c8bef3d351cf4ab1
       '@silenthill/h5-cc-bridge':
-        specifier: git+ssh://git@github.com/jackreuben197-ui/h5-cc-bridge.git#dev_merge_0901
-        version: https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/45a63faef893ec260e83b4813360e9473ba415c0
+        specifier: git+ssh://git@github.com/jackreuben197-ui/h5-cc-bridge.git#dev_merge_1002
+        version: https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/11736ea1ad5ac724d42cbef78cd56004d91cde94
       '@silenthill/h5-cc-i18n':
         specifier: github:jackreuben197-ui/h5-cc-i18n#dev_merge_0915
         version: https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/5f9bafb10f262953bf77f36cf1b705f83439f1c2
@@ -1060,8 +1060,8 @@ packages:
     resolution: {gitHosted: true, integrity: sha512-YQGVCH/prOhQ9mD7rrDZNj/j+r5XNxysgLrooCchf+3pGqSkFUVNAi9VfIs2S0QYkXelOG8D9KsnD/xER18l8w==, tarball: https://codeload.github.com/jackreuben197-ui/agreement-web/tar.gz/6bb45f3c40796edb2477c8b7c8bef3d351cf4ab1}
     version: 1.0.0
 
-  '@silenthill/h5-cc-bridge@https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/45a63faef893ec260e83b4813360e9473ba415c0':
-    resolution: {gitHosted: true, integrity: sha512-S+LRE5UAVbbDjGTJJkllw8cmvb5OcUQYG2SpVFcIfQGmh0I7WFznGtdvWkxiL82Hj6+sDTQTkCCmgU7oWdiirQ==, tarball: https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/45a63faef893ec260e83b4813360e9473ba415c0}
+  '@silenthill/h5-cc-bridge@https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/11736ea1ad5ac724d42cbef78cd56004d91cde94':
+    resolution: {gitHosted: true, integrity: sha512-arb68xdqzvMuXQeST8pnE+iveyNVzC9Gq2Jdtrss+XSTzUd2e66fTHAU1E3Vnz0jmdbfkhJ8mzcbDFIF4onduQ==, tarball: https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/11736ea1ad5ac724d42cbef78cd56004d91cde94}
     version: 0.1.0
 
   '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/5f9bafb10f262953bf77f36cf1b705f83439f1c2':
@@ -3495,7 +3495,7 @@ snapshots:
     dependencies:
       google-protobuf: 3.21.4
 
-  '@silenthill/h5-cc-bridge@https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/45a63faef893ec260e83b4813360e9473ba415c0': {}
+  '@silenthill/h5-cc-bridge@https://codeload.github.com/jackreuben197-ui/h5-cc-bridge/tar.gz/11736ea1ad5ac724d42cbef78cd56004d91cde94': {}
 
   '@silenthill/h5-cc-i18n@https://codeload.github.com/jackreuben197-ui/h5-cc-i18n/tar.gz/5f9bafb10f262953bf77f36cf1b705f83439f1c2': {}
 

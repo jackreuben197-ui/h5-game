@@ -9,10 +9,18 @@ import { useAppConfigStore } from '@/stores/appConfig'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import iconDiamond from '@/assets/icons/icon_diamond.png'
+import iconChips from '@/assets/icons/icon_chips.png'
 import icInfo from '@/assets/icons/ic_info.svg'
 import { resolveDiamondPriceValue } from '@/utils/diamondPriceConfig'
-import { t, tJoin } from '@/i18n'
-import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
+import { t, tJoin, ucLabel } from '@/i18n'
+import {
+  getPrivateUcChargePrice,
+  isChannelDiamondFreeMode,
+  isChannelPackageHost,
+  isPrivateUcChargeVisible,
+  PRIVATE_UC_FEE_TYPE,
+} from '@/utils/channelPackage'
+import { formatUC } from '@/utils/roomVisibility'
 
 const router = useRouter()
 
@@ -26,6 +34,8 @@ const gameStore = useGameStore()
 const userInfoStore = useUserInfoStore()
 const appConfigStore = useAppConfigStore()
 const hideDiamondElements = isChannelDiamondFreeMode()
+const isPrivateUcPackage = isChannelPackageHost()
+const chargeIcon = isPrivateUcPackage ? iconChips : iconDiamond
 
 const inputName = ref('')
 const submitting = ref(false)
@@ -112,13 +122,29 @@ function readDiamond(): number {
 const displayUser = computed(() => ({
   nickname: readNickname(),
   diamond: readDiamond(),
+  uc: formatUC(Number(userInfoStore.currentClub?.user_gold ?? 0)),
 }))
 
 const nicknameCost = computed(() => {
+  if (isPrivateUcPackage) {
+    const price = getPrivateUcChargePrice(PRIVATE_UC_FEE_TYPE.NICKNAME)
+    return {
+      original: price,
+      current: price,
+    }
+  }
   return resolveDiamondPriceValue(appConfigStore.globalConfig?.user_modify_name_price, {
     original: 0,
     current: 0,
   })
+})
+
+const showPrivateUcCharge = computed(() => {
+  return isPrivateUcPackage && isPrivateUcChargeVisible(nicknameCost.value.current)
+})
+
+const showChargeElements = computed(() => {
+  return !hideDiamondElements || showPrivateUcCharge.value
 })
 
 inputName.value = String(displayUser.value.nickname || '')
@@ -216,18 +242,22 @@ async function onSave(): Promise<void> {
         </div>
         <p class="input-hint">{{ t('UIMine_SetNick_InputTips') }}</p>
 
-        <div v-if="!hideDiamondElements" class="cost-row">
-          <span class="label">{{ t('UIClub_FundRecharge_9jO4mlS6') }}</span>
-          <img class="diamond" :src="iconDiamond" alt="diamond" />
-          <span class="origin">{{ nicknameCost.original }}</span>
+        <div v-if="showChargeElements" class="cost-row">
+          <span class="label">
+            {{ isPrivateUcPackage ? t('UIMine_UserInfoSettingNick_cost_title') : t('UIClub_FundRecharge_9jO4mlS6') }}
+          </span>
+          <img class="diamond" :src="chargeIcon" :alt="isPrivateUcPackage ? ucLabel() : 'diamond'" />
+          <span v-if="!isPrivateUcPackage" class="origin">{{ nicknameCost.original }}</span>
           <span class="current">{{ nicknameCost.current }}</span>
           <img class="info-icon" :src="icInfo" alt="info" />
         </div>
 
-        <div v-if="!hideDiamondElements" class="cost-row balance-row">
-          <span class="label">{{ t('UIMineAllDiamond') }}</span>
-          <img class="diamond" :src="iconDiamond" alt="diamond" />
-          <span class="balance">{{ displayUser.diamond }}</span>
+        <div v-if="showChargeElements" class="cost-row balance-row">
+          <span class="label">
+            {{ isPrivateUcPackage ? t('UIMine_UserInfoSettingNick_coin_left') : t('UIMineAllDiamond') }}
+          </span>
+          <img class="diamond" :src="chargeIcon" :alt="isPrivateUcPackage ? ucLabel() : 'diamond'" />
+          <span class="balance">{{ isPrivateUcPackage ? displayUser.uc : displayUser.diamond }}</span>
         </div>
       </section>
 

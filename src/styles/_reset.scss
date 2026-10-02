@@ -10,12 +10,14 @@ body {
   width: 100%;
   min-height: 100%;
   margin: 0;
+  touch-action: pan-x pan-y;
 }
 
 #app {
   width: 100%;
   margin: 0;
   min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+  touch-action: pan-x pan-y;
 }
 
 // 该文件由 Vue bundle 在 index.html 内联 <style> 之后加载，

@@ -176,6 +176,20 @@ export interface SyncDiamondConfigPayload {
   raw: unknown
 }
 
+// 私域渠道包 UC 收费项：1 修改俱乐部名称；2 收藏牌谱；3 MTT 记录费；4 修改昵称；
+// 5 牌桌加时；6 查看公共牌；7 普通桌记录费；8 看单人；9 看全部。
+// H5 只下发已定义项；未出现的类型由 CC 隐藏。
+export type PrivateUcFeeType = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+
+export interface PrivateUcChargeConfigItem {
+  feeType: PrivateUcFeeType
+  price: number
+}
+
+export interface SyncPrivateUcChargeConfigPayload {
+  items: PrivateUcChargeConfigItem[]
+}
+
 // H5 -> Cocos：token 变更同步。token 为空字符串表示登出。
 export interface SyncTokenPayload {
   token: string

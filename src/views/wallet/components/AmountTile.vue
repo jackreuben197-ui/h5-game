@@ -165,6 +165,9 @@ withDefaults(defineProps<Props>(), {
 
 .tile__chip {
   width: 100%;
+  // The chip is display-only. Let taps on the white payment label hit the
+  // outer amount button so the whole tile shares one selection handler.
+  pointer-events: none;
 }
 
 .tile__custom-label {

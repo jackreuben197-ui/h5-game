@@ -1,6 +1,6 @@
 {
-  "name": "NEX-GAME",
-  "short_name": "NEX-GAME",
+  "name": "派对德州",
+  "short_name": "派对德州",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

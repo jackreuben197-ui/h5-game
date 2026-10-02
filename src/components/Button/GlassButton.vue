@@ -2,10 +2,16 @@
 interface Props {
   label: string
   variant?: 'glass' | 'brand'
+  /** Optional filled arrow path for designs that provide a source SVG. */
+  arrowPath?: string
+  /** Filled arrow color; retained as the previous near-white by default. */
+  arrowFill?: string
 }
 
 withDefaults(defineProps<Props>(), {
   variant: 'glass',
+  arrowPath: '',
+  arrowFill: '#f9f9f9',
 })
 </script>
 
@@ -13,8 +19,26 @@ withDefaults(defineProps<Props>(), {
   <button class="gb" :class="{ 'gb--brand': variant === 'brand' }">
     <div class="gb__blur" />
     <span class="gb__label">{{ label }}</span>
-    <svg class="gb__arrow" width="5" height="8" viewBox="0 0 5 8" fill="none">
-      <path d="M1 1L4 4L1 7" stroke="#f9f9f9" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+    <svg
+      class="gb__arrow"
+      :width="arrowPath ? 7 : 5"
+      :height="arrowPath ? 12 : 8"
+      :viewBox="arrowPath ? '0 0 7 12' : '0 0 5 8'"
+      fill="none"
+    >
+      <path
+        v-if="arrowPath"
+        :d="arrowPath"
+        :fill="arrowFill"
+      />
+      <path
+        v-else
+        d="M1 1L4 4L1 7"
+        stroke="#f9f9f9"
+        stroke-width="1.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
     </svg>
     <div class="gb__inner-shadow" />
   </button>

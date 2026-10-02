@@ -61,15 +61,15 @@ withDefaults(defineProps<Props>(), {
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  aspect-ratio: 1 / 1;
-  padding: 0.48rem 0.275rem 0.285rem;
+  aspect-ratio: 1.85 / 1;
+  padding: 0.12rem 0.16rem 0.1rem;
   background: rgba(0, 0, 0, 0.12);
-  border: 0.04rem solid transparent;
-  border-radius: 0.64rem;
+  border: 0.03rem solid transparent;
+  border-radius: 0.26rem;
   width: 100%;
   min-width: 0;
   cursor: pointer;
-  overflow: hidden;
+  overflow: visible;
 
   @include theme-light-own {
     background: var(--wallet-l-surface-soft);
@@ -79,16 +79,12 @@ withDefaults(defineProps<Props>(), {
 .tile--active {
   background: rgba(122, 16, 32, 0.45);
   border-color: #fa2b4b;
-  box-shadow:
-    0 0 0.16rem rgba(250, 43, 75, 0.9),
-    0 0 0.48rem rgba(250, 43, 75, 0.45);
+  box-shadow: none;
 
   @include theme-light-own {
     background: rgba(250, 43, 75, 0.1);
     border-color: #fa2b4b;
-    box-shadow:
-      0 0 0.12rem rgba(250, 43, 75, 0.55),
-      0 0 0.4rem rgba(250, 43, 75, 0.28);
+    box-shadow: none;
   }
 }
 
@@ -111,8 +107,10 @@ withDefaults(defineProps<Props>(), {
 
 .tile__check {
   position: absolute;
-  top: 0.13rem;
-  right: 0.13rem;
+  // Keep the badge anchored to the tile border instead of floating outside
+  // the card at smaller mobile viewport scales.
+  top: -0.03rem;
+  right: -0.03rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -136,7 +134,7 @@ withDefaults(defineProps<Props>(), {
   display: flex;
   align-items: center;
   gap: 0.07rem;
-  margin-top: 0.36rem;
+  margin-top: 0.1rem;
   min-width: 0;
   max-width: 100%;
 }
@@ -162,15 +160,7 @@ withDefaults(defineProps<Props>(), {
 }
 
 .tile--active .tile__chip {
-  background: #fa2b4b;
-
-  :deep(.chip__amount) {
-    color: #f9f9f9;
-  }
-
-  @include theme-light-own {
-    box-shadow: none;
-  }
+  background: #ffffff;
 }
 
 .tile__chip {

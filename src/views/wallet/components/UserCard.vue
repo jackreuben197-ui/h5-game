@@ -9,16 +9,20 @@ import { useUserInfoStore } from '@/stores/userInfo'
 type Variant = 'compact' | 'expanded' | 'glass'
 
 interface Props {
-  avatar: string
+  avatar?: string
   name: string
   userId: string | number
   balance?: string | number
   variant?: Variant
+  /** Wallet compact cards can hide the avatar without removing the shared implementation. */
+  showAvatar?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  avatar: '',
   balance: '',
   variant: 'compact',
+  showAvatar: true,
 })
 
 const userInfoStore = useUserInfoStore()
@@ -48,11 +52,14 @@ const bannerBg = `url(${bannerBgUrl})`
     ></div>
 
     <div class="usercard__head">
-      <img
-        :src="displayAvatar"
-        alt=""
-        class="usercard__avatar"
-      />
+      <template v-if="showAvatar">
+        <!-- Avatar rendering is retained for other pages; wallet sets showAvatar=false per design. -->
+        <img
+          :src="displayAvatar"
+          alt=""
+          class="usercard__avatar"
+        />
+      </template>
       <div class="usercard__info">
         <div class="usercard__name">{{ displayName }}</div>
         <div class="usercard__id">
@@ -121,14 +128,24 @@ const bannerBg = `url(${bannerBgUrl})`
 }
 
 .usercard--compact {
+  min-height: 2.2rem;
+  padding: 0.2rem 0.28rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(0, 0, 0, 0.2);
   border-radius: 0.8rem;
+  box-shadow:
+    inset 0 0 0.2rem rgba(255, 255, 255, 0.14),
+    0 0.06rem 0.18rem rgba(0, 0, 0, 0.18);
+
+  .usercard__head {
+    min-height: 1.8rem;
+  }
 
   @include theme-light-own {
-    border-radius: 29.219px;
-    background: rgba(0, 0, 0, 0.19);
-    border: none;
-    box-shadow: none;
+    border-radius: 0.72rem;
+    background: rgba(255, 255, 255, 0.96);
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 0.06rem 0.2rem rgba(34, 34, 34, 0.1);
   }
 }
 
@@ -304,6 +321,25 @@ const bannerBg = `url(${bannerBgUrl})`
   gap: 0.285rem;
 }
 
+.usercard--compact .usercard__avatar {
+  width: 1.34rem;
+  height: 1.34rem;
+  margin-left: 0;
+}
+
+.usercard--compact .usercard__info {
+  gap: 0.07rem;
+}
+
+.usercard--compact .usercard__name {
+  font-size: 0.43rem;
+  line-height: 1.05;
+}
+
+.usercard--compact .usercard__id-value {
+  font-size: 0.2rem;
+}
+
 .usercard--expanded .usercard__head {
   gap: 0.57rem;
 }
@@ -374,8 +410,14 @@ const bannerBg = `url(${bannerBgUrl})`
   flex-direction: column;
   gap: 0.32rem;
   align-items: stretch;
-  margin-top: 18px;
+  margin-top: 0;
+  margin-left: auto;
   align-self: flex-start;
+}
+
+.usercard--compact .usercard__actions {
+  gap: 0.12rem;
+  align-self: center;
 }
 
 .usercard__balance {

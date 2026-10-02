@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { showToast } from 'vant'
 import icSupportService from '@/assets/images/ic_support_service.png'
@@ -20,6 +20,7 @@ import type { PaymentInfo } from '@/api/models/pay'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useWalletStore } from '@/stores/wallet'
 import { openCsOrderChat } from '@/components/GlobalCsOrderFloat/channel'
+import { splitWalletLabel } from '@/utils/walletLabel'
 
 const props = defineProps<{
   availableUc?: number
@@ -38,9 +39,11 @@ const router = useRouter()
 const route = useRoute()
 const walletStore = useWalletStore()
 const userInfoStore = useUserInfoStore()
+const walletLocale = computed(() => getLocale())
 
 // ─── i18n helper: returns fallback when key not translated ────────────────────
 function tx(key: string, fallback: string): string {
+  void walletLocale.value
   const val = t(key)
   return val && val !== key ? val : fallback
 }
@@ -56,10 +59,28 @@ const isAlipay = computed(() => activeChannel.value === 'alipay')
 const isUsdt = computed(() => activeChannel.value === 'usdt')
 
 function getCustomerCareLabel(): string {
+  void walletLocale.value
   if (getLocale() === 'cn' || getLocale() === 'zh') {
     return '人工客服'
   }
   return tx('Wallet_CsWithdraw', 'Support')
+}
+
+function getWithdrawTypeLabel(wt: OnlineWithdrawTypeItem): string {
+  return (
+    wt.name ||
+    (isUsdt.value
+      ? 'USDT'
+      : isWallet.value
+        ? 'USDT'
+        : isWechat.value
+          ? 'WeChat'
+          : isAlipay.value
+            ? 'Alipay'
+            : isCustomerCare.value
+              ? getCustomerCareLabel()
+              : tx('Wallet_BankCard', 'Bank Card'))
+  )
 }
 
 const paymentChannels = computed<{ id: ChannelId; image: string; label: string; key: string }[]>(() => [
@@ -422,6 +443,7 @@ const tabsScrollRef = ref<HTMLElement | null>(null)
 const tabItemRefs = ref<Record<string, HTMLElement | null>>({})
 const canScrollLeft = ref(false)
 const canScrollRight = ref(false)
+const hasTabOverflow = ref(false)
 
 function setTabRef(id: string, el: unknown) {
   if (el) {
@@ -432,6 +454,7 @@ function setTabRef(id: string, el: unknown) {
 function updateScrollState() {
   const el = tabsScrollRef.value
   if (!el) return
+  hasTabOverflow.value = el.scrollWidth > el.clientWidth + 4
   canScrollLeft.value = el.scrollLeft > 4
   canScrollRight.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 4
 }
@@ -450,9 +473,11 @@ function scrollToLeft() {
 
 function scrollToActiveTab(id: ChannelId) {
   void nextTick(() => {
+    const scrollEl = tabsScrollRef.value
     const tabEl = tabItemRefs.value[id]
-    if (tabEl) {
-      tabEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+    if (scrollEl && tabEl) {
+      const targetLeft = tabEl.offsetLeft - (scrollEl.clientWidth - tabEl.offsetWidth) / 2
+      scrollEl.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' })
     }
     updateScrollState()
   })
@@ -460,6 +485,11 @@ function scrollToActiveTab(id: ChannelId) {
 
 onMounted(() => {
   void nextTick(updateScrollState)
+  window.addEventListener('resize', updateScrollState)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateScrollState)
 })
 
 watch(availablePaymentChannels, () => {
@@ -615,14 +645,14 @@ watch(filteredWithdrawTypes, (list) => {
         <!-- Header with Tabs and Scroll Arrow Indicator -->
         <div class="wf__top-bar" :class="{ 'wf__top-bar--single': availablePaymentChannels.length === 1 }">
           <button
-            v-if="canScrollLeft"
+            v-if="hasTabOverflow && canScrollLeft"
             type="button"
             class="wf__tabs-arrow wf__tabs-arrow--left"
             aria-label="Scroll left"
             @click="scrollToLeft"
           >
             <svg width="10" height="10" viewBox="0 0 8 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M7 1L2 6L7 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M7 1L2 6L7 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </button>
 
@@ -647,14 +677,14 @@ watch(filteredWithdrawTypes, (list) => {
           </div>
 
           <button
-            v-if="canScrollRight"
+            v-if="hasTabOverflow && canScrollRight"
             type="button"
             class="wf__tabs-arrow wf__tabs-arrow--right"
             aria-label="Scroll right"
             @click="scrollToRight"
           >
             <svg width="10" height="10" viewBox="0 0 8 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M1 1L6 6L1 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M1 1L6 6L1 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </button>
         </div>
@@ -678,12 +708,18 @@ watch(filteredWithdrawTypes, (list) => {
               alt=""
               class="wf__grid-icon"
             />
-            <span v-fit-text="{ maxLines: 1, minScale: 0.75 }" class="wf__grid-name">{{
-              wt.name || (isUsdt ? 'USDT' : isWallet ? 'USDT' : isWechat ? 'WeChat' : isAlipay ? 'Alipay' : isCustomerCare ? getCustomerCareLabel() : tx('Wallet_BankCard', 'Bank Card'))
-            }}</span>
+            <span class="wf__grid-name">
+              <span
+                v-for="(line, lineIndex) in splitWalletLabel(getWithdrawTypeLabel(wt))"
+                :key="`${line}-${lineIndex}`"
+                class="wf__grid-name-line"
+              >
+                {{ line }}
+              </span>
+            </span>
             <div v-if="selectedWithdrawType?.id === wt.id" class="wf__grid-check">
               <svg width="8" height="6" viewBox="0 0 8 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M1 3L3 5L7 1" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M1 3L3 5L7 1" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
             </div>
           </div>
@@ -717,10 +753,10 @@ watch(filteredWithdrawTypes, (list) => {
                 @touchmove.passive="onSwipeMove"
                 @touchend="onSwipeEnd(info)"
               >
-                <div
-                  class="wf__acct-card"
-                  :class="{ 'wf__acct-card--active': selectedPaymentAccount?.id === info.id }"
-                  @click="selectedPaymentAccount = info"
+                  <div
+                    class="wf__acct-card"
+                    :class="{ 'wf__acct-card--active': selectedPaymentAccount?.id === info.id }"
+                    @click="selectedPaymentAccount = info"
                 >
                   <img
                     :src="walletPng"
@@ -732,20 +768,29 @@ watch(filteredWithdrawTypes, (list) => {
                       <span
                         v-if="info.pix_name || info.real_name || info.name || info.account_name"
                         class="wf__acct-card-name"
-                      >{{
-                        info.pix_name || info.real_name || info.name || info.account_name
-                      }}</span>
+                      >
+                        {{ info.pix_name || info.real_name || info.name || info.account_name }}
+                      </span>
                       <span v-if="info.bank_name" class="wf__acct-card-badge">{{ info.bank_name }}</span>
                     </div>
                     <div class="wf__acct-card-sub">
                       {{ tColon(tx('Wallet_ReceivingAccount', 'Receiving Account')) }}{{ formatAccountNumber(info.account_no) }}
                     </div>
                   </div>
+                  <span
+                    v-if="selectedPaymentAccount?.id === info.id"
+                    class="wf__acct-check"
+                    aria-hidden="true"
+                  >
+                    <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
+                      <path d="M1 3L3 5L7 1" />
+                    </svg>
+                  </span>
                 </div>
                 <template #right>
                   <button type="button" class="wf__acct-delete-btn" @click="askDeleteCard(info)">
                     <svg width="14" height="16" viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M1 3.5H13M5 3.5V2C5 1.44772 5.44772 1 6 1H8C8.55228 1 9 1.44772 9 2V3.5M11.5 3.5V13.5C11.5 14.0523 11.0523 14.5 10.5 14.5H3.5C2.94772 14.5 2.5 14.0523 2.5 13.5V3.5H11.5Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M1 3.5H13M5 3.5V2C5 1.44772 5.44772 1 6 1H8C8.55228 1 9 1.44772 9 2V3.5M11.5 3.5V13.5C11.5 14.0523 11.0523 14.5 10.5 14.5H3.5C2.94772 14.5 2.5 14.0523 2.5 13.5V3.5H11.5Z" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                     <span>{{ tx('UIClub_DeleteSomeone', 'Delete') }}</span>
                   </button>
@@ -838,22 +883,22 @@ watch(filteredWithdrawTypes, (list) => {
 .wf {
   display: flex;
   flex-direction: column;
-  gap: 0.28rem;
+  gap: 0.2rem;
   width: 100%;
-  padding-bottom: 1.2rem;
+  padding-bottom: 0.8rem;
 }
 
 /* Card 1 & Card 2 Base Glass Styling */
 .wf__card:first-child {
-  margin-top: -20px;
+  margin-top: 0;
 }
 
 .wf__card {
   position: relative;
-  padding: 0.36rem 0.32rem;
+  padding: 0.24rem 0.22rem;
   border: 0.016rem solid rgba(242, 242, 242, 0.25);
-  border-radius: 0.72rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  border-radius: 0.56rem;
+  box-shadow: 0 0.06rem 0.2rem rgba(0, 0, 0, 0.28);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -896,7 +941,8 @@ watch(filteredWithdrawTypes, (list) => {
   @include theme-light-own {
     border-color: var(--wallet-l-border);
     background: var(--wallet-l-surface);
-    box-shadow: 0 0.08rem 0.2rem rgba(70, 79, 88, 0.1);
+    box-shadow: 0 0.06rem 0.16rem rgba(70, 79, 88, 0.1);
+    border-radius: 0.5rem;
 
     &::before {
       background: none;
@@ -916,12 +962,12 @@ watch(filteredWithdrawTypes, (list) => {
   position: relative;
   display: flex;
   align-items: center;
-  width: fit-content;
+  width: 100%;
   max-width: 100%;
   background: rgba(0, 0, 0, 0.4);
-  padding: 0.06rem;
+  padding: 0.11rem 0.08rem;
   border-radius: 999px;
-  margin-bottom: 0.32rem;
+  margin-bottom: 0.14rem;
   overflow: hidden;
   box-sizing: border-box;
 
@@ -955,12 +1001,13 @@ watch(filteredWithdrawTypes, (list) => {
   &::-webkit-scrollbar {
     display: none;
   }
+
 }
 
 .wf__tabs {
   display: inline-flex;
   align-items: center;
-  gap: 0.08rem;
+  gap: 0.04rem;
   min-width: max-content;
 }
 
@@ -969,12 +1016,13 @@ watch(filteredWithdrawTypes, (list) => {
   align-items: center;
   justify-content: center;
   height: 0.68rem;
-  padding: 0 0.36rem;
+  padding: 0 0.25rem;
   border: none;
   border-radius: 999px;
   background: transparent;
   color: rgba(255, 255, 255, 0.85);
   font-family: var(--wallet-font-cn);
+  // Figma category label: 14.08px at the 440px reference width.
   font-size: 0.32rem;
   font-weight: 500;
   cursor: pointer;
@@ -1043,8 +1091,8 @@ watch(filteredWithdrawTypes, (list) => {
   align-items: center;
   justify-content: space-between;
   gap: 0.16rem;
-  margin-top: 0.08rem;
-  margin-bottom: 0.24rem;
+  margin-top: 0.04rem;
+  margin-bottom: 0.14rem;
 }
 
 .wf__add-title {
@@ -1054,8 +1102,9 @@ watch(filteredWithdrawTypes, (list) => {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: var(--wallet-font-cn);
-  font-size: 0.32rem;
-  font-weight: 600;
+  // Figma My Account: 17.51px/700 at the 440px reference width.
+  font-size: 0.4rem;
+  font-weight: 700;
   color: #ffffff;
 
   @include theme-light-own {
@@ -1069,15 +1118,17 @@ watch(filteredWithdrawTypes, (list) => {
   align-items: center;
   justify-content: center;
   gap: 0.12rem;
-  height: 0.64rem;
-  padding: 0 0.36rem;
-  border: none;
+  height: 0.5rem;
+  padding: 0 0.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 999px;
   background: #ffffff;
   color: #111111;
   font-family: var(--wallet-font-cn);
-  font-size: 0.28rem;
-  font-weight: 600;
+  // Figma Add Account: 14.73px/500/95% at the 440px reference width.
+  font-size: 0.335rem;
+  font-weight: 500;
+  line-height: 0.95;
   cursor: pointer;
   white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
@@ -1088,14 +1139,15 @@ watch(filteredWithdrawTypes, (list) => {
   }
 
   @include theme-light-own {
-    background: var(--wallet-l-accent);
-    color: var(--wallet-l-on-accent);
+    background: var(--wallet-l-surface);
+    border-color: var(--wallet-l-border);
+    color: var(--wallet-l-text);
   }
 }
 
 .wf__add-btn-plus {
   color: #ff3b5c;
-  font-size: 1.7em;
+  font-size: 1.35em;
   line-height: 1;
 }
 
@@ -1103,8 +1155,8 @@ watch(filteredWithdrawTypes, (list) => {
 .wf__grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0.16rem;
-  margin-bottom: 0.28rem;
+  gap: 0.12rem;
+  margin-bottom: 0.16rem;
 }
 
 .wf__grid-item {
@@ -1113,10 +1165,10 @@ watch(filteredWithdrawTypes, (list) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 0.18rem 0.06rem;
-  min-height: 1.36rem;
+  padding: 0.08rem 0.04rem;
+  min-height: 1.42rem;
   background: rgba(255, 255, 255, 0.08);
-  border-radius: 0.24rem;
+  border-radius: 0.18rem;
   border: 1.5px solid transparent;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1127,7 +1179,7 @@ watch(filteredWithdrawTypes, (list) => {
     background: rgba(255, 59, 92, 0.12);
 
     .wf__grid-name {
-      color: #ffd259;
+      color: #ffffff;
       font-weight: 600;
     }
   }
@@ -1140,7 +1192,7 @@ watch(filteredWithdrawTypes, (list) => {
       background: rgba(255, 59, 92, 0.1);
 
       .wf__grid-name {
-        color: #e69500;
+        color: var(--wallet-l-text);
         font-weight: 600;
       }
     }
@@ -1148,27 +1200,31 @@ watch(filteredWithdrawTypes, (list) => {
 }
 
 .wf__grid-icon {
-  width: 0.72rem;
-  height: 0.72rem;
+  width: 0.58rem;
+  height: 0.58rem;
   border-radius: 50%;
   object-fit: cover;
-  margin-bottom: 0.08rem;
+  margin-bottom: 0.05rem;
   pointer-events: none;
 }
 
 .wf__grid-name {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 0.64rem;
+  flex: 0 0 0.64rem;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
   font-family: var(--wallet-font-cn);
-  font-size: 0.38rem;
+  font-size: 0.26rem;
   font-weight: 500;
   color: #ffffff;
   text-align: center;
   line-height: 1.1;
-  white-space: normal;
-  word-break: break-word;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  white-space: nowrap;
   width: 100%;
   padding: 0 0.02rem;
 
@@ -1179,13 +1235,13 @@ watch(filteredWithdrawTypes, (list) => {
 
 .wf__grid-check {
   position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 0.34rem;
-  height: 0.34rem;
+  bottom: -1px;
+  right: -1px;
+  width: 0.28rem;
+  height: 0.28rem;
   background: #ff3b5c;
   border-top-left-radius: 0.16rem;
-  border-bottom-right-radius: 0.22rem;
+  border-bottom-right-radius: 0.18rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1195,47 +1251,83 @@ watch(filteredWithdrawTypes, (list) => {
 .wf__acct-list {
   display: flex;
   flex-direction: column;
-  gap: 0.18rem;
+  gap: 0.1rem;
 }
 
 .wf__acct-swipe {
-  border-radius: 0.28rem;
+  border-radius: 0.18rem;
   overflow: hidden;
 }
 
 .wf__acct-card {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.22rem;
-  padding: 0.22rem 0.26rem;
+  gap: 0.16rem;
+  min-height: 1.5rem;
+  padding: 0.18rem 0.2rem;
   background: rgba(255, 255, 255, 0.08);
-  border-radius: 0.28rem;
-  border: 1px solid transparent;
+  border-radius: 0.18rem;
+  border: 1.5px solid transparent;
   cursor: pointer;
   transition: all 0.2s ease;
   -webkit-tap-highlight-color: transparent;
 
   &--active {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 59, 92, 0.12);
+    border-color: #ff3b5c;
   }
 
   @include theme-light-own {
     background: var(--wallet-l-surface-soft);
 
     &--active {
-      background: rgba(5, 194, 151, 0.08);
-      border-color: var(--wallet-l-accent);
+      background: rgba(255, 59, 92, 0.1);
+      border-color: #ff3b5c;
     }
   }
 }
 
+.wf__grid-name-line {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  flex: 0 0 auto;
+  line-height: 1.05;
+}
+
 .wf__acct-card-icon {
-  width: 0.82rem;
-  height: 0.82rem;
+  width: 0.72rem;
+  height: 0.72rem;
   flex-shrink: 0;
   border-radius: 50%;
   object-fit: cover;
+}
+
+.wf__acct-check {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.28rem;
+  height: 0.28rem;
+  border-top-left-radius: 0.16rem;
+  border-bottom-right-radius: 0.18rem;
+  background: #ff3b5c;
+
+  svg {
+    width: 0.16rem;
+    height: 0.12rem;
+    stroke: #ffffff;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
 }
 
 .wf__acct-card-info {
@@ -1243,7 +1335,7 @@ watch(filteredWithdrawTypes, (list) => {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.08rem;
+  gap: 0.04rem;
 }
 
 .wf__acct-card-header {
@@ -1254,7 +1346,7 @@ watch(filteredWithdrawTypes, (list) => {
 
 .wf__acct-card-name {
   font-family: var(--wallet-font-cn);
-  font-size: 0.32rem;
+  font-size: 0.3rem;
   font-weight: 600;
   color: #ffffff;
   min-width: 0;
@@ -1289,8 +1381,9 @@ watch(filteredWithdrawTypes, (list) => {
 
 .wf__acct-card-sub {
   font-family: var(--wallet-font-num);
-  font-size: 0.29rem;
-  font-weight: 500;
+  // Figma Receiving Account: 13.88px/510 at the 440px reference width.
+  font-size: 0.315rem;
+  font-weight: 510;
   color: #ffffff;
   opacity: 0.95;
 
@@ -1320,16 +1413,17 @@ watch(filteredWithdrawTypes, (list) => {
 
 /* Card 2: Withdrawal Amount */
 .wf__amount-card {
-  padding: 0.36rem 0.32rem;
+  padding: 0.24rem 0.22rem;
   display: flex;
   flex-direction: column;
-  gap: 0.22rem;
+  gap: 0.12rem;
 }
 
 .wf__amount-title {
   font-family: var(--wallet-font-cn);
-  font-size: 0.32rem;
-  font-weight: 600;
+  // Figma: 17.51px/700 at the 440px reference width.
+  font-size: 0.4rem;
+  font-weight: 700;
   color: #ffffff;
 
   @include theme-light-own {
@@ -1347,7 +1441,7 @@ watch(filteredWithdrawTypes, (list) => {
 
 .wf__amount-limit {
   font-family: var(--wallet-font-cn);
-  font-size: 0.28rem;
+  font-size: 0.27rem;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.7);
   text-align: right;
@@ -1359,9 +1453,9 @@ watch(filteredWithdrawTypes, (list) => {
 
 .wf__amount-input-box {
   width: 100%;
-  height: 1.02rem;
+  height: 1.28rem;
   background: rgba(0, 0, 0, 0.35);
-  border-radius: 0.24rem;
+  border-radius: 0.28rem;
   padding: 0 0.28rem;
   display: flex;
   align-items: center;
@@ -1378,13 +1472,18 @@ watch(filteredWithdrawTypes, (list) => {
   background: transparent;
   border: none;
   outline: none;
-  font-size: 0.32rem;
+  // Figma withdrawal input: 16.43px/500/120% at the 440px reference width.
+  font-size: 0.375rem;
+  font-weight: 500;
+  line-height: 1.2;
   color: #ffffff;
   font-family: var(--wallet-font-num);
 
   &::placeholder {
     color: rgba(255, 255, 255, 0.45);
-    font-size: 0.28rem;
+    font-size: 0.375rem;
+    font-weight: 500;
+    line-height: 1.2;
     font-family: var(--wallet-font-cn);
   }
 
@@ -1402,8 +1501,10 @@ watch(filteredWithdrawTypes, (list) => {
   align-items: center;
   justify-content: space-between;
   font-family: var(--wallet-font-cn);
-  font-size: 0.28rem;
+  // Figma: 15.16px/500 at the 440px reference width.
+  font-size: 0.345rem;
   font-weight: 500;
+  line-height: 1.4;
   color: rgba(255, 255, 255, 0.95);
 
   @include theme-light-own {
@@ -1415,8 +1516,8 @@ watch(filteredWithdrawTypes, (list) => {
 .wf__cta-wrapper {
   position: relative;
   width: 100%;
-  height: 1.47rem;
-  margin-top: 0.36rem;
+  height: 1.28rem;
+  margin-top: 0.18rem;
   z-index: 1;
 }
 
@@ -1425,10 +1526,10 @@ watch(filteredWithdrawTypes, (list) => {
   width: 100% !important;
   height: 100% !important;
   border: 0.02rem solid rgba(249, 249, 249, 0.04) !important;
-  border-radius: 1.08rem !important;
-  background: rgba(170, 170, 170, 0.1) !important;
-  backdrop-filter: blur(18.5px);
-  -webkit-backdrop-filter: blur(18.5px);
+  border-radius: 999px !important;
+  background: var(--wallet-grad-primary) !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -1444,9 +1545,11 @@ watch(filteredWithdrawTypes, (list) => {
   }
 
   :deep(.primary-btn__text) {
-    font-size: 0.493rem !important;
-    font-weight: 600 !important;
-    color: #78e490 !important;
+    // Match the wallet recharge CTA's PrimaryButton text locally; do not
+    // change the shared PrimaryButton component used by other screens.
+    font-size: 0.5rem !important;
+    font-weight: 500 !important;
+    color: #ffffff !important;
   }
 
   @include theme-light-own {
@@ -1460,7 +1563,7 @@ watch(filteredWithdrawTypes, (list) => {
     }
 
     :deep(.primary-btn__text) {
-      color: var(--wallet-l-on-accent) !important;
+      color: #ffffff !important;
     }
   }
 }
@@ -1469,7 +1572,7 @@ watch(filteredWithdrawTypes, (list) => {
 .wf__acct-empty {
   text-align: center;
   font-family: var(--wallet-font-cn);
-  font-size: 0.26rem;
+  font-size: 0.24rem;
   color: #999999;
   padding: 0.2rem 0;
 

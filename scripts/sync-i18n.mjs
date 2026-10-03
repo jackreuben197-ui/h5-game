@@ -27,6 +27,8 @@ const sourcePath =
       ? siblingPath
       : packagePath
 const targetPath = path.resolve(projectRoot, 'public/h5-cc-i18n.min.js')
+const LOCALES_DIR = 'i18n'
+const localesTargetDir = path.resolve(projectRoot, 'public', LOCALES_DIR)
 
 // If the bundle is already committed in public/, use it as-is.
 if (!fs.existsSync(sourcePath)) {
@@ -43,3 +45,11 @@ fs.mkdirSync(path.dirname(targetPath), { recursive: true })
 fs.copyFileSync(sourcePath, targetPath)
 const { size } = fs.statSync(targetPath)
 console.log(`[sync:i18n] copied h5-cc-i18n.min.js (${size} bytes) from ${sourcePath} -> ${targetPath}`)
+
+const localesSourceDir = path.join(path.dirname(sourcePath), LOCALES_DIR)
+fs.rmSync(localesTargetDir, { recursive: true, force: true })
+if (fs.existsSync(localesSourceDir)) {
+  fs.cpSync(localesSourceDir, localesTargetDir, { recursive: true })
+  const count = fs.readdirSync(localesTargetDir).length
+  console.log(`[sync:i18n] copied ${count} locale files from ${localesSourceDir} -> ${localesTargetDir}`)
+}

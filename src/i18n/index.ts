@@ -64,6 +64,8 @@ const LEGACY_TO_PACKAGE: Record<LocaleCode, string> = {
 }
 
 const currentLocale = ref<LocaleCode>(resolveInitialLocale())
+const dictionaryVersion = ref(0)
+let pendingLocale: LocaleCode | null = null
 
 // data-locale на <html> позволяет стилям зависеть от языка: у иероглифических
 // строк другая плотность, и им нередко нужен свой кегль.
@@ -75,14 +77,39 @@ function applyDocumentLocale(locale: LocaleCode): void {
 // 初始化时把 package 的 locale 拉齐到外部 code，避免 i18n.get 在握手前取到默认值。
 applyPackageLocale(currentLocale.value)
 applyDocumentLocale(currentLocale.value)
+ensureInitialDictionary()
 
 export function getLocale(): LocaleCode {
   return currentLocale.value
 }
 
-export function setLocale(locale: string): void {
-  const previousLocale = currentLocale.value
+export function setLocale(locale: string, onApplied?: () => void): void {
   const resolvedLocale = normalizeLocale(locale) ?? DEFAULT_LOCALE
+
+  if (isPackageLocaleReady(resolvedLocale)) {
+    pendingLocale = null
+    commitLocale(resolvedLocale)
+    onApplied?.()
+    return
+  }
+
+  pendingLocale = resolvedLocale
+  loadPackageLocale(resolvedLocale, (ok) => {
+    if (pendingLocale !== resolvedLocale) {
+      return
+    }
+    pendingLocale = null
+    if (!ok) {
+      log.warn('load locale dictionary failed:', resolvedLocale)
+      return
+    }
+    commitLocale(resolvedLocale)
+    onApplied?.()
+  })
+}
+
+function commitLocale(resolvedLocale: LocaleCode): void {
+  const previousLocale = currentLocale.value
 
   // 先切换底层词典，再更新响应式状态。否则依赖 locale 的 computed 可能在
   // 词典仍是旧语言时重新求值，并缓存旧文案。
@@ -152,6 +179,7 @@ export function toServerLang(locale: LocaleCode = currentLocale.value): string {
 export function t(key: string, ...args: FormatArg[] | [FormatArgs]): string {
   // 读 ref 以便组件在 setLocale 时自动重渲染。
   const locale = currentLocale.value
+  void dictionaryVersion.value
   // H5 是语言状态来源；读取时保证页面级词典与 H5 当前状态一致，
   // setLocale 产生的变化会通过 syncLanguage 同步给 Cocos。
   applyPackageLocale(locale)
@@ -234,6 +262,38 @@ function applyPackageLocale(locale: LocaleCode): void {
   } catch (error) {
     log.warn('i18n.setLocale failed:', error)
   }
+}
+
+function isPackageLocaleReady(locale: LocaleCode): boolean {
+  const target = LEGACY_TO_PACKAGE[locale]
+  if (!target || typeof i18n.hasLocale !== 'function') {
+    return true
+  }
+  return i18n.hasLocale(target)
+}
+
+function loadPackageLocale(locale: LocaleCode, done: (ok: boolean) => void): void {
+  const target = LEGACY_TO_PACKAGE[locale]
+  if (!target || typeof i18n.loadLocale !== 'function') {
+    done(true)
+    return
+  }
+  i18n.loadLocale(target, done)
+}
+
+function ensureInitialDictionary(): void {
+  const locale = currentLocale.value
+  if (isPackageLocaleReady(locale)) {
+    return
+  }
+  loadPackageLocale(locale, (ok) => {
+    if (!ok) {
+      log.warn('load locale dictionary failed:', locale)
+      return
+    }
+    applyPackageLocale(currentLocale.value)
+    dictionaryVersion.value += 1
+  })
 }
 
 function resolveInitialLocale(): LocaleCode {

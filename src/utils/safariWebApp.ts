@@ -1,4 +1,5 @@
 import type { OrgClubSearchInfoData } from '@/api/models/org'
+import { isIos } from '@/utils/iosWebClip'
 
 function normalizedText(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
@@ -88,9 +89,12 @@ export function applySafariWebAppConfig(club: OrgClubSearchInfoData | null | und
     favicon?.setAttribute('type', 'image/png')
   }
 
-  // 移除可能存在的 manifest 引用，避免 iOS 17+ Safari 强制以静态 manifest 里的固定名称覆盖俱乐部自定义桌面名称
-  const manifestLink = document.querySelector<HTMLLinkElement>('link[rel="manifest"]')
-  if (manifestLink) {
-    manifestLink.remove()
+  // 移除可能存在的 manifest 引用，避免 iOS 17+ Safari 强制以静态 manifest 里的固定名称覆盖俱乐部自定义桌面名称。
+  // 仅限 iOS：Android Chrome 没有 manifest 就不会触发 beforeinstallprompt，"添加桌面快捷方式"会退化成提示文案。
+  if (isIos()) {
+    const manifestLink = document.querySelector<HTMLLinkElement>('link[rel="manifest"]')
+    if (manifestLink) {
+      manifestLink.remove()
+    }
   }
 }

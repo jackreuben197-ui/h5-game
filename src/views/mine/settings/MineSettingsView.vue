@@ -75,7 +75,7 @@ const sectionMiddle = computed<SettingItem[]>(() => [
     rightText: t('UIClub_Text73'),
   },
   { key: 'cancel', label: t('UIMine_DeleteUser'), icon: icDeleteAccount },
-  { key: 'about', label: t('tc_YQAGnw3p'), icon: icAboutUs },
+  // { key: 'about', label: t('tc_YQAGnw3p'), icon: icAboutUs },
   // { key: 'agreement', label: t('tc_5E0V3qlb'), icon: icPolicePrivacy },
 ])
 

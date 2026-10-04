@@ -282,7 +282,13 @@ async function onSecondaryAction(): Promise<void> {
     return
   }
 
-  // Android Chrome / Edge / 三星浏览器：原生 PWA 安装框（最佳路径）
+  // iOS 设备：统一展示 iOS 专用的“添加到主屏幕”图文引导弹窗
+  if (isIos()) {
+    showAddHomeGuide.value = true
+    return
+  }
+
+  // Android 设备：优先触发原生 PWA 安装框（询问用户安装）
   if (canPromptInstall()) {
     const result = await showAddToHomeScreenPrompt()
     if (result === 'accepted') {
@@ -292,42 +298,9 @@ async function onSecondaryAction(): Promise<void> {
     if (result === 'dismissed') return
   }
 
-  // iOS 原生 Safari：下发 mobileconfig 描述文件，一键添加到桌面（安装时需信任未签名描述文件）
-  if (isIosNativeSafari()) {
-    try {
-      showToast({ message: t('UILanding_Text18') + '…', duration: 1500 })
-      // 部署可能位于站点子路径，用 BASE_URL 解析成绝对地址作为快捷方式打开地址。
-      const appBaseUrl = new URL(import.meta.env.BASE_URL, window.location.href).toString()
-      await installIosWebClip({
-        label: '派对德州',
-        url: appBaseUrl,
-        // 图标在构建期内联成 data URL，避免线上未部署 icon-192.png 时 fetch 404。
-        iconUrl: webClipIcon,
-      })
-      // location.href 跳转后，iOS Safari 会接管显示"是否允许下载描述文件"对话框，
-      // 不需要再 toast；以下是兜底（极少数情况跳转未生效）
-      setTimeout(() => {
-        showToast({
-          message: t('UILanding_Done') + "，" + t('UILanding_Text19') + " " + t('UIMine_btn_setting') + " → " + t('UILanding_Text20') + " → VPN " + t('UILanding_Text21') + " " + t('UILanding_Text22'),
-          duration: 5000,
-        })
-      }, 1500)
-    } catch (err) {
-      console.error('[web-clip] install failed:', err)
-      showFailToast(t('UILanding_Fail') + "，" + t('UILanding_Text23'))
-    }
-    return
-  }
-
-  // iOS 第三方浏览器 / 内嵌 WebView：无法触发 mobileconfig，改为手动“添加到主屏幕”图文引导。
-  if (isIosThirdPartyBrowser() || isIos()) {
-    showAddHomeGuide.value = true
-    return
-  }
-
-  // 兜底：Android 上 PWA 资产未就绪 / 已 dismiss / 用户参与度未达标
+  // Android 兜底：若浏览器尚未触发原生 PWA 弹窗，显示 Toast 提示
   showToast(
-    isIosSafari() ? t('UILanding_Text28') + "，" + t('UILanding_Text29') + "\"" + t('UILanding_Text30') + "\"" : t('UILanding_Text31') + "\"" + t('UILanding_Text30') + "\"",
+    t('UILanding_Text31') + " \"" + t('UILanding_Text30') + "\"",
   )
 }
 </script>

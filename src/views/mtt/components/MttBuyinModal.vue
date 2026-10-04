@@ -17,11 +17,8 @@ import { useAppConfigStore } from '@/stores/appConfig'
 import { t } from '@/i18n'
 import { showToast } from 'vant'
 import {
-  getPrivateUcChargePrice,
   isChannelDiamondFreeMode,
   isChannelPackageHost,
-  isPrivateUcChargeVisible,
-  PRIVATE_UC_FEE_TYPE,
 } from '@/utils/channelPackage'
 
 /* ===== props / emits ===== */
@@ -77,7 +74,9 @@ const loading = ref(false)
 
 // 记录费配置直接从 Pinia 缓存读取（对齐 Unity GameCache，不重复请求）。
 const recordFeeConfig = computed(() =>
-  appConfigStore.getMttRecordFeeConfig(props.mtt?.gold_type ?? 1),
+  isPrivateUcPackage
+    ? appConfigStore.privateUcMttRecordFeeConfig
+    : appConfigStore.getMttRecordFeeConfig(props.mtt?.gold_type ?? 1),
 )
 
 async function fetchWalletAndConfig() {
@@ -271,16 +270,6 @@ interface RecordFeeResult {
 }
 
 const recordFee = computed<RecordFeeResult>(() => {
-  if (isPrivateUcPackage) {
-    const price = getPrivateUcChargePrice(PRIVATE_UC_FEE_TYPE.MTT_RECORD)
-    return {
-      show: isPrivateUcChargeVisible(price),
-      original: price,
-      final: price,
-      hasDiscount: false,
-      showTip: false,
-    }
-  }
   const cfg = recordFeeConfig.value
   const HIDDEN: RecordFeeResult = { show: false, original: 0, final: 0, hasDiscount: false, showTip: false }
   if (!cfg || cfg.status !== 1) return HIDDEN

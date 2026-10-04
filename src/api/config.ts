@@ -15,6 +15,7 @@ import type {
   OnlineWithdrawDescriptionData,
   OnlineWithdrawDescriptionRequest,
   OnlineWithdrawTypeListData,
+  PrivateUcConfigData,
   RegisterAreaData,
   UserWhitelistInfoData,
   UserWhitelistInfoRequest,
@@ -45,6 +46,18 @@ export async function postDiamondConfigApi(
   payload: DiamondConfigRequest = {},
 ): Promise<ApiResponse<DiamondConfigData>> {
   const response = await http.post<ApiResponse<DiamondConfigData>>('/config/diamond/config', payload)
+  return response.data
+}
+
+// 渠道包私域 UC 收费配置。
+export async function postPrivateUcConfigApi(
+  payload: Record<string, unknown> = {},
+): Promise<ApiResponse<PrivateUcConfigData>> {
+  const response = await http.post<ApiResponse<PrivateUcConfigData>>(
+    '/config/private/uc/config',
+    payload,
+    { suppressBusinessToast: true } satisfies HttpRequestOptionsExt,
+  )
   return response.data
 }
 

@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import type { PrivateUcChargeConfigItem, PrivateUcFeeType } from '@bridge-protocol'
 import { postBeforeLoginConfigApi, postGlobalConfigApi } from '@/api/config'
 import type {
   DiamondConfigData,
@@ -17,11 +18,19 @@ import {
   replacePublicCacheEntries,
 } from '@/utils/indexedDB'
 import { localStore } from '@/utils/localStore'
-import { configurePlatformDomains, isChannelPackageHost } from '@/utils/channelPackage'
+import {
+  CHANNEL_PACKAGE_UC_CHARGE_ENABLED,
+  configurePlatformDomains,
+  getPrivateUcChargeConfigs,
+  isChannelPackageHost,
+  type NormalizedPrivateUcConfig,
+} from '@/utils/channelPackage'
 
 interface AppConfigState {
   globalConfig: GlobalConfigData | null
   diamondConfig: DiamondConfigMap | null
+  privateUcChargeConfig: PrivateUcChargeConfigItem[]
+  privateUcMttRecordFeeConfig: MttRecordFeeConfig | null
 }
 
 let guestGlobalConfigPromise: Promise<void> | null = null
@@ -56,8 +65,13 @@ function normalizeSettings(raw: unknown): DiamondSetting[] {
     const row = item as Record<string, unknown>
     return {
       sb: Math.floor(toNum(row.sb)),
+      blind_type: Math.floor(toNum(row.blind_type)),
       price: toNum(row.price),
       discount_price: toNum(row.discount_price),
+      discount: row.discount === undefined ? 1 : toNum(row.discount),
+      record_floor: row.record_floor === undefined ? undefined : toNum(row.record_floor),
+      record_ratio: row.record_ratio === undefined ? undefined : toNum(row.record_ratio),
+      decimal_type: row.decimal_type === undefined ? undefined : Math.floor(toNum(row.decimal_type)),
     }
   })
 }
@@ -86,6 +100,8 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
   state: (): AppConfigState => ({
     globalConfig: null,
     diamondConfig: null,
+    privateUcChargeConfig: getPrivateUcChargeConfigs(),
+    privateUcMttRecordFeeConfig: null,
   }),
   getters: {
     // 对齐 Unity GameCache._clubDisplayPlatformMtt：赛事列表是否展示平台创建的 MTT/SNG。
@@ -103,6 +119,13 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
                 d.record_fee_mtt_uc
         if (!rawJson) return null
         try { return JSON.parse(rawJson) as MttRecordFeeConfig } catch { return null }
+      }
+    },
+    getPrivateUcChargePrice(state): (feeType: PrivateUcFeeType) => number {
+      return (feeType: PrivateUcFeeType) => {
+        if (!CHANNEL_PACKAGE_UC_CHARGE_ENABLED) return 0
+        const price = state.privateUcChargeConfig.find((item) => item.feeType === feeType)?.price
+        return typeof price === 'number' && Number.isFinite(price) && price > 0 ? price : 0
       }
     },
   },
@@ -182,6 +205,18 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
           console.warn('[appConfig] persist diamond_config cache failed:', error)
         })
     },
+    setPrivateUcChargeConfig(items: PrivateUcChargeConfigItem[]): void {
+      this.privateUcChargeConfig = CHANNEL_PACKAGE_UC_CHARGE_ENABLED
+        ? items.map((item) => ({ ...item, price: Number(item.price) || 0 }))
+        : getPrivateUcChargeConfigs()
+    },
+    setPrivateUcConfig(config: NormalizedPrivateUcConfig): void {
+      this.setPrivateUcChargeConfig(config.chargeItems)
+      this.diamondConfig = CHANNEL_PACKAGE_UC_CHARGE_ENABLED ? config.diamondConfig : {}
+      this.privateUcMttRecordFeeConfig = CHANNEL_PACKAGE_UC_CHARGE_ENABLED
+        ? config.mttRecordFeeConfig
+        : null
+    },
     async restorePublicConfigCache(): Promise<void> {
       // 必须先恢复全局域名配置，才能准确判断当前是否为渠道包。
       const globalConfig = await restoreGlobalConfig(StorageKey.APP_CONFIG_CACHE)
@@ -194,6 +229,7 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
       // 私域版本改用独立 UC 收费配置，不能再恢复旧的钻石收费缓存。
       if (isChannelPackageHost()) {
         this.diamondConfig = null
+        this.privateUcMttRecordFeeConfig = null
         return
       }
 

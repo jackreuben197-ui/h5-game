@@ -1,4 +1,4 @@
-import { postDiamondConfigApi } from '@/api/config'
+import { postDiamondConfigApi, postPrivateUcConfigApi } from '@/api/config'
 import { getUserClubApi, getUserInfoApi } from '@/api/user'
 import {
   forwardDiamondConfigToCocos,
@@ -16,7 +16,11 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { localStore } from '@/utils/localStore'
 import { ensureMultiLanguageTemplateLoaded } from '@/utils/multiLanguageTemplate'
 import { readClubListCache } from '@/utils/userClubListCache'
-import { getPrivateUcChargeConfigs, isChannelPackageHost } from '@/utils/channelPackage'
+import {
+  getPrivateUcChargeConfigs,
+  isChannelPackageHost,
+  normalizePrivateUcConfig,
+} from '@/utils/channelPackage'
 
 let inFlightToken = ''
 let inFlightPromise: Promise<PostAuthProfileSyncResult> | null = null
@@ -53,9 +57,13 @@ export function syncPostAuthData(): Promise<PostAuthSyncResult> {
   }
 
   const isPrivateUcPackage = isChannelPackageHost()
+  const appConfigStore = useAppConfigStore(pinia)
   forwardPrivateUcChargeConfigToCocos(
-    isPrivateUcPackage ? getPrivateUcChargeConfigs() : [],
+    isPrivateUcPackage ? appConfigStore.privateUcChargeConfig : [],
   )
+  if (isPrivateUcPackage) {
+    forwardDiamondConfigToCocos(appConfigStore.diamondConfig)
+  }
 
   // WS 保活独立于资料同步：同一 token 已同步过时，仍允许刷新/路由切换兜底恢复 WS。
   const wsReady = LoginSession.EnsureWS()
@@ -169,9 +177,32 @@ async function runPostAuthSync(token: string): Promise<PostAuthProfileSyncResult
         console.warn('[post-auth-sync] sync global config failed:', error)
       }),
 
-    // 私域版本后续改拉独立 UC 收费列表；接口提供前不再请求钻石收费列表。
+    // 私域版本只拉独立 UC 收费配置，不请求钻石收费列表。
     isPrivateUcPackage
-      ? Promise.resolve()
+      ? postPrivateUcConfigApi({})
+        .then((res) => {
+          if (gameStore.sessionToken.trim() !== token) return
+          const config = Number(res.code) === 0
+            ? normalizePrivateUcConfig(res.data)
+            : {
+                chargeItems: getPrivateUcChargeConfigs(),
+                diamondConfig: {},
+                mttRecordFeeConfig: null,
+              }
+          appConfigStore.setPrivateUcConfig(config)
+          forwardDiamondConfigToCocos(appConfigStore.diamondConfig)
+          forwardPrivateUcChargeConfigToCocos(appConfigStore.privateUcChargeConfig)
+        })
+        .catch((error) => {
+          console.warn('[post-auth-sync] sync private UC config failed:', error)
+          appConfigStore.setPrivateUcConfig({
+            chargeItems: getPrivateUcChargeConfigs(),
+            diamondConfig: {},
+            mttRecordFeeConfig: null,
+          })
+          forwardDiamondConfigToCocos(appConfigStore.diamondConfig)
+          forwardPrivateUcChargeConfigToCocos(appConfigStore.privateUcChargeConfig)
+        })
       : postDiamondConfigApi({})
         .then((res) => {
           if (res.code === 0 && res.data) {

@@ -14,7 +14,6 @@ import iconChips from '@/assets/icons/icon_chips.png'
 import { resolveDiamondPriceValue } from '@/utils/diamondPriceConfig'
 import { t } from '@/i18n'
 import {
-  getPrivateUcChargePrice,
   isChannelDiamondFreeMode,
   isChannelPackageHost,
   isPrivateUcChargeVisible,
@@ -128,7 +127,7 @@ const displayUser = computed(() => ({
 
 const nicknameCost = computed(() => {
   if (isPrivateUcPackage) {
-    const price = getPrivateUcChargePrice(PRIVATE_UC_FEE_TYPE.NICKNAME)
+    const price = appConfigStore.getPrivateUcChargePrice(PRIVATE_UC_FEE_TYPE.NICKNAME)
     return {
       original: price,
       current: price,

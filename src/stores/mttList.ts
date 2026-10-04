@@ -506,7 +506,7 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
       }
     },
 
-    // 对齐 Unity UserMttChangeNotify：新增/更新/不可见移除。
+    // 处理 UserMttChangeNotify：新增/更新/不可见移除。
     applyUserMttChangeNotify(rawBuffer: ArrayBufferLike): void {
       const payload = decodeUserMttChangeNotifyFromRawPacket(rawBuffer)
       if (!payload) {
@@ -547,6 +547,17 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
         return
       }
 
+      if (changeType === GAME_ROOM_DATA_CHANGE_TYPE.REMOVE) {
+        const matchId =
+          toSafeInt(payload.mttChange?.match_id) || toSafeInt(payload.mtt?.match_id)
+        if (!matchId) {
+          return
+        }
+
+        this.removeMttFromList(matchId)
+        return
+      }
+
       if (changeType !== GAME_ROOM_DATA_CHANGE_TYPE.UPDATE) {
         return
       }
@@ -567,12 +578,7 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
       const visible = isVisibleMttStatus(status)
 
       if (!visible) {
-        if (index >= 0) {
-          currentList.splice(index, 1)
-          this.records = currentList
-        }
-        this.mttIdList = this.mttIdList.filter((item) => toSafeInt(item.match_id) !== matchId)
-        this.persistMttListCache()
+        this.removeMttFromList(matchId)
         return
       }
 
@@ -597,6 +603,12 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
         __wsUpdateTime: sendTimestamp,
       }
       this.records = currentList
+      this.persistMttListCache()
+    },
+
+    removeMttFromList(matchId: number): void {
+      this.records = this.records.filter((item) => toSafeInt(item.match_id) !== matchId)
+      this.mttIdList = this.mttIdList.filter((item) => toSafeInt(item.match_id) !== matchId)
       this.persistMttListCache()
     },
 

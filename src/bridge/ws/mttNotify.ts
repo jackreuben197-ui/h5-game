@@ -17,10 +17,11 @@ export const MTT_NOTIFY_CODE = {
   MTT_SERIES_NOTIFY: 153,
 } as const
 
-// 与 Cocos GameRoomDataChangeType 对齐：1 新增，2 更新。
+// MTT/SNG 列表变更类型：1 新增，2 更新，3 移除。
 export const GAME_ROOM_DATA_CHANGE_TYPE = {
   ADD: 1,
   UPDATE: 2,
+  REMOVE: 3,
 } as const
 
 // 与 Cocos MttMatchStatus 对齐：0 未开赛，1 比赛中，2 已关闭，3 已取消。

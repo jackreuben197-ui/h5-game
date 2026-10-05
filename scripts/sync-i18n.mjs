@@ -13,23 +13,12 @@ const envLocalPath = localDir
   ? path.resolve(projectRoot, localDir, 'dist/h5-cc-i18n.min.js')
   : null
 
-const siblingPaths = [
-  path.resolve(projectRoot, '..', 'h5-cc-i18n', 'dist', 'h5-cc-i18n.min.js'),
-  path.resolve(projectRoot, '../../Ola_Vamos_i18n/h5-cc-i18n', 'dist', 'h5-cc-i18n.min.js'),
-]
-const siblingPath = siblingPaths.find((p) => fs.existsSync(p)) || siblingPaths[0]
-
 const packagePath = path.resolve(
   projectRoot,
   'node_modules/@silenthill/h5-cc-i18n/dist/h5-cc-i18n.min.js',
 )
 
-const sourcePath =
-  envLocalPath && fs.existsSync(envLocalPath)
-    ? envLocalPath
-    : fs.existsSync(siblingPath)
-      ? siblingPath
-      : packagePath
+const sourcePath = envLocalPath && fs.existsSync(envLocalPath) ? envLocalPath : packagePath
 const targetPath = path.resolve(projectRoot, 'public/h5-cc-i18n.min.js')
 
 // If the bundle is already committed in public/, use it as-is.
@@ -39,7 +28,7 @@ if (!fs.existsSync(sourcePath)) {
     process.exit(0)
   }
   console.error(`[sync:i18n] missing i18n runtime: ${sourcePath}`)
-  console.error('[sync:i18n] run "pnpm install" or build the sibling h5-cc-i18n package first.')
+  console.error('[sync:i18n] run "pnpm install" or point H5_CC_I18N_DIR at a built h5-cc-i18n checkout.')
   process.exit(1)
 }
 

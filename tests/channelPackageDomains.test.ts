@@ -209,6 +209,35 @@ test('club custom domain takes priority over platform qr-code domains', () => {
   )
 })
 
+test('club invite fields fall back to the matching private-domain club config', () => {
+  assert.deepEqual(
+    channelPackage.resolveChannelClubInviteFields(
+      { club_id: 17 },
+      {
+        club_id: 17,
+        invitation_code: 'club123',
+        safari_base_url: 'club-private.example.com',
+      },
+    ),
+    {
+      clubInviteCode: 'club123',
+      safariBaseUrl: 'club-private.example.com',
+    },
+  )
+
+  assert.deepEqual(
+    channelPackage.resolveChannelClubInviteFields(
+      { club_id: 18 },
+      {
+        club_id: 17,
+        invitation_code: 'wrong-club',
+        safari_base_url: 'wrong-club.example.com',
+      },
+    ),
+    { clubInviteCode: '', safariBaseUrl: '' },
+  )
+})
+
 test.after(() => {
   if (previousWindow) Object.defineProperty(globalThis, 'window', previousWindow)
   else Reflect.deleteProperty(globalThis, 'window')

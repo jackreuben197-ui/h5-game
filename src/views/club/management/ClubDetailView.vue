@@ -35,6 +35,7 @@ import { generateQrCodeUrl } from '@/utils/qrcode'
 import {
   buildChannelAgentInviteUrl,
   buildChannelClubInviteUrl,
+  resolveChannelClubInviteFields,
 } from '@/utils/channelPackage'
 import { formatUC } from '@/utils/roomVisibility'
 import { showFailToast, showSuccessToast } from 'vant'
@@ -982,10 +983,10 @@ async function confirmDeleteClub(): Promise<void> {
 }
 
 async function generateInviteQrCode(): Promise<void> {
-  const clubInviteCode = String(displayClub.value?.invitation_code || '').trim()
-  const safariBaseUrl = String(
-    displayClub.value?.safari_base_url || userInfoStore.currentClub?.safari_base_url || '',
-  ).trim()
+  const { clubInviteCode, safariBaseUrl } = resolveChannelClubInviteFields(
+    displayClub.value,
+    userInfoStore.channelDefaultClub,
+  )
   const url = isAgent.value && agentInviteCode.value
     ? buildChannelAgentInviteUrl(agentInviteCode.value, clubInviteCode, safariBaseUrl)
     : buildChannelClubInviteUrl(clubInviteCode, safariBaseUrl)

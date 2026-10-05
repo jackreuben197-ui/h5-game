@@ -20,6 +20,12 @@ interface PlatformDomainGlobalConfig {
   plat_domain_main_info?: unknown
 }
 
+interface ClubInviteSource {
+  club_id?: number | string
+  invitation_code?: string
+  safari_base_url?: string
+}
+
 // 历史官方入口兼容：该域名未包含在测试环境 plat_domain_main_info 中，
 // 但仍是有效官方包入口，必须避免按俱乐部自定义 CNAME 查询。
 const BUILT_IN_OFFICIAL_DOMAINS = ['test2-game.awanptest.com']
@@ -565,6 +571,23 @@ export function buildChannelClubInviteUrl(clubInviteCode?: string, safariBaseUrl
   }
 
   return `${currentUrl.protocol}//${normalizedClubCode}.${qrCodeDomain}`
+}
+
+export function resolveChannelClubInviteFields(
+  club: ClubInviteSource | null | undefined,
+  channelDefaultClub: ClubInviteSource | null | undefined,
+): { clubInviteCode: string; safariBaseUrl: string } {
+  const clubId = readString(String(club?.club_id ?? ''))
+  const channelClubId = readString(String(channelDefaultClub?.club_id ?? ''))
+  const matchingChannelClub =
+    clubId && channelClubId && clubId === channelClubId ? channelDefaultClub : undefined
+
+  return {
+    clubInviteCode:
+      readString(club?.invitation_code) || readString(matchingChannelClub?.invitation_code),
+    safariBaseUrl:
+      readString(club?.safari_base_url) || readString(matchingChannelClub?.safari_base_url),
+  }
 }
 
 export function buildChannelAgentInviteUrl(

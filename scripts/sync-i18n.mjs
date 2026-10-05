@@ -13,7 +13,11 @@ const envLocalPath = localDir
   ? path.resolve(projectRoot, localDir, 'dist/h5-cc-i18n.min.js')
   : null
 
-const siblingPath = path.resolve(projectRoot, '..', 'h5-cc-i18n', 'dist', 'h5-cc-i18n.min.js')
+const siblingPaths = [
+  path.resolve(projectRoot, '..', 'h5-cc-i18n', 'dist', 'h5-cc-i18n.min.js'),
+  path.resolve(projectRoot, '../../Ola_Vamos_i18n/h5-cc-i18n', 'dist', 'h5-cc-i18n.min.js'),
+]
+const siblingPath = siblingPaths.find((p) => fs.existsSync(p)) || siblingPaths[0]
 
 const packagePath = path.resolve(
   projectRoot,

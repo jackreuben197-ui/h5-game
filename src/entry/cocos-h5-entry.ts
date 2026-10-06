@@ -9,6 +9,29 @@ recordDebugEvent('[boot]', 'cocos h5 entry loaded', {
 
 let mountRevision = 0
 let mountTask: Promise<void> | null = null
+let cocosBootScheduled = false
+
+function startCocosAfterFirstPaint(): void {
+  if (cocosBootScheduled || typeof window === 'undefined') return
+  cocosBootScheduled = true
+
+  let dispatched = false
+  const dispatchReady = (): void => {
+    if (dispatched) return
+    dispatched = true
+    window.clearTimeout(fallbackTimer)
+    window.performance?.mark?.('h5-first-paint')
+    window.dispatchEvent(new Event('h5:first-paint'))
+  }
+
+  // 可见页面用双 RAF 保证 Vue 挂载结果至少已经交给浏览器绘制一帧；
+  // 后台/隐藏 WebView 的 RAF 可能被暂停，保留超时兜底避免 Cocos 永远不启动。
+  const fallbackTimer = window.setTimeout(dispatchReady, 1000)
+  if (typeof window.requestAnimationFrame !== 'function') return
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(dispatchReady)
+  })
+}
 
 async function preparePlatformDomains(): Promise<void> {
   const appConfigStore = useAppConfigStore(pinia)
@@ -29,7 +52,10 @@ const host = {
       })
       .then(() => {
         if (revision === mountRevision) {
-          mountH5App(container)
+          const mountedApp = mountH5App(container)
+          if (mountedApp) {
+            startCocosAfterFirstPaint()
+          }
         }
       })
       .finally(() => {

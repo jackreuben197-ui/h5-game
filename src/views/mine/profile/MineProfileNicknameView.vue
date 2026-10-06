@@ -14,7 +14,6 @@ import icInfo from '@/assets/icons/ic_info.svg'
 import { resolveDiamondPriceValue } from '@/utils/diamondPriceConfig'
 import { t, tJoin, ucLabel } from '@/i18n'
 import {
-  getPrivateUcChargePrice,
   isChannelDiamondFreeMode,
   isChannelPackageHost,
   isPrivateUcChargeVisible,
@@ -127,7 +126,7 @@ const displayUser = computed(() => ({
 
 const nicknameCost = computed(() => {
   if (isPrivateUcPackage) {
-    const price = getPrivateUcChargePrice(PRIVATE_UC_FEE_TYPE.NICKNAME)
+    const price = appConfigStore.getPrivateUcChargePrice(PRIVATE_UC_FEE_TYPE.NICKNAME)
     return {
       original: price,
       current: price,

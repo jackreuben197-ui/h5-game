@@ -373,6 +373,15 @@ function resolveFieldOptions(field: TableFormFieldConfig) {
   if (field.modelValue === 'ante') {
     return anteOptions.value
   }
+  if (field.modelValue === 'game_delay_times' && hideDiamondElements) {
+    const configuredMax = Number(appConfigStore.globalConfig?.private_game_delay_times)
+    if (Number.isFinite(configuredMax) && configuredMax >= 1) {
+      return Array.from({ length: Math.floor(configuredMax) }, (_, index) => ({
+        text: String(index + 1),
+        value: index + 1,
+      }))
+    }
+  }
   return field.options
 }
 

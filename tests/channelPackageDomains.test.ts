@@ -47,8 +47,109 @@ test('private UC config publishes all nine defined fee types with zero prices hi
     { feeType: 8, price: 0 },
     { feeType: 9, price: 0 },
   ])
-  assert.equal(channelPackage.CHANNEL_PACKAGE_UC_CHARGE_ENABLED, false)
+  assert.equal(channelPackage.CHANNEL_PACKAGE_UC_CHARGE_ENABLED, true)
   assert.equal(channelPackage.isPrivateUcChargeVisible(0, 'club.example.com'), false)
+})
+
+test('private UC API amounts are scaled and blind-level settings keep type_ext detail', () => {
+  const normalized = channelPackage.normalizePrivateUcConfig({
+    club_id: 97,
+    data: [
+      { fee_type: 1, config_kind: 1, str_value: '{"price":10000}' },
+      { fee_type: 2, config_kind: 1, value: 20000, str_value: '' },
+      {
+        fee_type: 3,
+        config_kind: 1,
+        str_value: '{"status":1,"floor_price":30000,"ratio":0.1,"decimal_type":3,"discount":1,"start_time":0,"end_time":0}',
+      },
+      {
+        fee_type: 4,
+        config_kind: 1,
+        str_value: '{"raw_price":40000,"pay_price":30000,"status":1,"start_time":0,"end_time":0}',
+      },
+      {
+        fee_type: 5,
+        config_kind: 1,
+        value: 99,
+        str_value: '{"game_delay_times":99,"free_addtime_daily_times":99}',
+      },
+      {
+        fee_type: 6,
+        config_kind: 1,
+        value: 99,
+        str_value: '{"view_type":2,"free_count":99}',
+      },
+      {
+        id: 17,
+        fee_type: 5,
+        config_kind: 2,
+        config_type: 2,
+        type_ext: 1210,
+        status: 1,
+        setting: '[{"sb":10,"blind_type":1,"price":1100,"discount_price":500,"discount":0.5}]',
+        start_date: '2026-01-01',
+        end_date: '2026-12-31',
+        start_time: 1767225600,
+        end_time: 1798761599,
+      },
+      {
+        id: 38,
+        fee_type: 6,
+        config_kind: 2,
+        config_type: 31,
+        type_ext: 0,
+        status: 1,
+        setting: '[{"sb":10,"blind_type":1,"price":900,"discount_price":0,"discount":1}]',
+        start_date: '',
+        end_date: '',
+        start_time: 0,
+        end_time: 0,
+      },
+      {
+        id: 39,
+        fee_type: 7,
+        config_kind: 2,
+        config_type: 9,
+        type_ext: 210,
+        status: 1,
+        setting: '[{"sb":10,"blind_type":1,"record_floor":1200,"record_ratio":0.5,"discount":1,"decimal_type":2}]',
+        start_date: '',
+        end_date: '',
+        start_time: 0,
+        end_time: 0,
+      },
+    ],
+    gold_type: 1,
+    tribe_id: 35,
+    unit_scale: 100,
+  } as any)
+
+  assert.deepEqual(normalized.chargeItems, [
+    { feeType: 1, price: 100 },
+    { feeType: 2, price: 200 },
+    { feeType: 3, price: 300 },
+    { feeType: 4, price: 400 },
+    { feeType: 5, price: 0 },
+    { feeType: 6, price: 0 },
+    { feeType: 7, price: 0 },
+    { feeType: 8, price: 0 },
+    { feeType: 9, price: 0 },
+  ])
+  assert.deepEqual(normalized.mttRecordFeeConfig, {
+    status: 1,
+    floor_price: 300,
+    ratio: 0.1,
+    decimal_type: 3,
+    discount: 1,
+    start_time: 0,
+    end_time: 0,
+  })
+  assert.equal(normalized.diamondConfig[2][1210].setting[0].sb, 10)
+  assert.equal(normalized.diamondConfig[2][1210].setting[0].price, 11)
+  assert.equal(normalized.diamondConfig[2][1210].setting[0].discount_price, 5)
+  assert.equal(normalized.diamondConfig[31][0].setting[0].price, 9)
+  assert.equal(normalized.diamondConfig[9][210].setting[0].record_floor, 12)
+  assert.equal(normalized.diamondConfig[9][210].setting[0].record_ratio, 0.5)
 })
 
 test('runtime platform domains drive package classification and invite URLs', () => {
@@ -141,6 +242,35 @@ test('hosts outside the platform domain config fall back to the deploy apex', ()
   assert.equal(
     channelPackage.buildChannelClubInviteUrl('RhSwEHJy'),
     'https://RhSwEHJy.prvw-game.trackyourchoice.com/#/home',
+  )
+})
+
+test('club invite fields fall back to the matching private-domain club config', () => {
+  assert.deepEqual(
+    channelPackage.resolveChannelClubInviteFields(
+      { club_id: 17 },
+      {
+        club_id: 17,
+        invitation_code: 'club123',
+        safari_base_url: 'club-private.example.com',
+      },
+    ),
+    {
+      clubInviteCode: 'club123',
+      safariBaseUrl: 'club-private.example.com',
+    },
+  )
+
+  assert.deepEqual(
+    channelPackage.resolveChannelClubInviteFields(
+      { club_id: 18 },
+      {
+        club_id: 17,
+        invitation_code: 'wrong-club',
+        safari_base_url: 'wrong-club.example.com',
+      },
+    ),
+    { clubInviteCode: '', safariBaseUrl: '' },
   )
 })
 

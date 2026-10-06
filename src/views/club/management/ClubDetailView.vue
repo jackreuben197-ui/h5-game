@@ -45,6 +45,7 @@ import {
   buildChannelClubInviteUrl,
   buildChannelRegisterUrl,
   isPrivateDomainMode,
+  resolveChannelClubInviteFields,
 } from '@/utils/channelPackage'
 import { formatUC } from '@/utils/roomVisibility'
 import { showFailToast, showSuccessToast } from 'vant'
@@ -1062,7 +1063,11 @@ async function generateInviteQrCode(): Promise<void> {
     return
   }
 
-  let clubInviteCode = String(currentClub.invitation_code || '').trim()
+  const inviteFields = resolveChannelClubInviteFields(
+    currentClub,
+    userInfoStore.channelDefaultClub,
+  )
+  let clubInviteCode = inviteFields.clubInviteCode
   if (!clubInviteCode) {
     try {
       const response = await postOrgClubInviTationApi({
@@ -1079,9 +1084,9 @@ async function generateInviteQrCode(): Promise<void> {
     }
   }
 
-  const safariBaseUrl = String(
-    currentClub.safari_base_url || userInfoStore.currentClub?.safari_base_url || '',
-  ).trim()
+  const safariBaseUrl =
+    inviteFields.safariBaseUrl ||
+    String(userInfoStore.currentClub?.safari_base_url || '').trim()
   const finalLink = isAgent.value && agentInviteCode.value
     ? buildChannelAgentInviteUrl(agentInviteCode.value, clubInviteCode, safariBaseUrl)
     : isChannelPackage

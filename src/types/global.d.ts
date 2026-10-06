@@ -32,6 +32,7 @@ declare global {
     onMessgeRecv?: BridgeReceiveFn
     onMessageRecv?: BridgeReceiveFn
     __H5_GAME_ON_COCOS_MESSAGE__?: (incoming: unknown) => void
+    __H5_START_COCOS__?: () => void
     __H5_READY__?: boolean
     __CC_READY__?: boolean
     __H5_VISIBLE__?: boolean

@@ -47,6 +47,14 @@ export interface GlobalConfigData {
   club_display_platform_mtt?: number | string
   // 平台数据统计使用的时区，对齐 Unity GameCache._platformTimeZone。
   platform_role_time_zone?: number | string
+  // 私域 UC 的加时档位数、每日免费加时次数；均来自原全局配置接口。
+  private_game_delay_times?: number | string
+  private_free_addtime_daily_times?: number | string
+  // 私域查看公共牌规则：{"view_type":1|2,"free_count":number}。
+  private_view_public_cards?: string | {
+    view_type?: number | string
+    free_count?: number | string
+  }
   [key: string]: unknown
 }
 
@@ -56,16 +64,56 @@ export interface DiamondConfigData {
   [key: string]: unknown
 }
 
+export interface PrivateUcConfigRow {
+  id: number
+  fee_type: number
+  tribe_id: number
+  config_kind: number
+  config_key: string
+  value: number
+  desc: string
+  str_value: string
+  value_type: number
+  config_type: number
+  type_ext: number
+  setting: string
+  status: number
+  start_date: string
+  end_date: string
+  start_time: number
+  end_time: number
+  op_id: number
+  create_time: string
+  update_time: string
+}
+
+// /config/private/uc/config 的服务端响应 data，严格对齐接口文档。
+export interface PrivateUcConfigData {
+  club_id: number
+  data: PrivateUcConfigRow[]
+  gold_type: number
+  tribe_id: number
+  unit_scale: number
+}
+
 export interface DiamondSetting {
   sb: number
+  blind_type: number
   price: number
   discount_price: number
+  discount: number
+  record_floor?: number
+  record_ratio?: number
+  decimal_type?: number
 }
 
 export interface DiamondConfigItem {
+  id?: number
   config_type: number
   status: number
   type_ext: number
+  start_date?: string
+  end_date?: string
   start_time: number
   end_time: number
   setting: DiamondSetting[]

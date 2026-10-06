@@ -793,44 +793,80 @@
     <!-- H5 挂载节点 -->
     <div id="app"></div>
 
-    <!-- Cocos 引擎加载（与旧模板一致） -->
-    <script src="src/settings.js" charset="utf-8"></script>
-    <script src="main.js" charset="utf-8"></script>
-
-    <!-- Cocos 启动脚本：兼容纯 H5 开发场景（无 Cocos 资源时直接跳过） -->
+    <!-- Cocos 启动脚本：等 H5 完成首次绘制后，再按 settings -> main -> engine 顺序加载。 -->
     <script type="text/javascript">
       ;(function () {
-        if (!window._CCSettings) {
-          return
-        }
-
-        var debug = window._CCSettings.debug
-        var splash = document.getElementById('splash')
-        if (splash) {
-          splash.style.display = 'block'
-        }
+        var cocosBootStarted = false
 
         function loadScript(moduleName, cb) {
-          function scriptLoaded() {
-            document.body.removeChild(domScript)
+          function finish(loaded) {
+            if (domScript.parentNode) {
+              domScript.parentNode.removeChild(domScript)
+            }
             domScript.removeEventListener('load', scriptLoaded, false)
-            cb && cb()
+            domScript.removeEventListener('error', scriptFailed, false)
+            cb && cb(loaded)
+          }
+          function scriptLoaded() {
+            finish(true)
+          }
+          function scriptFailed() {
+            finish(false)
           }
           var domScript = document.createElement('script')
           domScript.async = true
           domScript.src = moduleName
+          domScript.setAttribute('fetchpriority', 'low')
           domScript.addEventListener('load', scriptLoaded, false)
+          domScript.addEventListener('error', scriptFailed, false)
           document.body.appendChild(domScript)
         }
 
-        loadScript(debug ? 'cocos2d-js.js' : 'cocos2d-js-min.js', function () {
-          var hasPhysics = window.CC_PHYSICS_BUILTIN || window.CC_PHYSICS_CANNON
-          if (hasPhysics) {
-            loadScript(debug ? 'physics.js' : 'physics-min.js', window.boot)
-          } else if (typeof window.boot === 'function') {
-            window.boot()
+        function startCocos() {
+          if (cocosBootStarted) {
+            return
           }
-        })
+          cocosBootStarted = true
+
+          loadScript('src/settings.js', function (settingsLoaded) {
+            // 纯 H5 开发环境没有 Cocos 构建产物，保持原来的静默跳过行为。
+            if (!settingsLoaded || !window._CCSettings) {
+              return
+            }
+
+            loadScript('main.js', function (mainLoaded) {
+              if (!mainLoaded || typeof window.boot !== 'function') {
+                return
+              }
+
+              var debug = window._CCSettings.debug
+              var splash = document.getElementById('splash')
+              if (splash) {
+                splash.style.display = 'block'
+              }
+
+              loadScript(debug ? 'cocos2d-js.js' : 'cocos2d-js-min.js', function (engineLoaded) {
+                if (!engineLoaded) {
+                  return
+                }
+                var hasPhysics = window.CC_PHYSICS_BUILTIN || window.CC_PHYSICS_CANNON
+                if (hasPhysics) {
+                  loadScript(debug ? 'physics.js' : 'physics-min.js', function (physicsLoaded) {
+                    if (physicsLoaded && typeof window.boot === 'function') {
+                      window.boot()
+                    }
+                  })
+                } else {
+                  window.boot()
+                }
+              })
+            })
+          })
+        }
+
+        window.addEventListener('h5:first-paint', startCocos, { once: true })
+        // 便于性能排查和极端场景下由宿主显式触发；函数本身保证只执行一次。
+        window.__H5_START_COCOS__ = startCocos
       })()
     </script>
     <!-- Telegram 初始化：内联脚本避免外部路径在 Cocos 预览中失效 -->

@@ -11,7 +11,6 @@ import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import { t, tJoin, ucLabel } from '@/i18n'
 import {
-  getPrivateUcChargePrice,
   isChannelDiamondFreeMode,
   isChannelPackageHost,
   isPrivateUcChargeVisible,
@@ -75,7 +74,7 @@ const renameRule = computed(() => {
     return {
       interval: 0,
       first_free: 2,
-      price: getPrivateUcChargePrice(PRIVATE_UC_FEE_TYPE.CLUB_NAME),
+      price: appConfigStore.getPrivateUcChargePrice(PRIVATE_UC_FEE_TYPE.CLUB_NAME),
     }
   }
   return parseUpdateClubNameConfig(appConfigStore.globalConfig?.update_club_name_config)

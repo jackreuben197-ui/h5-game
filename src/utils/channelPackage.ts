@@ -1,5 +1,12 @@
 import StorageKey from '@/constants/storageKey'
 import type { PrivateUcChargeConfigItem, PrivateUcFeeType } from '@bridge-protocol'
+import type {
+  DiamondConfigMap,
+  DiamondSetting,
+  MttRecordFeeConfig,
+  PrivateUcConfigData,
+  PrivateUcConfigRow,
+} from '@/api/models/config'
 import { localStore } from '@/utils/localStore'
 import { appConfig } from '@/utils/appConfig'
 import {
@@ -28,6 +35,12 @@ const TG_MINI_APP_PARAM = 'tg_mini_app'
 interface PlatformDomainGlobalConfig {
   plat_domain_qrcode_info?: unknown
   plat_domain_main_info?: unknown
+}
+
+interface ClubInviteSource {
+  club_id?: number | string
+  invitation_code?: string
+  safari_base_url?: string
 }
 
 // 历史官方入口兼容：该域名未包含在测试环境 plat_domain_main_info 中，
@@ -275,8 +288,8 @@ function collectTelegramHandoffParams(): URLSearchParams {
  */
 export const CHANNEL_PACKAGE_DIAMOND_FREE_MODE = true
 
-// 私域 UC 收费总开关：关闭后 H5 / Cocos 一起隐藏 1～9 的收费金额和 UC 图标。
-export const CHANNEL_PACKAGE_UC_CHARGE_ENABLED = false
+// 私域 UC 收费总开关：关闭后下发价格统一归零，H5 / Cocos 一起隐藏 1～9 的收费与图标。
+export const CHANNEL_PACKAGE_UC_CHARGE_ENABLED = true
 
 export const PRIVATE_UC_FEE_TYPE = {
   CLUB_NAME: 1,
@@ -303,7 +316,7 @@ const DEFINED_PRIVATE_UC_FEE_TYPES: PrivateUcFeeType[] = [
   PRIVATE_UC_FEE_TYPE.VIEW_ALL_PLAYERS,
 ]
 
-// 服务端接口接入前，1～9 的临时价格统一为 0；价格为 0 时两端都隐藏收费与 UC 图标。
+// 接口失败或某收费项未配置时价格为 0，两端都隐藏收费与 UC 图标。
 const PRIVATE_UC_PRICE_BY_FEE_TYPE: Record<PrivateUcFeeType, number> = {
   [PRIVATE_UC_FEE_TYPE.CLUB_NAME]: 0,
   [PRIVATE_UC_FEE_TYPE.REPLAY_COLLECT]: 0,
@@ -323,8 +336,161 @@ export function getPrivateUcChargeConfigs(): PrivateUcChargeConfigItem[] {
   }))
 }
 
-export function getPrivateUcChargePrice(feeType: PrivateUcFeeType): number {
-  return getPrivateUcChargeConfigs().find((item) => item.feeType === feeType)?.price ?? 0
+function readRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null
+}
+
+function parseJsonRecord(value: string): Record<string, unknown> | null {
+  if (!value.trim()) return null
+  try {
+    return readRecord(JSON.parse(value))
+  } catch {
+    return null
+  }
+}
+
+function readFiniteNumber(value: unknown): number | null {
+  const number = Number(value)
+  return Number.isFinite(number) && number >= 0 ? number : null
+}
+
+function toUcAmount(value: unknown, unitScale: number): number {
+  const amount = readFiniteNumber(value)
+  return amount === null ? 0 : amount / unitScale
+}
+
+function isInTimeWindow(startTime: unknown, endTime: unknown): boolean {
+  const start = Number(startTime)
+  const end = Number(endTime)
+  const now = Math.floor(Date.now() / 1000)
+  return Number.isFinite(start) && Number.isFinite(end) && start > 0 && end >= start
+    && start <= now && now <= end
+}
+
+function parsePrivateUcSetting(setting: string, unitScale: number): DiamondSetting[] {
+  if (!setting.trim()) return []
+  try {
+    const parsed = JSON.parse(setting)
+    if (!Array.isArray(parsed)) return []
+    return parsed.flatMap((item) => {
+      const row = readRecord(item)
+      if (!row) return []
+      const sb = readFiniteNumber(row.sb)
+      if (sb === null) return []
+      const normalized: DiamondSetting = {
+        sb,
+        blind_type: Math.floor(readFiniteNumber(row.blind_type) ?? 0),
+        price: toUcAmount(row.price, unitScale),
+        discount_price: toUcAmount(row.discount_price, unitScale),
+        discount: readFiniteNumber(row.discount) ?? 1,
+      }
+      if (row.record_floor !== undefined) {
+        normalized.record_floor = toUcAmount(row.record_floor, unitScale)
+      }
+      if (row.record_ratio !== undefined) {
+        normalized.record_ratio = readFiniteNumber(row.record_ratio) ?? 0
+      }
+      if (row.decimal_type !== undefined) {
+        normalized.decimal_type = Math.floor(readFiniteNumber(row.decimal_type) ?? 0)
+      }
+      return [normalized]
+    })
+  } catch {
+    return []
+  }
+}
+
+export interface NormalizedPrivateUcConfig {
+  chargeItems: PrivateUcChargeConfigItem[]
+  diamondConfig: DiamondConfigMap
+  mttRecordFeeConfig: MttRecordFeeConfig | null
+}
+
+function readMttRecordFeeConfig(
+  row: PrivateUcConfigRow,
+  unitScale: number,
+): MttRecordFeeConfig | null {
+  const config = parseJsonRecord(row.str_value)
+  if (!config || Number(config.status) !== 1) return null
+  return {
+    status: 1,
+    floor_price: toUcAmount(config.floor_price, unitScale),
+    ratio: readFiniteNumber(config.ratio) ?? 0,
+    decimal_type: Math.floor(readFiniteNumber(config.decimal_type) ?? 1),
+    discount: readFiniteNumber(config.discount) ?? 1,
+    start_time: Math.floor(readFiniteNumber(config.start_time) ?? 0),
+    end_time: Math.floor(readFiniteNumber(config.end_time) ?? 0),
+  }
+}
+
+export function normalizePrivateUcConfig(raw: PrivateUcConfigData): NormalizedPrivateUcConfig {
+  const unitScale = Number(raw?.unit_scale)
+  const rows = Array.isArray(raw?.data) ? raw.data : []
+  const chargeItems = getPrivateUcChargeConfigs()
+  const chargeItemMap = new Map(chargeItems.map((item) => [item.feeType, item]))
+  const diamondConfig: DiamondConfigMap = {}
+  let mttRecordFeeConfig: MttRecordFeeConfig | null = null
+
+  if (!CHANNEL_PACKAGE_UC_CHARGE_ENABLED || !Number.isFinite(unitScale) || unitScale <= 0) {
+    return { chargeItems, diamondConfig, mttRecordFeeConfig }
+  }
+
+  for (const row of rows) {
+    const feeType = Number(row.fee_type) as PrivateUcFeeType
+    if (!DEFINED_PRIVATE_UC_FEE_TYPES.includes(feeType)) continue
+
+    // 只有收费类型 1～4 的全局价格/规则来自私域 UC 接口。
+    // 5 的加时次数/每日免费次数和 6 的查看模式/每日免费次数已经迁回
+    // /config/global/config 的 private_* key，不能再从这里的 config_kind=1 读取。
+    if (row.config_kind === 1 && feeType <= PRIVATE_UC_FEE_TYPE.NICKNAME) {
+      const config = parseJsonRecord(row.str_value)
+      const item = chargeItemMap.get(feeType)
+      if (!item) continue
+      switch (feeType) {
+        case PRIVATE_UC_FEE_TYPE.CLUB_NAME:
+          item.price = toUcAmount(config?.price, unitScale)
+          break
+        case PRIVATE_UC_FEE_TYPE.REPLAY_COLLECT:
+          item.price = toUcAmount(row.value, unitScale)
+          break
+        case PRIVATE_UC_FEE_TYPE.MTT_RECORD:
+          mttRecordFeeConfig = readMttRecordFeeConfig(row, unitScale)
+          item.price = mttRecordFeeConfig?.floor_price ?? 0
+          break
+        case PRIVATE_UC_FEE_TYPE.NICKNAME: {
+          if (!config || Number(config.status) !== 1) break
+          const price = isInTimeWindow(config.start_time, config.end_time)
+            ? config.pay_price
+            : config.raw_price
+          item.price = toUcAmount(price, unitScale)
+          break
+        }
+      }
+      continue
+    }
+
+    if (row.config_kind !== 2 || row.status !== 1 || row.config_type <= 0 || row.type_ext < 0) {
+      continue
+    }
+    const setting = parsePrivateUcSetting(row.setting, unitScale)
+    if (!setting.length) continue
+    if (!diamondConfig[row.config_type]) diamondConfig[row.config_type] = {}
+    diamondConfig[row.config_type][row.type_ext] = {
+      id: row.id,
+      config_type: row.config_type,
+      status: row.status,
+      type_ext: row.type_ext,
+      start_date: row.start_date,
+      end_date: row.end_date,
+      start_time: row.start_time,
+      end_time: row.end_time,
+      setting,
+    }
+  }
+
+  return { chargeItems, diamondConfig, mttRecordFeeConfig }
 }
 
 export function isPrivateUcChargeVisible(
@@ -579,6 +745,23 @@ function buildChannelClubOrigin(inviteCode?: string, safariBaseUrl?: string): st
 export function buildChannelClubInviteUrl(inviteCode?: string, safariBaseUrl?: string): string {
   const baseUrl = buildChannelClubOrigin(inviteCode, safariBaseUrl)
   return baseUrl.includes('/#/') ? baseUrl : `${baseUrl}${INVITE_LANDING_HASH}`
+}
+
+export function resolveChannelClubInviteFields(
+  club: ClubInviteSource | null | undefined,
+  channelDefaultClub: ClubInviteSource | null | undefined,
+): { clubInviteCode: string; safariBaseUrl: string } {
+  const clubId = readString(String(club?.club_id ?? ''))
+  const channelClubId = readString(String(channelDefaultClub?.club_id ?? ''))
+  const matchingChannelClub =
+    clubId && channelClubId && clubId === channelClubId ? channelDefaultClub : undefined
+
+  return {
+    clubInviteCode:
+      readString(club?.invitation_code) || readString(matchingChannelClub?.invitation_code),
+    safariBaseUrl:
+      readString(club?.safari_base_url) || readString(matchingChannelClub?.safari_base_url),
+  }
 }
 
 export function buildChannelAgentInviteUrl(

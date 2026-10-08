@@ -7,11 +7,15 @@ import { dzpkPersistStorage } from '@/utils/localStore'
 import {
   copyStorageToMainDomain,
   extractInviteCodeFromSubdomain,
+  hasClubLinkParams,
   isChannelPackageHost,
+  isClubLinkContext,
   isOfficialPackageHost,
   isPlatformQrCodeHost,
   isPrivateDomainMode,
   resolveInviteCode,
+  resolveUrlClubId,
+  resolveUrlClubRandomId,
 } from '@/utils/channelPackage'
 import { resolveTelegramClubRandomId } from '@/utils/telegramStartParam'
 import { applySafariWebAppConfig } from '@/utils/safariWebApp'
@@ -223,23 +227,25 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
     async ensureChannelDefaultClub(): Promise<ClubInfo | null> {
       const hostname =
         typeof window === 'undefined' ? '' : window.location.hostname.trim().toLowerCase()
-      // 普通本地开发无需请求渠道俱乐部；但渠道包模拟同样运行在 localhost
-      // （Cocos 预览通常是 :7456），此时必须按测试邀请码正常初始化。
-      if (hostname === 'localhost' && !isChannelPackageHost(hostname)) {
+      // 普通本地开发且无俱乐部 URL 参数时无需请求渠道俱乐部；但渠道包模拟或带参数链接必须正常初始化。
+      if (hostname === 'localhost' && !isChannelPackageHost(hostname) && !hasClubLinkParams()) {
         this.channelDefaultClub = null
         channelDefaultClubLoaded = false
+        applySafariWebAppConfig(null)
         return null
       }
       // “邀请码.二维码域名”必须按邀请码查询，不能当成俱乐部独立 CNAME 域名。
       const channelInviteCode = extractInviteCodeFromSubdomain(hostname)
       const baseUrl = channelInviteCode ? '' : resolveSafariBaseUrl(hostname)
-      // 主域名既不是渠道子域名也解析不出自定义域名，不发默认俱乐部请求。
-      if (!isPrivateDomainMode() && !baseUrl) {
+      // 主域名既不是渠道子域名、解析不出自定义域名，也不含俱乐部参数，不发默认俱乐部请求。
+      if (!isClubLinkContext(hostname) && !baseUrl) {
         this.channelDefaultClub = null
         channelDefaultClubLoaded = false
+        applySafariWebAppConfig(null)
         return null
       }
       if (channelDefaultClubLoaded) {
+        applySafariWebAppConfig(this.channelDefaultClub)
         return this.channelDefaultClub
       }
       if (channelDefaultClubInFlight) {
@@ -250,14 +256,17 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       // game links (login_/home_<roomId>_<clubRandomId>) resolve to a club random id. Both
       // select the same private-domain club via /org/club/default.
       const inviteCode = channelInviteCode || (baseUrl ? '' : resolveInviteCode(hostname))
-      const clubRandomId = Number(resolveTelegramClubRandomId())
+      const urlClubId = resolveUrlClubId()
+      const clubRandomId = resolveUrlClubRandomId() || Number(resolveTelegramClubRandomId()) || 0
       const payload = baseUrl
         ? { base_url: baseUrl }
         : inviteCode
           ? { invite_code: inviteCode }
-          : clubRandomId
-            ? { random_id: clubRandomId }
-            : {}
+          : urlClubId
+            ? ({ club_id: urlClubId } as Record<string, unknown>)
+            : clubRandomId
+              ? { random_id: clubRandomId }
+              : {}
 
       channelDefaultClubInFlight = (async () => {
         try {
@@ -267,8 +276,19 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
           }
           const rawClub = (response.data?.club || {}) as OrgClubSearchInfoData
           const resData = response.data as Record<string, unknown> | undefined
-          const safariLabel = rawClub.safari_label || resData?.safari_label
-          const safariIconUrl = rawClub.safari_icon_url || resData?.safari_icon_url
+          const rawObj = rawClub as Record<string, unknown>
+          const safariLabel =
+            rawClub.safari_label ||
+            resData?.safari_label ||
+            rawObj.desktop_name ||
+            rawObj.safari_name ||
+            rawObj.app_name
+          const safariIconUrl =
+            rawClub.safari_icon_url ||
+            resData?.safari_icon_url ||
+            rawObj.desktop_icon ||
+            rawObj.safari_icon ||
+            rawObj.app_icon
           const safariBaseUrl = rawClub.safari_base_url || resData?.safari_base_url
           const club = normalizeDefaultClub({
             ...rawClub,
@@ -287,14 +307,11 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
           }
           this.channelDefaultClub = club
           channelDefaultClubLoaded = true
-          if (club) {
-            applySafariWebAppConfig(club)
-          }
+          applySafariWebAppConfig(club)
           return club
         } catch (error) {
           console.warn('[userInfo] ensureChannelDefaultClub failed:', error)
-          // 刷新时可能已从持久化状态恢复出有效渠道配置；网络抖动不能把名称、
-          // Banner scope 和 h5_menu 一起清空。loaded 保持 false，后续调用仍可重试。
+          applySafariWebAppConfig(this.channelDefaultClub)
           return this.channelDefaultClub
         } finally {
           channelDefaultClubInFlight = null

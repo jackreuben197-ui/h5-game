@@ -261,6 +261,13 @@ export function isPrivateDomainMode(hostname: string = window.location.hostname)
   return isChannelPackageHost(hostname) || isTelegramClubContext()
 }
 
+export function isClubLinkContext(hostname: string = window.location.hostname): boolean {
+  if (isPrivateDomainMode(hostname)) return true
+  if (typeof window !== 'undefined' && hasClubLinkParams()) return true
+  return false
+}
+
+
 // 跳主域名会换 origin：sessionStorage 里的 Mini App 标记随之丢失，新地址里也不再有
 // tgWebAppData，于是 Telegram 环境「消失」——底部导航、安全区适配、initData 兜底登录全部失效。
 // 与 storage_data 同理，把 Telegram 身份一并带到目标地址，由 index.html 在新 origin 上还原。
@@ -616,6 +623,42 @@ export function extractInviteCodeFromSubdomain(
   }
   // 邀请码 = host 最前面的标签
   return getHostLabels(hostname)[0] || ''
+}
+
+export function resolveUrlClubId(url: URL = new URL(window.location.href)): number {
+  const searchParams = url.searchParams
+  const hashParams = getHashQueryParams(url.hash || '')
+  const rawId =
+    readParam(searchParams, hashParams, 'club_id') ||
+    readParam(searchParams, hashParams, 'clubId') ||
+    readParam(searchParams, hashParams, 'c') ||
+    readParam(searchParams, hashParams, 'club')
+  const num = parseInt(rawId, 10)
+  return isNaN(num) || num <= 0 ? 0 : num
+}
+
+export function resolveUrlClubRandomId(url: URL = new URL(window.location.href)): number {
+  const searchParams = url.searchParams
+  const hashParams = getHashQueryParams(url.hash || '')
+  const rawId =
+    readParam(searchParams, hashParams, 'random_id') ||
+    readParam(searchParams, hashParams, 'club_random_id') ||
+    readParam(searchParams, hashParams, 'clubRandomId')
+  const num = parseInt(rawId, 10)
+  return isNaN(num) || num <= 0 ? 0 : num
+}
+
+export function hasClubLinkParams(url: URL = new URL(window.location.href)): boolean {
+  if (typeof window === 'undefined') return false
+  const inviteCode =
+    readParam(url.searchParams, getHashQueryParams(url.hash || ''), 'invite_code') ||
+    readParam(url.searchParams, getHashQueryParams(url.hash || ''), 'code') ||
+    readParam(url.searchParams, getHashQueryParams(url.hash || ''), 'i')
+  if (inviteCode) return true
+  if (resolveUrlClubId(url) > 0) return true
+  if (resolveUrlClubRandomId(url) > 0) return true
+  if (resolveTelegramClubRandomId()) return true
+  return false
 }
 
 export function parseInviteParamsFromLocation(

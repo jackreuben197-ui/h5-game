@@ -30,6 +30,87 @@
     <link rel="apple-touch-icon" href="/src/assets/icons/Official_web_logo.jpeg" />
     <link rel="manifest" href="/manifest.webmanifest" />
 
+
+    <script>
+      ;(function () {
+        try {
+          var search = window.location.search || ''
+          var hash = window.location.hash || ''
+          var locationText = search + ' ' + hash
+          var hostname = (window.location.hostname || '').toLowerCase()
+
+          var hasClubParam = /(?:[?&]|^)(?:invite_code|code|i|trace_hash|club_id|clubId|c|club|random_id|club_random_id|clubRandomId)=/i.test(locationText)
+          var isSubdomain = false
+          if (hostname && hostname !== 'localhost' && !/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+            var labels = hostname.split('.')
+            if (labels.length >= 3 && !/^(www|h5|app|test|dev)$/i.test(labels[0])) {
+              isSubdomain = true
+            }
+          }
+          var isClubLink = hasClubParam || isSubdomain
+
+          if (isClubLink) {
+            var cachedLabel = ''
+            var cachedIcon = ''
+            try {
+              cachedLabel = window.localStorage.getItem('dzpk_h5_safari_label') || ''
+              cachedIcon = window.localStorage.getItem('dzpk_h5_safari_icon') || ''
+            } catch (e) {}
+
+            var label = cachedLabel || 'NEW-GAME'
+            var icon = cachedIcon || '/src/assets/icons/NEX-GAME.png'
+
+            document.title = label
+
+            var metaTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]')
+            if (metaTitle) {
+              metaTitle.setAttribute('content', label)
+            }
+            var metaApp = document.querySelector('meta[name="application-name"]')
+            if (metaApp) {
+              metaApp.setAttribute('content', label)
+            }
+            var touchIcon = document.querySelector('link[rel="apple-touch-icon"]')
+            if (touchIcon) {
+              touchIcon.setAttribute('href', icon)
+            }
+            var favicon = document.querySelector('link[rel="icon"]')
+            if (favicon) {
+              favicon.setAttribute('href', icon)
+            }
+            var manifest = document.querySelector('link[rel="manifest"]')
+            var isIos = /iPad|iPhone|iPod/.test(navigator.userAgent || '') || (navigator.platform === 'MacIntel' && Number(navigator.maxTouchPoints) > 1)
+            if (isIos) {
+              if (manifest) {
+                manifest.remove()
+              }
+            } else {
+              var manifestObj = {
+                name: label,
+                short_name: label,
+                start_url: window.location.href,
+                display: 'standalone',
+                background_color: '#222627',
+                theme_color: '#222627',
+                icons: [
+                  {
+                    src: icon,
+                    sizes: '192x192 512x512',
+                    type: (icon.indexOf('.jpeg') >= 0 || icon.indexOf('.jpg') >= 0) ? 'image/jpeg' : 'image/png',
+                    purpose: 'any maskable'
+                  }
+                ]
+              }
+              var dataUrl = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifestObj))
+              if (manifest) {
+                manifest.setAttribute('href', dataUrl)
+              }
+            }
+          }
+        } catch (err) {}
+      })()
+    </script>
+
     <!-- Telegram SDK 必须在业务脚本前读取启动参数（含 SDK 的同标签页刷新缓存）。 -->
     <script>
       ;(function () {

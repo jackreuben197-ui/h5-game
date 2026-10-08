@@ -28,11 +28,16 @@
     <meta name="apple-mobile-web-app-title" content="派对德州" />
     <link rel="icon" type="image/jpeg" href="/icons/Official_web_logo.jpeg" />
     <link rel="apple-touch-icon" href="/icons/Official_web_logo.jpeg" />
-    <link rel="manifest" href="/manifest.webmanifest" />
-
 
     <script>
       ;(function () {
+        var isIos = /iPad|iPhone|iPod/.test(navigator.userAgent || '') || (navigator.platform === 'MacIntel' && Number(navigator.maxTouchPoints) > 1)
+        if (!isIos) {
+          var manifestLink = document.createElement('link')
+          manifestLink.rel = 'manifest'
+          manifestLink.href = './manifest.webmanifest'
+          document.head.appendChild(manifestLink)
+        }
         try {
           var search = window.location.search || ''
           var hash = window.location.hash || ''
@@ -81,12 +86,7 @@
               favicon.setAttribute('href', icon)
             }
             var manifest = document.querySelector('link[rel="manifest"]')
-            var isIos = /iPad|iPhone|iPod/.test(navigator.userAgent || '') || (navigator.platform === 'MacIntel' && Number(navigator.maxTouchPoints) > 1)
-            if (isIos) {
-              if (manifest) {
-                manifest.remove()
-              }
-            } else {
+            if (!isIos) {
               var manifestObj = {
                 name: label,
                 short_name: label,

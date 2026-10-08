@@ -179,22 +179,7 @@ async function runPostAuthSync(token: string): Promise<PostAuthProfileSyncResult
 
     // 私域版本只拉独立 UC 收费配置，不请求钻石收费列表。
     isPrivateUcPackage
-      ? postPrivateUcConfigApi({})
-        .then((res) => {
-          if (gameStore.sessionToken.trim() !== token) return
-          const config = Number(res.code) === 0
-            ? normalizePrivateUcConfig(res.data)
-            : {
-                chargeItems: getPrivateUcChargeConfigs(),
-                diamondConfig: {},
-                mttRecordFeeConfig: null,
-              }
-          appConfigStore.setPrivateUcConfig(config)
-          forwardDiamondConfigToCocos(appConfigStore.diamondConfig)
-          forwardPrivateUcChargeConfigToCocos(appConfigStore.privateUcChargeConfig)
-        })
-        .catch((error) => {
-          console.warn('[post-auth-sync] sync private UC config failed:', error)
+      ? Promise.resolve().then(() => {
           appConfigStore.setPrivateUcConfig({
             chargeItems: getPrivateUcChargeConfigs(),
             diamondConfig: {},
@@ -203,6 +188,30 @@ async function runPostAuthSync(token: string): Promise<PostAuthProfileSyncResult
           forwardDiamondConfigToCocos(appConfigStore.diamondConfig)
           forwardPrivateUcChargeConfigToCocos(appConfigStore.privateUcChargeConfig)
         })
+      // ? postPrivateUcConfigApi({})
+      //   .then((res) => {
+      //     if (gameStore.sessionToken.trim() !== token) return
+      //     const config = Number(res.code) === 0
+      //       ? normalizePrivateUcConfig(res.data)
+      //       : {
+      //           chargeItems: getPrivateUcChargeConfigs(),
+      //           diamondConfig: {},
+      //           mttRecordFeeConfig: null,
+      //         }
+      //     appConfigStore.setPrivateUcConfig(config)
+      //     forwardDiamondConfigToCocos(appConfigStore.diamondConfig)
+      //     forwardPrivateUcChargeConfigToCocos(appConfigStore.privateUcChargeConfig)
+      //   })
+      //   .catch((error) => {
+      //     console.warn('[post-auth-sync] sync private UC config failed:', error)
+      //     appConfigStore.setPrivateUcConfig({
+      //       chargeItems: getPrivateUcChargeConfigs(),
+      //       diamondConfig: {},
+      //       mttRecordFeeConfig: null,
+      //     })
+      //     forwardDiamondConfigToCocos(appConfigStore.diamondConfig)
+      //     forwardPrivateUcChargeConfigToCocos(appConfigStore.privateUcChargeConfig)
+      //   })
       : postDiamondConfigApi({})
         .then((res) => {
           if (res.code === 0 && res.data) {

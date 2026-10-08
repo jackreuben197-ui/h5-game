@@ -57,15 +57,6 @@ function ensureLink(rel: string): HTMLLinkElement | null {
   return link
 }
 
-/**
- * 将 H5 名称与 Logo (Web App 标题与图标) 同步到当前文档。
- * 规则：
- * 1. 官方平台页面：固定使用名称“派对德州”与官方 Logo；
- * 2. 俱乐部链接：默认使用名称“NEW-GAME”与默认 Logo（/src/assets/icons/NEX-GAME.png）；
- *    若 CMS 为该俱乐部配置了自定义桌面名称 (safari_label / desktop_name) 或桌面图标 (safari_icon_url / desktop_icon)，
- *    则优先展示 CMS 自定义配置。
- * 优先级：自定义配置 > 系统默认配置。
- */
 export function applySafariWebAppConfig(club?: OrgClubSearchInfoData | null): void {
   if (typeof document === 'undefined') {
     return
@@ -187,4 +178,3 @@ function updateWebManifest(label: string, iconUrl: string, isClub: boolean): voi
     document.head.appendChild(link)
   }
 }
-

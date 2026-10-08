@@ -17,6 +17,8 @@ const stubs: Record<string, string> = {
   ),
   '@/utils/iosWebClip': moduleUrl('export const isIos = () => false'),
   '@/utils/channelPackage': new URL('../src/utils/channelPackage.ts', import.meta.url).href,
+  '@/assets/icons/NEX-GAME.png': moduleUrl('export default "/icons/NEX-GAME.png"'),
+  '@/assets/icons/Official_web_logo.jpeg': moduleUrl('export default "/icons/Official_web_logo.jpeg"'),
 }
 
 const hooks = registerHooks({

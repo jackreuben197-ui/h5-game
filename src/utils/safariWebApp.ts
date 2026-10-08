@@ -1,11 +1,13 @@
 import type { OrgClubSearchInfoData } from '@/api/models/org'
 import { isIos } from '@/utils/iosWebClip'
 import { isClubLinkContext } from '@/utils/channelPackage'
+import nexGameIcon from '@/assets/icons/NEX-GAME.png'
+import officialLogoIcon from '@/assets/icons/Official_web_logo.jpeg'
 
 export const DEFAULT_CLUB_NAME = 'NEW-GAME'
-export const DEFAULT_CLUB_ICON = '/src/assets/icons/NEX-GAME.png'
+export const DEFAULT_CLUB_ICON = nexGameIcon || '/icons/NEX-GAME.png'
 export const OFFICIAL_WEB_NAME = '派对德州'
-export const OFFICIAL_WEB_ICON = '/src/assets/icons/Official_web_logo.jpeg'
+export const OFFICIAL_WEB_ICON = officialLogoIcon || '/icons/Official_web_logo.jpeg'
 
 function normalizedText(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''

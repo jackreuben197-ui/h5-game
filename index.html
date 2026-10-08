@@ -26,8 +26,8 @@
     <meta name="360-fullscreen" content="true" />
     <meta name="x5-page-mode" content="app" />
     <meta name="apple-mobile-web-app-title" content="派对德州" />
-    <link rel="icon" type="image/jpeg" href="/src/assets/icons/Official_web_logo.jpeg" />
-    <link rel="apple-touch-icon" href="/src/assets/icons/Official_web_logo.jpeg" />
+    <link rel="icon" type="image/jpeg" href="/icons/Official_web_logo.jpeg" />
+    <link rel="apple-touch-icon" href="/icons/Official_web_logo.jpeg" />
     <link rel="manifest" href="/manifest.webmanifest" />
 
 
@@ -43,7 +43,9 @@
           var isSubdomain = false
           if (hostname && hostname !== 'localhost' && !/^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
             var labels = hostname.split('.')
-            if (labels.length >= 3 && !/^(www|h5|app|test|dev)$/i.test(labels[0])) {
+            if (hostname.endsWith('.localhost') && labels.length >= 2 && labels[0] !== 'www') {
+              isSubdomain = true
+            } else if (labels.length >= 3 && !/^(www|h5|app|test|dev)$/i.test(labels[0])) {
               isSubdomain = true
             }
           }
@@ -58,7 +60,7 @@
             } catch (e) {}
 
             var label = cachedLabel || 'NEW-GAME'
-            var icon = cachedIcon || '/src/assets/icons/NEX-GAME.png'
+            var icon = cachedIcon || '/icons/NEX-GAME.png'
 
             document.title = label
 

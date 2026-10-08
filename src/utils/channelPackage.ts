@@ -199,6 +199,10 @@ export function isChannelPackageHost(hostname: string = window.location.hostname
   if (isReservedOrNumericHost(normalizedHost)) {
     return false
   }
+  if (normalizedHost.endsWith('.localhost')) {
+    const labels = getHostLabels(normalizedHost)
+    return labels.length >= 2 && labels[0] !== 'localhost' && labels[0] !== 'www'
+  }
   const mainDomains = findPlatformBaseDomain(normalizedHost)
     ? platformMainDomains
     : resolveChannelMainDomain(normalizedHost)
@@ -606,6 +610,12 @@ export function extractInviteCodeFromSubdomain(
   const normalizedHost = readString(hostname).toLowerCase()
   if (isReservedOrNumericHost(normalizedHost)) {
     return ''
+  }
+  if (normalizedHost.endsWith('.localhost')) {
+    const labels = getHostLabels(normalizedHost)
+    if (labels.length >= 2 && labels[0] !== 'localhost' && labels[0] !== 'www') {
+      return labels[0]
+    }
   }
   // 二维码域名和历史主域名都兼容“邀请码.域名”的分享结构；俱乐部独立
   // CNAME 域名没有邀请码前缀，继续由 /org/club/default 的 base_url 解析。

@@ -876,10 +876,20 @@
     <!-- H5 挂载节点 -->
     <div id="app"></div>
 
-    <!-- Cocos 启动脚本：等 H5 完成首次绘制后，再按 settings -> main -> engine 顺序加载。 -->
+    <!--
+      settings/main 保持 Cocos Creator 原生静态引用，确保发布构建可以正确改写 hash。
+      Cocos framework 立即加载；场景和游戏资源由 boot() 在 H5 首页首帧后启动。
+    -->
+    <script src="src/settings.js" charset="utf-8"></script>
+    <script src="main.js" charset="utf-8"></script>
+
+    <!-- Cocos framework 先初始化；H5 首页完成首次绘制后再 boot 并加载游戏资源。 -->
     <script type="text/javascript">
       ;(function () {
+        var cocosRuntimeLoadStarted = false
+        var cocosRuntimeReady = false
         var cocosBootStarted = false
+        var h5FirstPaintReady = window.__H5_FIRST_PAINT_DONE__ === true
 
         function loadScript(moduleName, cb) {
           function finish(loaded) {
@@ -899,57 +909,73 @@
           var domScript = document.createElement('script')
           domScript.async = true
           domScript.src = moduleName
-          domScript.setAttribute('fetchpriority', 'low')
           domScript.addEventListener('load', scriptLoaded, false)
           domScript.addEventListener('error', scriptFailed, false)
           document.body.appendChild(domScript)
         }
 
-        function startCocos() {
-          if (cocosBootStarted) {
+        function tryBootCocos() {
+          if (cocosBootStarted || !cocosRuntimeReady || !h5FirstPaintReady) {
+            return
+          }
+          if (!window._CCSettings || typeof window.boot !== 'function') {
             return
           }
           cocosBootStarted = true
 
-          loadScript('src/settings.js', function (settingsLoaded) {
-            // 纯 H5 开发环境没有 Cocos 构建产物，保持原来的静默跳过行为。
-            if (!settingsLoaded || !window._CCSettings) {
+          var splash = document.getElementById('splash')
+          if (splash) {
+            splash.style.display = 'block'
+          }
+          window.boot()
+        }
+
+        function markCocosRuntimeReady() {
+          cocosRuntimeReady = true
+          tryBootCocos()
+        }
+
+        function loadCocosRuntime() {
+          if (cocosRuntimeLoadStarted || cocosRuntimeReady) {
+            return
+          }
+          // 独立 H5 开发环境没有 Cocos 构建产物，保持原来的跳过行为。
+          if (!window._CCSettings || typeof window.boot !== 'function') {
+            return
+          }
+          cocosRuntimeLoadStarted = true
+
+          var debug = window._CCSettings.debug
+          loadScript(debug ? 'cocos2d-js.js' : 'cocos2d-js-min.js', function (engineLoaded) {
+            if (!engineLoaded) {
+              cocosRuntimeLoadStarted = false
               return
             }
-
-            loadScript('main.js', function (mainLoaded) {
-              if (!mainLoaded || typeof window.boot !== 'function') {
-                return
-              }
-
-              var debug = window._CCSettings.debug
-              var splash = document.getElementById('splash')
-              if (splash) {
-                splash.style.display = 'block'
-              }
-
-              loadScript(debug ? 'cocos2d-js.js' : 'cocos2d-js-min.js', function (engineLoaded) {
-                if (!engineLoaded) {
+            var hasPhysics = window.CC_PHYSICS_BUILTIN || window.CC_PHYSICS_CANNON
+            if (hasPhysics) {
+              loadScript(debug ? 'physics.js' : 'physics-min.js', function (physicsLoaded) {
+                if (!physicsLoaded) {
+                  cocosRuntimeLoadStarted = false
                   return
                 }
-                var hasPhysics = window.CC_PHYSICS_BUILTIN || window.CC_PHYSICS_CANNON
-                if (hasPhysics) {
-                  loadScript(debug ? 'physics.js' : 'physics-min.js', function (physicsLoaded) {
-                    if (physicsLoaded && typeof window.boot === 'function') {
-                      window.boot()
-                    }
-                  })
-                } else {
-                  window.boot()
-                }
+                markCocosRuntimeReady()
               })
-            })
+            } else {
+              markCocosRuntimeReady()
+            }
           })
         }
 
-        window.addEventListener('h5:first-paint', startCocos, { once: true })
-        // 便于性能排查和极端场景下由宿主显式触发；函数本身保证只执行一次。
-        window.__H5_START_COCOS__ = startCocos
+        function markH5FirstPaintReady() {
+          h5FirstPaintReady = true
+          tryBootCocos()
+        }
+
+        window.addEventListener('h5:first-paint', markH5FirstPaintReady, { once: true })
+        // 页面解析到这里就开始加载 framework；boot 仍必须同时等待 H5 首帧和 runtime。
+        loadCocosRuntime()
+        // 便于性能排查和 framework 加载失败后的显式重试。
+        window.__H5_START_COCOS__ = loadCocosRuntime
       })()
     </script>
     <!-- Telegram 初始化：内联脚本避免外部路径在 Cocos 预览中失效 -->

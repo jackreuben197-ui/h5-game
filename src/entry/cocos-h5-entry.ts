@@ -1,7 +1,4 @@
 import { mountH5App, unmountH5App } from '../main'
-import { initDebugConsole } from '../utils/debugConsole'
-import { useAppConfigStore } from '../stores/appConfig'
-import { pinia } from '../stores/pinia'
 import { recordDebugEvent } from '../utils/debugCapture'
 import { configReady } from '../utils/appConfig'
 
@@ -22,6 +19,7 @@ function startCocosAfterFirstPaint(): void {
     if (dispatched) return
     dispatched = true
     window.clearTimeout(fallbackTimer)
+    window.__H5_FIRST_PAINT_DONE__ = true
     window.performance?.mark?.('h5-first-paint')
     window.dispatchEvent(new Event('h5:first-paint'))
   }
@@ -35,30 +33,19 @@ function startCocosAfterFirstPaint(): void {
   })
 }
 
-async function preparePlatformDomains(): Promise<void> {
-  await configReady.catch(() => undefined)
-  const appConfigStore = useAppConfigStore(pinia)
-  await appConfigStore.ensureGuestGlobalConfig()
-  if (!appConfigStore.globalConfig) {
-    await appConfigStore.restorePublicConfigCache()
-  }
-}
-
 const host = {
   mount(container = '#app'): void {
     recordDebugEvent('[boot]', 'mount requested', { container })
     if (mountTask) return
     const revision = ++mountRevision
-    mountTask = preparePlatformDomains()
-      .catch((error) => {
-        console.warn('[boot] prepare platform domains failed:', error)
-      })
+    // Vue 壳不再等待 before/login/config；配置与会话由首页首帧后在后台补齐。
+    mountTask = configReady
+      .catch(() => undefined)
       .then(() => {
-        if (revision === mountRevision) {
-          const mountedApp = mountH5App(container)
-          if (mountedApp) {
-            startCocosAfterFirstPaint()
-          }
+        if (revision !== mountRevision) return
+        const mountedApp = mountH5App(container)
+        if (mountedApp) {
+          startCocosAfterFirstPaint()
         }
       })
       .finally(() => {

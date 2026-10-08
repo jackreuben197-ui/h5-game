@@ -22,7 +22,6 @@ import {
   stopTokenRefreshLoop,
 } from './session/tokenRefresh'
 import {
-  ensureExperienceSession,
   releaseExperienceSessionOnPageExit,
   setupExperienceSessionLifecycle,
 } from './session/experienceSession'
@@ -175,11 +174,6 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
     if (userInfoStore.channelDefaultClub) {
       applySafariWebAppConfig(userInfoStore.channelDefaultClub)
     }
-    // Safari 保存到主屏幕前，按渠道子域名或自定义域名获取俱乐部配置并更新名称、图标。
-    void userInfoStore
-      .ensureChannelDefaultClub()
-      .then((club) => applySafariWebAppConfig(club))
-      .catch((error) => console.warn('[safariWebApp] load config failed:', error))
     app.use(textI18nPlugin)
     app.use(fitTextPlugin)
     app.use(router)
@@ -212,12 +206,15 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
     // h5 与 cocos 共用 user_cache_${userId} 一个 IndexedDB；localStorage 用 dzpk_cc_ 前缀隔离。
     stopCcStorageProxy = installCcStorageProxy()
     app.mount(mountTarget)
-    // 新访客自动领取体验账号；已有 token 先用 user/info 判定真实/体验身份。
+    // Vue 壳挂载后，渠道入口才请求 /default 并更新 Safari 名称、图标。
+    // HomeIndexView 同时调用时会复用 store 内的同一个 in-flight 请求。
+    void userInfoStore
+      .ensureChannelDefaultClub()
+      .then((club) => applySafariWebAppConfig(club))
+      .catch((error) => console.warn('[safariWebApp] load config failed:', error))
     // pagehide 时体验账号必须调用服务端登出，真实账号保持正常持久登录。
+    // 首次游客登录由首页在首帧后启动，不能与 Vue 壳争抢首次渲染。
     stopExperienceSessionLifecycle = setupExperienceSessionLifecycle()
-    void ensureExperienceSession().catch((error) => {
-      console.warn('[experience-session] bootstrap failed:', error)
-    })
     // 每天首次进入 H5 自动弹一次大厅展示面板：挂载、可见性变化、Cocos h5Show 均会触发。
     stopDailyH5DisplayPanel = setupDailyH5DisplayPanel()
     recordDebugEvent('[h5]', 'mount success', {

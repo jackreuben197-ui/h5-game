@@ -71,10 +71,11 @@ function parseUpdateClubNameConfig(raw: unknown): UpdateClubNameConfig {
 
 const renameRule = computed(() => {
   if (isPrivateUcPackage) {
+    const config = appConfigStore.getPrivateUcChargeConfig(PRIVATE_UC_FEE_TYPE.CLUB_NAME)
     return {
-      interval: 0,
-      first_free: 2,
-      price: appConfigStore.getPrivateUcChargePrice(PRIVATE_UC_FEE_TYPE.CLUB_NAME),
+      interval: config?.interval ?? 0,
+      first_free: config?.first_free === 1 ? 1 : 2,
+      price: config?.price ?? 0,
     }
   }
   return parseUpdateClubNameConfig(appConfigStore.globalConfig?.update_club_name_config)

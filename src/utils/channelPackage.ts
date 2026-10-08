@@ -340,7 +340,19 @@ const PRIVATE_UC_PRICE_BY_FEE_TYPE: Record<PrivateUcFeeType, number> = {
   [PRIVATE_UC_FEE_TYPE.VIEW_ALL_PLAYERS]: 0,
 }
 
-export function getPrivateUcChargeConfigs(): PrivateUcChargeConfigItem[] {
+// bridge 的基础协议只要求 feeType/price；私域 UC 接口中的非收费规则作为兼容扩展字段
+// 随同一条消息透传，不要求 h5-cc-bridge 发版。
+export interface PrivateUcChargeConfigItemExt extends PrivateUcChargeConfigItem {
+  interval?: number
+  first_free?: 1 | 2
+  tiered_fee_type?: 1 | 2
+  multiple?: number
+  capped?: number
+  user_rake?: number
+  decimal_type?: number
+}
+
+export function getPrivateUcChargeConfigs(): PrivateUcChargeConfigItemExt[] {
   return DEFINED_PRIVATE_UC_FEE_TYPES.map((feeType) => ({
     feeType,
     price: CHANNEL_PACKAGE_UC_CHARGE_ENABLED ? PRIVATE_UC_PRICE_BY_FEE_TYPE[feeType] : 0,
@@ -376,8 +388,14 @@ function isInTimeWindow(startTime: unknown, endTime: unknown): boolean {
   const start = Number(startTime)
   const end = Number(endTime)
   const now = Math.floor(Date.now() / 1000)
-  return Number.isFinite(start) && Number.isFinite(end) && start > 0 && end >= start
-    && start <= now && now <= end
+  return (
+    Number.isFinite(start) &&
+    Number.isFinite(end) &&
+    start > 0 &&
+    end >= start &&
+    start <= now &&
+    now <= end
+  )
 }
 
 function parsePrivateUcSetting(setting: string, unitScale: number): DiamondSetting[] {
@@ -414,7 +432,7 @@ function parsePrivateUcSetting(setting: string, unitScale: number): DiamondSetti
 }
 
 export interface NormalizedPrivateUcConfig {
-  chargeItems: PrivateUcChargeConfigItem[]
+  chargeItems: PrivateUcChargeConfigItemExt[]
   diamondConfig: DiamondConfigMap
   mttRecordFeeConfig: MttRecordFeeConfig | null
 }
@@ -452,17 +470,21 @@ export function normalizePrivateUcConfig(raw: PrivateUcConfigData): NormalizedPr
     const feeType = Number(row.fee_type) as PrivateUcFeeType
     if (!DEFINED_PRIVATE_UC_FEE_TYPES.includes(feeType)) continue
 
-    // 只有收费类型 1～4 的全局价格/规则来自私域 UC 接口。
     // 5 的加时次数/每日免费次数和 6 的查看模式/每日免费次数已经迁回
-    // /config/global/config 的 private_* key，不能再从这里的 config_kind=1 读取。
-    if (row.config_kind === 1 && feeType <= PRIVATE_UC_FEE_TYPE.NICKNAME) {
+    // /config/global/config 的 private_* key；1～4、8～9 的非阶梯规则仍来自私域 UC 接口。
+    if (row.config_kind === 1) {
       const config = parseJsonRecord(row.str_value)
       const item = chargeItemMap.get(feeType)
       if (!item) continue
       switch (feeType) {
-        case PRIVATE_UC_FEE_TYPE.CLUB_NAME:
+        case PRIVATE_UC_FEE_TYPE.CLUB_NAME: {
           item.price = toUcAmount(config?.price, unitScale)
+          const interval = readFiniteNumber(config?.interval)
+          const firstFree = readFiniteNumber(config?.first_free)
+          if (interval !== null) item.interval = Math.floor(interval)
+          if (firstFree === 1 || firstFree === 2) item.first_free = firstFree
           break
+        }
         case PRIVATE_UC_FEE_TYPE.REPLAY_COLLECT:
           item.price = toUcAmount(row.value, unitScale)
           break
@@ -476,6 +498,21 @@ export function normalizePrivateUcConfig(raw: PrivateUcConfigData): NormalizedPr
             ? config.pay_price
             : config.raw_price
           item.price = toUcAmount(price, unitScale)
+          break
+        }
+        case PRIVATE_UC_FEE_TYPE.VIEW_ONE_PLAYER: {
+          if (!config) break
+          item.tiered_fee_type = Number(config.tiered_fee_type) === 1 ? 1 : 2
+          item.multiple = Math.floor(readFiniteNumber(config.multiple) ?? 1)
+          item.capped = toUcAmount(config.capped, unitScale)
+          item.user_rake = readFiniteNumber(config.user_rake) ?? 0
+          item.decimal_type = Math.floor(readFiniteNumber(config.decimal_type) ?? 1)
+          break
+        }
+        case PRIVATE_UC_FEE_TYPE.VIEW_ALL_PLAYERS: {
+          if (!config) break
+          item.user_rake = readFiniteNumber(config.user_rake) ?? 0
+          item.decimal_type = Math.floor(readFiniteNumber(config.decimal_type) ?? 1)
           break
         }
       }

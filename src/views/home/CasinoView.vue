@@ -125,7 +125,7 @@ const routeClubId = computed<number | undefined>(() => {
     const n = parseInt(val as string, 10)
     if (Number.isFinite(n) && n > 0) return n
   }
-  if (isChannelPackage) {
+  if (isChannelPackage.value) {
     const cid = toSafeInt(
       channelClub.value?.club_id ||
       userInfoStore.channelDefaultClub?.club_id ||
@@ -139,7 +139,7 @@ const routeClubId = computed<number | undefined>(() => {
 
 // Global mode = entered from home/bottom-nav with no club context. Never true in channel package / clubprivate link.
 const isGlobalMode = computed(() => {
-  if (isChannelPackage) return false
+  if (isChannelPackage.value) return false
   if (props.clubId && props.clubId > 0) return false
   if (routeClubId.value && routeClubId.value > 0) return false
   return true
@@ -1016,7 +1016,7 @@ watch(selectedCategory, () => {
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
 onMounted(async () => {
   try {
-    if (isChannelPackage && !routeClubId.value) {
+    if (isChannelPackage.value && !routeClubId.value) {
       await userInfoStore.ensureChannelDefaultClub().catch((err) => {
         console.warn('[casino] ensureChannelDefaultClub failed:', err)
       })
@@ -1043,7 +1043,7 @@ onMounted(async () => {
 })
 
 onActivated(async () => {
-  if (isChannelPackage && !routeClubId.value) {
+  if (isChannelPackage.value && !routeClubId.value) {
     await userInfoStore.ensureChannelDefaultClub().catch(console.warn)
   }
   if (gameRecords.value.length === 0) await fetchPopularGames()

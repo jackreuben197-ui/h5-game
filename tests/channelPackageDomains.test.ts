@@ -55,7 +55,11 @@ test('private UC API amounts are scaled and blind-level settings keep type_ext d
   const normalized = channelPackage.normalizePrivateUcConfig({
     club_id: 97,
     data: [
-      { fee_type: 1, config_kind: 1, str_value: '{"price":10000}' },
+      {
+        fee_type: 1,
+        config_kind: 1,
+        str_value: '{"interval":24,"first_free":1,"price":10000}',
+      },
       { fee_type: 2, config_kind: 1, value: 20000, str_value: '' },
       {
         fee_type: 3,
@@ -118,6 +122,16 @@ test('private UC API amounts are scaled and blind-level settings keep type_ext d
         start_time: 0,
         end_time: 0,
       },
+      {
+        fee_type: 8,
+        config_kind: 1,
+        str_value: '{"tiered_fee_type":1,"multiple":2,"capped":900,"user_rake":3,"decimal_type":1}',
+      },
+      {
+        fee_type: 9,
+        config_kind: 1,
+        str_value: '{"user_rake":4,"decimal_type":2}',
+      },
     ],
     gold_type: 1,
     tribe_id: 35,
@@ -125,15 +139,23 @@ test('private UC API amounts are scaled and blind-level settings keep type_ext d
   } as any)
 
   assert.deepEqual(normalized.chargeItems, [
-    { feeType: 1, price: 100 },
+    { feeType: 1, price: 100, interval: 24, first_free: 1 },
     { feeType: 2, price: 200 },
     { feeType: 3, price: 300 },
     { feeType: 4, price: 400 },
     { feeType: 5, price: 0 },
     { feeType: 6, price: 0 },
     { feeType: 7, price: 0 },
-    { feeType: 8, price: 0 },
-    { feeType: 9, price: 0 },
+    {
+      feeType: 8,
+      price: 0,
+      tiered_fee_type: 1,
+      multiple: 2,
+      capped: 9,
+      user_rake: 3,
+      decimal_type: 1,
+    },
+    { feeType: 9, price: 0, user_rake: 4, decimal_type: 2 },
   ])
   assert.deepEqual(normalized.mttRecordFeeConfig, {
     status: 1,

@@ -74,6 +74,6 @@ test('custom domain club stays scoped to the default API club', () => {
   assert.match(storeSource, /normalizeClubId\(this\.channelDefaultClub\?\.club_id\)/)
   assert.match(
     homeSource,
-    /if \(isChannelPackage\) \{\s*return userInfoStore\.channelDefaultClub/,
+    /if \(isChannelPackage\.value\) \{\s*return userInfoStore\.channelDefaultClub/,
   )
 })

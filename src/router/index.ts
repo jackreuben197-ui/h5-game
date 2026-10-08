@@ -6,16 +6,12 @@ import {
 } from 'vue-router'
 import { useGameStore } from '@/stores/game'
 import { useWalletStore } from '@/stores/wallet'
-import { useUserInfoStore } from '@/stores/userInfo'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { pinia } from '@/stores/pinia'
 import { createLogger } from '@/utils/logger'
 import { isChannelDiamondFreeMode, isChannelPackageHost } from '@/utils/channelPackage'
 import { preloadMainLayoutStyles, syncMainLayout } from '@/utils/mainLayout'
 import { syncPostAuthData } from '@/session/postAuthSync'
-import { bootstrapCurrentSessionLists, ensureExperienceSession } from '@/session/experienceSession'
-import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
-import { useAppConfigStore } from '@/stores/appConfig'
 import { clubRoutes } from './routes/club'
 import { mainRoute } from './routes/main'
 import { messageRoutes } from './routes/message'
@@ -177,34 +173,6 @@ router.beforeEach(async (to, from) => {
     hasToken: Boolean(token),
     isGuestAccount: gameStore.isGuestAccount,
   })
-
-  // 首屏落点必须和动态底栏使用同一份可见性结果。只按 h5_menu 固定跳到
-  // /match 会造成“底栏只有牌桌，页面却是暂无赛事”，直到用户手动切 Tab。
-  if (isChannelPackage && (to.name === 'lobby' || to.name === 'match-index')) {
-    const userInfoStore = useUserInfoStore(pinia)
-    const channelClub = await userInfoStore.ensureChannelDefaultClub()
-    if (Number(channelClub?.h5_menu) === 1) {
-      const sessionReady = await ensureExperienceSession().catch((error) => {
-        log.warn('resolve channel session before landing failed', error)
-        return false
-      })
-      if (sessionReady) {
-        await Promise.allSettled([
-          bootstrapCurrentSessionLists(),
-          gameStore.isGuestAccount
-            ? useAppConfigStore(pinia).ensureGuestGlobalConfig()
-            : useAppConfigStore(pinia).ensureFreshGlobalConfig(gameStore.sessionToken.trim()),
-        ])
-        const { hasMtt, hasPoker } = useChannelBottomMenu()
-        if (!hasMtt.value && hasPoker.value) {
-          return { name: 'game-list', query: to.query, hash: to.hash }
-        }
-      }
-      if (to.name === 'lobby') {
-        return { name: 'match-index', query: to.query, hash: to.hash }
-      }
-    }
-  }
 
   if (isChannelPackage && to.name === 'club') {
     return { name: 'club-index' }

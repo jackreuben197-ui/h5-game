@@ -16,16 +16,20 @@ const router = useRouter()
 const appConfigStore = useAppConfigStore()
 const gameStore = useGameStore()
 const userInfoStore = useUserInfoStore()
-const isChannelPackage = isChannelPackageHost()
+const isChannelPackage = computed(() => {
+  void appConfigStore.globalConfig
+  return isChannelPackageHost()
+})
 
 const loading = ref(false)
 const balanceVisible = ref(true)
 
-const currentClub = computed<ClubInfo | null>(() =>
-  userInfoStore.currentClub ||
-  userInfoStore.clubList[0] ||
-  (isChannelPackage ? userInfoStore.channelDefaultClub : null),
-)
+const currentClub = computed<ClubInfo | null>(() => {
+  if (isChannelPackage.value) {
+    return userInfoStore.channelDefaultClub
+  }
+  return userInfoStore.currentClub || userInfoStore.clubList[0] || null
+})
 const selectedClubId = computed(() => toSafeInt(currentClub.value?.club_id))
 const selectedTribeId = computed(() =>
   toSafeInt((currentClub.value as Record<string, unknown> | null)?.tribe_id),

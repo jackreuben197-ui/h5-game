@@ -34,8 +34,8 @@ let platformMainDomains: string[] = [...BUILT_IN_OFFICIAL_DOMAINS]
 let platformQrCodeDomains: string[] = []
 
 // 渠道包联调时可临时启用：
-const TEST_CHANNEL_INVITE_CODE = ''
-// const TEST_CHANNEL_INVITE_CODE = 'ksGuBmMk'
+// const TEST_CHANNEL_INVITE_CODE = ''
+const TEST_CHANNEL_INVITE_CODE = 'ksGuBmMk'
 // const TEST_CHANNEL_INVITE_CODE = 'rhswehjy'
 // const TEST_CHANNEL_INVITE_CODE = 'DtuDnwXY'
 
@@ -222,8 +222,14 @@ function isInTimeWindow(startTime: unknown, endTime: unknown): boolean {
   const start = Number(startTime)
   const end = Number(endTime)
   const now = Math.floor(Date.now() / 1000)
-  return Number.isFinite(start) && Number.isFinite(end) && start > 0 && end >= start
-    && start <= now && now <= end
+  return (
+    Number.isFinite(start) &&
+    Number.isFinite(end) &&
+    start > 0 &&
+    end >= start &&
+    start <= now &&
+    now <= end
+  )
 }
 
 function parsePrivateUcSetting(setting: string, unitScale: number): DiamondSetting[] {

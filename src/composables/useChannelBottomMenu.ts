@@ -22,7 +22,10 @@ export function useChannelBottomMenu() {
   const roomListStore = useRoomListStore()
   const mttListStore = useMttListStore()
   const appConfigStore = useAppConfigStore()
-  const isChannelPackage = isChannelPackageHost()
+  const isChannelPackage = computed(() => {
+    void appConfigStore.globalConfig
+    return isChannelPackageHost()
+  })
 
   const channelClub = computed(() => {
     // 游客只能使用渠道公开俱乐部配置，不能让残留的真实用户 clubList 改变菜单版本。
@@ -45,7 +48,7 @@ export function useChannelBottomMenu() {
   // 俱乐部数据尚未到达时先保持默认版本 A，避免首屏导航闪变。
   const isVersionB = computed(
     () =>
-      isChannelPackage &&
+      isChannelPackage.value &&
       h5Menu.value !== null &&
       h5Menu.value !== undefined &&
       Number(h5Menu.value) === 1,

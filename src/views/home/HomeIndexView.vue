@@ -24,6 +24,10 @@ import PokerGameList from '@/views/home/gameList.vue'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 import { requireRealUser } from '@/session/realUserGate'
 import { ensureExperienceSession } from '@/session/experienceSession'
+import LoginSession from '@/session/loginSession'
+import { isBridgeHandshakeDone, onBridgeHandshakeDone } from '@/bridge/core/cocosBridgeChannel'
+import { ensureWsProxyConnected } from '@/bridge/ws'
+import { waitForH5FirstPaint } from '@/utils/firstPaint'
 
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
@@ -32,7 +36,11 @@ const mttListStore = useMttListStore()
 const appConfigStore = useAppConfigStore()
 const gameStore = useGameStore()
 const displayPlatformDiamond = usePlatformDiamondVisibility()
-const isChannelPackage = isChannelPackageHost()
+// 配置缓存/接口到达后重新判断域名类型；未知域名首屏按渠道处理，避免错显官方布局。
+const isChannelPackage = computed(() => {
+  void appConfigStore.globalConfig
+  return isChannelPackageHost()
+})
 const { isVersionB: isChannelMenuVersionB } = useChannelBottomMenu()
 
 const noticeScrollRef = ref<HTMLElement | null>(null)
@@ -45,6 +53,39 @@ const NOTICE_SPEED_PX_PER_SEC = 40
 const NOTICE_GAP_PX = 48
 
 let noticeResizeObserver: ResizeObserver | null = null
+let stopHomeWsBridgeReadyListener: (() => void) | null = null
+
+async function ensureHomeWebSocket(forceExistingConnection = false): Promise<void> {
+  try {
+    const cachedPort = LoginSession.WSPort
+    if (forceExistingConnection && cachedPort > 0) {
+      // 真实账号的 post-auth 可能早于延后启动的 Cocos 建立 WS。握手完成后强制
+      // 重连一次，让 Cocos 收到新的 wsOpen/REGISTER；游客有缓存端口时同样适用。
+      await ensureWsProxyConnected({ port: cachedPort, force: true })
+      return
+    }
+    await LoginSession.EnsureWS()
+  } catch (error) {
+    console.warn('[home] ensure websocket failed:', error)
+  }
+}
+
+function startHomeWebSocketAfterCocosReady(): void {
+  stopHomeWsBridgeReadyListener?.()
+  stopHomeWsBridgeReadyListener = null
+
+  if (isBridgeHandshakeDone()) {
+    void ensureHomeWebSocket()
+    return
+  }
+
+  // 游客也能进入牌桌。会话就绪后预先等待 Cocos 握手并建立 WS，不能等点击牌桌。
+  stopHomeWsBridgeReadyListener = onBridgeHandshakeDone(() => {
+    stopHomeWsBridgeReadyListener?.()
+    stopHomeWsBridgeReadyListener = null
+    void ensureHomeWebSocket(true)
+  })
+}
 
 interface ZoneStats {
   tables: number
@@ -134,7 +175,7 @@ function persistHomeRoomStatsCache(stats: HomeZoneStats): void {
 const homeRoomStats = ref<HomeZoneStats>(restoreHomeRoomStatsCache() || createEmptyZoneStats())
 const currentClub = computed<ClubInfo | null>(() => {
   // 渠道入口只能展示 default 接口锁定的俱乐部；持久化的 currentClub 也可能来自官方包。
-  if (isChannelPackage) {
+  if (isChannelPackage.value) {
     return userInfoStore.channelDefaultClub
   }
   if (userInfoStore.currentClub) {
@@ -148,7 +189,7 @@ const selectedTribeId = computed(() =>
 )
 
 const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages()
-const { noticeText, ensureHomeAnnouncementConfig } = useHomeAnnouncement()
+const { noticeText } = useHomeAnnouncement()
 const noticeTrackStyle = computed<CSSProperties>(() => ({
   '--notice-gap': `${NOTICE_GAP_PX}px`,
   '--notice-distance': `${noticeDistancePx.value}px`,
@@ -166,25 +207,30 @@ const mttTablesText = computed(() => `${homeRoomStats.value.mtt.tables}`)
 const mttPlayersText = computed(() => `${homeRoomStats.value.mtt.players}`)
 type HomeContentMode = 'zones' | 'mtt' | 'poker'
 
-// 渠道包版本 B 的首页固定保留首页信息区，底部嵌入扑克列表。
-// 版本 A 与官方包继续沿用现有的单类型 / 专区入口行为。
+// 渠道包在首页信息区下按 A/B 与可见列表决定内容；官方包始终使用专区豆腐块布局。
 const homeContentModeRaw = computed<HomeContentMode>(() => {
+  // 官方包布局固定为“游戏中心 + 热门游戏”，不随牌桌/赛事数量切版。
+  if (!isChannelPackage.value) {
+    return 'zones'
+  }
   const pokerTables = homeRoomStats.value.poker.tables
   const mttTables = homeRoomStats.value.mtt.tables
   if (isChannelMenuVersionB.value) {
-    return 'poker'
+    // 对齐原渠道 B 落点：有赛事时优先赛事；只有牌桌时才进入牌桌列表。
+    return mttTables > 0 || pokerTables === 0 ? 'mtt' : 'poker'
   }
   if (mttTables > 0 && pokerTables === 0) {
     return 'mtt'
   }
-  if (isChannelPackage && pokerTables > 0 && mttTables === 0) {
+  if (pokerTables > 0 && mttTables === 0) {
     return 'poker'
   }
   return 'zones'
 })
-// 首屏不猜测布局：俱乐部配置、全局配置、牌桌和 MTT 全部稳定后再一次性展示。
-const homeContentMode = ref<HomeContentMode>(homeContentModeRaw.value)
+// 渠道首屏不猜测布局：俱乐部配置、全局配置、牌桌和 MTT 稳定后再一次性展示。
+const homeContentMode = ref<HomeContentMode>('zones')
 const homeContentReady = ref(false)
+const showOfficialHomeSections = computed(() => !isChannelPackage.value)
 
 function commitHomeContentMode(): void {
   homeContentMode.value = homeContentModeRaw.value
@@ -192,7 +238,7 @@ function commitHomeContentMode(): void {
 
 const currentJoinedClub = computed(() => userInfoStore.currentJoinedClub)
 const canManageChannelClub = computed(
-  () => isChannelPackage && Boolean(gameStore.isRealUser && currentJoinedClub.value),
+  () => isChannelPackage.value && Boolean(gameStore.isRealUser && currentJoinedClub.value),
 )
 const showChannelFloatingActions = computed(() => canManageChannelClub.value)
 
@@ -482,44 +528,95 @@ watch(
 )
 
 async function bootstrapHomeContent(): Promise<void> {
-  // 渠道俱乐部必须先于身份识别完成，因为它同时决定游客列表 scope、俱乐部标题和 h5_menu。
-  if (isChannelPackage) {
-    await userInfoStore.ensureChannelDefaultClub()
+  // 本地缓存和渠道 /default 可以在壳渲染后立刻启动，但都不能阻塞 Vue 首次挂载。
+  const restoreConfigCacheReady = appConfigStore.restorePublicConfigCache().catch((error) => {
+    console.warn('[home] restore public config cache failed:', error)
+  })
+  const initialIsChannelPackage = isChannelPackage.value
+  let channelClubReady: Promise<ClubInfo | null> = initialIsChannelPackage
+    ? userInfoStore.ensureChannelDefaultClub()
+    : Promise.resolve(null)
+
+  // 游客登录和 login/config 后置到首帧之后，避免与首页壳争抢主线程和网络调度。
+  await waitForH5FirstPaint()
+
+  // 公开配置不携带 token，可以和会话校验并行；任何 user/* 请求必须等旧 token
+  // 校验/恢复完成，避免刷新时拿刚被 pagehide/logout 释放的体验 token 抢跑。
+  const publicConfigReady = restoreConfigCacheReady.then(() =>
+    appConfigStore.ensureGuestGlobalConfig(true),
+  )
+  const sessionReady = ensureExperienceSession().catch((error) => {
+    console.warn('[home] resolve session identity failed:', error)
+    return false
+  })
+  const configReady = sessionReady.then(async (ready) => {
+    const sessionKey = gameStore.sessionToken.trim()
+    if (ready && sessionKey && !gameStore.isGuestAccount) {
+      return appConfigStore.ensureFreshGlobalConfig(sessionKey)
+    }
+    await publicConfigReady
+    return false
+  })
+
+  // 本地可能保留已被 pagehide/logout 释放的体验 token。牌桌与赛事无论是否已有
+  // token，都必须等会话校验完成后再请求，不能让 contrast/rooms 携带旧 token 抢跑。
+  const loadHomeLists = async (): Promise<void> => {
+    await Promise.allSettled([
+      roomListStore.bootstrapRoomList(),
+      mttListStore.bootstrapMttList(),
+    ])
+  }
+  const listsReady = sessionReady.then(async (ready) => {
+    if (!ready || !gameStore.sessionToken.trim()) return
+    await loadHomeLists()
+  })
+  const websocketReady = sessionReady.then((ready) => {
+    if (!ready || !gameStore.sessionToken.trim()) return
+    startHomeWebSocketAfterCocosReady()
+  })
+
+  await Promise.allSettled([
+    restoreConfigCacheReady,
+    channelClubReady,
+    sessionReady,
+    configReady,
+    listsReady,
+    websocketReady,
+  ])
+
+  // 全局域名配置可能把“未知域名”重新识别为渠道入口，此时补齐 /default。
+  if (!initialIsChannelPackage && isChannelPackage.value) {
+    channelClubReady = userInfoStore.ensureChannelDefaultClub()
+    await channelClubReady
   }
 
-  await ensureExperienceSession().catch((error) => {
-    console.warn('[home] resolve session identity failed:', error)
-  })
+  ensureClubDataReady()
   if (gameStore.isRealUser) {
     void fetchHomeMiniGameStats().catch((error) => {
       console.warn('[home] fetch mini game stats failed:', error)
     })
   }
-  ensureClubDataReady()
-
-  // 首页显示前必须确认本会话的最新全局配置。postAuthSync 若已在请求，这里会复用同一 promise；
-  // 身份初始化失败且没有 token 时，回退到免登录配置接口。
-  const sessionKey = gameStore.sessionToken.trim()
-  const configReady = sessionKey
-    ? appConfigStore.ensureFreshGlobalConfig(sessionKey)
-    : ensureHomeAnnouncementConfig()
-  const roomListReady = roomListStore.bootstrapRoomList()
-  const mttListReady = mttListStore.bootstrapMttList()
-  await Promise.allSettled([configReady, roomListReady, mttListReady])
 
   // 两份列表及其共同过滤上下文全部稳定后，一次提交统计和页面模式。
   refreshHomePokerMahjongStatsFromStore()
   refreshHomeMttStatsFromStore()
   commitHomeContentMode()
   homeContentReady.value = true
+
+  // 配置与 /default 已稳定后再确认一次 banner scope；运行时缓存会自动去重。
+  void fetchLobbyBannerImages().catch((error) => {
+    console.warn('[home] refresh lobby banner failed:', error)
+  })
 }
 
 onMounted(() => {
   // 首页和两个列表页共用 store；俱乐部、身份和配置就绪后一次性提交首屏。
   void bootstrapHomeContent()
-  void fetchLobbyBannerImages().catch((error) => {
-    console.warn('[home] fetch lobby banner failed:', error)
-  })
+  void waitForH5FirstPaint().then(() =>
+    fetchLobbyBannerImages().catch((error) => {
+      console.warn('[home] fetch lobby banner failed:', error)
+    }),
+  )
   void updateNoticeMarquee()
 
   if (typeof ResizeObserver !== 'undefined') {
@@ -533,6 +630,8 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  stopHomeWsBridgeReadyListener?.()
+  stopHomeWsBridgeReadyListener = null
   if (noticeResizeObserver) {
     noticeResizeObserver.disconnect()
     noticeResizeObserver = null
@@ -579,7 +678,10 @@ onBeforeUnmount(() => {
     <ChannelClubInfoPanel />
 
     <!-- 渠道包单类型直接展示列表；赛事和牌桌并存时展示专区入口。 -->
-    <div class="home-swap-container" :aria-busy="!homeContentReady">
+    <div
+      class="home-swap-container"
+      :aria-busy="isChannelPackage && !homeContentReady"
+    >
       <Transition name="home-swap">
         <div
           v-if="homeContentReady && homeContentMode === 'mtt'"
@@ -596,7 +698,7 @@ onBeforeUnmount(() => {
           <PokerGameList embedded scroll-key="home-poker" />
         </div>
         <div
-          v-else-if="homeContentReady"
+          v-else-if="showOfficialHomeSections || homeContentReady"
           key="default"
           class="home-default-sections home-swap-panel"
         >

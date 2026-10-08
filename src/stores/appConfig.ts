@@ -140,11 +140,12 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
     },
     // 游客（无 token）场景经免鉴权聚合接口补拉全局配置；登录用户走 postAuthSync 的 /config/global/config。
     // 对齐 pokerqueen HotUpdateConfigCache：请求体为 { global_config_req: { last_update_time } }。
-    async ensureGuestGlobalConfig(): Promise<void> {
-      if (this.globalConfig) {
+    async ensureGuestGlobalConfig(forceRefresh = false): Promise<void> {
+      if (this.globalConfig && !forceRefresh) {
         return
       }
       if (!guestGlobalConfigPromise) {
+        const configBeforeRequest = this.globalConfig
         guestGlobalConfigPromise = postBeforeLoginConfigApi({
           global_config_req: { last_update_time: 0 },
         })
@@ -153,8 +154,12 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
               return
             }
             const config = extractGuestGlobalConfig(response.data)
-            // 登录竞态兜底：期间 postAuthSync 已写入时不覆盖。
-            if (config && !this.globalConfig) {
+            // 普通补拉只填空；首屏后台刷新允许替换本地缓存，但不能覆盖期间
+            // 由真实登录 postAuthSync 写入的另一份新配置。
+            if (
+              config &&
+              (!this.globalConfig || (forceRefresh && this.globalConfig === configBeforeRequest))
+            ) {
               this.setGlobalConfig(config)
             }
           })
@@ -221,7 +226,8 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
       // 必须先恢复全局域名配置，才能准确判断当前是否为渠道包。
       const globalConfig = await restoreGlobalConfig(StorageKey.APP_CONFIG_CACHE)
 
-      if (globalConfig) {
+      // 网络刷新与缓存恢复可能并行；缓存只能填空，不能覆盖刚返回的新配置。
+      if (globalConfig && !this.globalConfig) {
         this.globalConfig = globalConfig
         configurePlatformDomains(globalConfig)
       }
@@ -234,7 +240,7 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
       }
 
       const diamondConfig = await restoreDiamondConfig(StorageKey.DIAMOND_CONFIG_CACHE)
-      if (diamondConfig) {
+      if (diamondConfig && !this.diamondConfig) {
         this.diamondConfig = diamondConfig
       }
     },

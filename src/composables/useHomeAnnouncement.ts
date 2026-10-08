@@ -51,7 +51,10 @@ export function useHomeAnnouncement(): {
 } {
   const appConfigStore = useAppConfigStore()
   const userInfoStore = useUserInfoStore()
-  const isChannelPackage = isChannelPackageHost()
+  const isChannelPackage = computed(() => {
+    void appConfigStore.globalConfig
+    return isChannelPackageHost()
+  })
 
   const platformAnnouncement = computed(() =>
     parseHomeAnnouncementConfig(appConfigStore.globalConfig?.home_announcement_config),
@@ -65,7 +68,7 @@ export function useHomeAnnouncement(): {
   })
 
   const noticeText = computed(() => {
-    if (isChannelPackage) {
+    if (isChannelPackage.value) {
       return channelClubAnnouncement.value || platformAnnouncement.value.h5
     }
     return isTelegramMiniAppEnv()

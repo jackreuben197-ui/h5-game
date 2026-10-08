@@ -10,6 +10,8 @@ import { useMttListStore } from '@/stores/mttList'
 import { useRoomListStore } from '@/stores/roomList'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useGameStore } from '@/stores/game'
+import { useAppConfigStore } from '@/stores/appConfig'
+import { waitForH5FirstPaint } from '@/utils/firstPaint'
 
 type TabIconKey =
   | 'home'
@@ -28,13 +30,17 @@ interface TabItem {
   icon: TabIconKey
 }
 
-const isChannelPackage = isChannelPackageHost()
+const appConfigStore = useAppConfigStore()
+const isChannelPackage = computed(() => {
+  void appConfigStore.globalConfig
+  return isChannelPackageHost()
+})
 const { isVersionB, hasPoker, hasMtt } = useChannelBottomMenu()
 
 // 版本 A：首页、充值、消息、我的。
 // 版本 B：比赛、牌桌按可见数据动态展示；两者都没有时保留比赛作为默认入口。
 const candidateTabs = computed<TabItem[]>(() => {
-  const middleTab: TabItem = isChannelPackage
+  const middleTab: TabItem = isChannelPackage.value
     ? {
         key: 'wallet',
         label: t('UIGuildFund_RechargeText'),
@@ -61,7 +67,7 @@ const candidateTabs = computed<TabItem[]>(() => {
     icon: 'club',
   }
 
-  if (isChannelPackage && isVersionB.value) {
+  if (isChannelPackage.value && isVersionB.value) {
     return [
       ...(hasMtt.value || !hasPoker.value
         ? [
@@ -95,7 +101,7 @@ const candidateTabs = computed<TabItem[]>(() => {
 
   return [
     homeTab,
-    ...(!isChannelPackage ? [clubTab] : []),
+    ...(!isChannelPackage.value ? [clubTab] : []),
     middleTab,
     {
       key: 'message',
@@ -120,13 +126,13 @@ const roomListStore = useRoomListStore()
 const mttListStore = useMttListStore()
 const gameStore = useGameStore()
 // 动态菜单必须等俱乐部配置、牌桌和赛事三份数据全部稳定后一次性出现。
-const tabsReady = ref(true)
+const tabsReady = ref(!isChannelPackage.value || tabsStore.committedChannelTabs.length > 0)
 const displayedTabs = ref<TabItem[]>([])
-const isStabilizingTabs = ref(isChannelPackage)
+const isStabilizingTabs = ref(isChannelPackage.value)
 // 当前激活项索引：用于驱动顶部凸起在当前 tab 数量间平滑移动。
 const activeTabKey = computed<MainTabKey>(() => {
   if (isVersionB.value && route.name === 'lobby') {
-    return 'poker'
+    return hasMtt.value || !hasPoker.value ? 'mtt' : 'poker'
   }
   const routeTabKey = route.meta.tabKey
   return typeof routeTabKey === 'string' ? (routeTabKey as MainTabKey) : tabsStore.activeTab
@@ -176,8 +182,12 @@ const stableDynamicItems: Record<'mtt' | 'poker', TabItem> = {
 }
 
 function resolveCommittedTabs(): TabItem[] {
-  if (!isChannelPackage || !tabsStore.committedChannelTabs.length) {
+  if (!isChannelPackage.value) {
     return candidateTabs.value.map((tab) => ({ ...tab }))
+  }
+  // 渠道 A/B 与动态玩法均未确认时保持底栏占位，不能先画版本 A 再切版本 B。
+  if (!tabsStore.committedChannelTabs.length) {
+    return []
   }
   const itemMap = new Map(candidateTabs.value.map((tab) => [tab.key, tab]))
   // 登录切换的中间态可能暂时没有牌桌/赛事，必须仍能还原已提交项。
@@ -192,7 +202,7 @@ displayedTabs.value = resolveCommittedTabs()
 
 function commitDisplayedTabs(nextTabs: TabItem[]): void {
   displayedTabs.value = nextTabs.map((tab) => ({ ...tab }))
-  if (isChannelPackage) {
+  if (isChannelPackage.value) {
     tabsStore.commitChannelTabs(nextTabs.map((tab) => tab.key))
   }
 }
@@ -340,9 +350,10 @@ watch([activeIndex, () => displayedTabs.value.length], ([newIndex]) => {
 async function stabilizeDynamicTabs(): Promise<void> {
   const revision = ++stabilizationRevision
   isStabilizingTabs.value = true
-  if (isChannelPackage) {
+  if (isChannelPackage.value) {
     await userInfoStore.ensureChannelDefaultClub()
     if (Number(userInfoStore.channelDefaultClub?.h5_menu) === 1) {
+      await waitForH5FirstPaint()
       const sessionReady = await ensureExperienceSession().catch((error) => {
         console.warn('[main-bottom-tab] resolve session identity failed:', error)
         return false
@@ -369,7 +380,7 @@ async function stabilizeDynamicTabs(): Promise<void> {
 watch(
   [() => gameStore.sessionToken, () => gameStore.syncedIdentityToken],
   () => {
-    if (!componentMounted || !isChannelPackage) return
+    if (!componentMounted || !isChannelPackage.value) return
     isStabilizingTabs.value = true
     void stabilizeDynamicTabs()
   },

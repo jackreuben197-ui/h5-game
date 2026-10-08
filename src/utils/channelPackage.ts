@@ -34,8 +34,8 @@ let platformMainDomains: string[] = [...BUILT_IN_OFFICIAL_DOMAINS]
 let platformQrCodeDomains: string[] = []
 
 // 渠道包联调时可临时启用：
-// const TEST_CHANNEL_INVITE_CODE = ''
-const TEST_CHANNEL_INVITE_CODE = 'ksGuBmMk'
+const TEST_CHANNEL_INVITE_CODE = ''
+// const TEST_CHANNEL_INVITE_CODE = 'ksGuBmMk'
 // const TEST_CHANNEL_INVITE_CODE = 'rhswehjy'
 // const TEST_CHANNEL_INVITE_CODE = 'DtuDnwXY'
 

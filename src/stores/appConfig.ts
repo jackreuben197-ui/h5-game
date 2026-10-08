@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { PrivateUcChargeConfigItem, PrivateUcFeeType } from '@bridge-protocol'
+import type { PrivateUcFeeType } from '@bridge-protocol'
 import { postBeforeLoginConfigApi, postGlobalConfigApi } from '@/api/config'
 import type {
   DiamondConfigData,
@@ -24,12 +24,13 @@ import {
   getPrivateUcChargeConfigs,
   isChannelPackageHost,
   type NormalizedPrivateUcConfig,
+  type PrivateUcChargeConfigItemExt,
 } from '@/utils/channelPackage'
 
 interface AppConfigState {
   globalConfig: GlobalConfigData | null
   diamondConfig: DiamondConfigMap | null
-  privateUcChargeConfig: PrivateUcChargeConfigItem[]
+  privateUcChargeConfig: PrivateUcChargeConfigItemExt[]
   privateUcMttRecordFeeConfig: MttRecordFeeConfig | null
 }
 
@@ -128,6 +129,10 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
         return typeof price === 'number' && Number.isFinite(price) && price > 0 ? price : 0
       }
     },
+    getPrivateUcChargeConfig(state): (feeType: PrivateUcFeeType) => PrivateUcChargeConfigItemExt | null {
+      return (feeType: PrivateUcFeeType) =>
+        state.privateUcChargeConfig.find((item) => item.feeType === feeType) ?? null
+    },
   },
   actions: {
     setGlobalConfig(config: GlobalConfigData): void {
@@ -210,7 +215,7 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
           console.warn('[appConfig] persist diamond_config cache failed:', error)
         })
     },
-    setPrivateUcChargeConfig(items: PrivateUcChargeConfigItem[]): void {
+    setPrivateUcChargeConfig(items: PrivateUcChargeConfigItemExt[]): void {
       this.privateUcChargeConfig = CHANNEL_PACKAGE_UC_CHARGE_ENABLED
         ? items.map((item) => ({ ...item, price: Number(item.price) || 0 }))
         : getPrivateUcChargeConfigs()

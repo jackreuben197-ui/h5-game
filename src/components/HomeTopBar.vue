@@ -54,7 +54,7 @@ function openGuestAuth(mode: 'login' | 'register'): void {
 }
 
 .home-top-bar__logo {
-  color: #000;
+  color: #fff;
   font-family: 'HONOR Sans CN', sans-serif;
   font-size: 0.54rem;
   font-weight: 900;
@@ -64,6 +64,10 @@ function openGuestAuth(mode: 'login' | 'register'): void {
     -0.5px 0 0 currentColor,
     0 0.5px 0 currentColor,
     0 -0.5px 0 currentColor;
+
+  @include theme-light {
+    color: #000;
+  }
 }
 
 .home-top-bar__actions {

@@ -480,8 +480,6 @@ function handleOpenCustomerService(): void {
       <ClubZoneQuickActions v-else-if="isChannelPackage && !props.embedded" />
       <GameTypeTabbar
         v-model="activeTab"
-        :class="{ 'home-embedded-tabs': props.embedded }"
-        :force-light="props.embedded"
         :tabs="[
           { name: 'all', title: t('UIMatch_GtO8YEdb') },
           { name: 'texas', title: t('UITexasInfo_Texas') },
@@ -496,7 +494,6 @@ function handleOpenCustomerService(): void {
           :key="group.groupKey"
           :group="group"
           :expanded="expandedMap[group.groupKey] === true"
-          :force-light="props.embedded"
           @toggle="handleToggleGroup"
           @table-click="handleTableClick"
         />
@@ -539,7 +536,7 @@ function handleOpenCustomerService(): void {
   height: auto;
   min-height: 0;
   overflow: visible;
-  color: #000;
+  color: #fff;
   background-image: none;
 
   @include theme-light {
@@ -612,6 +609,7 @@ function handleOpenCustomerService(): void {
   padding-bottom: 0.5333rem;
   padding-left: 0.38rem;
   background: rgba(255, 255, 255, 0.24);
+  -webkit-backdrop-filter: blur(0.3533rem) saturate(1.04);
   backdrop-filter: blur(0.3533rem) saturate(1.04);
 
   @include theme-light {
@@ -626,30 +624,19 @@ function handleOpenCustomerService(): void {
   padding-right: 0;
   padding-bottom: 0.2rem;
   padding-left: 0;
-  background: #fff;
-  backdrop-filter: none;
+  background: rgba(255, 255, 255, 0.24);
+  -webkit-backdrop-filter: blur(0.3533rem) saturate(1.04);
+  backdrop-filter: blur(0.3533rem) saturate(1.04);
 
   @include theme-light {
     background: #fff;
+    -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
 }
 
 .room-list-page--channel-menu-b .group-list {
   padding-bottom: calc(env(safe-area-inset-bottom) + 2.8rem);
-}
-
-.room-list-page--embedded :deep(.home-embedded-tabs),
-.room-list-page--embedded :deep(.home-embedded-tabs .van-tabs__wrap),
-.room-list-page--embedded :deep(.home-embedded-tabs .van-tabs__nav) {
-  background: transparent !important;
-  background-image: none !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-}
-
-.room-list-page--embedded .empty-wrap {
-  color: rgba(34, 34, 34, 0.58);
 }
 
 .empty-wrap {

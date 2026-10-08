@@ -629,6 +629,7 @@ function getDefaultGameIcon(category: MttCategory): string {
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   padding: 0.1rem 0.38rem 0.5rem;
+  -webkit-backdrop-filter: blur(0.3533rem) saturate(1.04);
   backdrop-filter: blur(0.3533rem) saturate(1.04);
 }
 

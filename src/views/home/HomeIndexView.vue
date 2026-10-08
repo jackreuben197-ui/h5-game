@@ -1023,12 +1023,6 @@ onBeforeUnmount(() => {
 
   :deep(.mtt-group) {
     margin-bottom: 0;
-    .mtt-group__title {
-      color: #000;
-    }
-    .mtt-group__toggle {
-      color: rgba(0, 0, 0, 0.77);
-    }
   }
 }
 
@@ -1119,8 +1113,12 @@ onBeforeUnmount(() => {
     font-size: 0.38rem;
     font-weight: 700;
     margin-bottom: 0rem;
-    color: #000;
+    color: #fff;
     font-family: 'HONOR Sans CN', sans-serif;
+
+    @include theme-light {
+      color: #000;
+    }
   }
 }
 

@@ -76,17 +76,6 @@ watch(
   }
 }
 
-// 首页的深色方案仍使用白底；浅色方案才切换到浅色主题背景图。
-.main-layout--home {
-  background-color: #fff;
-  background-image: none;
-
-  @include theme-light {
-    background-color: var(--c-page);
-    background-image: var(--main-bg-light);
-  }
-}
-
 .main-layout-content {
   position: relative;
   z-index: 2;

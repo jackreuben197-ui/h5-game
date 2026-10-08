@@ -74,7 +74,7 @@ const candidateTabs = computed<TabItem[]>(() => {
             {
               key: 'mtt' as const,
               label: t('UITabbarMatch'),
-              path: '/match',
+              path: '/home?section=mtt',
               icon: 'mtt' as const,
             },
           ]
@@ -84,7 +84,7 @@ const candidateTabs = computed<TabItem[]>(() => {
             {
               key: 'poker' as const,
               label: t('UITexasReport_Label_AllBarPZ'),
-              path: '/gameList',
+              path: '/home?section=poker',
               icon: 'home' as const,
             },
           ]
@@ -132,6 +132,15 @@ const isStabilizingTabs = ref(isChannelPackage.value)
 // 当前激活项索引：用于驱动顶部凸起在当前 tab 数量间平滑移动。
 const activeTabKey = computed<MainTabKey>(() => {
   if (isVersionB.value && route.name === 'lobby') {
+    const requestedSection = Array.isArray(route.query.section)
+      ? route.query.section[0]
+      : route.query.section
+    if (requestedSection === 'poker' && hasPoker.value) {
+      return 'poker'
+    }
+    if (requestedSection === 'mtt' && (hasMtt.value || !hasPoker.value)) {
+      return 'mtt'
+    }
     return hasMtt.value || !hasPoker.value ? 'mtt' : 'poker'
   }
   const routeTabKey = route.meta.tabKey
@@ -170,13 +179,13 @@ const stableDynamicItems: Record<'mtt' | 'poker', TabItem> = {
   mtt: {
     key: 'mtt',
     label: t('UITabbarMatch'),
-    path: '/match',
+    path: '/home?section=mtt',
     icon: 'mtt',
   },
   poker: {
     key: 'poker',
     label: t('UITexasReport_Label_AllBarPZ'),
-    path: '/gameList',
+    path: '/home?section=poker',
     icon: 'home',
   },
 }

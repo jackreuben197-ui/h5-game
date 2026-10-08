@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { usePlatformDiamondVisibility } from '@/composables/usePlatformDiamondVisibility'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { getCowboyRoomListApi } from '@/api/gc'
 import type { RoomRecord } from '@/api/models/roomcenter'
 import StorageKey from '@/constants/storageKey'
@@ -30,6 +30,7 @@ import { ensureWsProxyConnected } from '@/bridge/ws'
 import { waitForH5FirstPaint } from '@/utils/firstPaint'
 
 const router = useRouter()
+const route = useRoute()
 const userInfoStore = useUserInfoStore()
 const roomListStore = useRoomListStore()
 const mttListStore = useMttListStore()
@@ -206,6 +207,12 @@ const mahjongPlayersText = 0
 const mttTablesText = computed(() => `${homeRoomStats.value.mtt.tables}`)
 const mttPlayersText = computed(() => `${homeRoomStats.value.mtt.players}`)
 type HomeContentMode = 'zones' | 'mtt' | 'poker'
+const requestedHomeSection = computed<'mtt' | 'poker' | null>(() => {
+  const rawSection = Array.isArray(route.query.section)
+    ? route.query.section[0]
+    : route.query.section
+  return rawSection === 'mtt' || rawSection === 'poker' ? rawSection : null
+})
 
 // 渠道包在首页信息区下按 A/B 与可见列表决定内容；官方包始终使用专区豆腐块布局。
 const homeContentModeRaw = computed<HomeContentMode>(() => {
@@ -216,6 +223,14 @@ const homeContentModeRaw = computed<HomeContentMode>(() => {
   const pokerTables = homeRoomStats.value.poker.tables
   const mttTables = homeRoomStats.value.mtt.tables
   if (isChannelMenuVersionB.value) {
+    // 私域 B 的底栏牌桌/赛事都是同一个首页，只通过查询参数选择首页内嵌列表。
+    // 查询参数与当前可见数据不一致时回退到原落点规则，避免展示空的错误专区。
+    if (requestedHomeSection.value === 'poker' && pokerTables > 0) {
+      return 'poker'
+    }
+    if (requestedHomeSection.value === 'mtt' && (mttTables > 0 || pokerTables === 0)) {
+      return 'mtt'
+    }
     // 对齐原渠道 B 落点：有赛事时优先赛事；只有牌桌时才进入牌桌列表。
     return mttTables > 0 || pokerTables === 0 ? 'mtt' : 'poker'
   }
@@ -480,6 +495,12 @@ async function updateNoticeMarquee(): Promise<void> {
 
 watch(noticeText, () => {
   void updateNoticeMarquee()
+})
+
+watch(requestedHomeSection, () => {
+  if (homeContentReady.value) {
+    commitHomeContentMode()
+  }
 })
 
 watch(

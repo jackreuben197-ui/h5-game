@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { t } from '@/i18n'
-import mttBannerSm from '@/assets/images/mtt_banner_sm.png'
-import mttBannerMd from '@/assets/images/mtt_banner_md.png'
-import mttBannerLg from '@/assets/images/mtt_banner_lg.png'
+import mttBannerSm from '@/assets/images/mtt_banner_sm.webp'
+import mttBannerMd from '@/assets/images/mtt_banner_md.webp'
+import mttBannerLg from '@/assets/images/mtt_banner_lg.webp'
 
 // MTT 卡片支持三种尺寸：
 //   sm  - 1行3张，紧凑小卡

@@ -179,7 +179,7 @@ watch(
       'main-layout--guest': isGuestPreview,
       'main-layout--authenticated': isPrimaryLayout && !isGuestPreview,
       'is-version-b': isVersionB,
-      'main-layout--home-b': isHomeRoute && isVersionB,
+      'main-layout--home-bg': isHomeRoute,
     }"
     :style="backgroundStyle"
   >
@@ -248,7 +248,7 @@ watch(
   }
 }
 
-.main-layout.main-layout--home-b {
+.main-layout.main-layout--home-bg {
   background-color: #0d121c;
   background-image: url('@/assets/images/main_bg.webp') !important;
   background-size: cover;

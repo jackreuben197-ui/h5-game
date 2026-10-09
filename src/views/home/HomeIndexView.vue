@@ -1189,8 +1189,16 @@ onBeforeUnmount(() => {
 
 @media (max-width: 599px) {
   .home-page--banner-capped .home-header {
+    position: relative;
     flex: 0 1 3.68rem;
     max-height: 3.68rem;
+  }
+
+  .home-page--banner-capped .home-header__inner {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    height: auto;
   }
 }
 

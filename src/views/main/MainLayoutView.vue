@@ -179,6 +179,7 @@ watch(
       'main-layout--guest': isGuestPreview,
       'main-layout--authenticated': isPrimaryLayout && !isGuestPreview,
       'is-version-b': isVersionB,
+      'main-layout--home-b': isHomeRoute && isVersionB,
     }"
     :style="backgroundStyle"
   >
@@ -241,6 +242,17 @@ watch(
 :root[data-theme='light'] .main-layout--pure-black {
   background-color: transparent;
   background-image: url('@/assets/images/main_bg_light.webp') !important;
+
+  .main-layout-content {
+    background: transparent;
+  }
+}
+
+.main-layout.main-layout--home-b {
+  background-color: #0d121c;
+  background-image: url('@/assets/images/main_bg.webp') !important;
+  background-size: cover;
+  background-position: center;
 
   .main-layout-content {
     background: transparent;

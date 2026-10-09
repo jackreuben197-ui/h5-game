@@ -1,3 +1,7 @@
+<script lang="ts">
+let lastCommittedHomeContentMode: 'zones' | 'mtt' | 'poker' | 'casino' | null = null
+</script>
+
 <script setup lang="ts">
 import { usePlatformDiamondVisibility } from '@/composables/usePlatformDiamondVisibility'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from 'vue'
@@ -497,12 +501,13 @@ const homeContentModeRaw = computed<HomeContentMode>(() => {
   return 'zones'
 })
 // 渠道首屏不猜测布局：俱乐部配置、全局配置、牌桌和 MTT 稳定后再一次性展示。
-const homeContentMode = ref<HomeContentMode>('zones')
-const homeContentReady = ref(false)
+const homeContentMode = ref<HomeContentMode>(lastCommittedHomeContentMode ?? 'zones')
+const homeContentReady = ref(lastCommittedHomeContentMode !== null)
 const showOfficialHomeSections = computed(() => !isChannelPackage.value)
 
 function commitHomeContentMode(): void {
   homeContentMode.value = homeContentModeRaw.value
+  lastCommittedHomeContentMode = homeContentMode.value
 }
 
 // 专区入口只在 zones 模式渲染：赛事 / 扑克常驻（没内容也保留入口，点进去是空态），
@@ -839,6 +844,12 @@ async function bootstrapHomeContent(): Promise<void> {
   })
 }
 
+if (homeContentReady.value) {
+  refreshHomePokerMahjongStatsFromStore()
+  refreshHomeMttStatsFromStore()
+  commitHomeContentMode()
+}
+
 onMounted(() => {
   // 首页和两个列表页共用 store；俱乐部、身份和配置就绪后一次性提交首屏。
   void bootstrapHomeContent()
@@ -875,6 +886,7 @@ onBeforeUnmount(() => {
     :class="{
       'home-page--fit': homeContentMode === 'zones',
       'home-page--mtt': homeContentReady && homeContentMode === 'mtt',
+      'home-page--banner-capped': isChannelPackage && !(homeContentReady && homeContentMode === 'zones'),
       'is-version-b': isVersionB
     }"
   >
@@ -1173,6 +1185,13 @@ onBeforeUnmount(() => {
   flex: 1 1 3.68rem;
   min-height: 0;
   max-height: 5.5rem;
+}
+
+@media (max-width: 599px) {
+  .home-page--banner-capped .home-header {
+    flex: 0 1 3.68rem;
+    max-height: 3.68rem;
+  }
 }
 
 .home-header__inner {

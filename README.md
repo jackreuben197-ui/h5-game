@@ -565,27 +565,22 @@ WebView 发布。
 
 当前项目字体接入约定如下：
 
-1. 字体文件统一放在 `public/assets/fonts/`。
-2. 全局 `@font-face` 统一写在 `src/styles/_base.scss`。
-3. 全局默认字体链在 `src/styles/_base.scss` 的 `--font-family-sans` 配置。
+1. 字体文件统一放在 `public/assets/fonts/`；`HONOR Sans CN` 例外，见下方「HONOR Sans CN 分片」。
+2. 全局 `@font-face` 统一写在 `src/styles/_fonts.scss`。
+3. 全局默认字体链在 `src/styles/_tokens.scss` 的 `--font-family-sans` 配置。
 4. 页面局部特殊字体（例如 MTT 倒计时）在对应 SFC 局部样式中覆盖。
 
 当前已接入示例：
 
-- `HONOR Sans CN`：`public/assets/fonts/HONORSansCN-Regular.woff2`
+- `HONOR Sans CN`：按 `unicode-range` 分片，`src/assets/fonts/honor-sans-cn/*.woff2`
 - `Keania One`：`public/assets/fonts/KeaniaOne-Regular.woff2`
 
-`@font-face` 示例（见 `src/styles/_base.scss`）：
+HONOR Sans CN 分片：
 
-```scss
-@font-face {
-  font-family: 'HONOR Sans CN';
-  src: url('/assets/fonts/HONORSansCN-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-```
+- 源字体 `scripts/fonts/HONORSansCN-Regular.woff2`（4.1 MB）不再直接下发；`pnpm fonts:split` 把它切成约 70 个分片，并生成 `src/styles/_fonts-honor.scss`（每个分片一条带 `unicode-range` 的 `@font-face`），浏览器只下载页面实际用到的分片。
+- 分片依据：拉丁/西里尔、CJK 标点、H5 实际引用的简中词条用字（`sc-1`）、其余简中（`sc-2`）、繁中（`tc-*`）、日文（`ja`），剩余字符按码位每 400 个一片（`ext-*`）。
+- 脚本依赖 `pip install fonttools brotli`；输出是确定性的，词典或源码用字变化后重新执行并提交生成结果即可。
+- 不要手改 `_fonts-honor.scss` 和 `honor-sans-cn/` 目录。
 
 注意：
 
@@ -1181,9 +1176,9 @@ H5 事务入口是 `src/session/cocosTableSitdownAuth.ts`。`syncPostAuthData()`
 当前多语言使用 `@silenthill/h5-cc-i18n` 共享包，不依赖 `vue-i18n`：
 
 - 单一来源：`@silenthill/h5-cc-i18n` 仓库；实际安装版本由 `pnpm-lock.yaml` 固定。
-- H5 运行文件：`public/h5-cc-i18n.min.js`，在 Vue 入口前建立 `window.__H5_CC_I18N__`。
+- H5 运行文件：`public/h5-cc-i18n.min.js`（仅 runtime），在 Vue 入口前建立 `window.__H5_CC_I18N__`；各语言词典在 `public/i18n/h5-cc-i18n.<locale>.<hash>.js`。
 - `predev`、`prebuild` 自动从依赖包复制安装产物；可手动执行 `pnpm sync:i18n`。
-- 当前运行包内含四种语言，切换语言不再额外请求 TXT 文件。
+- `index.html` 的内联脚本只同步加载当前语言的词典；切换语言时由 `setLocale()` 按需加载目标语言。
 - 格式化器：`src/i18n/parser.ts`（处理 `\n` 转义和 `{0}` 占位符）
 - 核心模块：`src/i18n/index.ts`
 - 组合式 API：`src/i18n/useTextI18n.ts`

@@ -961,7 +961,7 @@ onBeforeUnmount(() => {
           <div class="game-center-scroll">
             <div class="game-center-track">
               <div class="game-scroll-card game-card-mtt" @click="goToMttList">
-                <img class="zone-lg-bg" src="@/assets/icons/game_zone_mtt_lg.png" alt="MTT" />
+                <img class="zone-lg-bg" src="@/assets/icons/game_zone_mtt_lg.webp" alt="MTT" />
                 <div class="zone-info">
                   <div class="zone-header">
                     <span class="zone-title"> {{ t('UIHomeMttArea') }} </span>
@@ -988,7 +988,7 @@ onBeforeUnmount(() => {
               <div class="game-scroll-card poker-card" @click="goToGameList">
                 <img
                   class="zone-lg-bg"
-                  src="@/assets/icons/game_zone_poker_lg.png"
+                  src="@/assets/icons/game_zone_poker_lg.webp"
                   :alt="t('UIClub_Text15')"
                 />
                 <div class="poker-overlay"></div>
@@ -1023,7 +1023,7 @@ onBeforeUnmount(() => {
               >
                 <img
                   class="zone-lg-bg"
-                  src="@/assets/icons/game_zone_mahjong_lg.png"
+                  src="@/assets/icons/game_zone_mahjong_lg.webp"
                   :alt="t('Mahjong_Name')"
                 />
                 <div class="zone-info">

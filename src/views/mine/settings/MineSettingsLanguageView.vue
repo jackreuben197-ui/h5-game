@@ -60,7 +60,8 @@ function selectLanguage(key: string): void {
   }
 
   if (SUPPORTED.includes(key)) {
-    setLocale(key as LocaleCode)
+    setLocale(key as LocaleCode, () => showSuccessToast(t('UIClub_Success5')))
+    return
   }
   showSuccessToast(t('UIClub_Success5'))
 }

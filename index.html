@@ -172,10 +172,10 @@
     <!-- 语言首帧对齐：Vue 入口与 Cocos 启动都读取该实例，先按持久化语言设好 locale -->
     <script>
       ;(function () {
-        var raw = window.localStorage.getItem('dzpk_h5_Language') || ''
-        var saved = raw
+        var saved = ''
         try {
-          saved = JSON.parse(raw)
+          saved = window.localStorage.getItem('dzpk_h5_Language') || ''
+          saved = JSON.parse(saved)
         } catch (error) {}
         var LOCALE_MAP = {
           cn: 'zh-CN',
@@ -193,7 +193,61 @@
           th: 'th',
           vi: 'vi',
         }
-        var target = LOCALE_MAP[saved]
+        function normalizeLocale(input) {
+          if (!input) {
+            return ''
+          }
+          var normalized = String(input).toLowerCase().replace(/_/g, '-')
+          if (
+            normalized === 'tw' ||
+            normalized === 'hk' ||
+            normalized === 'zh-hant' ||
+            normalized.indexOf('zh-tw') === 0 ||
+            normalized.indexOf('zh-hk') === 0
+          ) {
+            return 'zh'
+          }
+          if (
+            normalized === 'cn' ||
+            normalized === 'zh-cn' ||
+            normalized === 'zh-hans' ||
+            normalized.indexOf('zh-cn') === 0
+          ) {
+            return 'cn'
+          }
+          if (normalized === 'zh') {
+            return 'zh'
+          }
+          if (normalized.indexOf('zh') === 0) {
+            return 'cn'
+          }
+          if (normalized === 'br' || normalized.indexOf('pt') === 0) {
+            return 'pt'
+          }
+          if (normalized === 'us' || normalized.indexOf('en') === 0) {
+            return 'en'
+          }
+          var primary = normalized.split('-')[0]
+          return LOCALE_MAP[primary] ? primary : ''
+        }
+        var code = normalizeLocale(saved) || normalizeLocale(window.navigator.language) || 'cn'
+        var target = LOCALE_MAP[code]
+        var runtime = window.__H5_CC_I18N__
+        if (!target || !runtime) {
+          return
+        }
+        window.__H5_I18N_BOOT_LOCALE__ = target
+        if (typeof runtime.hasLocale === 'function' && !runtime.hasLocale(target)) {
+          var url = runtime.getLocaleUrl(target)
+          if (url) {
+            document.write('<script src="' + url + '"><\/script>')
+          }
+        }
+      })()
+    </script>
+    <script>
+      ;(function () {
+        var target = window.__H5_I18N_BOOT_LOCALE__
         var runtime = window.__H5_CC_I18N__
         if (target && runtime && typeof runtime.setLocale === 'function') {
           runtime.setLocale(target)
@@ -644,7 +698,6 @@
         /* Cocos 以此为真实画框高度，不含 H5 的底部溢出量。 */
         --app-cocos-height: var(--app-viewport-height);
         --h5-shell-bg-color: #222627;
-        --h5-shell-bg-image: url('/src/assets/images/main_bg.webp');
         --app-bottom-bleed: 0px;
         --app-content-safe-area-top: env(safe-area-inset-top);
         --app-visual-safe-area-top: 0px;
@@ -658,7 +711,6 @@
 
       html[data-theme='light'] {
         --h5-shell-bg-color: #f3f5f7;
-        --h5-shell-bg-image: url('/src/assets/images/main_bg_light.webp');
       }
 
       @supports (height: 100dvh) {
@@ -811,10 +863,6 @@
         z-index: 10;
         box-sizing: border-box;
         background-color: var(--h5-shell-bg-color);
-        background-image: var(--h5-shell-bg-image);
-        background-repeat: no-repeat;
-        background-position: center top;
-        background-size: cover;
       }
 
       /* 普通 H5 输入框仅在会被键盘遮挡时平移；客服面板单独使用 keyboard inset。 */

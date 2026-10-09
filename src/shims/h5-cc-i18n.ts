@@ -21,6 +21,9 @@ interface H5CCI18n {
   getCurrentLocale?(): string
   setLocale(locale: string): void
   get(key: string, fallback?: string): string
+  hasLocale?(locale: string): boolean
+  loadLocale?(locale: string, callback?: (ok: boolean) => void): void
+  getLocaleUrl?(locale: string): string
 }
 
 const i18n: H5CCI18n = (window as any).__H5_CC_I18N__ ?? {

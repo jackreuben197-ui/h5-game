@@ -119,16 +119,8 @@ function resolveTableLabel(roomInfo: BillRoomInfoContext | undefined): string {
   return ''
 }
 
-// 决定 {0} 占位符要填什么。CLUBTOUSER 在 UC tab 填 "UC"，记分牌 tab 填 "GC"，钻石 tab 填牌桌标签。
-function resolvePlaceholderArg(
-  opCode: string,
-  ctx: BillTitleContext,
-  activeTab: number,
-): string {
-  if (opCode === 'CLUBTOUSER') {
-    if (activeTab === 4) return resolveTableLabel(ctx.roomInfo)
-    return activeTab === 1 ? 'UC' : 'GC'
-  }
+// 决定 {0} 占位符要填什么，仅牌桌类账单需要追加桌类型。
+function resolvePlaceholderArg(opCode: string, ctx: BillTitleContext): string {
   if (OP_CODES_NEED_TABLE_LABEL.has(opCode)) {
     return resolveTableLabel(ctx.roomInfo)
   }
@@ -147,9 +139,10 @@ export function resolveOpCodeText(opCodeRaw: unknown): string {
   return resolveTemplateTextByKey(key, getLocale()) || t(key) || key
 }
 
-// 解析 op_code 的本地化文案：归一化 CBBI/CBBO；override key 优先；{0} 按 ctx + activeTab 替换。
+// 解析 op_code 的本地化文案：归一化 CBBI/CBBO；override key 优先；{0} 按 ctx 替换。
+// activeTab 保留在签名中以兼容现有调用，不再用于 CLUBTOUSER 货币类型拼接。
 // 未找到模板时返回空串（调用方决定 fallback），避免页面出现裸的 "OpCodeString_XXX"。
-export function resolveBillOpCodeText(ctx: BillTitleContext, activeTab: number): string {
+export function resolveBillOpCodeText(ctx: BillTitleContext, _activeTab: number): string {
   const opCode = normalizeBillOpCode(ctx.opCode)
   if (!opCode) return ''
 
@@ -165,7 +158,7 @@ export function resolveBillOpCodeText(ctx: BillTitleContext, activeTab: number):
   if (!template.includes('{0}')) {
     return template
   }
-  const arg0 = resolvePlaceholderArg(opCode, ctx, activeTab)
+  const arg0 = resolvePlaceholderArg(opCode, ctx)
   return template.replace(/\{0\}/g, arg0)
 }
 

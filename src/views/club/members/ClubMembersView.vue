@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { showFailToast, showSuccessToast } from 'vant'
 import { formatUC } from '@/utils/roomVisibility'
@@ -124,6 +124,7 @@ const customStartDate = ref(startOfDay(addDays(customEndDate.value, -6)))
 const minSelectableDate = startOfDay(addMonths(new Date(), -3))
 const maxSelectableDate = endOfDay(new Date())
 const recordListRef = ref<HTMLElement | null>(null)
+const membersListRef = ref<HTMLElement | null>(null)
 const showFundSheet = ref(false)
 const activeMember = ref<MemberItem | null>(null)
 const fundAssetTab = ref<FundAssetTab>('coin')
@@ -1024,8 +1025,13 @@ async function fetchMembers(reset = false, silent = false): Promise<void> {
     const rawMembers = Array.isArray(response.data.data) ? response.data.data : []
     const nextMembers = rawMembers.map(mapMember)
 
-    members.value = reset ? nextMembers : [...members.value, ...nextMembers]
-    membersOffset.value = currentOffset + rawMembers.length
+    if (reset) {
+      members.value = nextMembers
+    } else {
+      const knownIds = new Set(members.value.map((item) => item.id))
+      members.value = [...members.value, ...nextMembers.filter((item) => !knownIds.has(item.id))]
+    }
+    membersOffset.value = currentOffset + PAGE_SIZE
 
     const rawTotal = Number(response.data.total)
     const hasValidTotal = Number.isFinite(rawTotal) && rawTotal >= 0
@@ -1042,7 +1048,7 @@ async function fetchMembers(reset = false, silent = false): Promise<void> {
     if (hasValidTotal) {
       hasMoreMembers.value = membersOffset.value < total
     } else {
-      hasMoreMembers.value = rawMembers.length >= PAGE_SIZE
+      hasMoreMembers.value = rawMembers.length > 0
     }
 
     // 触底加载写回的是累计后的完整列表（更新而非覆盖）。
@@ -1080,6 +1086,16 @@ async function fetchMembers(reset = false, silent = false): Promise<void> {
     } else {
       loadingMoreMembers.value = false
     }
+  }
+
+  await nextTick()
+  fillMembersViewport()
+}
+
+function fillMembersViewport(): void {
+  const list = membersListRef.value
+  if (list && list.scrollHeight - list.clientHeight <= 80) {
+    loadNextPage()
   }
 }
 
@@ -1572,6 +1588,7 @@ onMounted(() => {
         </section>
 
         <section
+          ref="membersListRef"
           class="members-list"
           :aria-label="t('UIGuild_MemberList')"
           @scroll="onMembersScroll"

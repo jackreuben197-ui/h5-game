@@ -222,16 +222,24 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
         : getPrivateUcChargeConfigs()
     },
     setPrivateUcConfig(config: NormalizedPrivateUcConfig, persistCache = true): void {
-      this.setPrivateUcChargeConfig(config.chargeItems)
-      this.diamondConfig = CHANNEL_PACKAGE_UC_CHARGE_ENABLED ? config.diamondConfig : {}
-      this.privateUcMttRecordFeeConfig = CHANNEL_PACKAGE_UC_CHARGE_ENABLED
+      // IndexedDB 不能结构化克隆 Vue/Pinia 的响应式 Proxy。先保留普通对象，
+      // 再写入 store；持久化时也必须使用这些局部变量，不能从 this 上回读。
+      const chargeItems = CHANNEL_PACKAGE_UC_CHARGE_ENABLED
+        ? config.chargeItems.map((item) => ({ ...item, price: Number(item.price) || 0 }))
+        : getPrivateUcChargeConfigs()
+      const diamondConfig = CHANNEL_PACKAGE_UC_CHARGE_ENABLED ? config.diamondConfig : {}
+      const mttRecordFeeConfig = CHANNEL_PACKAGE_UC_CHARGE_ENABLED
         ? config.mttRecordFeeConfig
         : null
+
+      this.privateUcChargeConfig = chargeItems
+      this.diamondConfig = diamondConfig
+      this.privateUcMttRecordFeeConfig = mttRecordFeeConfig
       if (persistCache) {
         void persistPrivateUcConfig({
-          chargeItems: this.privateUcChargeConfig,
-          diamondConfig: this.diamondConfig ?? {},
-          mttRecordFeeConfig: this.privateUcMttRecordFeeConfig,
+          chargeItems,
+          diamondConfig,
+          mttRecordFeeConfig,
         }).catch((error) => {
           console.warn('[appConfig] persist uc_config cache failed:', error)
         })

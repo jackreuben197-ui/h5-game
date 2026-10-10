@@ -1378,7 +1378,7 @@ onBeforeUnmount(() => {
   }
 
   :deep(.mtt-group + .mtt-group) {
-    margin-top: 0.48rem;
+    margin-top: 0.32rem;
   }
 }
 // 保持和 .home-page 的直接子级同样的纵向堆叠 + 间距。

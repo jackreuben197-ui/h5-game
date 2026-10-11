@@ -13,6 +13,7 @@ import StorageKey from '@/constants/storageKey'
 import {
   PUBLIC_STORE_APP_CONFIG,
   PUBLIC_STORE_DIAMOND_CONFIG,
+  PUBLIC_STORE_UC_CONFIG,
   readPublicCache,
   readPublicCacheEntries,
   replacePublicCacheEntries,
@@ -220,12 +221,29 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
         ? items.map((item) => ({ ...item, price: Number(item.price) || 0 }))
         : getPrivateUcChargeConfigs()
     },
-    setPrivateUcConfig(config: NormalizedPrivateUcConfig): void {
-      this.setPrivateUcChargeConfig(config.chargeItems)
-      this.diamondConfig = CHANNEL_PACKAGE_UC_CHARGE_ENABLED ? config.diamondConfig : {}
-      this.privateUcMttRecordFeeConfig = CHANNEL_PACKAGE_UC_CHARGE_ENABLED
+    setPrivateUcConfig(config: NormalizedPrivateUcConfig, persistCache = true): void {
+      // IndexedDB 不能结构化克隆 Vue/Pinia 的响应式 Proxy。先保留普通对象，
+      // 再写入 store；持久化时也必须使用这些局部变量，不能从 this 上回读。
+      const chargeItems = CHANNEL_PACKAGE_UC_CHARGE_ENABLED
+        ? config.chargeItems.map((item) => ({ ...item, price: Number(item.price) || 0 }))
+        : getPrivateUcChargeConfigs()
+      const diamondConfig = CHANNEL_PACKAGE_UC_CHARGE_ENABLED ? config.diamondConfig : {}
+      const mttRecordFeeConfig = CHANNEL_PACKAGE_UC_CHARGE_ENABLED
         ? config.mttRecordFeeConfig
         : null
+
+      this.privateUcChargeConfig = chargeItems
+      this.diamondConfig = diamondConfig
+      this.privateUcMttRecordFeeConfig = mttRecordFeeConfig
+      if (persistCache) {
+        void persistPrivateUcConfig({
+          chargeItems,
+          diamondConfig,
+          mttRecordFeeConfig,
+        }).catch((error) => {
+          console.warn('[appConfig] persist uc_config cache failed:', error)
+        })
+      }
     },
     async restorePublicConfigCache(): Promise<void> {
       // 必须先恢复全局域名配置，才能准确判断当前是否为渠道包。
@@ -239,8 +257,13 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
 
       // 私域版本改用独立 UC 收费配置，不能再恢复旧的钻石收费缓存。
       if (isChannelPackageHost()) {
-        this.diamondConfig = null
-        this.privateUcMttRecordFeeConfig = null
+        const privateUcConfig = await restorePrivateUcConfig()
+        if (privateUcConfig) {
+          this.setPrivateUcConfig(privateUcConfig, false)
+        } else {
+          this.diamondConfig = null
+          this.privateUcMttRecordFeeConfig = null
+        }
         return
       }
 
@@ -278,6 +301,23 @@ async function persistDiamondConfig(
     .filter((entry) => Number.isFinite(entry.key) && entry.key > 0)
   await replacePublicCacheEntries(PUBLIC_STORE_DIAMOND_CONFIG, entries)
   localStore.removeItem(legacyKey)
+}
+
+const UC_CONFIG_CHARGE_ITEMS_KEY = 'charge_items'
+const UC_CONFIG_MTT_RECORD_FEE_KEY = 'mtt_record_fee_config'
+
+async function persistPrivateUcConfig(value: NormalizedPrivateUcConfig): Promise<void> {
+  const entries: Array<{ key: IDBValidKey; value: unknown }> = [
+    { key: UC_CONFIG_CHARGE_ITEMS_KEY, value: value.chargeItems },
+    { key: UC_CONFIG_MTT_RECORD_FEE_KEY, value: value.mttRecordFeeConfig },
+    ...Object.entries(value.diamondConfig)
+      .map(([configType, configValue]) => ({
+        key: Number(configType),
+        value: configValue,
+      }))
+      .filter((entry) => Number.isFinite(entry.key) && entry.key > 0),
+  ]
+  await replacePublicCacheEntries(PUBLIC_STORE_UC_CONFIG, entries)
 }
 
 async function restoreGlobalConfig(
@@ -337,4 +377,48 @@ async function restoreDiamondConfig(
   }
 
   return null
+}
+
+async function restorePrivateUcConfig(): Promise<NormalizedPrivateUcConfig | null> {
+  const entries = await readPublicCacheEntries<unknown>(PUBLIC_STORE_UC_CONFIG)
+  if (!entries.length) return null
+
+  let chargeItems: PrivateUcChargeConfigItemExt[] | null = null
+  let mttRecordFeeConfig: MttRecordFeeConfig | null = null
+  let hasMttRecordFeeEntry = false
+  const diamondConfig: DiamondConfigMap = {}
+
+  for (const entry of entries) {
+    if (entry.key === UC_CONFIG_CHARGE_ITEMS_KEY) {
+      if (Array.isArray(entry.value)) {
+        chargeItems = entry.value as PrivateUcChargeConfigItemExt[]
+      }
+      continue
+    }
+    if (entry.key === UC_CONFIG_MTT_RECORD_FEE_KEY) {
+      hasMttRecordFeeEntry = true
+      if (entry.value && typeof entry.value === 'object' && !Array.isArray(entry.value)) {
+        mttRecordFeeConfig = entry.value as MttRecordFeeConfig
+      }
+      continue
+    }
+
+    const configType = Number(entry.key)
+    if (
+      Number.isFinite(configType) &&
+      configType > 0 &&
+      entry.value &&
+      typeof entry.value === 'object' &&
+      !Array.isArray(entry.value)
+    ) {
+      diamondConfig[configType] = entry.value as Record<number, DiamondConfigItem>
+    }
+  }
+
+  if (!chargeItems && !hasMttRecordFeeEntry && !Object.keys(diamondConfig).length) return null
+  return {
+    chargeItems: chargeItems ?? getPrivateUcChargeConfigs(),
+    diamondConfig,
+    mttRecordFeeConfig,
+  }
 }

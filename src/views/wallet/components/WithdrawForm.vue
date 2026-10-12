@@ -9,6 +9,7 @@ import { postOnlineWithdrawTypeListApi, postOnlineWithdrawDescriptionApi } from 
 import { postTiquGoldApi } from '@/api/order'
 import type { OnlineWithdrawTypeItem, OnlineWithdrawTypeListData } from '@/api/models/config'
 import { useWalletStore } from '@/stores/wallet'
+import { formatUC } from '@/utils/roomVisibility'
 
 const emit = defineEmits<{
   'open-cs-chat': [orderData: Record<string, unknown>]
@@ -21,7 +22,7 @@ const props = defineProps<{
 }>()
 
 const walletStore = useWalletStore()
-const availableUc = computed(() => props.balance ?? 0)
+const availableUc = computed(() => formatUC(props.balance ?? 0))
 
 const savedAddresses = ref<OnlineWithdrawTypeItem[]>([])
 const selectedAddress = ref<OnlineWithdrawTypeItem | null>(null)

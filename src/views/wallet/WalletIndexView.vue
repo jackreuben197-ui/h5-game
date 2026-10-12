@@ -31,6 +31,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { useMainTabsStore } from '@/stores/mainTabs'
 import { setH5Visible } from '@/bridge/channels/uiChannel'
 import { isChannelPackageHost } from '@/utils/channelPackage'
+import { formatUC } from '@/utils/roomVisibility'
 import {
   postOrderUserRechargeNoApi,
   postRechargeGoldApi,
@@ -857,7 +858,7 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
             <div class="balance-row">
               <div class="balance-chip">
                 <span class="balance-chip__value">
-                  {{ walletBalance.toLocaleString() }}
+                  {{ formatUC(walletBalance) }}
                 </span>
                 <img :src="icCoins" alt="" class="balance-chip__icon" />
               </div>

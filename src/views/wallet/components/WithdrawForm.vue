@@ -23,7 +23,6 @@ import { openCsOrderChat } from '@/components/GlobalCsOrderFloat/channel'
 import { splitWalletLabel } from '@/utils/walletLabel'
 
 const props = defineProps<{
-  availableUc?: number
   clubId?: number
   balance?: number
   preview?: boolean
@@ -48,7 +47,7 @@ function tx(key: string, fallback: string): string {
   return val && val !== key ? val : fallback
 }
 
-const availableUc = computed(() => props.availableUc ?? 0)
+const availableUc = computed(() => props.balance ?? 0)
 
 type ChannelId = 'bankcard' | 'wallet' | 'customercare' | 'wechat' | 'alipay' | 'usdt'
 const activeChannel = ref<ChannelId>('customercare')

@@ -36,6 +36,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { useMainTabsStore } from '@/stores/mainTabs'
 import { setH5Visible } from '@/bridge/channels/uiChannel'
 import { isPrivateDomainMode } from '@/utils/channelPackage'
+import { formatUC } from '@/utils/roomVisibility'
 import {
   postOrderUserRechargeNoApi,
   postRechargeGoldApi,
@@ -46,7 +47,6 @@ import {
 import { postChatSupportChannelListApi } from '@/api/chat'
 import { generateQrCodeUrl } from '@/utils/qrcode'
 import { showToast } from 'vant'
-import { postClubUserWalletApi } from '@/api/org'
 import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 import { useGameStore } from '@/stores/game'
@@ -336,38 +336,6 @@ function openWalletChild(path: string): void {
   if (!requireRealUser(() => openWalletChild(path))) return
   void router.push({ path, query: route.query })
 }
-
-// 当前俱乐部成员余额（单位：分），用于钱包余额展示与回收可用额度
-const clubGold = ref(0)
-
-async function fetchClubBalance(): Promise<void> {
-  const clubId = walletClubId.value
-  if (!clubId) {
-    clubGold.value = 0
-    return
-  }
-  try {
-    const res = await postClubUserWalletApi({ club_id: clubId })
-    if (res.code === 0 && res.data) {
-      const d = res.data as Record<string, unknown>
-      const raw = d.user_gold ?? d.gold ?? d.golds ?? d.balance ?? 0
-      clubGold.value = Number(raw) || 0
-    } else {
-      clubGold.value = 0
-    }
-  } catch (e) {
-    console.error('Failed to fetch club balance', e)
-    clubGold.value = 0
-  }
-}
-
-watch(
-  walletClubId,
-  (id) => {
-    if (id) void fetchClubBalance()
-  },
-  { immediate: true },
-)
 
 async function refreshPendingCsOrder() {
   if (!gameStore.isRealUser) return
@@ -1304,7 +1272,7 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
             <div class="balance-row">
               <div class="balance-chip">
                 <span class="balance-chip__value">
-                  {{ (clubGold / 100).toFixed(2) }}
+                  {{ formatUC(walletBalance) }}
                 </span>
                 <img :src="icCoins" alt="" class="balance-chip__icon" />
               </div>
@@ -1399,12 +1367,10 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
         <template v-else>
           <WithdrawForm
             :club-id="walletClubId"
-            :available-uc="clubGold"
             :balance="walletBalance"
             :preview="!gameStore.isRealUser"
             @open-cs-chat="onWithdrawCsChat"
             @require-auth="requestWalletAuth"
-            @withdrawn="fetchClubBalance"
           />
         </template>
       </div>

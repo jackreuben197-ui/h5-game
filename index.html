@@ -36,6 +36,7 @@
           var manifestLink = document.createElement('link')
           manifestLink.rel = 'manifest'
           manifestLink.href = './manifest.webmanifest'
+          manifestLink.setAttribute('data-default-href', manifestLink.getAttribute('href'))
           document.head.appendChild(manifestLink)
         }
         try {

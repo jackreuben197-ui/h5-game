@@ -133,9 +133,17 @@ function updateWebManifest(label: string, iconUrl: string, isClub: boolean): voi
 
   let manifestLink = document.querySelector<HTMLLinkElement>('link[rel="manifest"]')
 
+  if (manifestLink && !manifestLink.dataset.defaultHref) {
+    const currentHref = manifestLink.getAttribute('href') || ''
+    if (currentHref && !currentHref.startsWith('data:')) {
+      manifestLink.dataset.defaultHref = currentHref
+    }
+  }
+
   if (!isClub) {
-    if (manifestLink) {
-      manifestLink.setAttribute('href', '/manifest.webmanifest')
+    const defaultHref = manifestLink?.dataset.defaultHref
+    if (manifestLink && defaultHref) {
+      manifestLink.setAttribute('href', defaultHref)
     }
     return
   }

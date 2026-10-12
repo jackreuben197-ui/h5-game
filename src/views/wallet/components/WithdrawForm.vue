@@ -85,11 +85,11 @@ function getWithdrawTypeLabel(wt: OnlineWithdrawTypeItem): string {
 
 const paymentChannels = computed<{ id: ChannelId; image: string; label: string; key: string }[]>(() => [
   { id: 'customercare', image: icSupportService, label: getCustomerCareLabel(), key: 'Wallet_CsWithdraw' },
-  { id: 'bankcard', image: icBankcard, label: tx('Wallet_BankCard', 'Bank Card'), key: 'Wallet_BankCard' },
-  { id: 'wallet', image: walletPng, label: tx('Wallet_Title', 'Wallet'), key: 'Wallet_Title' },
-  { id: 'wechat', image: icWeChat, label: tx('Wallet_WeChat', 'WeChat'), key: 'Wallet_WeChat' },
   { id: 'alipay', image: icAlipay, label: tx('Wallet_Alipay', 'Alipay'), key: 'Wallet_Alipay' },
+  { id: 'wechat', image: icWeChat, label: tx('Wallet_WeChat', 'WeChat'), key: 'Wallet_WeChat' },
+  { id: 'bankcard', image: icBankcard, label: tx('Wallet_BankCard', 'Bank Card'), key: 'Wallet_BankCard' },
   { id: 'usdt', image: icUsdt, label: 'USDT', key: 'Wallet_USDT' },
+  { id: 'wallet', image: walletPng, label: tx('Wallet_Title', 'Wallet'), key: 'Wallet_Title' },
 ])
 
 const withdrawTypes = ref<OnlineWithdrawTypeItem[]>([])
@@ -313,18 +313,6 @@ async function fetchWithdrawTypes(): Promise<void> {
 
   if (requestedChannel && availablePaymentChannels.value.some((c) => c.id === requestedChannel)) {
     applyChannel(requestedChannel)
-  } else if (csWithdrawTypes.value.length > 0) {
-    applyChannel('customercare')
-  } else if (bankWithdrawTypes.value.length > 0) {
-    applyChannel('bankcard')
-  } else if (walletWithdrawTypes.value.length > 0) {
-    applyChannel('wallet')
-  } else if (wechatWithdrawTypes.value.length > 0) {
-    applyChannel('wechat')
-  } else if (alipayWithdrawTypes.value.length > 0) {
-    applyChannel('alipay')
-  } else if (usdtWithdrawTypes.value.length > 0) {
-    applyChannel('usdt')
   } else if (availablePaymentChannels.value.length > 0) {
     applyChannel(availablePaymentChannels.value[0].id)
   } else {

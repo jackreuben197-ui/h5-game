@@ -592,11 +592,11 @@ interface RechargeCategoryDefinition {
 
 const rechargeCategoryDefinitions: RechargeCategoryDefinition[] = [
   { id: 'customer', key: 'Wallet_CsWithdraw', fallback: '人工客服' },
-  { id: 'wallet', key: 'Wallet_Wallet', fallback: '钱包' },
-  { id: 'usdt', key: 'Wallet_USDT', fallback: 'USDT' },
   { id: 'alipay', key: 'Wallet_Alipay', fallback: '支付宝' },
   { id: 'wechat', key: 'Wallet_WeChat', fallback: '微信' },
   { id: 'bankcard', key: 'Wallet_BankCard', fallback: '银行卡' },
+  { id: 'usdt', key: 'Wallet_USDT', fallback: 'USDT' },
+  { id: 'wallet', key: 'Wallet_Wallet', fallback: '钱包' },
 ]
 
 function rechargeCategoryLabel(definition: RechargeCategoryDefinition): string {
@@ -724,11 +724,7 @@ function ensureRechargeSelection(): void {
     return
   }
 
-  // Customer service is the product default when it is available. Otherwise
-  // fall back to USDT, then the first category returned by the server.
   const category = categories.find(({ id }) => id === activeRechargeCategory.value)
-    ?? categories.find(({ id }) => id === 'customer')
-    ?? categories.find(({ id }) => id === 'usdt')
     ?? categories[0]
   if (category.id !== activeRechargeCategory.value) {
     activeRechargeCategory.value = category.id

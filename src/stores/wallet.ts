@@ -73,8 +73,13 @@ export const useWalletStore = defineStore('wallet', () => {
     return Math.round((value + Number.EPSILON) * 10000) / 10000
   }
 
+  function resolveUsdtRate(rate: unknown): number {
+    const normalizedRate = Number(rate)
+    return Number.isFinite(normalizedRate) && normalizedRate > 0 ? normalizedRate : 1
+  }
+
   function calculateUsdtPrice(goldCount: number, usdtRate: number, feeRate: number, feeType = 0) {
-    const base = usdtRate > 0 ? goldCount / 100 / usdtRate : 0
+    const base = goldCount / 100 / resolveUsdtRate(usdtRate)
     const roundedBase = roundMoney4(base)
     const roundedFee = feeType === 2 && feeRate > 0 ? roundMoney4(base * feeRate) : 0
     const totalUiPrice = Math.max(0, roundMoney4(roundedBase - roundedFee))
@@ -94,8 +99,7 @@ export const useWalletStore = defineStore('wallet', () => {
     feeType = 0,
     discount = 0,
   ) {
-    const normalizedRate = Number(rate)
-    const base = normalizedRate > 0 ? goldCount / 100 / normalizedRate : 0
+    const base = goldCount / 100 / resolveUsdtRate(rate)
     const roundedBase = roundMoney4(base)
     const roundedDiscount = discount > 0 ? roundMoney4(base * discount) : 0
     const roundedFee = feeType === 2 && feeRate > 0 ? roundMoney4(base * feeRate) : 0
@@ -196,6 +200,7 @@ export const useWalletStore = defineStore('wallet', () => {
     clearPriceList,
     calculateUsdtPrice,
     calculateRechargeUsdtPrice,
+    resolveUsdtRate,
     roundMoney4,
     formatUsdtPrice,
     calculateCustomerServicePrice,

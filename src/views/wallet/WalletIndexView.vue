@@ -482,7 +482,7 @@ const presets = computed<Preset[]>(() => {
   const list = hasPriceList ? selected!.price_list! : (walletStore.goldPriceData?.list ?? [])
 
   const isUsdt = selected?.type === 1 || selected?.type === 2
-  const usdtRate = selected?.usdt_rate ?? 1
+  const usdtRate = walletStore.resolveUsdtRate(selected?.usdt_rate)
   const feeRate = selected?.fee_rate ?? 0
   const feeType = selected?.fee_type ?? 0
   const discount = selected?.discount ?? 0
@@ -551,7 +551,7 @@ const displayPayAmount = computed(() => {
   if (selected?.type === 1 || selected?.type === 2) {
     // USDT
     const goldCount = amount * 100
-    const usdtRate = selected.usdt_rate ?? 1
+    const usdtRate = walletStore.resolveUsdtRate(selected.usdt_rate)
     const feeRate = selected.fee_rate ?? 0
     const feeType = selected.fee_type ?? 0
     const discount = selected.discount ?? 0
@@ -564,7 +564,7 @@ const displayPayAmount = computed(() => {
   if (selected?.type === 3) {
     // Customer Service: show decimals
     const goldCount = amount * 100
-    const usdtRate = selected.usdt_rate ?? 1
+    const usdtRate = walletStore.resolveUsdtRate(selected.usdt_rate)
     const feeRate = selected.fee_rate ?? 0
     const feeType = selected.fee_type ?? 0
     const discount = selected.discount ?? 0
@@ -653,7 +653,7 @@ async function onPayClick() {
 
     usdtPopupProps.value = {
       goldCount,
-      usdtRate: selectedPayType.usdt_rate ?? 1,
+      usdtRate: walletStore.resolveUsdtRate(selectedPayType.usdt_rate),
       feeRate: selectedPayType.fee_rate ?? 0,
       feeType: selectedPayType.fee_type ?? 0,
       discount: selectedPayType.discount ?? 0,
@@ -663,7 +663,7 @@ async function onPayClick() {
   } else if (selectedPayType?.type === 2 || selectedPayType?.type === 3) {
     csPopupProps.value = {
       goldCount: originalGoldCount,
-      usdtRate: selectedPayType.usdt_rate ?? 1,
+      usdtRate: walletStore.resolveUsdtRate(selectedPayType.usdt_rate),
       feeRate: selectedPayType.fee_rate ?? 0,
       feeType: selectedPayType.fee_type ?? 0,
       discount: selectedPayType.discount ?? 0,
@@ -693,7 +693,7 @@ async function onCsSubmit() {
   const clubId = walletClubId.value
 
   let goldCount = csPopupProps.value.goldCount
-  const usdtRate = selectedPayType.usdt_rate ?? 1
+  const usdtRate = walletStore.resolveUsdtRate(selectedPayType.usdt_rate)
   const feeRate = selectedPayType.fee_rate ?? 0
   const feeType = selectedPayType.fee_type ?? 0
   const discount = selectedPayType.discount ?? 0
@@ -813,7 +813,7 @@ async function onUsdtSubmit(type: number) {
   // 2. Calculate pay_price — fee only applied when fee_type === 2 (player pays)
   const priceData = walletStore.calculateRechargeUsdtPrice(
     goldCount,
-    selectedPayType.usdt_rate ?? 1,
+    walletStore.resolveUsdtRate(selectedPayType.usdt_rate),
     selectedPayType.fee_rate ?? 0,
     usdtPopupProps.value.feeType,
     selectedPayType.discount ?? 0,

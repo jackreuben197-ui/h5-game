@@ -113,8 +113,8 @@ const withdrawRangeText = computed(() => {
 })
 
 const selectedRateText = computed(() => {
-  const usdtRate = Number(selectedAddress.value?.usdt_rate)
-  return Number.isFinite(usdtRate) && usdtRate > 0 ? formatAmount(usdtRate) : ''
+  if (!selectedAddress.value) return ''
+  return formatAmount(walletStore.resolveUsdtRate(selectedAddress.value.usdt_rate))
 })
 
 const withdrawConfirmFeeRate = computed(() => {
@@ -333,21 +333,16 @@ async function handleSubmit(): Promise<void> {
       }
     }
 
-    const usdtRate = Number(channel.usdt_rate)
+    const usdtRate = walletStore.resolveUsdtRate(channel.usdt_rate)
     const feeRate = channel.fee_rate ?? 0
     const feeType = channel.fee_type ?? 0
-
-    if (!Number.isFinite(usdtRate) || usdtRate <= 0) {
-      showToast(t('Wallet_Rate'))
-      return
-    }
 
     const priceData = walletStore.calculateUsdtPrice(goldCents, usdtRate, feeRate, feeType)
     const feeAmount =
       feeType === 2 ? walletStore.roundMoney4((goldCents / 100 / usdtRate) * feeRate) : 0
 
     pendingWithdraw.value = {
-      channel: channel as OnlineWithdrawTypeItem & { id: number },
+      channel: { ...channel, usdt_rate: usdtRate } as OnlineWithdrawTypeItem & { id: number },
       clubId: club.club_id,
       goldCents,
       address: addrTrim,

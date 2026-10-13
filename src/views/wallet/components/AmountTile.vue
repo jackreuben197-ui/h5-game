@@ -7,22 +7,19 @@ interface Props {
   chip?: string | number
   active?: boolean
   custom?: boolean
-  disabled?: boolean
 }
 
 withDefaults(defineProps<Props>(), {
   chip: '',
   active: false,
   custom: false,
-  disabled: false,
 })
 </script>
 
 <template>
   <button
     class="tile"
-    :class="{ 'tile--active': active, 'tile--custom': custom, 'tile--disabled': disabled }"
-    :disabled="disabled"
+    :class="{ 'tile--active': active, 'tile--custom': custom }"
   >
     <template v-if="custom">
       <span class="tile__custom-label">{{ $txt('Wallet_CustomAmount') }}</span>
@@ -88,11 +85,6 @@ withDefaults(defineProps<Props>(), {
   @include theme-light {
     background: rgba(134, 134, 134, 0.12);
   }
-}
-
-.tile--disabled {
-  cursor: not-allowed;
-  opacity: 0.4;
 }
 
 .tile__head {

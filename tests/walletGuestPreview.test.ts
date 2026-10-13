@@ -119,19 +119,15 @@ test('wallet recharge and record requests keep the explicitly directed club cont
   try {
     const { postClubFundOrderListApi, postClubPlayerOrderRecordApi, postRechargeGoldApi } =
       await import('../src/api/order.ts')
-    const { postOnlinePayTypeUserAddressApi } = await import('../src/api/config.ts')
     const { calls } = await import(httpMockUrl)
 
     await postClubFundOrderListApi({ my_order: true }, 91)
     await postClubPlayerOrderRecordApi({ order_type: 1 }, 91)
     await postRechargeGoldApi({ amount: 10_000 }, 91)
-    await postOnlinePayTypeUserAddressApi({ pay_type_id: 7 })
 
     assert.equal(calls[0][2]?.xClub, 91)
     assert.equal(calls[1][2]?.xClub, 91)
     assert.equal(calls[2][2]?.xClub, 91)
-    assert.equal(calls[3][0], '/config/get_online_pay_type_user_address')
-    assert.equal(calls[3][1]?.pay_type_id, 7)
   } finally {
     hooks.deregister()
   }

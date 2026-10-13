@@ -314,22 +314,3 @@ export interface OnlineWithdrawDescriptionData {
   name?: string
   [key: string]: unknown
 }
-
-// /config/get_online_pay_type_user_address 请求与响应。
-export interface OnlinePayTypeUserAddressRequest {
-  /** 支付类型 ID；0 或不传时查询全部。 */
-  pay_type_id?: number
-  [key: string]: unknown
-}
-
-export interface OnlinePayTypeUserAddressItem {
-  id?: number
-  pay_type_id?: number
-  address?: string
-  [key: string]: unknown
-}
-
-export interface OnlinePayTypeUserAddressData {
-  list?: OnlinePayTypeUserAddressItem[]
-  [key: string]: unknown
-}

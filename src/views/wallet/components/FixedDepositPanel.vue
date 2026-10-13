@@ -76,7 +76,7 @@ async function onConfirmDeposit(): Promise<void> {
   try {
     const res = await postRechargeGoldApi(
       {
-        amount: Number(depositAmount.value),
+        amount: Math.round(Number(depositAmount.value) * 100),
         legal_tender: 0,
         gold_type: 1,
         pay_id: 0,

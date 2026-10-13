@@ -19,10 +19,8 @@ const emit = defineEmits<{
 const walletStore = useWalletStore()
 
 const feeDisplay = computed(() => {
-  if ((props.discount ?? 0) > 0) {
-    return '-' + ((props.discount ?? 0) * 100).toFixed(2).replace(/\.00$/, '') + '%'
-  }
-  return props.feeRate > 0 ? (props.feeRate * 100).toFixed(2).replace(/\.00$/, '') + '%' : '0'
+  if (props.feeType !== 2 || props.feeRate <= 0) return '0'
+  return (props.feeRate * 100).toFixed(2).replace(/\.00$/, '') + '%'
 })
 
 const payPrice = computed(() =>
@@ -30,6 +28,7 @@ const payPrice = computed(() =>
     props.goldCount,
     props.rate || 1,
     props.feeRate || 0,
+    props.feeType || 0,
     props.discount || 0,
   ),
 )
@@ -59,7 +58,7 @@ const payPrice = computed(() =>
                 payPrice.toLocaleString(undefined, {
                   useGrouping: false,
                   minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
+                  maximumFractionDigits: 4,
                 })
               }}
             </span>

@@ -16,7 +16,7 @@ const emit = defineEmits<{
   cancel: [orderNo: string]
 }>()
 
-const timeLeft = ref(900) // 15 minutes default
+const timeLeft = ref(30 * 60)
 let timer: number | null = null
 
 const formattedTime = computed(() => {

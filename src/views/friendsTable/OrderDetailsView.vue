@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import { t } from '@/i18n'
 import type { ClubPlayerOrderRecordOrderInfo } from '@/api/models/order'
+import { formatUC } from '@/utils/roomVisibility'
 
 const props = defineProps<{ order: ClubPlayerOrderRecordOrderInfo }>()
 const emit = defineEmits<{ close: [] }>()
@@ -18,6 +19,7 @@ function statusLabel(status?: number): string {
     2: t('Wallet_StatusApproved'),
     3: t('Wallet_StatusRejected'),
     4: t('Wallet_StatusCancelled'),
+    5: t('UICommon_TimeOut'),
   }
   return map[status ?? 0] ?? '-'
 }
@@ -37,14 +39,34 @@ function orderValue(...keys: string[]): string {
   return '-'
 }
 
+function formatFee(): string {
+  const feeAmount = orderValue('pay_price_fee', 'fee_amount', 'service_fee', 'fee')
+  if (props.order.fee_type !== 2) return feeAmount === '-' ? '0' : feeAmount
+  const feeRate = Number(props.order.fee_rate)
+  const rateText = Number.isFinite(feeRate)
+    ? `${(feeRate * 100).toFixed(2).replace(/\.00$/, '')}%`
+    : ''
+  if (!rateText) return feeAmount
+  return feeAmount === '-' ? rateText : `${rateText} (${feeAmount})`
+}
+
 const rows = computed<Row[]>(() => [
   { label: t('Wallet_OrderId'), value: props.order.order_no ?? '-' },
-  { label: t('Wallet_OrderAmount'), value: String(props.order.gold_num ?? '-') },
-  { label: t('UIMine_WalletPlatform_fee_s'), value: orderValue('fee', 'fee_amount', 'service_fee') },
-  { label: t('Wallet_OrderPayAmount'), value: String(props.order.amount ?? '-') },
+  {
+    label: t('Wallet_OrderAmount'),
+    value: props.order.gold_num == null ? '-' : formatUC(Number(props.order.gold_num)),
+  },
+  { label: t('UIMine_WalletPlatform_fee_s'), value: formatFee() },
+  { label: t('Wallet_OrderPayAmount'), value: orderValue('pay_price', 'amount', 'dest_amount') },
   { label: t('UICommon_PayAddress'), value: orderValue('pay_address', 'from_address') },
-  { label: t('UITribeRechargeUSDTShopPayeetNameTip'), value: orderValue('name', 'payee_name', 'receive_name') },
-  { label: t('Wallet_OrderRecvAddr'), value: orderValue('receive_address', 'to_address', 'dest_address') },
+  {
+    label: t('UITribeRechargeUSDTShopPayeetNameTip'),
+    value: orderValue('pay_type_name', 'name', 'payee_name', 'receive_name'),
+  },
+  {
+    label: t('Wallet_OrderRecvAddr'),
+    value: orderValue('pay_type_address', 'receive_address', 'to_address', 'dest_address'),
+  },
   { label: t('Wallet_OrderTime'), value: formatTime(props.order.create_time) },
   { label: t('Wallet_OrderStatus'), value: statusLabel(props.order.status) },
 ])

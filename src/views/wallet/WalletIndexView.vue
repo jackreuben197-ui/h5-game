@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { showSuccessToast, showToast } from 'vant'
 import ava1 from '@/assets/images/wallet/avatars/ava1.png'
 import icCoins from '@/assets/icons/wallet/ic_coins.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
@@ -39,7 +40,10 @@ import {
   postOrderUserClubOrderCancelApi,
 } from '@/api/order'
 import { postChatSupportChannelListApi } from '@/api/chat'
+import { postOnlinePayTypeUserAddressApi } from '@/api/config'
 import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
+import type { OnlinePayTypeUserAddressItem } from '@/api/models/config'
+import type { PropGoldPriceListPayType } from '@/api/models/prop'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 import { useGameStore } from '@/stores/game'
 import { requireRealUser, type PendingRealUserAction } from '@/session/realUserGate'
@@ -126,8 +130,12 @@ const usdtPopupProps = ref({
   feeType: 0,
   discount: 0,
   uniqueAmountEnabled: false,
+  originalAmountAvailable: true,
+  originalGoldCount: 0,
 })
 const usdtUniqueAmount = ref<{ amount: number; priceId: number } | null>(null)
+const usdtOriginalGoldCount = ref(0)
+const savedPayAddresses = ref<OnlinePayTypeUserAddressItem[]>([])
 
 const unfinishedOrder = ref<ClubFundOrderListOrderInfo | null>(null)
 const showUnfinishedPopup = ref(false)
@@ -417,8 +425,29 @@ watch(
 )
 
 const filteredPayTypes = computed(() =>
-  (walletStore.goldPriceData?.pay_types ?? []).filter((pt) => pt.type === 1 || pt.type === 3),
+  (walletStore.goldPriceData?.pay_types ?? []).filter(
+    (pt) => pt.type === 1 || pt.type === 2 || pt.type === 3,
+  ),
 )
+
+const selectedPayType = computed(() => filteredPayTypes.value[activeMethod.value])
+
+function rechargeBounds(payType = selectedPayType.value): { minCents: number; maxCents: number } {
+  const configuredMin = Number(payType?.user_recharge_min)
+  const configuredMax = Number(payType?.user_recharge_max)
+  return {
+    minCents: Number.isFinite(configuredMin) && configuredMin > 0 ? configuredMin : 100,
+    maxCents: Number.isFinite(configuredMax) && configuredMax > 0 ? configuredMax : 99999900,
+  }
+}
+
+function isRechargeAmountAvailable(goldCount: number): boolean {
+  const { minCents, maxCents } = rechargeBounds()
+  return goldCount >= minCents && goldCount <= maxCents
+}
+
+const keypadMin = computed(() => rechargeBounds().minCents / 100)
+const keypadMax = computed(() => rechargeBounds().maxCents / 100)
 
 const methods = computed<PaymentMethod[]>(() =>
   filteredPayTypes.value.map((pt) => ({
@@ -460,7 +489,7 @@ const presets = computed<Preset[]>(() => {
   }
   const list = hasPriceList ? selected!.price_list! : (walletStore.goldPriceData?.list ?? [])
 
-  const isUsdt = selected?.type === 1
+  const isUsdt = selected?.type === 1 || selected?.type === 2
   const usdtRate = selected?.usdt_rate ?? 1
   const feeRate = selected?.fee_rate ?? 0
   const feeType = selected?.fee_type ?? 0
@@ -481,12 +510,13 @@ const presets = computed<Preset[]>(() => {
         goldCount,
         usdtRate,
         feeRate,
+        feeType,
         discount,
       )
       chipStr = csPrice.toLocaleString(undefined, {
         useGrouping: false,
         minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
+        maximumFractionDigits: 4,
       })
     }
 
@@ -495,15 +525,36 @@ const presets = computed<Preset[]>(() => {
       chip: chipStr,
       id: item.id,
       payPrice: item.pay_price as number | undefined,
+      disabled: !isRechargeAmountAvailable(goldCount),
     }
   })
 })
+
+watch(
+  presets,
+  (list) => {
+    if (list.length === 0) {
+      activePreset.value = -1
+      return
+    }
+    if (activePreset.value === -1) return
+    if (!list[activePreset.value] || list[activePreset.value]?.disabled) {
+      activePreset.value = list.findIndex((preset) => !preset.disabled)
+    }
+  },
+  { immediate: true },
+)
 
 function onCustom(): void {
   keypadOpen.value = true
 }
 
 function onKeypadSubmit(v: number): void {
+  if (!isRechargeAmountAvailable(Math.round(v * 100))) {
+    const { minCents, maxCents } = rechargeBounds()
+    showToast(t('UIMineUSDTSheetInputMaxLimitTip', minCents / 100, maxCents / 100))
+    return
+  }
   customAmount.value = String(v)
   keypadOpen.value = false
   activePreset.value = -1
@@ -521,7 +572,7 @@ const displayPayAmount = computed(() => {
   const selected = payTypes[activeMethod.value]
   const amount = Number(selectedAmount.value)
 
-  if (selected?.type === 1) {
+  if (selected?.type === 1 || selected?.type === 2) {
     // USDT
     const goldCount = amount * 100
     const usdtRate = selected.usdt_rate ?? 1
@@ -539,60 +590,112 @@ const displayPayAmount = computed(() => {
     const goldCount = amount * 100
     const usdtRate = selected.usdt_rate ?? 1
     const feeRate = selected.fee_rate ?? 0
+    const feeType = selected.fee_type ?? 0
     const discount = selected.discount ?? 0
     const csPrice = walletStore.calculateCustomerServicePrice(
       goldCount,
       usdtRate,
       feeRate,
+      feeType,
       discount,
     )
     return csPrice.toLocaleString(undefined, {
       useGrouping: false,
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      maximumFractionDigits: 4,
     })
   }
 
   return selectedAmount.value
 })
 
+const canPay = computed(() => {
+  const amount = Number(selectedAmount.value)
+  return Boolean(selectedPayType.value) && amount > 0 && isRechargeAmountAvailable(Math.round(amount * 100))
+})
+
 const tabLabels = [t('Wallet_Deposit'), t('Wallet_Withdraw')]
+
+async function loadSavedPayAddresses(payTypeId: number): Promise<void> {
+  savedPayAddresses.value = []
+  try {
+    const res = await postOnlinePayTypeUserAddressApi({ pay_type_id: payTypeId })
+    if (res.code !== 0) return
+    savedPayAddresses.value = (res.data?.list ?? []).filter(
+      (item) =>
+        String(item.address ?? '').trim().length > 0 &&
+        (!item.pay_type_id || Number(item.pay_type_id) === payTypeId),
+    )
+  } catch (error) {
+    console.error('Failed to load payer wallet addresses', error)
+  }
+}
+
+async function fetchUniqueRechargeAmount(
+  payType: PropGoldPriceListPayType,
+  originalGoldCount: number,
+): Promise<{ amount: number; priceId: number } | null> {
+  try {
+    const res = await postOrderUserRechargeNoApi(
+      {
+        amount: originalGoldCount,
+        pay_id: payType.id,
+      },
+      walletClubId.value,
+    )
+    if (res.code !== 0 || res.data?.amount == null) {
+      showToast(res.message || 'Failed to get unique recharge amount')
+      return null
+    }
+
+    const uniqueGoldCount = Number(res.data.amount)
+    const uniqueAmount = {
+      amount: uniqueGoldCount,
+      priceId: Number(res.data.price_id ?? 0),
+    }
+    usdtUniqueAmount.value = uniqueAmount
+    usdtPopupProps.value.goldCount = uniqueGoldCount
+    usdtPopupProps.value.originalAmountAvailable = res.data.used !== true
+    return uniqueAmount
+  } catch (error) {
+    console.error('Failed to get unique recharge amount', error)
+    showToast('Failed to get unique recharge amount')
+    return null
+  }
+}
+
+async function refreshUniqueRechargeAmount(): Promise<void> {
+  const payType = selectedPayType.value
+  if (payType?.type !== 1 || usdtOriginalGoldCount.value <= 0) return
+  const refreshed = await fetchUniqueRechargeAmount(payType, usdtOriginalGoldCount.value)
+  if (!refreshed) usdtPopupOpen.value = false
+}
 
 async function onPayClick() {
   if (!requireRealUser(resumeWalletPayAfterLogin)) return
   const payTypes = filteredPayTypes.value
   const selectedPayType = payTypes[activeMethod.value]
+  const originalGoldCount = Math.round(Number(selectedAmount.value) * 100)
+
+  if (!selectedPayType || !isRechargeAmountAvailable(originalGoldCount)) {
+    const { minCents, maxCents } = rechargeBounds(selectedPayType)
+    showToast(t('UIMineUSDTSheetInputMaxLimitTip', minCents / 100, maxCents / 100))
+    return
+  }
 
   if (selectedPayType?.type === 1) {
-    let goldCount = Number(selectedAmount.value) * 100
+    let goldCount = originalGoldCount
     usdtUniqueAmount.value = null
+    usdtOriginalGoldCount.value = originalGoldCount
+    usdtPopupProps.value.originalAmountAvailable = true
+    await loadSavedPayAddresses(Number(selectedPayType.id ?? 0))
 
     // Match the native client: obtain the server-generated tail before opening
     // the confirmation dialog, so +0.01 and similar unique amounts are visible.
     if ((selectedPayType.increase_interval ?? 0) > 0) {
-      try {
-        const res = await postOrderUserRechargeNoApi(
-          {
-            amount: goldCount,
-            pay_id: selectedPayType.id,
-          },
-          walletClubId.value,
-        )
-        if (res.code === 0 && res.data?.amount != null) {
-          goldCount = Number(res.data.amount)
-          usdtUniqueAmount.value = {
-            amount: goldCount,
-            priceId: Number(res.data.price_id ?? 0),
-          }
-        } else {
-          alert(res.message || 'Failed to get unique recharge amount')
-          return
-        }
-      } catch (e) {
-        console.error('Failed to get unique recharge amount', e)
-        alert('Failed to get unique recharge amount')
-        return
-      }
+      const uniqueAmount = await fetchUniqueRechargeAmount(selectedPayType, originalGoldCount)
+      if (!uniqueAmount) return
+      goldCount = uniqueAmount.amount
     }
 
     usdtPopupProps.value = {
@@ -602,11 +705,13 @@ async function onPayClick() {
       feeType: selectedPayType.fee_type ?? 0,
       discount: selectedPayType.discount ?? 0,
       uniqueAmountEnabled: (selectedPayType.increase_interval ?? 0) > 0,
+      originalAmountAvailable: usdtPopupProps.value.originalAmountAvailable,
+      originalGoldCount,
     }
     usdtPopupOpen.value = true
-  } else if (selectedPayType?.type === 3) {
+  } else if (selectedPayType?.type === 2 || selectedPayType?.type === 3) {
     csPopupProps.value = {
-      goldCount: Number(selectedAmount.value) * 100,
+      goldCount: originalGoldCount,
       usdtRate: selectedPayType.usdt_rate ?? 1,
       feeRate: selectedPayType.fee_rate ?? 0,
       feeType: selectedPayType.fee_type ?? 0,
@@ -656,21 +761,24 @@ async function onCsSubmit() {
       if (res.code === 0 && res.data) {
         goldCount = res.data.amount ?? goldCount
         priceId = res.data.price_id ?? 0
+      } else {
+        showToast(res.message || 'Failed to get unique recharge amount')
+        return
       }
     } catch (e) {
       console.error('Failed to get unique recharge amount', e)
+      showToast('Failed to get unique recharge amount')
+      return
     }
   }
 
-  // pay_price rule: discount > 0 takes priority (discount removes fee from pay_price);
-  // only when discount = 0 and fee_type = 2 is the fee added to pay_price.
-  const basePrice = usdtRate > 0 ? goldCount / 100 / usdtRate : 0
-  const apiPayPrice =
-    discount > 0
-      ? Number((basePrice * (1 - discount)).toFixed(4))
-      : feeType === 2 && feeRate > 0
-        ? Number((basePrice * (1 + feeRate)).toFixed(4))
-        : Number(basePrice.toFixed(4))
+  const apiPayPrice = walletStore.calculateCustomerServicePrice(
+    goldCount,
+    usdtRate,
+    feeRate,
+    feeType,
+    discount,
+  )
 
   try {
     const res = await postRechargeGoldApi(
@@ -691,22 +799,26 @@ async function onCsSubmit() {
       clubId,
     )
 
-    if (res.code === 0 && res.data) {
-      rechargeResult.value = res.data
+    if (res.code === 0) {
+      rechargeResult.value = res.data ?? {}
 
-      const opened = await openMatchOrderChat(
-        {
-          ...res.data,
-          gold_num: goldCount,
-          pay_price: apiPayPrice,
-        },
-        1,
-      )
-      if (opened) {
-        await refreshPendingCsOrder()
+      if (selectedPayType.type === 3) {
+        const opened = await openMatchOrderChat(
+          {
+            ...(res.data ?? {}),
+            gold_num: goldCount,
+            pay_price: apiPayPrice,
+          },
+          1,
+        )
+        if (opened) {
+          await refreshPendingCsOrder()
+        } else {
+          rechargeResult.value = res.data ?? {}
+          usdtDetailsPopupOpen.value = true
+        }
       } else {
-        rechargeResult.value = res.data
-        usdtDetailsPopupOpen.value = true
+        showSuccessToast(t('UIMineMallUSDTShop_APIOrderSubmitTip'))
       }
 
       activePreset.value = 0
@@ -722,8 +834,8 @@ async function onCsSubmit() {
   }
 }
 
-async function onUsdtSubmit(type: number) {
-  if (!requireRealUser(() => onUsdtSubmit(type))) return
+async function onUsdtSubmit(type: number, payAddress: string, saveAddress: boolean) {
+  if (!requireRealUser(() => onUsdtSubmit(type, payAddress, saveAddress))) return
   usdtPopupOpen.value = false
 
   const payTypes = filteredPayTypes.value
@@ -736,7 +848,7 @@ async function onUsdtSubmit(type: number) {
   let goldCount =
     type === 0
       ? usdtPopupProps.value.goldCount
-      : Math.floor(usdtPopupProps.value.goldCount / 100) * 100
+      : usdtPopupProps.value.originalGoldCount
 
   let priceId = activePreset.value === -1 ? 0 : (presets.value[activePreset.value]?.id ?? 0)
 
@@ -761,16 +873,15 @@ async function onUsdtSubmit(type: number) {
     const res = await postRechargeGoldApi(
       {
         amount: goldCount,
-        legal_tender: Math.round(priceData.totalUiPrice * 100),
+        legal_tender: 0,
         gold_type: 1,
         pay_id: selectedPayType.id,
         price_id: priceId,
         pay_price: priceData.apiPayPrice,
         use_usdt_rate: true,
-        pay_address: '',
-        pay_address_save: false,
+        pay_address: payAddress,
+        pay_address_save: saveAddress,
         order_no: '',
-        name: 'USDT User',
       },
       clubId,
     )
@@ -783,6 +894,7 @@ async function onUsdtSubmit(type: number) {
       // Reset selection state after success
       activePreset.value = 0
       customAmount.value = ''
+      if (saveAddress) void loadSavedPayAddresses(Number(selectedPayType.id ?? 0))
     } else if (res.code === 20066) {
       // User has unfinished orders
       void checkUnfinishedOrders()
@@ -888,6 +1000,7 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
           <PrimaryButton
             :text="t('UIMineMallUSDTShop_PromptlyRechargeTip') + ' ' + displayPayAmount"
             class="pay-cta"
+            :disabled="!canPay"
             @click="onPayClick"
           />
         </template>
@@ -907,6 +1020,9 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
     <NumericKeypad
       :open="keypadOpen"
       :show-input-area="true"
+      :min="keypadMin"
+      :max="keypadMax"
+      :initial-value="customAmount"
       @close="keypadOpen = false"
       @submit="onKeypadSubmit"
     />
@@ -930,8 +1046,12 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
       :fee-type="usdtPopupProps.feeType"
       :discount="usdtPopupProps.discount"
       :unique-amount-enabled="usdtPopupProps.uniqueAmountEnabled"
+      :original-amount-available="usdtPopupProps.originalAmountAvailable"
+      :original-gold-count="usdtPopupProps.originalGoldCount"
+      :wallet-addresses="savedPayAddresses"
       @close="usdtPopupOpen = false"
       @submit="onUsdtSubmit"
+      @refresh="refreshUniqueRechargeAmount"
     />
 
     <UnfinishedOrderPopup

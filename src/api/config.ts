@@ -14,6 +14,8 @@ import type {
   MultiLanguageTemplateRecord,
   OnlineWithdrawDescriptionData,
   OnlineWithdrawDescriptionRequest,
+  OnlinePayTypeUserAddressData,
+  OnlinePayTypeUserAddressRequest,
   OnlineWithdrawTypeListData,
   PrivateUcConfigData,
   RegisterAreaData,
@@ -138,6 +140,17 @@ export async function postOnlineWithdrawDescriptionApi(
     '/config/online_withdraw_description',
     payload,
     { xClub: false } satisfies HttpRequestOptionsExt,
+  )
+  return response.data
+}
+
+// 对齐 Unity HttpUserGetPayTypeAddressProtocol.API。
+export async function postOnlinePayTypeUserAddressApi(
+  payload: OnlinePayTypeUserAddressRequest = {},
+): Promise<ApiResponse<OnlinePayTypeUserAddressData>> {
+  const response = await http.post<ApiResponse<OnlinePayTypeUserAddressData>>(
+    '/config/get_online_pay_type_user_address',
+    payload,
   )
   return response.data
 }

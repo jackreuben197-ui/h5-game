@@ -96,7 +96,7 @@ function shouldAttachXClub(url: string): boolean {
   if (/^\/?config\/online_withdraw/.test(url)) {
     return true
   }
-  return /^\/?order\/user\/(?:withdraw|recharge_no|recharge|club_order\/cancel)\b/.test(url)
+  return /^\/?order\/user\/(?:withdraw|recharge_no|recharge|order_records|club_order\/cancel)\b/.test(url)
 }
 
 function readClubIdFromPayload(payload: unknown): string {

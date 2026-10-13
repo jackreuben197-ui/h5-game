@@ -6,6 +6,7 @@ export interface Preset {
   chip: string | number
   id?: number
   payPrice?: number
+  disabled?: boolean
 }
 
 interface Props {
@@ -31,7 +32,8 @@ const emit = defineEmits<{
       :amount="p.amount"
       :chip="p.chip"
       :active="activeIndex === i"
-      @click="emit('select', i)"
+      :disabled="p.disabled"
+      @click="!p.disabled && emit('select', i)"
     />
     <AmountTile
       amount=""

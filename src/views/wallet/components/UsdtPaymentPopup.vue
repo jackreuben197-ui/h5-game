@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useWalletStore } from '@/stores/wallet'
+import type { OnlinePayTypeUserAddressItem } from '@/api/models/config'
 import icCoins from '@/assets/icons/wallet/ic_coins.png'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import { t } from '@/i18n'
@@ -12,22 +13,30 @@ const props = defineProps<{
   feeType?: number
   discount?: number
   uniqueAmountEnabled?: boolean
+  originalAmountAvailable?: boolean
+  originalGoldCount?: number
+  walletAddresses?: OnlinePayTypeUserAddressItem[]
 }>()
 
 const emit = defineEmits<{
   close: []
-  submit: [type: number]
+  submit: [type: number, payAddress: string, saveAddress: boolean]
+  refresh: []
 }>()
 
 const walletStore = useWalletStore()
 
 // 0: exact amount, 1: rounded amount
 const selectedOption = ref(0)
-const isTimedOut = ref(false)
-let timer: number | null = null
+const payAddress = ref('')
+const saveAddress = ref(false)
+const addressError = ref('')
+let refreshTimer: number | null = null
 
 const exactGoldCount = computed(() => props.goldCount || 0)
-const roundedGoldCount = computed(() => Math.floor((props.goldCount || 0) / 100) * 100)
+const roundedGoldCount = computed(
+  () => props.originalGoldCount ?? Math.floor((props.goldCount || 0) / 100) * 100,
+)
 
 const exactPriceData = computed(() =>
   walletStore.calculateRechargeUsdtPrice(
@@ -65,22 +74,42 @@ function close(): void {
 }
 
 function submit(): void {
-  if (isTimedOut.value) return
-  emit('submit', selectedOption.value)
+  const address = payAddress.value.trim()
+  if (!address) {
+    addressError.value = t('UIDialogTribeRechargeUSDT_InputAddress')
+    return
+  }
+  emit('submit', selectedOption.value, address, saveAddress.value)
 }
 
-onMounted(() => {
-  // 15 minutes timeout
-  timer = window.setTimeout(
-    () => {
-      isTimedOut.value = true
-    },
-    15 * 60 * 1000,
-  )
-})
+function scheduleUniqueAmountRefresh(): void {
+  if (refreshTimer) window.clearInterval(refreshTimer)
+  refreshTimer = null
+  if (!props.uniqueAmountEnabled) return
+  refreshTimer = window.setInterval(() => emit('refresh'), 3 * 60 * 1000)
+}
+
+watch(
+  () => props.walletAddresses,
+  (addresses) => {
+    if (!payAddress.value.trim()) {
+      payAddress.value = addresses?.find((item) => item.address?.trim())?.address?.trim() ?? ''
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  () => props.originalAmountAvailable,
+  (available) => {
+    if (available === false && selectedOption.value === 1) selectedOption.value = 0
+  },
+)
+
+onMounted(scheduleUniqueAmountRefresh)
 
 onUnmounted(() => {
-  if (timer) clearTimeout(timer)
+  if (refreshTimer) window.clearInterval(refreshTimer)
 })
 </script>
 
@@ -95,7 +124,7 @@ onUnmounted(() => {
             <div class="card__header-info">
               <span>
                 {{ t('UIMine_WalletPlatform_fee_s') }}：{{
-                  props.feeRate > 0
+                  props.feeType === 2 && props.feeRate > 0
                     ? (props.feeRate * 100).toFixed(2).replace(/\.00$/, '') + '%'
                     : '0'
                 }}
@@ -173,10 +202,13 @@ onUnmounted(() => {
 
             <!-- Option 1: Rounded -->
             <div
-              v-if="!props.uniqueAmountEnabled"
+              v-if="props.uniqueAmountEnabled"
               class="option-card"
-              :class="{ 'option-card--active': selectedOption === 1 }"
-              @click="selectedOption = 1"
+              :class="{
+                'option-card--active': selectedOption === 1,
+                'option-card--disabled': props.originalAmountAvailable === false,
+              }"
+              @click="props.originalAmountAvailable !== false && (selectedOption = 1)"
             >
               <div class="option-card__amount-row">
                 <span class="option-card__amount">{{ formatGoldCount(roundedGoldCount) }}</span>
@@ -230,24 +262,38 @@ onUnmounted(() => {
             </div>
           </div>
 
+          <div class="payer-address">
+            <select
+              v-if="(props.walletAddresses?.length ?? 0) > 0"
+              v-model="payAddress"
+              class="payer-address__select"
+              @change="addressError = ''"
+            >
+              <option
+                v-for="item in props.walletAddresses"
+                :key="item.id ?? item.address"
+                :value="item.address"
+              >
+                {{ item.address }}
+              </option>
+            </select>
+            <input
+              v-model="payAddress"
+              class="payer-address__input"
+              :placeholder="t('UIDialogTribeRechargeUSDT_InputAddress')"
+              autocomplete="off"
+              @input="addressError = ''"
+            />
+            <label class="payer-address__save">
+              <input v-model="saveAddress" type="checkbox" />
+              <span>{{ t('Save') }}</span>
+            </label>
+            <p v-if="addressError" class="payer-address__error">{{ addressError }}</p>
+          </div>
+
           <!-- Submit Button -->
           <div class="card__action">
             <PrimaryButton :text="t('UIMineMallUSDTShopDiamondPayTip')" @click="submit" />
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Timeout Reminder Modal -->
-    <div v-if="isTimedOut" class="timeout-overlay" @click.self="isTimedOut = false">
-      <div class="timeout-card">
-        <div class="timeout-card__inner">
-          <div class="timeout-header">
-            <h2 class="timeout-title">{{ t('UICommon_RemindAndNotice') }}</h2>
-          </div>
-          <div class="timeout-body">
-            <p class="timeout-text">{{ t('UIWallet_Time') }}，</p>
-            <p class="timeout-text">{{ t('UIWallet_Again') }}</p>
           </div>
         </div>
       </div>
@@ -481,6 +527,44 @@ onUnmounted(() => {
   }
 }
 
+.option-card--disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.payer-address {
+  display: flex;
+  flex-direction: column;
+  gap: 0.16rem;
+  margin-top: 0.24rem;
+}
+
+.payer-address__select,
+.payer-address__input {
+  width: 100%;
+  min-height: 0.82rem;
+  padding: 0 0.24rem;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 0.22rem;
+  color: var(--c-text);
+  background: rgba(0, 0, 0, 0.22);
+  font-size: 0.28rem;
+}
+
+.payer-address__save {
+  display: flex;
+  align-items: center;
+  gap: 0.14rem;
+  color: var(--c-text-muted);
+  font-size: 0.25rem;
+}
+
+.payer-address__error {
+  margin: 0;
+  color: #ff6b6b;
+  font-size: 0.24rem;
+}
+
 .option-card--active::before {
   opacity: 1;
 }
@@ -594,187 +678,5 @@ onUnmounted(() => {
 
 .card__action {
   margin-top: 0.1rem;
-}
-
-.timeout-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-image: url('@/assets/images/wallet/bg_sharp.webp');
-
-  @include theme-light {
-    background-color: var(--c-page);
-    background-image: none;
-  }
-}
-
-.timeout-overlay::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  backdrop-filter: blur(34px);
-  -webkit-backdrop-filter: blur(34px);
-  background: var(--c-overlay);
-}
-
-.timeout-card {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  width: 317.029px;
-  padding: 15.7px 15.399px 15.399px 15.399px;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 18.116px;
-  border: 0.96px solid rgba(242, 242, 242, 0.4);
-  border-radius: clamp(28px, 10vw, 36.4px);
-  box-shadow:
-    3.4px 4.3px 6.9px rgba(0, 0, 0, 0.25),
-    0 0 8.6px #000 inset,
-    2.1px 4.25px 17.2px rgba(242, 242, 242, 0.9) inset;
-  overflow: hidden;
-  animation: modal-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  background-image: url('@/assets/images/wallet/bg_sharp.webp');
-  background-size: cover;
-  background-position: center;
-
-  @include theme-light {
-    --c-text: #fff;
-    --c-text-muted: rgba(255, 255, 255, 0.5);
-    background: linear-gradient(
-      148.19deg,
-      rgba(78, 78, 78, 0.78) 0%,
-      rgba(58, 58, 58, 0.82) 48%,
-      rgba(42, 42, 42, 0.86) 100%
-    );
-  }
-}
-
-.timeout-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: rgba(0, 0, 0, 0.7);
-  box-shadow:
-    0.0919rem 0.1149rem 0.1838rem 0 rgba(0, 0, 0, 0.25),
-    0 0 0.2298rem 0 #000 inset,
-    0.0566rem 0.1132rem 0.4596rem 0 rgba(242, 242, 242, 0.9) inset;
-  backdrop-filter: blur(7.580729961395264px);
-  -webkit-backdrop-filter: blur(7.580729961395264px);
-  pointer-events: none;
-  z-index: 1;
-
-  @include theme-light {
-    background: rgba(8, 8, 8, 0.25);
-  }
-}
-
-.timeout-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 0.0255rem;
-  background: linear-gradient(
-    180deg,
-    rgba(242, 242, 242, 0.4) 0%,
-    rgba(255, 255, 255, 0) 50%,
-    rgba(255, 255, 255, 0.5) 100%
-  );
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
-
-.timeout-card__inner {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-self: stretch;
-}
-
-.timeout-header {
-  display: flex;
-  align-self: stretch;
-  height: 45.58px;
-  padding: 17px 5.804px;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 45.58px;
-  margin: 0 -15.399px 0;
-  background: linear-gradient(
-    97deg,
-    rgba(255, 255, 255, 0.1) 21.11%,
-    rgba(230, 230, 230, 0.1) 71.43%
-  );
-
-  @include theme-light {
-    background: linear-gradient(
-      97deg,
-      rgba(255, 255, 255, 0.1) 21.11%,
-      rgba(230, 230, 230, 0.1) 71.43%
-    );
-  }
-}
-
-.timeout-title {
-  background: linear-gradient(180deg, #fff 0%, #e6e6e6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0;
-  letter-spacing: 0.32px;
-
-  @include theme-light {
-    background: none;
-    -webkit-text-fill-color: #fff;
-    color: #fff;
-  }
-}
-
-.timeout-body {
-  text-align: center;
-  margin-top: 18.12px;
-}
-
-.timeout-text {
-  color: var(--c-text);
-  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
-  font-size: 15px;
-  line-height: 1.5;
-  margin: 0;
-  letter-spacing: 0.32px;
-}
-
-@keyframes modal-pop {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
 }
 </style>

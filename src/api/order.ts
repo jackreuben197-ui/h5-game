@@ -1,4 +1,4 @@
-import http from '@/api/http'
+import http, { type HttpRequestOptionsExt } from '@/api/http'
 import type { ApiResponse } from '@/api/models/common'
 import type {
   ClubFundApplyListRequest,
@@ -106,8 +106,9 @@ export async function postClubFundOrderListApi(
   clubId?: number
 ): Promise<ApiResponse<ClubFundOrderListResponseData>> {
   const endpoint = '/order/club/order_list'
-  const headers = clubId != null ? { 'X-Club': String(clubId) } : undefined
-  const response = await http.post<ApiResponse<ClubFundOrderListResponseData>>(endpoint, payload, { headers })
+  const response = await http.post<ApiResponse<ClubFundOrderListResponseData>>(endpoint, payload, {
+    xClub: clubId,
+  } satisfies HttpRequestOptionsExt)
   return response.data
 }
 
@@ -212,10 +213,15 @@ export async function postClubPlayerExchangeApi(
 
 // 对齐 cocos WebClubPlayerOrderRecord.API
 export async function postClubPlayerOrderRecordApi(
-  payload: ClubPlayerOrderRecordRequest = {} as ClubPlayerOrderRecordRequest
+  payload: ClubPlayerOrderRecordRequest = {} as ClubPlayerOrderRecordRequest,
+  clubId?: number,
 ): Promise<ApiResponse<ClubPlayerOrderRecordResponseData>> {
   const endpoint = '/order/user/order_records'
-  const response = await http.post<ApiResponse<ClubPlayerOrderRecordResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<ClubPlayerOrderRecordResponseData>>(
+    endpoint,
+    payload,
+    { xClub: clubId } satisfies HttpRequestOptionsExt,
+  )
   return response.data
 }
 
@@ -225,8 +231,9 @@ export async function postRechargeGoldApi(
   clubId?: number
 ): Promise<ApiResponse<RechargeGoldResponseData>> {
   const endpoint = '/order/user/recharge'
-  const headers = clubId != null ? { 'X-club': String(clubId) } : undefined
-  const response = await http.post<ApiResponse<RechargeGoldResponseData>>(endpoint, payload, { headers })
+  const response = await http.post<ApiResponse<RechargeGoldResponseData>>(endpoint, payload, {
+    xClub: clubId,
+  } satisfies HttpRequestOptionsExt)
   return response.data
 }
 
@@ -236,8 +243,9 @@ export async function postOrderUserRechargeNoApi(
   clubId?: number
 ): Promise<ApiResponse<OrderUserRechargeNoResponseData>> {
   const endpoint = '/order/user/recharge_no'
-  const headers = clubId != null ? { 'X-Club': String(clubId) } : undefined
-  const response = await http.post<ApiResponse<OrderUserRechargeNoResponseData>>(endpoint, payload, { headers })
+  const response = await http.post<ApiResponse<OrderUserRechargeNoResponseData>>(endpoint, payload, {
+    xClub: clubId,
+  } satisfies HttpRequestOptionsExt)
   return response.data
 }
 

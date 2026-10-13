@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import TogglePillGroup from '@/components/wallet/TogglePillGroup.vue'
 import RecordItem from '@/components/wallet/RecordItem.vue'
@@ -7,9 +8,21 @@ import OrderDetailsView from './OrderDetailsView.vue'
 import { t } from '@/i18n'
 import { postClubFundOrderListApi, postClubPlayerOrderRecordApi } from '@/api/order'
 import type { ClubFundOrderListOrderInfo, ClubPlayerOrderRecordOrderInfo } from '@/api/models/order'
-import { useWalletStore } from '@/stores/wallet'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { formatUC } from '@/utils/roomVisibility'
 
-const walletStore = useWalletStore()
+const route = useRoute()
+const userInfoStore = useUserInfoStore()
+
+const clubId = computed(() => {
+  const raw = Array.isArray(route.query.clubId) ? route.query.clubId[0] : route.query.clubId
+  const directedId = Number(raw)
+  if (Number.isFinite(directedId) && directedId > 0) return directedId
+  const currentClub =
+    userInfoStore.currentClub ?? userInfoStore.clubList[0] ?? userInfoStore.channelDefaultClub
+  const currentId = Number(currentClub?.club_id)
+  return Number.isFinite(currentId) && currentId > 0 ? currentId : undefined
+})
 
 const activeTab = ref(0)
 const selectedOrder = ref<ClubPlayerOrderRecordOrderInfo | null>(null)
@@ -24,6 +37,7 @@ function statusLabel(status?: number): string {
     2: t('Wallet_StatusApproved'),
     3: t('Wallet_StatusRejected'),
     4: t('Wallet_StatusCancelled'),
+    5: t('UICommon_TimeOut'),
   }
   return map[status ?? 0] ?? '-'
 }
@@ -49,39 +63,39 @@ async function loadOrders(): Promise<void> {
   loading.value = true
   selectedOrder.value = null
   try {
-    if (!walletStore.goldPriceData) {
-      await walletStore.loadPriceList().catch(() => {})
-    }
     const order_type = activeTab.value === 0 ? 1 : 2
     const limit = 20
     const offset = 0
-    const tribeDirect = walletStore.goldPriceData?.from_tribe === true
-    if (tribeDirect) {
-      const clubRes = await postClubFundOrderListApi({
+    const clubRes = await postClubFundOrderListApi(
+      {
         my_order: true,
         order_type,
         limit,
         offset,
-      })
-      if (clubRes.code === 0) {
-        const list = clubRes.data?.list ?? []
-        orders.value = list.map((row) => mapClubFundOrderToRecord(row, order_type))
-        return
-      }
+      },
+      clubId.value,
+    )
+    if (clubRes.code === 0) {
+      const list = clubRes.data?.list ?? []
+      orders.value = list.map((row) => mapClubFundOrderToRecord(row, order_type))
+      return
     }
 
-    const userRes = await postClubPlayerOrderRecordApi({
-      order_type,
-      limit,
-      offset,
-    })
+    const userRes = await postClubPlayerOrderRecordApi(
+      {
+        order_type,
+        limit,
+        offset,
+      },
+      clubId.value,
+    )
     orders.value = userRes.data?.list ?? []
   } finally {
     loading.value = false
   }
 }
 
-watch(activeTab, loadOrders)
+watch([activeTab, clubId], loadOrders)
 onMounted(loadOrders)
 </script>
 
@@ -102,8 +116,8 @@ onMounted(loadOrders)
         v-for="(order, idx) in orders"
         :key="order.order_no ?? String(idx)"
         :type="activeTab === 0 ? t('Wallet_OrderAmountDeposit') : t('Wallet_OrderAmountWithdraw')"
-        :amount="order.gold_num ?? 0"
-        :pay-amount="order.amount ?? 0"
+        :amount="formatUC(Number(order.gold_num ?? 0))"
+        :pay-amount="order.pay_price ?? order.amount ?? 0"
         :time="formatTime(order.create_time)"
         :status="statusLabel(order.status)"
         @click="selectedOrder = order"

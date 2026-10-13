@@ -343,7 +343,8 @@ async function handleSubmit(): Promise<void> {
     }
 
     const priceData = walletStore.calculateUsdtPrice(goldCents, usdtRate, feeRate, feeType)
-    const feeAmount = feeType === 2 ? (goldCents / 100 / usdtRate) * feeRate : 0
+    const feeAmount =
+      feeType === 2 ? walletStore.roundMoney4((goldCents / 100 / usdtRate) * feeRate) : 0
 
     pendingWithdraw.value = {
       channel: channel as OnlineWithdrawTypeItem & { id: number },
@@ -351,7 +352,7 @@ async function handleSubmit(): Promise<void> {
       goldCents,
       address: addrTrim,
       payPrice: priceData.apiPayPrice,
-      feeAmount: Number(feeAmount.toFixed(4)),
+      feeAmount,
     }
     showWithdrawConfirm.value = true
   } finally {

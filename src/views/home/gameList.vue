@@ -106,7 +106,10 @@ const pageStyle = computed<CSSProperties>(() => ({
   '--tab-bg': `url(${tabBg})`,
 }))
 const selectedClub = computed(
-  () => userInfoStore.currentClub ?? userInfoStore.channelDefaultClub,
+  () =>
+    isChannelPackage
+      ? (userInfoStore.channelDefaultClub ?? userInfoStore.currentClub)
+      : (userInfoStore.currentClub ?? userInfoStore.channelDefaultClub),
 )
 const selectedClubId = computed(() => toSafeInt(selectedClub.value?.club_id))
 const selectedClubRandomId = computed(() => toSafeInt(selectedClub.value?.random_id))

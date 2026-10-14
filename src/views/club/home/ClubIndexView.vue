@@ -185,12 +185,15 @@ const currentJoinedClub = computed(() => {
 })
 
 const currentClub = computed(() => {
-  return currentJoinedClub.value || (isChannelPackage ? userInfoStore.channelDefaultClub : null)
+  return isChannelPackage
+    ? userInfoStore.channelDefaultClub || currentJoinedClub.value
+    : currentJoinedClub.value
 })
 
 const showChannelTabbar = computed(() => isChannelPackage)
 
 const selectedClubId = computed(() => toSafeInt(currentClub.value?.club_id))
+const selectedClubRandomId = computed(() => toSafeInt(currentClub.value?.random_id))
 const selectedTribeId = computed(() => toSafeInt(currentClub.value?.tribe_id))
 
 const canCreateTable = computed(() => {
@@ -618,6 +621,8 @@ async function handleTableClick(room: RoomRecord): Promise<void> {
     token: gameStore.sessionToken,
     websocketPort: wsPort,
     from: 'h5-club-table',
+    clubId: selectedClubId.value,
+    clubRandomId: selectedClubRandomId.value,
     roomId: String(room.rid ?? ''),
     roomName: String(room.name ?? ''),
     roomInfo: room,

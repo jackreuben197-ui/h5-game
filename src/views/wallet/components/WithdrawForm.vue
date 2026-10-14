@@ -113,8 +113,8 @@ const withdrawRangeText = computed(() => {
 })
 
 const selectedRateText = computed(() => {
-  if (!selectedAddress.value) return ''
-  return formatAmount(walletStore.resolveUsdtRate(selectedAddress.value.usdt_rate))
+  const usdtRate = walletStore.resolveUsdtRate(selectedAddress.value?.usdt_rate)
+  return usdtRate > 0 ? formatAmount(usdtRate) : ''
 })
 
 const withdrawConfirmFeeRate = computed(() => {
@@ -314,6 +314,12 @@ async function handleSubmit(): Promise<void> {
       return
     }
 
+    const usdtRate = walletStore.resolveUsdtRate(channel.usdt_rate)
+    if (usdtRate <= 0) {
+      showToast(`${t('Wallet_Rate')}${t('adaptation10322')}`)
+      return
+    }
+
     const savedTxt = withdrawUserDescription(channel)
     if (addrTrim !== savedTxt) {
       const saveRes = await postOnlineWithdrawDescriptionApi({
@@ -333,7 +339,6 @@ async function handleSubmit(): Promise<void> {
       }
     }
 
-    const usdtRate = walletStore.resolveUsdtRate(channel.usdt_rate)
     const feeRate = channel.fee_rate ?? 0
     const feeType = channel.fee_type ?? 0
 

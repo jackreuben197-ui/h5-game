@@ -73,7 +73,7 @@ onUnmounted(() => {
             <h2 class="header__title">{{ t('UIMineMallUSDTShopPayDialogSurePay') }}</h2>
             <div class="header__info">
               <p>{{ t('UIMine_WalletPlatform_fee_s') }}: {{ feeDisplay }}</p>
-              <p>{{ t('UIWallet_Current') }}: 1USDT={{ rate || 1 }}UC</p>
+              <p>{{ t('UIWallet_Current') }}: 1USDT={{ rate || 0 }}UC</p>
             </div>
           </div>
 

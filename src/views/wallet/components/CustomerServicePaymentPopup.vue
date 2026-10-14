@@ -26,7 +26,7 @@ const feeDisplay = computed(() => {
 const payPrice = computed(() =>
   walletStore.calculateCustomerServicePrice(
     props.goldCount,
-    props.rate || 1,
+    props.rate,
     props.feeRate || 0,
     props.feeType || 0,
     props.discount || 0,
@@ -44,7 +44,7 @@ const payPrice = computed(() =>
             <h2 class="card__title">{{ t('UIMineMallUSDTShopPayDialogSurePay') }}</h2>
             <div class="card__header-info">
               <span>{{ t('UIMine_WalletPlatform_fee_s') }}：{{ feeDisplay }}</span>
-              <span>{{ t('UIWallet_Current') }}：1USDT={{ props.rate || 1 }}UC</span>
+              <span>{{ t('UIWallet_Current') }}：1USDT={{ props.rate || 0 }}UC</span>
             </div>
           </div>
 

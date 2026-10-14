@@ -88,14 +88,14 @@ test('wallet store falls back to the public channel club for preview pricing', a
       totalUiPrice: 50,
     })
     assert.deepEqual(walletStore.calculateUsdtPrice(10_000, 0, 0), {
-      apiPayPrice: 100,
-      totalUiPrice: 100,
+      apiPayPrice: 0,
+      totalUiPrice: 0,
     })
     assert.deepEqual(walletStore.calculateRechargeUsdtPrice(10_000, 0, 0), {
-      apiPayPrice: 100,
-      totalUiPrice: 100,
+      apiPayPrice: 0,
+      totalUiPrice: 0,
     })
-    assert.equal(walletStore.calculateCustomerServicePrice(10_000, Number.NaN, 0), 100)
+    assert.equal(walletStore.calculateCustomerServicePrice(10_000, Number.NaN, 0), 0)
     assert.deepEqual(walletStore.calculateRechargeUsdtPrice(10_000, 2, 0.05, 2, 0.1), {
       apiPayPrice: 47.5,
       totalUiPrice: 47.5,

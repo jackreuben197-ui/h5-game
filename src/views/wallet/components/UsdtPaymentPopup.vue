@@ -105,7 +105,7 @@ onUnmounted(() => {
                     : '0'
                 }}
               </span>
-              <span>{{ t('UIWallet_Current') }}：1USDT={{ props.rate || 1 }}UC</span>
+              <span>{{ t('UIWallet_Current') }}：1USDT={{ props.rate || 0 }}UC</span>
             </div>
           </div>
 

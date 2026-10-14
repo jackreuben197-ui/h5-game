@@ -7,7 +7,7 @@ import type {
 import { openBridgePanel } from '@/bridge/channels/panelChannel'
 import { subscribeCocosMessages } from '@/bridge/core/cocosBridgeChannel'
 import StorageKey from '@/constants/storageKey'
-import { isChannelPackageHost, isTelegramClubContext } from '@/utils/channelPackage'
+import { isChannelPackageHost, isPrivateDomainMode, isTelegramClubContext } from '@/utils/channelPackage'
 import { BRIDGE_ACTION, BRIDGE_MSG_TYPE, type BridgeMessage } from '@bridge-protocol'
 import { t } from '@/i18n'
 import { localStore } from '@/utils/localStore'
@@ -83,14 +83,14 @@ export async function tryShowDailyH5DisplayPanel(): Promise<void> {
     return
   }
 
-  // 私域版本（渠道包）暂时不展示三级公告，也不请求公告数据。
-  if (isChannelPackageHost()) {
-    return
-  }
+  const isClub = isChannelPackageHost() || isPrivateDomainMode()
+  const displayStorageKey = isClub
+    ? `${StorageKey.H5_DISPLAY_LAST_SHOWN_DATE}_club`
+    : StorageKey.H5_DISPLAY_LAST_SHOWN_DATE
 
   const today = getLocalDateKey()
   const lastShown = localStore.getItem<string | null>(
-    StorageKey.H5_DISPLAY_LAST_SHOWN_DATE,
+    displayStorageKey,
     null,
   )
   if (lastShown === today) {
@@ -116,8 +116,16 @@ export async function tryShowDailyH5DisplayPanel(): Promise<void> {
       ? data.find_us
       : null
 
-  // 三类数据全为空时，用内置多语言 fallback 兜底，保证仍有内容展示。
-  if (!downloadApp && popupNotices.length === 0 && !findUs) {
+  // 俱乐部版本：仅展示“添加桌面快捷方式”单个弹窗（步骤1），不添加后两个通知面板（步骤2公告和步骤3备用地址）。
+  // 官方网站版本保持原有逻辑不变：三类数据全为空时，用内置多语言 fallback 兜底。
+  if (isClub) {
+    if (!downloadApp) {
+      const fallback = buildFallbackDisplay()
+      downloadApp = fallback.download_app
+    }
+    popupNotices = []
+    findUs = null
+  } else if (!downloadApp && popupNotices.length === 0 && !findUs) {
     const fallback = buildFallbackDisplay()
     downloadApp = fallback.download_app
     popupNotices = fallback.popup_notices
@@ -129,12 +137,13 @@ export async function tryShowDailyH5DisplayPanel(): Promise<void> {
     title: '',
     props: {
       download_app: downloadApp ?? undefined,
-      popup_notices: popupNotices,
-      find_us: findUs ?? undefined,
+      popup_notices: isClub ? [] : popupNotices,
+      find_us: isClub ? undefined : (findUs ?? undefined),
+      isClub,
     },
   })
 
-  localStore.setItem(StorageKey.H5_DISPLAY_LAST_SHOWN_DATE, today)
+  localStore.setItem(displayStorageKey, today)
 }
 
 function runTrigger(reason: string): void {

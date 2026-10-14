@@ -4,24 +4,25 @@ import { showFailToast, showSuccessToast, showToast } from 'vant'
 import { t } from '@/i18n'
 import {
   canPromptInstall,
-  isIosSafari,
   isStandaloneDisplay,
   showAddToHomeScreenPrompt,
 } from '@/utils/environment'
-import {
-  installIosWebClip,
-  isIos,
-  isIosNativeSafari,
-  isIosThirdPartyBrowser,
-} from '@/utils/iosWebClip'
+import { isIos } from '@/utils/iosWebClip'
 import hometab1 from '@/assets/images/hometab1.png'
 import hometab2 from '@/assets/images/hometab2.png'
-import webClipIcon from '@/assets/images/icon-192.png?inline'
 import { sanitizeRichHtml } from '@/utils/safeHtml'
 import {
   isExternalLinkIframeModeEnabled,
   openExternalLinkFrame,
 } from '@/utils/externalLinkFrame'
+import { isChannelPackageHost, isPrivateDomainMode } from '@/utils/channelPackage'
+import { useUserInfoStore } from '@/stores/userInfo'
+import {
+  DEFAULT_CLUB_ICON,
+  DEFAULT_CLUB_NAME,
+  OFFICIAL_WEB_ICON,
+  OFFICIAL_WEB_NAME,
+} from '@/utils/safariWebApp'
 
 const props = defineProps<{
   panelProps?: Record<string, unknown>
@@ -109,7 +110,84 @@ const findUsData = computed<FindUsData & { link_list: string[] }>(() => {
 })
 
 // ==================== 状态 ====================
+const userInfoStore = useUserInfoStore()
+
+const isClub = computed<boolean>(() => {
+  if (typeof props.panelProps?.isClub === 'boolean') {
+    return props.panelProps.isClub
+  }
+  return isChannelPackageHost() || isPrivateDomainMode()
+})
+
+const dynamicGuideLabel = computed<string>(() => {
+  if (isClub.value) {
+    const club = userInfoStore.channelDefaultClub || userInfoStore.currentClub
+    const raw = (club || {}) as Record<string, unknown>
+    const fromClub =
+      (typeof club?.safari_label === 'string' && club.safari_label.trim()) ||
+      (typeof raw.safari_name === 'string' && raw.safari_name.trim()) ||
+      (typeof raw.desktop_name === 'string' && raw.desktop_name.trim()) ||
+      (typeof club?.name === 'string' && club.name.trim()) ||
+      (typeof raw.app_name === 'string' && raw.app_name.trim())
+    if (fromClub) return fromClub
+
+    if (typeof window !== 'undefined') {
+      const cached = window.localStorage.getItem('dzpk_h5_safari_label')
+      if (cached && cached.trim()) return cached.trim()
+    }
+
+    if (
+      typeof document !== 'undefined' &&
+      document.title &&
+      document.title.trim() &&
+      document.title !== OFFICIAL_WEB_NAME
+    ) {
+      return document.title.trim()
+    }
+
+    return DEFAULT_CLUB_NAME
+  }
+  return OFFICIAL_WEB_NAME
+})
+
+const dynamicGuideIcon = computed<string>(() => {
+  if (isClub.value) {
+    const club = userInfoStore.channelDefaultClub || userInfoStore.currentClub
+    const raw = (club || {}) as Record<string, unknown>
+    const fromClub =
+      (typeof club?.safari_icon_url === 'string' && club.safari_icon_url.trim()) ||
+      (typeof raw.safari_icon === 'string' && raw.safari_icon.trim()) ||
+      (typeof raw.desktop_icon === 'string' && raw.desktop_icon.trim()) ||
+      (typeof club?.logo === 'string' && club.logo.trim()) ||
+      (typeof raw.app_icon === 'string' && raw.app_icon.trim())
+    if (fromClub) return fromClub
+
+    if (typeof window !== 'undefined') {
+      const cached = window.localStorage.getItem('dzpk_h5_safari_icon')
+      if (cached && cached.trim()) return cached.trim()
+    }
+
+    if (typeof document !== 'undefined') {
+      const touchIcon = document.querySelector<HTMLLinkElement>('link[rel="apple-touch-icon"]')?.href
+      if (touchIcon && touchIcon.trim()) return touchIcon.trim()
+      const favIcon = document.querySelector<HTMLLinkElement>('link[rel="icon"]')?.href
+      if (favIcon && favIcon.trim()) return favIcon.trim()
+    }
+
+    return DEFAULT_CLUB_ICON
+  }
+  return OFFICIAL_WEB_ICON
+})
+
+function onGuideIconError(event: Event): void {
+  const target = event.target
+  if (target instanceof HTMLImageElement) {
+    target.src = isClub.value ? DEFAULT_CLUB_ICON : OFFICIAL_WEB_ICON
+  }
+}
+
 // 按需显示：只把有数据的步骤纳入递进序列（1=下载APP 2=弹窗公告 3=备用地址）
+// 俱乐部版本只保留第1步，不展示后两步
 const hasDownloadApp = computed(() => Object.keys(downloadAppData.value).length > 0)
 const hasPopupNotices = computed(() => popupNoticeList.value.length > 0)
 const hasFindUs = computed(() => {
@@ -120,8 +198,8 @@ const hasFindUs = computed(() => {
 const availableSteps = computed<number[]>(() => {
   const steps: number[] = []
   if (hasDownloadApp.value) steps.push(1)
-  if (hasPopupNotices.value) steps.push(2)
-  if (hasFindUs.value) steps.push(3)
+  if (!isClub.value && hasPopupNotices.value) steps.push(2)
+  if (!isClub.value && hasFindUs.value) steps.push(3)
   return steps
 })
 
@@ -339,6 +417,7 @@ async function onSecondaryAction(): Promise<void> {
             <span>{{ t('UILanding_Table') }}</span>
           </button>
           <button
+            v-if="!isClub"
             class="notification-panel__btn notification-panel__btn--primary"
             type="button"
             @click="onDownload"
@@ -509,8 +588,24 @@ async function onSecondaryAction(): Promise<void> {
             </div>
             <div class="a2h-guide__step">
               <p class="a2h-guide__text">{{ t('H5Display_GuideStep2') }}</p>
-              <div class="a2h-guide__img-wrap">
+              <div class="a2h-guide__img-wrap a2h-guide__img-wrap--step2">
                 <img :src="hometab2" alt="" class="a2h-guide__img" />
+                <div class="a2h-guide__mock-row">
+                  <div class="a2h-guide__mock-icon-wrap">
+                    <img
+                      :src="dynamicGuideIcon"
+                      alt=""
+                      class="a2h-guide__mock-icon"
+                      @error="onGuideIconError"
+                    />
+                  </div>
+                  <div class="a2h-guide__mock-info">
+                    <div class="a2h-guide__mock-title">
+                      <span>{{ dynamicGuideLabel }}</span>
+                    </div>
+                    <div class="a2h-guide__mock-sub">{{ dynamicGuideLabel }}</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1138,6 +1233,7 @@ async function onSecondaryAction(): Promise<void> {
   }
 
   &__img-wrap {
+    position: relative;
     border-radius: 20px;
     overflow: hidden;
     display: flex;
@@ -1145,6 +1241,77 @@ async function onSecondaryAction(): Promise<void> {
     width: 80%;
     max-width: 300px;
     margin: 0 auto;
+
+    &--step2 {
+      position: relative;
+    }
+  }
+
+  &__mock-row {
+    position: absolute;
+    top: 29.67%;
+    left: 0;
+    width: 100%;
+    height: 33.06%;
+    display: flex;
+    align-items: center;
+    padding: 0 4% 0 3.2%;
+    box-sizing: border-box;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  &__mock-icon-wrap {
+    width: 17.14%;
+    aspect-ratio: 1 / 1;
+    border-radius: 22%;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f2f2f7;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  }
+
+  &__mock-icon {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  &__mock-info {
+    margin-left: 3.5%;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  &__mock-title {
+    font-size: clamp(10px, 3.4vw, 13px);
+    font-weight: 500;
+    color: #000000;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', sans-serif;
+  }
+
+  &__mock-sub {
+    font-size: clamp(8px, 2.7vw, 10px);
+    color: #8e8e93;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', sans-serif;
   }
 
   &__img {

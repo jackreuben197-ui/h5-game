@@ -1418,6 +1418,11 @@ onBeforeUnmount(() => {
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   overscroll-behavior-y: contain;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .home-swap-panel {
@@ -1818,6 +1823,28 @@ onBeforeUnmount(() => {
     flex: none;
     flex-shrink: 0;
     max-height: none;
+  }
+  .home-page.home-page--mtt {
+    height: auto;
+    overflow: visible;
+  }
+  .home-page.home-page--fit,
+  .home-page.home-page--mtt {
+    padding-bottom: 122px;
+  }
+  .home-page--mtt .home-swap-container {
+    flex: none;
+    overflow: visible;
+  }
+  .home-page--mtt .home-swap-panel,
+  .home-page--mtt .home-mtt-content {
+    height: auto;
+  }
+  .home-page--mtt .home-mtt-content {
+    overflow: visible;
+  }
+  .main-layout--guest .home-page {
+    padding-top: 8px;
   }
 }
 

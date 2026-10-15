@@ -26,7 +26,7 @@ import {
   encodeHoldemPacket,
   type HoldemPacketDecodeResult,
 } from './holdemPacket'
-import { Code } from '@holdem-pb'
+import { Code, ServerMessageError } from '@holdem-pb'
 
 const log = createLogger('[ws]')
 const logSend = createLogger('[wsSend]')
@@ -84,12 +84,14 @@ let hiddenAt = 0
 const HOLDEN_CODE_NAME: Record<number, string> = {
   [Code.MSG_D_REGISTER]: 'REGISTER',
   [Code.MSG_D_HEARTBEAT]: 'HEARTBEAT',
+  [Code.MSG_S_ERROR]: 'ERROR',
   [Code.MSG_D_ENTER_ROOM]: 'ENTER_ROOM',
   [Code.MSG_D_LEAVE]: 'LEAVE',
   [Code.MSG_S_CACHE_DATA_UPDATE]: 'CACHE_DATA_UPDATE',
   [Code.MSG_S_ROOM_CHANGE_NOTIFY]: 'ROOM_CHANGE_NOTIFY',
   [Code.MSG_S_USER_MTT_CHANGE_NOTIFY]: 'USER_MTT_CHANGE_NOTIFY',
   [Code.MSG_S_USER_SNG_CHANGE_NOTIFY]: 'USER_SNG_CHANGE_NOTIFY',
+  [Code.MSG_S_USER_ORDER_AUDIT]: 'USER_ORDER_AUDIT',
   [Code.MSG_S_MTT_SERIES_NOTIFY]: 'MTT_SERIES_NOTIFY',
   [Code.MSG_S_ACTION_ALL]: 'ACTION_ALL',
   [Code.MSG_S_USER_JOIN_CLUB]: 'USER_JOIN_CLUB',
@@ -118,8 +120,13 @@ export interface H5WaitWsPacketOptions {
   timeoutMs?: number
 }
 
-// 从 payload 推导 websocket URL：优先全量 URL，其次端口模板。
+// 从 payload 推导 websocket URL：本地开发优先走 Vite WS 代理；其他环境保持现网直连逻辑。
 function resolveWsUrl(payload: WsConnectPayload): string {
+  const proxyUrl = (import.meta.env.VITE_WS_PROXY_URL || '').trim()
+  if (proxyUrl) {
+    return proxyUrl
+  }
+
   if (typeof payload.url === 'string' && payload.url.trim()) {
     return payload.url.trim()
   }
@@ -640,6 +647,21 @@ function logHoldemPacket(
   const code = decodedPacket.code
   const body = decodedPacket.body
   const codeName = HOLDEN_CODE_NAME[code] || 'UNKNOWN'
+  if (code === Code.MSG_S_ERROR) {
+    try {
+      const serverError = ServerMessageError.deserializeBinary(body).toObject()
+      logRecv.warn({
+        code,
+        codeName,
+        status: serverError.status,
+        message: serverError.message,
+      })
+      return code
+    } catch (error) {
+      logRecv.warn({ code, codeName, bodyLen: body.length, decodeError: error })
+      return code
+    }
+  }
   const isHeartbeat = code === Code.MSG_D_HEARTBEAT
 
   // 心跳包非常高频，限制日志频率，避免刷屏。

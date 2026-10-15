@@ -258,6 +258,9 @@ export default defineConfig(({ mode, command }) => {
         '/api': {
           target: proxyTarget,
           changeOrigin: true,
+          // 本地 WS 通过 /api/channel/ 接入测试服，避免测试服拒绝 localhost Origin。
+          ws: true,
+          rewriteWsOrigin: true,
           secure: false,
         },
       },

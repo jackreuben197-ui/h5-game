@@ -5,9 +5,19 @@ import type { PropGoldPriceListData } from '@/api/models/prop'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { postClubFundOrderListApi } from '@/api/order'
 import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
+import { normalizeRechargeRewardTiers } from '@/features/rechargeReward/model'
 
 export const useWalletStore = defineStore('wallet', () => {
   const goldPriceData = ref<PropGoldPriceListData | null>(null)
+  const firstRechargeRewardTiers = computed(() =>
+    normalizeRechargeRewardTiers(goldPriceData.value?.first_recharge_reward),
+  )
+  const dailyRechargeRewardTiers = computed(() =>
+    normalizeRechargeRewardTiers(goldPriceData.value?.daily_recharge_reward),
+  )
+  const hasRechargeRewardActivity = computed(
+    () => firstRechargeRewardTiers.value.length > 0 || dailyRechargeRewardTiers.value.length > 0,
+  )
   let goldPriceClubId: number | undefined
   let priceListRequest: { clubId?: number; promise: Promise<void> } | null = null
   let priceListRequestVersion = 0
@@ -198,6 +208,9 @@ export const useWalletStore = defineStore('wallet', () => {
 
   return {
     goldPriceData,
+    firstRechargeRewardTiers,
+    dailyRechargeRewardTiers,
+    hasRechargeRewardActivity,
     loadPriceList,
     clearPriceList,
     calculateUsdtPrice,

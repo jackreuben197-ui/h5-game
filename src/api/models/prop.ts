@@ -91,8 +91,27 @@ export interface PropGoldPriceListData {
   total?: number // 总条目数
   list?: PropGoldPriceListGoldInfo[] // 金币信息列表
   pay_types?: PropGoldPriceListPayType[] // 支付方式列表
+  first_recharge_reward?: PropGoldPriceListRechargeRewardTier[] // 首充礼，金额字段单位为分
+  daily_recharge_reward?: PropGoldPriceListRechargeRewardTier[] // 充值礼，金额字段单位为分
   /** 联盟直充：为 true 时订单列表走 /order/club/order_list?my_order */
   from_tribe?: boolean
+
+  [key: string]: unknown
+}
+
+export interface PropGoldPriceListRechargeRewardTier {
+  start_amount?: number // 充值区间起始金额，单位为分
+  end_amount?: number // 充值区间结束金额，单位为分
+  rewards?: PropGoldPriceListRechargeReward[]
+
+  [key: string]: unknown
+}
+
+export interface PropGoldPriceListRechargeReward {
+  prop_id?: number
+  prop_name?: string
+  prop_value?: number // 道具价值，单位为分
+  quantity?: number
 
   [key: string]: unknown
 }

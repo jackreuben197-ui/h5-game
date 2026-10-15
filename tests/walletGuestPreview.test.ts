@@ -45,7 +45,19 @@ test('wallet store falls back to the public channel club for preview pricing', a
     });
     export const postPropGoldPriceListApi = async (...args) => {
       calls.push(args);
-      return { code: 0, data: { list: [], pay_types: [] } };
+      return {
+        code: 0,
+        data: {
+          list: [],
+          pay_types: [],
+          first_recharge_reward: [{
+            start_amount: 100,
+            end_amount: 1000000,
+            rewards: [{ prop_id: 654, prop_name: 'MTT ticket', prop_value: 50000, quantity: 1 }],
+          }],
+          daily_recharge_reward: [],
+        },
+      };
     };
     export const postClubFundOrderListApi = async () => ({ code: 0, data: { list: [] } });
     export const ref = value => ({ value });
@@ -61,6 +73,8 @@ test('wallet store falls back to the public channel club for preview pricing', a
     '@/api/prop': mockUrl,
     '@/api/order': mockUrl,
     '@/stores/userInfo': mockUrl,
+    '@/features/rechargeReward/model':
+      new URL('../src/features/rechargeReward/model.ts', import.meta.url).href,
   }
   const hooks = registerHooks({
     resolve(specifier, context, nextResolve) {
@@ -79,6 +93,22 @@ test('wallet store falls back to the public channel club for preview pricing', a
     assert.equal(calls[0][0]?.source_type, 2)
     assert.deepEqual(calls[0][0]?.gold_types, [1])
     assert.equal(calls[0][1], 73)
+    assert.equal(walletStore.hasRechargeRewardActivity.value, true)
+    assert.deepEqual(walletStore.firstRechargeRewardTiers.value, [
+      {
+        startAmount: 1,
+        endAmount: 10_000,
+        rewards: [
+          {
+            propId: 654,
+            propName: 'MTT ticket',
+            propValue: 500,
+            quantity: 1,
+            propIcon: '',
+          },
+        ],
+      },
+    ])
     assert.deepEqual(walletStore.calculateUsdtPrice(10_000, 2, 0.05, 2), {
       apiPayPrice: 47.5,
       totalUiPrice: 47.5,

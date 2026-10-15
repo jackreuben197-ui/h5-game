@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { showSuccessToast, showToast } from 'vant'
 import ava1 from '@/assets/images/wallet/avatars/ava1.png'
@@ -21,6 +21,10 @@ import UnfinishedOrderPopup from '@/views/wallet/components/UnfinishedOrderPopup
 import UsdtPaymentDetailsPopup from '@/views/wallet/components/UsdtPaymentDetailsPopup.vue'
 import CustomerServicePaymentPopup from '@/views/wallet/components/CustomerServicePaymentPopup.vue'
 import FixedDepositPanel from '@/views/wallet/components/FixedDepositPanel.vue'
+import {
+  subscribeRechargeOrderSucceeded,
+  type RechargeOrderSucceededDetail,
+} from '@/features/rechargeReward/channel'
 import MainBottomTab from '@/components/Tabbar/MainBottomTab.vue'
 import {
   openGlobalCustomerServiceChat,
@@ -155,6 +159,7 @@ const activeCsOrder = computed(() => {
 
 const hasSeenRechargeNotification = ref(false)
 const hasSeenWithdrawNotification = ref(false)
+let stopRechargeOrderSucceededListener: (() => void) | null = null
 
 const currentHasSeen = computed(() => {
   return activeTab.value === 0
@@ -169,6 +174,40 @@ function asRecord(value: unknown): Record<string, unknown> {
 function firstPresent(...values: unknown[]): unknown {
   return values.find((value) => value !== undefined && value !== null && value !== '')
 }
+
+function rechargeResultOrderNo(): string {
+  const result = asRecord(rechargeResult.value)
+  const order = asRecord(result.order)
+  return String(firstPresent(result.order_no, order.order_no) || '')
+}
+
+function onRechargeOrderSucceeded(detail: RechargeOrderSucceededDetail): void {
+  const activeOrderNo = rechargeResultOrderNo()
+  if (usdtDetailsPopupOpen.value && (!activeOrderNo || activeOrderNo === detail.orderNo)) {
+    usdtDetailsPopupOpen.value = false
+    rechargeResult.value = null
+  }
+
+  const unfinishedOrderNo = String(unfinishedOrder.value?.order_no || '')
+  if (showUnfinishedPopup.value && unfinishedOrderNo === detail.orderNo) {
+    showUnfinishedPopup.value = false
+    unfinishedOrder.value = null
+  }
+
+  if (gameStore.isRealUser) {
+    void checkUnfinishedOrders(false)
+    void refreshPendingCsOrder()
+  }
+}
+
+onMounted(() => {
+  stopRechargeOrderSucceededListener = subscribeRechargeOrderSucceeded(onRechargeOrderSucceeded)
+})
+
+onBeforeUnmount(() => {
+  stopRechargeOrderSucceededListener?.()
+  stopRechargeOrderSucceededListener = null
+})
 
 function toFiniteNumber(value: unknown): number {
   const number = Number(value)
@@ -869,7 +908,6 @@ async function onUsdtSubmit(type: number) {
     )
 
     if (res.code === 0 && res.data) {
-      console.log('Recharge successful:', res.data)
       rechargeResult.value = res.data
       usdtDetailsPopupOpen.value = true
 
@@ -948,14 +986,34 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
             />
           </template>
           <template #extra>
-            <div class="balance-row">
-              <div class="balance-chip">
-                <span class="balance-chip__value">
-                  {{ formatUC(walletBalance) }}
-                </span>
-                <img :src="icCoins" alt="" class="balance-chip__icon" />
+            <div
+              class="wallet-card-extra"
+              :class="{
+                'wallet-card-extra--reward':
+                  activeTab === 0 && walletStore.hasRechargeRewardActivity,
+              }"
+            >
+              <div class="balance-row">
+                <div class="balance-chip">
+                  <span class="balance-chip__value">
+                    {{ formatUC(walletBalance) }}
+                  </span>
+                  <img :src="icCoins" alt="" class="balance-chip__icon" />
+                </div>
+                <span class="balance-label">{{ $txt('Wallet_Balance') }}</span>
               </div>
-              <span class="balance-label">{{ $txt('Wallet_Balance') }}</span>
+              <div
+                v-if="activeTab === 0 && walletStore.hasRechargeRewardActivity"
+                class="reward-hint"
+                :aria-label="t('UIRechargeReward_ActivityDescription')"
+              >
+                <span class="reward-hint__badge">
+                  {{ t('UIRechargeReward_ActivityBadge') }}
+                </span>
+                <span class="reward-hint__text">
+                  {{ t('UIRechargeReward_ActivityDescription') }}
+                </span>
+              </div>
             </div>
           </template>
         </UserCard>
@@ -1205,6 +1263,46 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
   margin-top: 0.21rem;
   margin-bottom: 0.54rem;
   margin-left: 54px;
+}
+
+.wallet-card-extra {
+  display: flex;
+  flex-direction: column;
+}
+
+.wallet-card-extra--reward .balance-row {
+  margin-bottom: 0.14rem;
+}
+
+.reward-hint {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.12rem;
+  margin: 0 0.08rem 0.38rem;
+  color: rgba(255, 255, 255, 0.88);
+  font-family: var(--wallet-font-cn);
+  font-size: 0.23rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.reward-hint__badge {
+  flex: 0 0 auto;
+  padding: 0.025rem 0.13rem;
+  color: #80601c;
+  border-radius: 999px;
+  background: #f7dda0;
+}
+
+.reward-hint__text {
+  min-width: 0;
+}
+
+:global(html[data-theme='light']) .reward-hint {
+  color: rgba(62, 39, 48, 0.84);
 }
 
 .balance-chip {

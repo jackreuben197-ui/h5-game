@@ -10,8 +10,13 @@ import {
   type RechargeRewardItem,
   type RechargeRewardNotification,
 } from '@/features/rechargeReward/model'
+import { getLocale } from '@/i18n'
 import { useTextI18n } from '@/i18n/useTextI18n'
 import { useGameStore } from '@/stores/game'
+import {
+  multiLanguageTemplateVersion,
+  resolveTemplateTextByKey,
+} from '@/utils/multiLanguageTemplate'
 
 const SEEN_ORDER_STORAGE_PREFIX = 'h5_recharge_reward_seen_v1'
 const MAX_SEEN_ORDERS = 100
@@ -89,6 +94,13 @@ function onH5VisibilityChange(event: Event): void {
 }
 
 function displayRewardName(reward: RechargeRewardItem): string {
+  // propName may be a template key such as PROP2023.... The template map is restored from
+  // public_cache/multi_language_template; reading its version keeps an already-open popup in sync
+  // when the asynchronous IndexedDB restore completes.
+  void multiLanguageTemplateVersion.value
+  const templateName = resolveTemplateTextByKey(reward.propName, getLocale())
+  if (templateName) return templateName
+
   const translated = t(reward.propName)
   return translated === reward.propName ? reward.propName : translated
 }

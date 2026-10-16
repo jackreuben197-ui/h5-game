@@ -44,6 +44,7 @@ import {
   postOrderUserClubOrderCancelApi,
 } from '@/api/order'
 import { postChatSupportChannelListApi } from '@/api/chat'
+import { getUserClubApi, getUserInfoApi } from '@/api/user'
 import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
 import type { PropGoldPriceListPayType } from '@/api/models/prop'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
@@ -195,6 +196,9 @@ function onRechargeOrderSucceeded(detail: RechargeOrderSucceededDetail): void {
   }
 
   if (gameStore.isRealUser) {
+    // 余额变更通知可能晚于订单审核通知，主动刷新用户及俱乐部余额，避免支付弹窗
+    // 已关闭但钱包卡片仍显示旧值。
+    void Promise.allSettled([getUserInfoApi(), getUserClubApi()])
     void checkUnfinishedOrders(false)
     void refreshPendingCsOrder()
   }

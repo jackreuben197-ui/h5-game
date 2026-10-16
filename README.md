@@ -1671,9 +1671,9 @@ onUnmounted(() => {
 })
 ```
 
-## 13. 协议文件同步（Protobuf）
+## 13. 协议依赖同步（Protobuf）
 
-pb 生成文件（`.js` + `.d.ts`）**已提交到 git**，通常不需要每次开发都重新执行。
+H5 的 protobuf 类型和运行时统一来自 `@silenthill/agreement-web`，仓库内不再保存生成的 pb 文件。
 
 ```bash
 pnpm sync:protocol
@@ -1681,16 +1681,16 @@ pnpm sync:protocol
 
 **何时需要执行**：上游 `agreement-web` 仓库新增或变更了 H5 订阅的协议时。
 
-**执行后**：把更新的 pb 文件提交到 git，与代码一起走 CR 流程。
+**执行后**：更新 `@silenthill/agreement-web` 安装产物和 `pnpm-lock.yaml`，将锁文件与代码一起提交。
 
 **与 `sync:i18n` 的区别**：
 
 | 命令 | 触发方式 | 来源 | 产物是否提交 git |
 |------|---------|------|----------------|
 | `sync:i18n` | `predev` / `prebuild` 自动 | `@silenthill/h5-cc-i18n` 安装产物 | 否（复制到 `public/`） |
-| `sync:protocol` | 手动按需 | `agreement-web` 仓库 | 是（pb 文件已纳入版控） |
+| `sync:protocol` | 手动按需 | `@silenthill/agreement-web` | 是（只提交锁文件） |
 
-**白名单维护**：`scripts/update_protocol.sh` 中的 `H5_RECV_FILES` 数组。H5 只同步大厅 / 全局通知（code < 1000），游戏内协议由 Cocos 自行管理，双方都从同一个 `agreement-web` 仓库拉取。
+H5 只按业务需要订阅大厅 / 全局通知，但协议类型不再按文件复制。H5 和 Cocos 必须将 `@silenthill/agreement-web` 锁定到同一协议版本。
 
 新增协议的完整步骤见 `src/bridge/README.md` 6.4 节。
 

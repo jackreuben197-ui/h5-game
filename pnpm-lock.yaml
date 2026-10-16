@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@silenthill/agreement-web':
         specifier: github:kingofake/agreement-web#master
-        version: git+https://git@github.com:kingofake/agreement-web.git#96cdc35fd8d6588b66b7a141230abd521b61d403
+        version: git+ssh://git@github.com/kingofake/agreement-web.git#921be247732066cdae55477ce3a81c29fbbb6b6c
       '@silenthill/h5-cc-bridge':
         specifier: github:soolary/h5-cc-bridge#main
         version: git+ssh://git@github.com/soolary/h5-cc-bridge.git#36dae00701b74e936a76000e9591b9e115feca63
@@ -1042,8 +1042,8 @@ packages:
   '@rolldown/pluginutils@1.0.0-rc.2':
     resolution: {integrity: sha512-izyXV/v+cHiRfozX62W9htOAvwMo4/bXKDrQ+vom1L1qRuexPock/7VZDAhnpHCLNejd3NJ6hiab+tO0D44Rgw==}
 
-  '@silenthill/agreement-web@git+https://git@github.com:kingofake/agreement-web.git#96cdc35fd8d6588b66b7a141230abd521b61d403':
-    resolution: {commit: 96cdc35fd8d6588b66b7a141230abd521b61d403, repo: git@github.com:kingofake/agreement-web.git, type: git}
+  '@silenthill/agreement-web@git+ssh://git@github.com/kingofake/agreement-web.git#921be247732066cdae55477ce3a81c29fbbb6b6c':
+    resolution: {commit: 921be247732066cdae55477ce3a81c29fbbb6b6c, repo: git@github.com:kingofake/agreement-web.git, type: git}
     version: 1.0.0
 
   '@silenthill/h5-cc-bridge@git+ssh://git@github.com/soolary/h5-cc-bridge.git#36dae00701b74e936a76000e9591b9e115feca63':
@@ -3458,7 +3458,7 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.0-rc.2': {}
 
-  '@silenthill/agreement-web@git+https://git@github.com:kingofake/agreement-web.git#96cdc35fd8d6588b66b7a141230abd521b61d403':
+  '@silenthill/agreement-web@git+ssh://git@github.com/kingofake/agreement-web.git#921be247732066cdae55477ce3a81c29fbbb6b6c':
     dependencies:
       google-protobuf: 3.21.4
 

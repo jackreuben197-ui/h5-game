@@ -44,6 +44,7 @@ import {
   type EnterMttPayload,
 } from '@bridge-protocol'
 import { useGameStore } from '@/stores/game'
+import { useMttListStore } from '@/stores/mttList'
 import LoginSession from '@/session/loginSession'
 import { requireRealUser } from '@/session/realUserGate'
 
@@ -52,6 +53,7 @@ type DetailTabName = 'status' | 'players' | 'rewards' | 'tables' | 'blinds'
 const route = useRoute()
 const router = useRouter()
 const gameStore = useGameStore()
+const mttListStore = useMttListStore()
 const activeTab = ref<DetailTabName>('status')
 const detailData = ref<RoomcenterMttDetailData | null>(null)
 const btnLoading = ref(false)
@@ -468,7 +470,10 @@ async function handleBtnClick(): Promise<void> {
     btnLoading.value = true
     try {
       const res = await mttQuitApi(matchId.value)
-      if (res && res.code === 0) await loadDetail()
+      if (res && res.code === 0) {
+        mttListStore.setMttRegistered(matchId.value, false)
+        await loadDetail()
+      }
     } finally {
       btnLoading.value = false
     }
@@ -501,6 +506,7 @@ async function handleBuyinConfirm(payload: {
     }
     const res = isRebuy ? await mttRebuyApi(id, apiPayload) : await mttBuyInApi(id, apiPayload)
     if (res && res.code === 0) {
+      if (!isRebuy) mttListStore.setMttRegistered(id, true)
       await loadDetail()
     }
   } finally {

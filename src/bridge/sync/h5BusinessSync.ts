@@ -222,6 +222,7 @@ export function initUserBalanceSync(): () => void {
       },
     }
     store.setUserInfo(updated)
+    store.syncClubGold(payload.clubId, payload.gold)
     forwardUserInfoToCocos(updated)
   })
 

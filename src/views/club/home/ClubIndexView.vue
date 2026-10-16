@@ -61,6 +61,7 @@ import {
   resolveTemplateTextByKey,
 } from '@/utils/multiLanguageTemplate'
 import { formatDateTime, formatTodayAwareTimeLabel, toTimestampMs } from '@/utils/time'
+import { isMttRegistered } from '@/utils/mttRegistration'
 import { requireRealUser } from '@/session/realUserGate'
 import { ensureExperienceSessionReady } from '@/session/experienceSession'
 
@@ -1006,7 +1007,10 @@ function normalizeRecordToViewItem(
   const applyStartAtMs = toTimestampMs(record.apply_start_time)
   const lateEndAtMs = calcLateEndMs(record, startAtMs)
 
-  const action = resolveAction(stage)
+  const defaultAction = resolveAction(stage)
+  const action = isMttRegistered(record)
+    ? { ...defaultAction, label: t('MTT_State_Registered') }
+    : defaultAction
   const statusView = resolveStatusView(stage, startAtMs, applyStartAtMs, lateEndAtMs, nowTimestamp)
   const rawName = toSafeString(record.name)
   const title = resolveNameByUnityRule(rawName) || `MTT #${record.match_id ?? '-'}`.trim()

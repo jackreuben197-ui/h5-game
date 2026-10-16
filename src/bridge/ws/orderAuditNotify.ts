@@ -54,6 +54,7 @@ function rewardMessageToRecord(value: unknown): DynamicRecord | null {
 
 function readRewards(message: DynamicMethodRecord, objectValue: DynamicRecord): unknown {
   const methodValue = callMethod(message, [
+    'getRewardPropsList',
     'getRewardsList',
     'getRewardList',
     'getRewardListList',
@@ -73,7 +74,8 @@ function readRewards(message: DynamicMethodRecord, objectValue: DynamicRecord): 
       ].find(Array.isArray)
 
   if (Array.isArray(list)) {
-    return list.map((item) => rewardMessageToRecord(item) || item)
+    const generatedRewards = list.map((item) => rewardMessageToRecord(item) || item)
+    if (generatedRewards.length) return generatedRewards
   }
 
   return (
@@ -117,7 +119,8 @@ export function decodeUserOrderAudit(
       code: packet.code,
       roomId: packet.roomId,
       matchId: packet.matchId,
-      body: decoded,
+      message: objectValue,
+      decoded,
       normalized,
     })
     return normalized

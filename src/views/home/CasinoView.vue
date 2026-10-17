@@ -192,6 +192,7 @@ const getHotCategoryByGameApiType = (gameApiType: string): string | null => {
     case 'real_evo':
     case 'real_obo':
     case 'real_pa':
+    case 'yaxing_live':
     case 'panda_fblive':
     case 'panda_asg':
       return 'hot-real'
@@ -232,6 +233,7 @@ const getCategoryByGameApiType = (gameApiType: string): string | null => {
     case 'real_evo':
     case 'real_obo':
     case 'real_pa':
+    case 'yaxing_live':
     case 'panda_fblive':
     case 'panda_asg':
       return 'zhenren'
@@ -408,6 +410,7 @@ const getLocalizedGameName = (gameName: string): string => {
   if (gameName.includes('乐游')) return multilang('UICasino_Game_LEGPoker', 'LEG Poker', gameName)
   if (gameName.includes('T1 Game') || gameName.includes('区块链')) return multilang('UICasino_Game_T1Poker', 'T1 Game Blockchain', gameName)
   if (gameName.includes('DB真人') || gameName.includes('DB视讯')) return multilang('UICasino_Game_DBLive', 'DB Live', gameName)
+  if (gameName.includes('亚星') || gameName.toLowerCase().includes('yaxing') || gameName.toLowerCase().includes('asia gaming') || gameName.includes('AG真人') || gameName.includes('AG视讯')) return multilang('UICasino_Game_YaXingLive', 'Asia Gaming Live', '亚星真人')
   return gameName
 }
 
@@ -449,8 +452,10 @@ const sortHotFishGames = (games: GameItem[]): GameItem[] =>
 
 const HOT_REAL_ORDER: Record<string, number> = {
   real_name: 0,
-  real_obo: 1,
-  real_pa: 2,
+  real_evo: 1,
+  real_obo: 2,
+  real_pa: 3,
+  yaxing_live: 4,
 }
 
 const sortHotRealGames = (games: GameItem[]): GameItem[] => {
@@ -605,7 +610,12 @@ const getCategoryGames = (category: string): GameItem[] => {
     .map((game: any) => transformGameToItem(game))
     .filter((item) => item.originalGame)
 
-  return [...sortedPopularGames, ...transformedOtherGames]
+  const result = [...sortedPopularGames, ...transformedOtherGames]
+  if (category === 'zhenren') {
+    return sortHotRealGames(result)
+  }
+
+  return result
 }
 
 // ─── API calls are now in useCasinoStore ──────────────────────────────────────
@@ -1263,7 +1273,7 @@ onActivated(async () => {
           >
             <template
               v-for="item in block.items"
-              :key="`${block.key}-${item.gameId || item.gameCode || ''}-${item.img || ''}-${item.title || ''}`"
+              :key="`${block.key}-${item.gameApiType || ''}-${item.gameId || ''}-${item.gameCode || ''}-${item.title || ''}`"
             >
               <button
                 class="app-card"

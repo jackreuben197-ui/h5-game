@@ -170,7 +170,7 @@ export type CategoryKey =
 
 /** Maps category key → game_api_type array (from API spec) */
 export const CATEGORY_API_TYPES: Record<CategoryKey, string[]> = {
-  zhenren:  ['real_name', 'real_evo', 'real_obo', 'real_pa', 'panda_fblive', 'fb_live', 'panda_asg'],
+  zhenren:  ['real_name', 'real_evo', 'real_obo', 'real_pa', 'yaxing_live', 'panda_fblive', 'fb_live', 'panda_asg'],
   dianzi:   ['real_elect', 'panda_pgs', 'slots_pgsoft', 'zf_pgsoft', 'slots_fc', 'slots_cq9', 'slots_fg', 'slots_pa'],
   tiyu:     ['panda_fbs', 'fb_sports', 'shaba_sport', 'panda_sport'],
   buyu:     ['real_fish', 'sea_jdb', 'panda_jdb', 'slots_jdb'],

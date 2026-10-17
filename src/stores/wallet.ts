@@ -6,9 +6,19 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { postClubFundOrderListApi } from '@/api/order'
 import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
 import { isPrivateDomainMode } from '@/utils/channelPackage'
+import { normalizeRechargeRewardTiers } from '@/features/rechargeReward/model'
 
 export const useWalletStore = defineStore('wallet', () => {
   const goldPriceData = ref<PropGoldPriceListData | null>(null)
+  const firstRechargeRewardTiers = computed(() =>
+    normalizeRechargeRewardTiers(goldPriceData.value?.first_recharge_reward),
+  )
+  const dailyRechargeRewardTiers = computed(() =>
+    normalizeRechargeRewardTiers(goldPriceData.value?.daily_recharge_reward),
+  )
+  const hasRechargeRewardActivity = computed(
+    () => firstRechargeRewardTiers.value.length > 0 || dailyRechargeRewardTiers.value.length > 0,
+  )
   let goldPriceClubId: number | undefined
   let priceListRequest: { clubId?: number; promise: Promise<void> } | null = null
   let priceListRequestVersion = 0
@@ -46,7 +56,6 @@ export const useWalletStore = defineStore('wallet', () => {
     ).then((res) => {
       if (requestVersion !== priceListRequestVersion) return
 
-      // All payment types (types 1 to 9) should be loaded and shown.
       goldPriceData.value = res.data ?? null
       goldPriceClubId = clubId
     })
@@ -70,15 +79,22 @@ export const useWalletStore = defineStore('wallet', () => {
     goldPriceData.value = null
   }
 
-  function calculateUsdtPrice(goldCount: number, usdtRate: number, feeRate: number, feeType = 0) {
-    const base = usdtRate > 0 ? goldCount / 100 / usdtRate : 0
-    let total = base
-    if (feeType === 2 && feeRate > 0) {
-      const fee = base * feeRate
-      total = base - fee
-    }
+  function roundMoney4(value: number): number {
+    if (!Number.isFinite(value)) return 0
+    return Math.round((value + Number.EPSILON) * 10000) / 10000
+  }
 
-    const totalUiPrice = Number(Math.max(0, total).toFixed(4))
+  function resolveUsdtRate(rate: unknown): number {
+    const normalizedRate = Number(rate)
+    return Number.isFinite(normalizedRate) && normalizedRate > 0 ? normalizedRate : 0
+  }
+
+  function calculateUsdtPrice(goldCount: number, usdtRate: number, feeRate: number, feeType = 0) {
+    const normalizedRate = resolveUsdtRate(usdtRate)
+    const base = normalizedRate > 0 ? goldCount / 100 / normalizedRate : 0
+    const roundedBase = roundMoney4(base)
+    const roundedFee = feeType === 2 && feeRate > 0 ? roundMoney4(base * feeRate) : 0
+    const totalUiPrice = Math.max(0, roundMoney4(roundedBase - roundedFee))
     const apiPayPrice = totalUiPrice
 
     return { apiPayPrice, totalUiPrice }
@@ -121,33 +137,23 @@ export const useWalletStore = defineStore('wallet', () => {
     feeType = 0,
     discount = 0,
   ) {
-    const normalizedRate = Number(rate)
+    const normalizedRate = resolveUsdtRate(rate)
     const base = normalizedRate > 0 ? goldCount / 100 / normalizedRate : 0
-    let priceAfterDiscount = base * (1 - discount)
-    priceAfterDiscount = Math.round(priceAfterDiscount * 10000) / 10000
-
-    let total = priceAfterDiscount
-    if (feeType === 2 && feeRate > 0) {
-      total = priceAfterDiscount + base * feeRate
-      total = Math.round(total * 10000) / 10000
-    }
-
-    const totalUiPrice = Number(total.toFixed(6))
+    const roundedBase = roundMoney4(base)
+    const roundedDiscount = discount > 0 ? roundMoney4(base * discount) : 0
+    const roundedFee = feeType === 2 && feeRate > 0 ? roundMoney4(base * feeRate) : 0
+    const totalUiPrice = Math.max(0, roundMoney4(roundedBase - roundedDiscount + roundedFee))
     return { apiPayPrice: totalUiPrice, totalUiPrice }
   }
 
-  function calculateCustomerServicePrice(goldCount: number, rate: number, feeRate: number, discount = 0) {
-    const normalizedRate = Number(rate)
-    const base = normalizedRate > 0 ? goldCount / 100 / normalizedRate : 0
-    let final: number
-    if (discount > 0) {
-      final = base * (1 - discount)
-    } else if (feeRate > 0) {
-      final = base * (1 + feeRate)
-    } else {
-      final = base
-    }
-    return Number((Math.round(final * 100) / 100).toFixed(2))
+  function calculateCustomerServicePrice(
+    goldCount: number,
+    rate: number,
+    feeRate: number,
+    feeType = 0,
+    discount = 0,
+  ) {
+    return calculateRechargeUsdtPrice(goldCount, rate, feeRate, feeType, discount).totalUiPrice
   }
 
   const pendingCsRechargeOrders = ref<ClubFundOrderListOrderInfo[]>([])
@@ -409,11 +415,16 @@ export const useWalletStore = defineStore('wallet', () => {
 
   return {
     goldPriceData,
+    firstRechargeRewardTiers,
+    dailyRechargeRewardTiers,
+    hasRechargeRewardActivity,
     loadPriceList,
     clearPriceList,
     calculateUsdtPrice,
     calculateOnlinePaymentPrice,
     calculateRechargeUsdtPrice,
+    resolveUsdtRate,
+    roundMoney4,
     formatUsdtPrice,
     calculateCustomerServicePrice,
     pendingCsRechargeOrders,

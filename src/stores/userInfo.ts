@@ -361,6 +361,37 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       this.clubList = nextList
       return true
     },
+    syncClubGold(clubId: number, gold: number): boolean {
+      if (!Number.isFinite(clubId) || clubId <= 0 || !Number.isFinite(gold)) {
+        return false
+      }
+
+      const normalizedClubId = normalizeClubId(clubId)
+      const normalizedGold = Math.max(0, Number(gold))
+      let updated = false
+      const index = this.clubList.findIndex(
+        (club) => normalizeClubId(club.club_id) === normalizedClubId,
+      )
+      if (index >= 0) {
+        const nextList = [...this.clubList]
+        nextList[index] = {
+          ...nextList[index],
+          user_gold: normalizedGold,
+        }
+        this.clubList = nextList
+        updated = true
+      }
+
+      if (normalizeClubId(this.channelDefaultClub?.club_id) === normalizedClubId) {
+        this.channelDefaultClub = {
+          ...this.channelDefaultClub,
+          user_gold: normalizedGold,
+        } as ClubInfo
+        updated = true
+      }
+
+      return updated
+    },
     syncCurrentClubDiamond(diamond: number): boolean {
       if (!this.currentClubId || !Number.isFinite(diamond)) {
         return false

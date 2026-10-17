@@ -123,6 +123,7 @@ export async function completeCocosTableSitdownAuth(
       userId,
       token: realToken,
       websocketPort,
+      clubId: requiredChannelClubId || previousTable.clubId,
     }
 
     resumeCocosWsWrites()

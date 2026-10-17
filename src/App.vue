@@ -12,6 +12,9 @@ import LoginModal from '@/views/login/LoginModal.vue'
 const gameStore = useGameStore()
 const loginModalStore = useLoginModalStore()
 const hasRealUserSession = computed(() => gameStore.isRealUser)
+const shouldMountRechargeRewardPopup = computed(
+  () => import.meta.env.DEV || hasRealUserSession.value,
+)
 const hasChatSession = computed(() => Boolean(gameStore.sessionToken.trim()))
 const isCocosTableAuthOverlay = computed(
   () => loginModalStore.context === H5_LOGIN_CONTEXT.TABLE_SITDOWN,
@@ -23,6 +26,9 @@ const GlobalMessageTodoNotice = defineAsyncComponent(
 )
 const GlobalCustomerServiceChat = defineAsyncComponent(
   () => import('@/components/GlobalCustomerServiceChat/GlobalCustomerServiceChat.vue'),
+)
+const GlobalRechargeRewardPopup = defineAsyncComponent(
+  () => import('@/components/RechargeReward/GlobalRechargeRewardPopup.vue'),
 )
 </script>
 
@@ -41,6 +47,9 @@ const GlobalCustomerServiceChat = defineAsyncComponent(
   <ExternalLinkFrame />
   <Teleport v-if="hasRealUserSession" to="body">
     <GlobalMessageTodoNotice />
+  </Teleport>
+  <Teleport v-if="shouldMountRechargeRewardPopup" to="body">
+    <GlobalRechargeRewardPopup />
   </Teleport>
   <Teleport v-if="hasChatSession" to="body">
     <GlobalCustomerServiceChat />

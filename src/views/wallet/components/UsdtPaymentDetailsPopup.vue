@@ -20,7 +20,7 @@ const emit = defineEmits<{
   cancel: [orderNo: string]
 }>()
 
-const timeLeft = ref(props.initialTimeLeft ?? 900) // 15 minutes default
+const timeLeft = ref(props.initialTimeLeft ?? 30 * 60)
 let timer: number | null = null
 
 const formattedTime = computed(() => {
@@ -101,7 +101,7 @@ onUnmounted(() => {
             <h2 class="header__title">{{ t('UIMineMallUSDTShopPayDialogSurePay') }}</h2>
             <div class="header__info">
               <p>{{ t('UIMine_WalletPlatform_fee_s') }}: {{ feeDisplay }}</p>
-              <p>{{ t('UIWallet_Current') }}: 1USDT={{ rate || 1 }}{{ ucLabel() }}</p>
+              <p>{{ t('UIWallet_Current') }}: 1USDT={{ rate || 0 }}{{ ucLabel() }}</p>
             </div>
             <PopupCloseButton @close="emit('close')" />
           </div>

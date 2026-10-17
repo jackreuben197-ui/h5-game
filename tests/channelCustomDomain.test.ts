@@ -77,3 +77,33 @@ test('custom domain club stays scoped to the default API club', () => {
     /if \(isChannelPackage\.value\) \{\s*return userInfoStore\.channelDefaultClub/,
   )
 })
+
+test('channel table entry keeps the channel club through sitdown and account switch', () => {
+  const gameListSource = readFileSync(
+    new URL('../src/views/home/gameList.vue', import.meta.url),
+    'utf8',
+  )
+  const clubHomeSource = readFileSync(
+    new URL('../src/views/club/home/ClubIndexView.vue', import.meta.url),
+    'utf8',
+  )
+  const friendsTableSource = readFileSync(
+    new URL('../src/views/friendsTable/FriendsTableIndexView.vue', import.meta.url),
+    'utf8',
+  )
+  const sitdownAuthSource = readFileSync(
+    new URL('../src/session/cocosTableSitdownAuth.ts', import.meta.url),
+    'utf8',
+  )
+
+  assert.match(
+    gameListSource,
+    /isChannelPackage(?:\.value)?\s*\?\s*\(userInfoStore\.channelDefaultClub \?\? userInfoStore\.currentClub\)/,
+  )
+  assert.match(clubHomeSource, /clubId: selectedClubId\.value/)
+  assert.match(friendsTableSource, /clubId: channelClubId\.value/)
+  assert.match(
+    sitdownAuthSource,
+    /clubId: requiredChannelClubId \|\| previousTable\.clubId/,
+  )
+})

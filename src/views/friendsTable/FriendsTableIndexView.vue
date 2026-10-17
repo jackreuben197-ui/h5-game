@@ -51,6 +51,12 @@ const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
 const roomListStore = useRoomListStore()
 const hideDiamondElements = isChannelDiamondFreeMode()
+const channelClubId = computed(() =>
+  hideDiamondElements ? Math.max(0, Math.floor(Number(userInfoStore.channelDefaultClub?.club_id) || 0)) : 0,
+)
+const channelClubRandomId = computed(() =>
+  hideDiamondElements ? Math.max(0, Math.floor(Number(userInfoStore.channelDefaultClub?.random_id) || 0)) : 0,
+)
 
 const INVITE_CODE_LENGTH = 7
 const inviteCode = ref<string[]>(Array(INVITE_CODE_LENGTH).fill(''))
@@ -408,6 +414,8 @@ async function enterFriendRoom(roomInfo: unknown, roomId: number): Promise<void>
     token: gameStore.sessionToken,
     websocketPort: wsPort,
     from: 'h5-friends-table',
+    clubId: channelClubId.value,
+    clubRandomId: channelClubRandomId.value,
     roomId: String(roomId),
     roomName:
       String((roomInfo as Record<string, unknown>)?.name || '').trim() ||

@@ -14,12 +14,14 @@ import { forwardGlobalConfigToCocos } from '@/bridge/sync/h5BusinessSync'
 import { postPropUserPropInfoApi } from '@/api/prop'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import { useAppConfigStore } from '@/stores/appConfig'
+import { useUserInfoStore } from '@/stores/userInfo'
 import { t, ucLabel } from '@/i18n'
 import { showToast } from 'vant'
 import {
   isChannelDiamondFreeMode,
   isChannelPackageHost,
 } from '@/utils/channelPackage'
+import { filterWalletsForCurrentClub } from '@/utils/channelWallet'
 
 /* ===== props / emits ===== */
 export type MttJoinMode = 'apply' | 'rebuy' | 'addon'
@@ -68,9 +70,13 @@ function applyRound(val: number, decimalType: number): number {
 
 /* ===== 远端数据 ===== */
 const appConfigStore = useAppConfigStore()
+const userInfoStore = useUserInfoStore()
 const wallets = ref<MttWallet[]>([])
 const freeLimit = ref<MttWalletFreeLimit | null>(null)
 const loading = ref(false)
+const currentClubId = computed(() =>
+  Number(userInfoStore.currentClub?.club_id ?? userInfoStore.channelDefaultClub?.club_id ?? 0),
+)
 
 // 记录费配置直接从 Pinia 缓存读取（对齐 Unity GameCache，不重复请求）。
 const recordFeeConfig = computed(() =>
@@ -112,12 +118,20 @@ async function fetchWalletAndConfig() {
     const [walletRes] = await Promise.all([getMttUserWalletApi(props.mttId), extra])
 
     if (walletRes.code === 0 && walletRes.data) {
-      wallets.value = walletRes.data.wallet ?? []
+      wallets.value = filterWalletsForCurrentClub(
+        walletRes.data.wallet ?? [],
+        isPrivateUcPackage,
+        currentClubId.value,
+      )
       freeLimit.value = walletRes.data.free ?? null
 
       // 单钱包自动选中
       if (wallets.value.length === 1) {
         selectedWallet.value = wallets.value[0]
+      } else if (
+        !wallets.value.some((wallet) => wallet.club_id === selectedWallet.value?.club_id)
+      ) {
+        selectedWallet.value = null
       }
     } else if (walletRes.code === 20009) {
       showToast(t('ServerErrorCode_20009'))

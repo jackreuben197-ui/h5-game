@@ -641,6 +641,21 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
       this.persistMttListCache()
     },
 
+    setMttRegistered(matchId: number, registered: boolean): void {
+      const targetId = toSafeInt(matchId)
+      const index = this.records.findIndex((item) => toSafeInt(item.match_id) === targetId)
+      if (!targetId || index < 0) return
+
+      const nextRecords = this.records.slice()
+      const current = nextRecords[index]
+      nextRecords[index] = {
+        ...current,
+        mtt_buy: registered ? Math.max(1, toSafeInt(current.mtt_buy)) : 0,
+      }
+      this.records = nextRecords
+      this.persistMttListCache()
+    },
+
     // 对齐 Unity UserSngChangeNotify：当前 H5 不渲染 SNG 列表，但保持本地索引同步。
     applyUserSngChangeNotify(rawBuffer: ArrayBufferLike): void {
       const payload = decodeUserSngChangeNotifyFromRawPacket(rawBuffer)

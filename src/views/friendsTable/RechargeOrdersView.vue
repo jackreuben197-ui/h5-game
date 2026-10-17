@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import TogglePillGroup from '@/components/wallet/TogglePillGroup.vue'
 import RecordItem from '@/components/wallet/RecordItem.vue'
@@ -21,6 +22,7 @@ import { isPrivateDomainMode } from '@/utils/channelPackage'
 import { generateQrCodeUrl } from '@/utils/qrcode'
 import { formatDateTime, toTimestampMs } from '@/utils/time'
 import { openCsOrderChat } from '@/components/GlobalCsOrderFloat/channel'
+import { useUserInfoStore } from '@/stores/userInfo'
 
 type PendingPaymentKind = 'online' | 'usdt'
 
@@ -33,9 +35,22 @@ interface PendingPayment {
 }
 
 const PAYMENT_WINDOW_SECONDS = 900
+const USDT_PAYMENT_WINDOW_SECONDS = 30 * 60
 
+const route = useRoute()
+const userInfoStore = useUserInfoStore()
 const walletStore = useWalletStore()
 const appConfigStore = useAppConfigStore()
+
+const clubId = computed(() => {
+  const raw = Array.isArray(route.query.clubId) ? route.query.clubId[0] : route.query.clubId
+  const directedId = Number(raw)
+  if (Number.isFinite(directedId) && directedId > 0) return directedId
+  const currentClub =
+    userInfoStore.currentClub ?? userInfoStore.clubList[0] ?? userInfoStore.channelDefaultClub
+  const currentId = Number(currentClub?.club_id)
+  return Number.isFinite(currentId) && currentId > 0 ? currentId : undefined
+})
 
 const activeTab = ref(0)
 const selectedOrder = ref<ClubPlayerOrderRecordOrderInfo | null>(null)
@@ -52,6 +67,7 @@ function statusLabel(status?: number): string {
     2: t('Wallet_StatusApproved'),
     3: t('Wallet_StatusRejected'),
     4: t('Wallet_StatusCancelled'),
+    5: t('UICommon_TimeOut'),
   }
   return map[status ?? 0] ?? '-'
 }
@@ -96,12 +112,15 @@ async function loadOrders(): Promise<void> {
     const offset = 0
     const tribeDirect = walletStore.goldPriceData?.from_tribe === true
     if (tribeDirect || isPrivateDomainMode()) {
-      const clubRes = await postClubFundOrderListApi({
-        my_order: true,
-        order_type,
-        limit,
-        offset,
-      })
+      const clubRes = await postClubFundOrderListApi(
+        {
+          my_order: true,
+          order_type,
+          limit,
+          offset,
+        },
+        clubId.value,
+      )
       if (clubRes.code === 0) {
         const list = clubRes.data?.list ?? []
         orders.value = list.map((row) => mapClubFundOrderToRecord(row, order_type))
@@ -110,11 +129,14 @@ async function loadOrders(): Promise<void> {
       }
     }
 
-    const userRes = await postClubPlayerOrderRecordApi({
-      order_type,
-      limit,
-      offset,
-    })
+    const userRes = await postClubPlayerOrderRecordApi(
+      {
+        order_type,
+        limit,
+        offset,
+      },
+      clubId.value,
+    )
     orders.value = userRes.data?.list ?? []
     ordersFromClubList.value = false
   } finally {
@@ -131,14 +153,17 @@ async function resolvePendingOrder(
 ): Promise<ClubFundOrderListOrderInfo | null> {
   if (ordersFromClubList.value) return order as ClubFundOrderListOrderInfo
   try {
-    const res = await postClubFundOrderListApi({
-      my_order: true,
-      order_type: 1,
-      order_no: order.order_no,
-      status: 1,
-      limit: 20,
-      offset: 0,
-    })
+    const res = await postClubFundOrderListApi(
+      {
+        my_order: true,
+        order_type: 1,
+        order_no: order.order_no,
+        status: 1,
+        limit: 20,
+        offset: 0,
+      },
+      clubId.value,
+    )
     if (res.code !== 0) return null
     return res.data?.list?.find((row) => row.order_no === order.order_no) ?? null
   } catch {
@@ -230,11 +255,15 @@ function orderCreatedAtMs(raw?: string): number {
   return Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] ?? 0)) - tzHours * 3600_000
 }
 
-function paymentTimeLeft(order: ClubFundOrderListOrderInfo): number | undefined {
+function paymentTimeLeft(
+  order: ClubFundOrderListOrderInfo,
+  kind: PendingPaymentKind,
+): number | undefined {
   const createdAt = orderCreatedAtMs(order.create_time)
   if (!createdAt) return undefined
+  const windowSeconds = kind === 'usdt' ? USDT_PAYMENT_WINDOW_SECONDS : PAYMENT_WINDOW_SECONDS
   const elapsed = Math.floor((Date.now() - createdAt) / 1000)
-  return Math.min(PAYMENT_WINDOW_SECONDS, Math.max(0, PAYMENT_WINDOW_SECONDS - elapsed))
+  return Math.min(windowSeconds, Math.max(0, windowSeconds - elapsed))
 }
 
 async function onRecordClick(order: ClubPlayerOrderRecordOrderInfo): Promise<void> {
@@ -259,7 +288,7 @@ async function onRecordClick(order: ClubPlayerOrderRecordOrderInfo): Promise<voi
     order: pending,
     payType,
     qrCode: await resolveQrCode(pending),
-    timeLeft: paymentTimeLeft(pending),
+    timeLeft: paymentTimeLeft(pending, kind),
   }
 }
 
@@ -318,7 +347,7 @@ async function cancelPendingOrder(orderNo: string): Promise<void> {
   }
 }
 
-watch(activeTab, loadOrders)
+watch([activeTab, clubId], loadOrders)
 onMounted(loadOrders)
 </script>
 

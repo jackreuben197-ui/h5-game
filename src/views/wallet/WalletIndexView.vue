@@ -25,6 +25,10 @@ import OnlinePaymentPopup from '@/views/wallet/components/OnlinePaymentPopup.vue
 import CustomerServicePaymentPopup from '@/views/wallet/components/CustomerServicePaymentPopup.vue'
 import { openCsOrderChat } from '@/components/GlobalCsOrderFloat/channel'
 import FixedDepositPanel from '@/views/wallet/components/FixedDepositPanel.vue'
+import {
+  subscribeRechargeOrderSucceeded,
+  type RechargeOrderSucceededDetail,
+} from '@/features/rechargeReward/channel'
 import MainBottomTab from '@/components/Tabbar/MainBottomTab.vue'
 import {
   openGlobalCustomerServiceChat,
@@ -47,7 +51,9 @@ import {
 import { postChatSupportChannelListApi } from '@/api/chat'
 import { generateQrCodeUrl } from '@/utils/qrcode'
 import { showToast } from 'vant'
+import { getUserClubApi, getUserInfoApi } from '@/api/user'
 import type { ClubFundOrderListOrderInfo } from '@/api/models/order'
+import type { PropGoldPriceListPayType } from '@/api/models/prop'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 import { useGameStore } from '@/stores/game'
 import { requireRealUser, type PendingRealUserAction } from '@/session/realUserGate'
@@ -174,6 +180,7 @@ const usdtPopupProps = ref({
   uniqueAmountEnabled: false,
 })
 const usdtUniqueAmount = ref<{ amount: number; priceId: number } | null>(null)
+const usdtOriginalGoldCount = ref(0)
 
 const unfinishedOrder = ref<ClubFundOrderListOrderInfo | null>(null)
 const showUnfinishedPopup = ref(false)
@@ -227,6 +234,7 @@ const activeCsOrder = computed(() => {
 
 const hasSeenRechargeNotification = ref(false)
 const hasSeenWithdrawNotification = ref(false)
+let stopRechargeOrderSucceededListener: (() => void) | null = null
 
 const currentHasSeen = computed(() => {
   return activeTab.value === 0
@@ -241,6 +249,43 @@ function asRecord(value: unknown): Record<string, unknown> {
 function firstPresent(...values: unknown[]): unknown {
   return values.find((value) => value !== undefined && value !== null && value !== '')
 }
+
+function rechargeResultOrderNo(): string {
+  const result = asRecord(rechargeResult.value)
+  const order = asRecord(result.order)
+  return String(firstPresent(result.order_no, order.order_no) || '')
+}
+
+function onRechargeOrderSucceeded(detail: RechargeOrderSucceededDetail): void {
+  const activeOrderNo = rechargeResultOrderNo()
+  if (usdtDetailsPopupOpen.value && (!activeOrderNo || activeOrderNo === detail.orderNo)) {
+    usdtDetailsPopupOpen.value = false
+    rechargeResult.value = null
+  }
+
+  const unfinishedOrderNo = String(unfinishedOrder.value?.order_no || '')
+  if (showUnfinishedPopup.value && unfinishedOrderNo === detail.orderNo) {
+    showUnfinishedPopup.value = false
+    unfinishedOrder.value = null
+  }
+
+  if (gameStore.isRealUser) {
+    // 余额变更通知可能晚于订单审核通知，主动刷新用户及俱乐部余额，避免支付弹窗
+    // 已关闭但钱包卡片仍显示旧值。
+    void Promise.allSettled([getUserInfoApi(), getUserClubApi()])
+    void checkUnfinishedOrders(false)
+    void refreshPendingCsOrder()
+  }
+}
+
+onMounted(() => {
+  stopRechargeOrderSucceededListener = subscribeRechargeOrderSucceeded(onRechargeOrderSucceeded)
+})
+
+onBeforeUnmount(() => {
+  stopRechargeOrderSucceededListener?.()
+  stopRechargeOrderSucceededListener = null
+})
 
 function toFiniteNumber(value: unknown): number {
   const number = Number(value)
@@ -492,8 +537,9 @@ async function handleUnfinishedContinue(order: ClubFundOrderListOrderInfo) {
     }
   } else if (orderType === 1) {
     // Standard USDT flow
-    usdtPopupProps.value.usdtRate =
-      (fullOrder as any).usdt_rate || (fullOrder as any).exchange_rate || 1
+    usdtPopupProps.value.usdtRate = walletStore.resolveUsdtRate(
+      (fullOrder as any).usdt_rate || (fullOrder as any).exchange_rate,
+    )
     usdtDetailsPopupOpen.value = true
   } else {
     // 微信 / 支付宝 / 银行卡等在线支付（type 2、4-9）继续未完成订单
@@ -549,6 +595,12 @@ watch(
 const filteredPayTypes = computed(() =>
   (walletStore.goldPriceData?.pay_types ?? []),
 )
+
+const selectedPayType = computed(() => filteredPayTypes.value[activeMethod.value])
+
+function showRateError(): void {
+  showToast(`${t('Wallet_Rate')}${t('adaptation10322')}`)
+}
 
 type RechargeCategoryId = 'customer' | 'wallet' | 'alipay' | 'wechat' | 'usdt' | 'bankcard'
 
@@ -739,8 +791,8 @@ const presets = computed<Preset[]>(() => {
   }
   const list = hasPriceList ? selected!.price_list! : (walletStore.goldPriceData?.list ?? [])
 
-  const isUsdt = selected?.type === 1
-  const usdtRate = selected?.usdt_rate ?? 1
+  const isUsdt = selected?.type === 1 || selected?.type === 2
+  const usdtRate = walletStore.resolveUsdtRate(selected?.usdt_rate)
   const feeRate = selected?.fee_rate ?? 0
   const feeType = selected?.fee_type ?? 0
   const discount = selected?.discount ?? 0
@@ -760,12 +812,13 @@ const presets = computed<Preset[]>(() => {
         goldCount,
         usdtRate,
         feeRate,
+        feeType,
         discount,
       )
       chipStr = csPrice.toLocaleString(undefined, {
         useGrouping: false,
         minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
+        maximumFractionDigits: 4,
       })
     }
 
@@ -860,7 +913,7 @@ const displayPayAmount = computed(() => {
   if (selected?.type !== 3 && selected) {
     // USDT / 微信 / 支付宝 / 银行卡等在线支付
     const goldCount = amount * 100
-    const usdtRate = selected.usdt_rate ?? 1
+    const usdtRate = walletStore.resolveUsdtRate(selected.usdt_rate)
     const feeRate = selected.fee_rate ?? 0
     const feeType = selected.fee_type ?? 0
     const discount = selected.discount ?? 0
@@ -873,19 +926,21 @@ const displayPayAmount = computed(() => {
   if (selected?.type === 3) {
     // Customer Service: show decimals
     const goldCount = amount * 100
-    const usdtRate = selected.usdt_rate ?? 1
+    const usdtRate = walletStore.resolveUsdtRate(selected.usdt_rate)
     const feeRate = selected.fee_rate ?? 0
+    const feeType = selected.fee_type ?? 0
     const discount = selected.discount ?? 0
     const csPrice = walletStore.calculateCustomerServicePrice(
       goldCount,
       usdtRate,
       feeRate,
+      feeType,
       discount,
     )
     return csPrice.toLocaleString(undefined, {
       useGrouping: false,
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      maximumFractionDigits: 4,
     })
   }
 
@@ -900,6 +955,45 @@ const payButtonText = computed(() =>
 
 const tabLabels = computed(() => [walletText('Wallet_Deposit'), walletText('Wallet_Withdraw')])
 
+async function fetchUniqueRechargeAmount(
+  payType: PropGoldPriceListPayType,
+  originalGoldCount: number,
+): Promise<{ amount: number; priceId: number } | null> {
+  try {
+    const res = await postOrderUserRechargeNoApi(
+      {
+        amount: originalGoldCount,
+        pay_id: payType.id,
+      },
+      walletClubId.value,
+    )
+    if (res.code !== 0 || res.data?.amount == null) {
+      showToast(res.message || 'Failed to get unique recharge amount')
+      return null
+    }
+
+    const uniqueGoldCount = Number(res.data.amount)
+    const uniqueAmount = {
+      amount: uniqueGoldCount,
+      priceId: Number(res.data.price_id ?? 0),
+    }
+    usdtUniqueAmount.value = uniqueAmount
+    usdtPopupProps.value.goldCount = uniqueGoldCount
+    return uniqueAmount
+  } catch (error) {
+    console.error('Failed to get unique recharge amount', error)
+    showToast('Failed to get unique recharge amount')
+    return null
+  }
+}
+
+async function refreshUniqueRechargeAmount(): Promise<void> {
+  const payType = selectedPayType.value
+  if (payType?.type !== 1 || usdtOriginalGoldCount.value <= 0) return
+  const refreshed = await fetchUniqueRechargeAmount(payType, usdtOriginalGoldCount.value)
+  if (!refreshed) usdtPopupOpen.value = false
+}
+
 async function onPayClick() {
   if (!hasSelection.value) return
   if (!requireRealUser(resumeWalletPayAfterLogin)) return
@@ -912,78 +1006,71 @@ async function onPayClick() {
   }
   const payTypes = filteredPayTypes.value
   const selectedPayType = payTypes[activeMethod.value]
+  if (!selectedPayType) return
+  const originalGoldCount = Math.round(Number(selectedAmount.value) * 100)
 
-  if (selectedPayType?.type === 1) {
-    let goldCount = Number(selectedAmount.value) * 100
-    usdtUniqueAmount.value = null
+  if (selectedPayType.type === 1 || selectedPayType.type === 3) {
+    const usdtRate = walletStore.resolveUsdtRate(selectedPayType.usdt_rate)
+    if (usdtRate <= 0) {
+      showRateError()
+      return
+    }
 
-    // Match the native client: obtain the server-generated tail before opening
-    // the confirmation dialog, so +0.01 and similar unique amounts are visible.
-    if ((selectedPayType.increase_interval ?? 0) > 0) {
-      try {
-        const res = await postOrderUserRechargeNoApi(
-          {
-            amount: goldCount,
-            pay_id: selectedPayType.id,
-          },
-          walletClubId.value,
-        )
-        if (res.code === 0 && res.data?.amount != null) {
-          goldCount = Number(res.data.amount)
-          usdtUniqueAmount.value = {
-            amount: goldCount,
-            priceId: Number(res.data.price_id ?? 0),
-          }
-        } else {
-          alert(res.message || 'Failed to get unique recharge amount')
-          return
-        }
-      } catch (e) {
-        console.error('Failed to get unique recharge amount', e)
-        alert('Failed to get unique recharge amount')
-        return
+    if (selectedPayType.type === 1) {
+      let goldCount = originalGoldCount
+      usdtUniqueAmount.value = null
+      usdtOriginalGoldCount.value = originalGoldCount
+
+      // Match the native client: obtain the server-generated tail before opening
+      // the confirmation dialog, so +0.01 and similar unique amounts are visible.
+      if ((selectedPayType.increase_interval ?? 0) > 0) {
+        const uniqueAmount = await fetchUniqueRechargeAmount(selectedPayType, originalGoldCount)
+        if (!uniqueAmount) return
+        goldCount = uniqueAmount.amount
       }
+
+      usdtPopupProps.value = {
+        goldCount,
+        usdtRate,
+        feeRate: selectedPayType.fee_rate ?? 0,
+        feeType: selectedPayType.fee_type ?? 0,
+        discount: selectedPayType.discount ?? 0,
+        uniqueAmountEnabled: (selectedPayType.increase_interval ?? 0) > 0,
+      }
+      usdtPopupOpen.value = true
+      return
     }
 
-    usdtPopupProps.value = {
-      goldCount,
-      usdtRate: selectedPayType.usdt_rate ?? 1,
-      feeRate: selectedPayType.fee_rate ?? 0,
-      feeType: selectedPayType.fee_type ?? 0,
-      discount: selectedPayType.discount ?? 0,
-      uniqueAmountEnabled: (selectedPayType.increase_interval ?? 0) > 0,
-    }
-    usdtPopupOpen.value = true
-  } else if (selectedPayType?.type === 3) {
     csPopupProps.value = {
-      goldCount: Number(selectedAmount.value) * 100,
-      usdtRate: selectedPayType.usdt_rate ?? 1,
+      goldCount: originalGoldCount,
+      usdtRate,
       feeRate: selectedPayType.fee_rate ?? 0,
       feeType: selectedPayType.fee_type ?? 0,
       discount: selectedPayType.discount ?? 0,
     }
     csPopupOpen.value = true
-  } else if (selectedPayType) {
-    // 微信 / 支付宝 / 银行卡等在线支付
-    onlinePopupProps.value = {
-      goldCount: Number(selectedAmount.value) * 100,
-      rate: selectedPayType.rate ?? 1,
-      feeRate: selectedPayType.fee_rate ?? 0,
-      feeType: selectedPayType.fee_type ?? 0,
-      discount: selectedPayType.discount ?? 0,
-      payId: selectedPayType.id ?? 0,
-      priceId:
-        activePreset.value === CUSTOM_PRESET ? 0 : (presets.value[activePreset.value]?.id ?? 0),
-    }
-    onlinePopupInitialData.value = {
-      step: 1,
-      orderNo: '',
-      qrCode: '',
-      payAddress: '',
-      paymentUrl: '',
-    }
-    onlinePopupOpen.value = true
+    return
   }
+
+  // 微信 / 支付宝 / 银行卡等在线支付
+  onlinePopupProps.value = {
+    goldCount: originalGoldCount,
+    rate: selectedPayType.rate ?? 1,
+    feeRate: selectedPayType.fee_rate ?? 0,
+    feeType: selectedPayType.fee_type ?? 0,
+    discount: selectedPayType.discount ?? 0,
+    payId: selectedPayType.id ?? 0,
+    priceId:
+      activePreset.value === CUSTOM_PRESET ? 0 : (presets.value[activePreset.value]?.id ?? 0),
+  }
+  onlinePopupInitialData.value = {
+    step: 1,
+    orderNo: '',
+    qrCode: '',
+    payAddress: '',
+    paymentUrl: '',
+  }
+  onlinePopupOpen.value = true
 }
 
 async function resumeWalletPayAfterLogin(): Promise<void> {
@@ -1026,16 +1113,21 @@ async function onWithdrawCsChat(orderData: Record<string, unknown>) {
 
 async function onCsSubmit() {
   if (!requireRealUser(onCsSubmit)) return
-  csPopupOpen.value = false
 
   const payTypes = filteredPayTypes.value
   const selectedPayType = payTypes[activeMethod.value]
   if (!selectedPayType) return
 
+  const usdtRate = walletStore.resolveUsdtRate(selectedPayType.usdt_rate)
+  if (usdtRate <= 0) {
+    showRateError()
+    return
+  }
+  csPopupOpen.value = false
+
   const clubId = walletClubId.value
 
   let goldCount = csPopupProps.value.goldCount
-  const usdtRate = selectedPayType.usdt_rate ?? 1
   const feeRate = selectedPayType.fee_rate ?? 0
   const feeType = selectedPayType.fee_type ?? 0
   const discount = selectedPayType.discount ?? 0
@@ -1057,21 +1149,24 @@ async function onCsSubmit() {
       if (res.code === 0 && res.data) {
         goldCount = res.data.amount ?? goldCount
         priceId = res.data.price_id ?? 0
+      } else {
+        showToast(res.message || 'Failed to get unique recharge amount')
+        return
       }
     } catch (e) {
       console.error('Failed to get unique recharge amount', e)
+      showToast('Failed to get unique recharge amount')
+      return
     }
   }
 
-  // pay_price rule: discount > 0 takes priority (discount removes fee from pay_price);
-  // only when discount = 0 and fee_type = 2 is the fee added to pay_price.
-  const basePrice = usdtRate > 0 ? goldCount / 100 / usdtRate : 0
-  const apiPayPrice =
-    discount > 0
-      ? Number((basePrice * (1 - discount)).toFixed(4))
-      : feeType === 2 && feeRate > 0
-        ? Number((basePrice * (1 + feeRate)).toFixed(4))
-        : Number(basePrice.toFixed(4))
+  const apiPayPrice = walletStore.calculateCustomerServicePrice(
+    goldCount,
+    usdtRate,
+    feeRate,
+    feeType,
+    discount,
+  )
 
   try {
     const res = await postRechargeGoldApi(
@@ -1129,11 +1224,17 @@ async function onCsSubmit() {
 
 async function onUsdtSubmit(type: number) {
   if (!requireRealUser(() => onUsdtSubmit(type))) return
-  usdtPopupOpen.value = false
 
   const payTypes = filteredPayTypes.value
   const selectedPayType = payTypes[activeMethod.value]
   if (!selectedPayType) return
+
+  const usdtRate = walletStore.resolveUsdtRate(selectedPayType.usdt_rate)
+  if (usdtRate <= 0) {
+    showRateError()
+    return
+  }
+  usdtPopupOpen.value = false
 
   const clubId = walletClubId.value
 
@@ -1156,7 +1257,7 @@ async function onUsdtSubmit(type: number) {
   // 2. Calculate pay_price — fee only applied when fee_type === 2 (player pays)
   const priceData = walletStore.calculateRechargeUsdtPrice(
     goldCount,
-    selectedPayType.usdt_rate ?? 1,
+    usdtRate,
     selectedPayType.fee_rate ?? 0,
     usdtPopupProps.value.feeType,
     selectedPayType.discount ?? 0,
@@ -1167,7 +1268,7 @@ async function onUsdtSubmit(type: number) {
     const res = await postRechargeGoldApi(
       {
         amount: goldCount,
-        legal_tender: Math.round(priceData.totalUiPrice * 100),
+        legal_tender: 0,
         gold_type: 1,
         pay_id: selectedPayType.id,
         price_id: priceId,
@@ -1176,7 +1277,6 @@ async function onUsdtSubmit(type: number) {
         pay_address: '',
         pay_address_save: false,
         order_no: '',
-        name: 'USDT User',
       },
       clubId,
       // 「订单审核中」提示只在客服撮合充值时弹出，其它充值方式静默处理。
@@ -1184,7 +1284,6 @@ async function onUsdtSubmit(type: number) {
     )
 
     if (res.code === 0 && res.data) {
-      console.log('Recharge successful:', res.data)
       rechargeResult.value = res.data
       usdtDetailsPopupOpen.value = true
 
@@ -1269,14 +1368,34 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
             />
           </template>
           <template #extra>
-            <div class="balance-row">
-              <div class="balance-chip">
-                <span class="balance-chip__value">
-                  {{ formatUC(walletBalance) }}
-                </span>
-                <img :src="icCoins" alt="" class="balance-chip__icon" />
+            <div
+              class="wallet-card-extra"
+              :class="{
+                'wallet-card-extra--reward':
+                  activeTab === 0 && walletStore.hasRechargeRewardActivity,
+              }"
+            >
+              <div class="balance-row">
+                <div class="balance-chip">
+                  <span class="balance-chip__value">
+                    {{ formatUC(walletBalance) }}
+                  </span>
+                  <img :src="icCoins" alt="" class="balance-chip__icon" />
+                </div>
+                <span class="balance-label">{{ walletText('Wallet_BalanceLabel') }}</span>
               </div>
-              <span class="balance-label">{{ walletText('Wallet_BalanceLabel') }}</span>
+              <div
+                v-if="activeTab === 0 && walletStore.hasRechargeRewardActivity"
+                class="reward-hint"
+                :aria-label="t('UIRechargeReward_ActivityDescription')"
+              >
+                <span class="reward-hint__badge">
+                  {{ t('UIRechargeReward_ActivityBadge') }}
+                </span>
+                <span class="reward-hint__text">
+                  {{ t('UIRechargeReward_ActivityDescription') }}
+                </span>
+              </div>
             </div>
           </template>
         </UserCard>
@@ -1405,6 +1524,7 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
       :unique-amount-enabled="usdtPopupProps.uniqueAmountEnabled"
       @close="usdtPopupOpen = false"
       @submit="onUsdtSubmit"
+      @refresh="refreshUniqueRechargeAmount"
     />
 
     <OnlinePaymentPopup
@@ -1924,6 +2044,46 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
   margin-top: 0.21rem;
   margin-bottom: 0.54rem;
   margin-left: 54px;
+}
+
+.wallet-card-extra {
+  display: flex;
+  flex-direction: column;
+}
+
+.wallet-card-extra--reward .balance-row {
+  margin-bottom: 0.14rem;
+}
+
+.reward-hint {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.12rem;
+  margin: 0 0.08rem 0.38rem;
+  color: rgba(255, 255, 255, 0.88);
+  font-family: var(--wallet-font-cn);
+  font-size: 0.23rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.reward-hint__badge {
+  flex: 0 0 auto;
+  padding: 0.025rem 0.13rem;
+  color: #80601c;
+  border-radius: 999px;
+  background: #f7dda0;
+}
+
+.reward-hint__text {
+  min-width: 0;
+}
+
+:global(html[data-theme='light']) .reward-hint {
+  color: rgba(62, 39, 48, 0.84);
 }
 
 .balance-chip {

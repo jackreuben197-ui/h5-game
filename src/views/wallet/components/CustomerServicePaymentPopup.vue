@@ -21,17 +21,16 @@ const emit = defineEmits<{
 const walletStore = useWalletStore()
 
 const feeDisplay = computed(() => {
-  if ((props.discount ?? 0) > 0) {
-    return '-' + ((props.discount ?? 0) * 100).toFixed(2).replace(/\.00$/, '') + '%'
-  }
-  return props.feeRate > 0 ? (props.feeRate * 100).toFixed(2).replace(/\.00$/, '') + '%' : '0'
+  if (props.feeType !== 2 || props.feeRate <= 0) return '0'
+  return (props.feeRate * 100).toFixed(2).replace(/\.00$/, '') + '%'
 })
 
 const payPrice = computed(() =>
   walletStore.calculateCustomerServicePrice(
     props.goldCount,
-    props.rate || 1,
+    props.rate,
     props.feeRate || 0,
+    props.feeType || 0,
     props.discount || 0,
   ),
 )
@@ -53,7 +52,7 @@ const payPrice = computed(() =>
             <h2 class="card__title">{{ t('UIMineMallUSDTShopPayDialogSurePay') }}</h2>
             <div class="card__header-info">
               <span>{{ t('UIMine_WalletPlatform_fee_s') }}：{{ feeDisplay }}</span>
-              <span>{{ t('UIWallet_Current') }}：1USDT={{ props.rate || 1 }}{{ ucLabel() }}</span>
+              <span>{{ t('UIWallet_Current') }}：1USDT={{ props.rate || 0 }}{{ ucLabel() }}</span>
             </div>
             <PopupCloseButton @close="emit('close')" />
           </div>
@@ -68,7 +67,7 @@ const payPrice = computed(() =>
                 payPrice.toLocaleString(undefined, {
                   useGrouping: false,
                   minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
+                  maximumFractionDigits: 4,
                 })
               }}
             </span>

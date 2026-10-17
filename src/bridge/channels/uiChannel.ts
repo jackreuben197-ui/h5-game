@@ -53,6 +53,12 @@ export function setH5Visible(visible: boolean): void {
         window.dispatchEvent(new Event('h5:cocos-layout-change'))
       })
     }
+
+    window.dispatchEvent(
+      new CustomEvent('h5:visibility-change', {
+        detail: { visible },
+      }),
+    )
   }
 
   log.info('[h5-visibility]', {
@@ -132,6 +138,12 @@ export function setH5TableAuthOverlay(visible: boolean): void {
   if (visible && typeof window !== 'undefined') {
     window.__H5_VISIBLE__ = visible
     document.documentElement.setAttribute(COCOS_ACTIVE_ATTRIBUTE, '1')
+    // 登录弹窗虽然由 H5 绘制，但底层仍处于牌桌场景；充值奖励不能覆盖牌桌登录流程。
+    window.dispatchEvent(
+      new CustomEvent('h5:visibility-change', {
+        detail: { visible: false },
+      }),
+    )
   }
 }
 

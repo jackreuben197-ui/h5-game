@@ -107,7 +107,10 @@ const pageStyle = computed<CSSProperties>(() => ({
   '--tab-bg': `url(${tabBg})`,
 }))
 const selectedClub = computed(
-  () => userInfoStore.currentClub ?? userInfoStore.channelDefaultClub,
+  () =>
+    isChannelPackage.value
+      ? (userInfoStore.channelDefaultClub ?? userInfoStore.currentClub)
+      : (userInfoStore.currentClub ?? userInfoStore.channelDefaultClub),
 )
 const selectedClubId = computed(() => toSafeInt(selectedClub.value?.club_id))
 const selectedClubRandomId = computed(() => toSafeInt(selectedClub.value?.random_id))
@@ -181,7 +184,7 @@ const groupedRecords = computed<RoomGroupViewModel[]>(() => {
 })
 
 onMounted(() => {
-  if (!props.embedded && isChannelPackage) {
+  if (!props.embedded && isChannelPackage.value) {
     void fetchLobbyBannerImages().catch((error) => {
       console.warn('[poker-list] fetch lobby banner failed:', error)
     })

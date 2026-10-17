@@ -24,6 +24,7 @@ function statusLabel(status?: number): string {
     2: t('Wallet_StatusApproved'),
     3: t('Wallet_StatusRejected'),
     4: t('Wallet_StatusCancelled'),
+    5: t('UICommon_TimeOut'),
   }
   return map[status ?? 0] ?? '-'
 }

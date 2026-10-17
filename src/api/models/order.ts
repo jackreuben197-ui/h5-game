@@ -454,7 +454,7 @@ export interface ClubFundOrderListData {
 export interface ClubFundOrderListOrderInfo {
   order_no?: string // 订单编号
   gold_num?: number // 订单金币
-  status?: number // 订单状态 （1-申请中,2-同意,3-拒绝,4-取消申请）
+  status?: number // 订单状态 （1-申请中,2-同意,3-拒绝,4-取消申请,5-超时）
   create_time?: string // 创建订单时间
   dest_gold_type?: number // 目标金币类型。1 联盟币，2 USDT
   dest_amount?: number // 转换目标金额
@@ -493,7 +493,7 @@ export interface ClubPlayerOrderRecordOrderInfo {
   order_no?: string // 订单编号
   order_type?: number // 订单类型： 1 = 充豆， 2 = 提豆
   gold_num?: number // 订单金币数
-  status?: number // 订单状态： 1 = 申请中， 2 = 同意， 3 = 拒绝， 4 = 取消申请
+  status?: number // 订单状态： 1 = 申请中，2 = 同意，3 = 拒绝，4 = 取消申请，5 = 超时
   audit_time?: string // 审核时间
   audit_user_id?: number // 审核人真实ID
   audit_type?: number // 审核来源： 1 = CMS， 2 = App
@@ -514,6 +514,13 @@ export interface ClubPlayerOrderRecordOrderInfo {
   gold_type?: number // 原金币类型
   avatar?: string // 用户头像
   user_desc?: string // 玩家描述
+  pay_price?: number // 实际支付/到账金额
+  pay_price_fee?: number // 玩家承担的手续费金额
+  fee_rate?: number // 手续费比例
+  fee_type?: number // 0-无，1-俱乐部承担，2-玩家承担
+  pay_type_name?: string // 收付款方式名称
+  pay_type_address?: string // 收款地址
+  pay_address?: string // 付款地址
 
   [key: string]: unknown
 }

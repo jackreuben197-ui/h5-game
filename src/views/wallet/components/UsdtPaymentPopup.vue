@@ -20,6 +20,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: []
   submit: [type: number]
+  refresh: []
 }>()
 
 const walletStore = useWalletStore()
@@ -30,7 +31,8 @@ const SHOW_ROUNDED_OPTION = false
 
 const selectedOption = ref(0)
 const isTimedOut = ref(false)
-let timer: number | null = null
+let timeoutTimer: number | null = null
+let refreshTimer: number | null = null
 
 const exactGoldCount = computed(() => props.goldCount || 0)
 const roundedGoldCount = computed(() => Math.floor((props.goldCount || 0) / 100) * 100)
@@ -76,17 +78,20 @@ function submit(): void {
 }
 
 onMounted(() => {
-  // 3 minutes timeout
-  timer = window.setTimeout(
+  timeoutTimer = window.setTimeout(
     () => {
       isTimedOut.value = true
     },
     3 * 60 * 1000,
   )
+  if (props.uniqueAmountEnabled) {
+    refreshTimer = window.setInterval(() => emit('refresh'), 3 * 60 * 1000)
+  }
 })
 
 onUnmounted(() => {
-  if (timer) clearTimeout(timer)
+  if (timeoutTimer) window.clearTimeout(timeoutTimer)
+  if (refreshTimer) window.clearInterval(refreshTimer)
 })
 </script>
 
@@ -103,12 +108,12 @@ onUnmounted(() => {
             <div class="card__header-info">
               <span>
                 {{ t('UIMine_WalletPlatform_fee_s') }}：{{
-                  props.feeRate > 0
+                  props.feeType === 2 && props.feeRate > 0
                     ? (props.feeRate * 100).toFixed(2).replace(/\.00$/, '') + '%'
                     : '0'
                 }}
               </span>
-              <span>{{ t('UIWallet_Current') }}：1USDT={{ props.rate || 1 }}{{ ucLabel() }}</span>
+              <span>{{ t('UIWallet_Current') }}：1USDT={{ props.rate || 0 }}{{ ucLabel() }}</span>
             </div>
             <PopupCloseButton @close="close" />
           </div>

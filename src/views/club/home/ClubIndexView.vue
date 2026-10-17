@@ -67,6 +67,7 @@ import {
   resolveTemplateTextByKey,
 } from '@/utils/multiLanguageTemplate'
 import { formatDateTime, formatTodayAwareTimeLabel, toTimestampMs } from '@/utils/time'
+import { isMttRegistered } from '@/utils/mttRegistration'
 import { requireRealUser } from '@/session/realUserGate'
 import { ensureExperienceSessionReady } from '@/session/experienceSession'
 
@@ -200,12 +201,15 @@ const currentJoinedClub = computed(() => {
 })
 
 const currentClub = computed(() => {
-  return currentJoinedClub.value || (isChannelPackage ? userInfoStore.channelDefaultClub : null)
+  return isChannelPackage
+    ? userInfoStore.channelDefaultClub || currentJoinedClub.value
+    : currentJoinedClub.value
 })
 
 const showChannelTabbar = computed(() => isChannelPackage)
 
 const selectedClubId = computed(() => toSafeInt(currentClub.value?.club_id))
+const selectedClubRandomId = computed(() => toSafeInt(currentClub.value?.random_id))
 const selectedTribeId = computed(() => toSafeInt(currentClub.value?.tribe_id))
 
 const canCreateTable = computed(() => {
@@ -622,6 +626,8 @@ async function handleTableClick(room: RoomRecord): Promise<void> {
     token: gameStore.sessionToken,
     websocketPort: wsPort,
     from: 'h5-club-table',
+    clubId: selectedClubId.value,
+    clubRandomId: selectedClubRandomId.value,
     roomId: String(room.rid ?? ''),
     roomName: String(room.name ?? ''),
     roomInfo: room,
@@ -1005,7 +1011,10 @@ function normalizeRecordToViewItem(
   const applyStartAtMs = toTimestampMs(record.apply_start_time)
   const lateEndAtMs = calcLateEndMs(record, startAtMs)
 
-  const action = resolveAction(stage)
+  const defaultAction = resolveAction(stage)
+  const action = isMttRegistered(record)
+    ? { ...defaultAction, label: t('MTT_State_Registered') }
+    : defaultAction
   const statusView = resolveStatusView(stage, startAtMs, applyStartAtMs, lateEndAtMs, nowTimestamp)
   const rawName = toSafeString(record.name)
   const title = resolveNameByUnityRule(rawName) || `MTT #${record.match_id ?? '-'}`.trim()

@@ -1368,34 +1368,14 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
             />
           </template>
           <template #extra>
-            <div
-              class="wallet-card-extra"
-              :class="{
-                'wallet-card-extra--reward':
-                  activeTab === 0 && walletStore.hasRechargeRewardActivity,
-              }"
-            >
-              <div class="balance-row">
-                <div class="balance-chip">
-                  <span class="balance-chip__value">
-                    {{ formatUC(walletBalance) }}
-                  </span>
-                  <img :src="icCoins" alt="" class="balance-chip__icon" />
-                </div>
-                <span class="balance-label">{{ walletText('Wallet_BalanceLabel') }}</span>
-              </div>
-              <div
-                v-if="activeTab === 0 && walletStore.hasRechargeRewardActivity"
-                class="reward-hint"
-                :aria-label="t('UIRechargeReward_ActivityDescription')"
-              >
-                <span class="reward-hint__badge">
-                  {{ t('UIRechargeReward_ActivityBadge') }}
+            <div class="balance-row">
+              <div class="balance-chip">
+                <span class="balance-chip__value">
+                  {{ formatUC(walletBalance) }}
                 </span>
-                <span class="reward-hint__text">
-                  {{ t('UIRechargeReward_ActivityDescription') }}
-                </span>
+                <img :src="icCoins" alt="" class="balance-chip__icon" />
               </div>
+              <span class="balance-label">{{ walletText('Wallet_BalanceLabel') }}</span>
             </div>
           </template>
         </UserCard>
@@ -1464,6 +1444,14 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
 
             <div class="presets-card">
               <h2 class="presets-card__title">{{ walletText('Wallet_DepositAmount') }}</h2>
+              <div
+                v-if="walletStore.hasRechargeRewardActivity"
+                class="reward-hint"
+                :aria-label="t('UIRechargeReward_ActivityDescription')"
+              >
+                <span class="reward-hint__badge">{{ t('UIRechargeReward_ActivityBadge') }}</span>
+                <span class="reward-hint__text">{{ t('UIRechargeReward_ActivityDescription') }}</span>
+              </div>
               <PresetAmountGrid
                 :presets="presets"
                 :active-index="activePreset"
@@ -2046,45 +2034,42 @@ function requestWalletAuth(action?: PendingRealUserAction): void {
   margin-left: 54px;
 }
 
-.wallet-card-extra {
-  display: flex;
-  flex-direction: column;
-}
-
-.wallet-card-extra--reward .balance-row {
-  margin-bottom: 0.14rem;
-}
-
 .reward-hint {
-  position: relative;
-  z-index: 1;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.12rem;
-  margin: 0 0.08rem 0.38rem;
-  color: rgba(255, 255, 255, 0.88);
+  gap: 0.2rem;
+  margin: 0 0 0.24rem;
+  color: rgba(255, 255, 255, 0.92);
   font-family: var(--wallet-font-cn);
-  font-size: 0.23rem;
-  line-height: 1.45;
-  text-align: center;
+  font-size: 0.32rem;
+  line-height: 1.35;
+  text-align: left;
+
+  @include theme-light-own {
+    color: var(--wallet-l-text);
+  }
 }
 
 .reward-hint__badge {
   flex: 0 0 auto;
-  padding: 0.025rem 0.13rem;
-  color: #80601c;
+  padding: 0.06rem 0.24rem;
   border-radius: 999px;
-  background: #f7dda0;
+  background: rgba(250, 43, 75, 0.35);
+  color: #ffffff;
+  font-size: 0.3rem;
+  font-weight: 500;
+  white-space: nowrap;
+
+  @include theme-light-own {
+    background: rgba(250, 43, 75, 0.12);
+    color: #fa2b4b;
+  }
 }
 
 .reward-hint__text {
   min-width: 0;
 }
 
-:global(html[data-theme='light']) .reward-hint {
-  color: rgba(62, 39, 48, 0.84);
-}
 
 .balance-chip {
   position: relative;

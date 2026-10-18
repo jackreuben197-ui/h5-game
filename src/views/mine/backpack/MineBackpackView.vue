@@ -5,7 +5,9 @@ import { postPropUserPropListApi } from '@/api/prop'
 import type { PropUserPropListRecord } from '@/api/models/prop'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import AppSvgIcon from '@/components/Icon/AppSvgIcon.vue'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
+import { formatDateTime } from '@/utils/time'
 import { getLocale, t } from '@/i18n'
 
 // 主容器背景图：全页面共用一张底图。
@@ -35,21 +37,8 @@ function toSafeString(value: unknown): string {
 }
 
 function resolveTimeLabel(raw: unknown): string {
-  if (typeof raw === 'string' && raw.trim()) {
-    return raw
-  }
-
-  const timestamp = toSafeNumber(raw)
-  if (timestamp <= 0) {
-    return '--'
-  }
-
-  const date = new Date(timestamp > 1_000_000_000_000 ? timestamp : timestamp * 1000)
-  if (Number.isNaN(date.getTime())) {
-    return '--'
-  }
-
-  return date.toLocaleString('zh-CN', { hour12: false })
+  const formatted = formatDateTime(raw, 'DD/MM/YYYY HH:mm')
+  return formatted === '--:--' ? '--' : formatted
 }
 
 function mapBackpackItem(row: PropUserPropListRecord, index: number): BackpackItem {
@@ -108,7 +97,10 @@ onMounted(() => {
           </div>
           <div>
             <div class="name">{{ item.name }}</div>
-            <div class="time">{{ item.expire }}</div>
+            <div class="time">
+              <AppSvgIcon name="calendar" class="calendar-icon" />
+              <span>{{ item.expire }}</span>
+            </div>
           </div>
         </article>
       </section>
@@ -187,8 +179,21 @@ onMounted(() => {
 
 .time {
   margin-top: 0.06rem;
+  display: flex;
+  align-items: center;
+  gap: 0.13rem;
   font-size: 0.31rem;
-  opacity: 0.86;
+
+  span {
+    opacity: 0.86;
+  }
+}
+
+.calendar-icon {
+  width: 0.3733rem;
+  height: 0.3467rem;
+  flex: none;
+  color: #fff;
 }
 </style>
 
@@ -215,6 +220,10 @@ onMounted(() => {
 
   .icon-wrap {
     background: rgba(0, 0, 0, 0.06);
+  }
+
+  .calendar-icon {
+    color: var(--c-brand);
   }
 }
 </style>

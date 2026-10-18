@@ -93,6 +93,9 @@ function shouldAttachXClub(url: string): boolean {
   if (/^\/?(?:(?:org|cmsext)\/club|cmsext\/room|order\/club)\//.test(url)) {
     return true
   }
+  if (/^\/?user\/gold_change\/log\b/.test(url)) {
+    return true
+  }
   if (/^\/?config\/online_withdraw/.test(url)) {
     return true
   }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import bannerBgUrl from '@/assets/images/wallet/banner_bg.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import TagPill from '@/components/wallet/TagPill.vue'
@@ -17,10 +17,26 @@ import {
   multiLanguageTemplateVersion,
   resolveTemplateTextByKey,
 } from '@/utils/multiLanguageTemplate'
+import {
+  resolveWalletClub,
+  resolveWalletClubGold,
+  resolveWalletClubId,
+} from '@/utils/walletClub'
 
 const userInfoStore = useUserInfoStore()
 const router = useRouter()
+const route = useRoute()
 const userInfo = computed(() => userInfoStore.userInfo?.user)
+const walletClub = computed(() =>
+  resolveWalletClub(
+    userInfoStore.clubList,
+    userInfoStore.currentClubId,
+    userInfoStore.channelDefaultClub,
+    route.query.clubId,
+  ),
+)
+const walletClubId = computed(() => resolveWalletClubId(walletClub.value))
+const walletBalance = computed(() => resolveWalletClubGold(walletClub.value))
 
 const logs = ref<UserGoldChangeLogRecord[]>([])
 
@@ -73,13 +89,27 @@ function formatRecordName(record: UserGoldChangeLogRecord): string {
 }
 
 function goGiftUc(): void {
-  void router.push('/wallet/gift-uc')
+  void router.push({ path: '/wallet/gift-uc', query: route.query })
 }
 
-onMounted(async () => {
-  const res = await postUserGoldChangeLogApi({ limit: 20, offset: 0 })
-  logs.value = res.data?.list ?? []
-})
+let logsRequestVersion = 0
+
+watch(
+  walletClubId,
+  async (clubId) => {
+    const requestVersion = ++logsRequestVersion
+    if (!clubId) {
+      logs.value = []
+      return
+    }
+
+    const res = await postUserGoldChangeLogApi({ limit: 20, offset: 0 }, clubId)
+    if (requestVersion === logsRequestVersion) {
+      logs.value = res.data?.list ?? []
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -113,7 +143,7 @@ onMounted(async () => {
 
             <div class="balance-section">
               <span class="balance-label">Balance:</span>
-              <span class="balance-value">{{ formatUC(userInfo?.gold as number) ?? 0 }}</span>
+              <span class="balance-value">{{ formatUC(walletBalance) }}</span>
               <img :src="iconChips" alt="chips" class="chip-icon" />
             </div>
           </div>

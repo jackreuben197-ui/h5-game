@@ -605,10 +605,12 @@ export async function postUserDiamondsWalletApi(
 // /api/user/gold_change/log —玩家资金变动明细。
 export async function postUserGoldChangeLogApi(
   payload: UserGoldChangeLogRequest = {},
+  clubId?: number | string,
 ): Promise<ApiResponse<UserGoldChangeLogData>> {
   const response = await http.post<ApiResponse<UserGoldChangeLogData>>(
     '/user/gold_change/log',
     payload,
+    { xClub: clubId },
   )
   return response.data
 }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { showFailToast, showSuccessToast } from 'vant'
 import iconChips from '@/assets/icons/wallet/ic_coins.png'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
@@ -11,8 +12,15 @@ import {
 import type { OrgClubUserWalletRelationListUserData } from '@/api/models/org'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { t } from '@/i18n'
+import { formatUC } from '@/utils/roomVisibility'
+import {
+  resolveWalletClub,
+  resolveWalletClubGold,
+  resolveWalletClubId,
+} from '@/utils/walletClub'
 
 const userInfoStore = useUserInfoStore()
+const route = useRoute()
 
 const keypadOpen = ref(false)
 const amount = ref('')
@@ -21,16 +29,23 @@ const selectedUserIds = ref<number[]>([])
 const loading = ref(false)
 const submitting = ref(false)
 
-const currentClubId = computed(() => {
-  const club = userInfoStore.currentClub ?? userInfoStore.clubList[0]
-  return Number(club?.club_id ?? 0)
-})
+const walletClub = computed(() =>
+  resolveWalletClub(
+    userInfoStore.clubList,
+    userInfoStore.currentClubId,
+    userInfoStore.channelDefaultClub,
+    route.query.clubId,
+  ),
+)
+
+const currentClubId = computed(() => resolveWalletClubId(walletClub.value))
+const availableGold = computed(() => Math.max(0, resolveWalletClubGold(walletClub.value)))
 
 const maxAmount = computed(() => {
-  return Math.max(0, Number(userInfoStore.userInfo?.user?.gold ?? 0))
+  return Math.floor(availableGold.value / 100)
 })
 
-const displayMaxAmount = computed(() => maxAmount.value.toLocaleString())
+const displayMaxAmount = computed(() => formatUC(availableGold.value))
 
 const displayAmount = computed(() => {
   const raw = Number(amount.value || 0)
@@ -59,15 +74,26 @@ function onAmountSubmit(value: number): void {
   keypadOpen.value = false
 }
 
+let relationsRequestVersion = 0
+
 async function loadRelations(): Promise<void> {
+  const clubId = currentClubId.value
+  const requestVersion = ++relationsRequestVersion
+  if (!clubId) {
+    relations.value = []
+    loading.value = false
+    return
+  }
+
   loading.value = true
   try {
     const res = await postOrgClubUserWalletRelationListApi({
       limit: 50,
       offset: 0,
-      club_id: currentClubId.value || undefined,
+      club_id: clubId,
     })
 
+    if (requestVersion !== relationsRequestVersion) return
     if (res.code !== 0) {
       showFailToast(res.message || t('UIWallet_FetchPlayerFail'))
       relations.value = []
@@ -76,10 +102,13 @@ async function loadRelations(): Promise<void> {
 
     relations.value = res.data?.data ?? []
   } catch {
+    if (requestVersion !== relationsRequestVersion) return
     showFailToast(t('UIWallet_FetchPlayerFail'))
     relations.value = []
   } finally {
-    loading.value = false
+    if (requestVersion === relationsRequestVersion) {
+      loading.value = false
+    }
   }
 }
 
@@ -95,19 +124,22 @@ async function submitGift(): Promise<void> {
     return
   }
 
-  if (n > maxAmount.value) {
+  const amountInCent = Math.round(n * 100)
+  if (amountInCent > availableGold.value) {
     showFailToast(t('UIWallet_Text2'))
     return
   }
 
   submitting.value = true
   try {
-    const amountInCent = Math.round(n * 100)
-    const res = await postOrgClubUserWalletRelationGrantApi({
-      user_ids: selectedUserIds.value,
-      amount: amountInCent,
-      gold_type: 1,
-    })
+    const res = await postOrgClubUserWalletRelationGrantApi(
+      {
+        user_ids: selectedUserIds.value,
+        amount: amountInCent,
+        gold_type: 1,
+      },
+      currentClubId.value,
+    )
 
     if (res.code !== 0) {
       showFailToast(res.message || t('UISend_DoneFail'))
@@ -125,9 +157,15 @@ async function submitGift(): Promise<void> {
   }
 }
 
-onMounted(() => {
-  void loadRelations()
-})
+watch(
+  currentClubId,
+  () => {
+    amount.value = ''
+    selectedUserIds.value = []
+    void loadRelations()
+  },
+  { immediate: true },
+)
 </script>
 
 <template>

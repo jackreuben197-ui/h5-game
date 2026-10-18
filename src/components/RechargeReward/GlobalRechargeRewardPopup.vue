@@ -203,7 +203,7 @@ onBeforeUnmount(() => {
               <strong>×{{ reward.quantity }}</strong>
             </p>
             <small v-if="reward.propValue > 0">
-              （{{ t('UIRechargeReward_Value', reward.propValue) }}）
+              （{{ t('UIRechargeReward_Value', reward.propValue) }}x{{ reward.quantity }}）
             </small>
           </div>
         </div>

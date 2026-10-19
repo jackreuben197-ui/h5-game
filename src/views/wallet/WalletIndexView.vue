@@ -57,6 +57,11 @@ import type { PropGoldPriceListPayType } from '@/api/models/prop'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 import { useGameStore } from '@/stores/game'
 import { requireRealUser, type PendingRealUserAction } from '@/session/realUserGate'
+import {
+  resolveWalletClub,
+  resolveWalletClubGold,
+  resolveWalletClubId,
+} from '@/utils/walletClub'
 
 const router = useRouter()
 const route = useRoute()
@@ -86,33 +91,22 @@ const directedClubId = computed(() => {
   return Number.isFinite(clubId) && clubId > 0 ? clubId : undefined
 })
 const walletClub = computed(() => {
-  if (directedClubId.value) {
-    return (
-      userInfoStore.clubList.find((club) => Number(club.club_id) === directedClubId.value) ??
-      (Number(userInfoStore.channelDefaultClub?.club_id) === directedClubId.value
-        ? userInfoStore.channelDefaultClub
-        : null)
-    )
-  }
   if (!gameStore.isRealUser) {
     return userInfoStore.channelDefaultClub
   }
-  return (
-    userInfoStore.currentClub ??
-    userInfoStore.clubList[0] ??
-    userInfoStore.channelDefaultClub ??
-    null
+  return resolveWalletClub(
+    userInfoStore.clubList,
+    userInfoStore.currentClubId,
+    userInfoStore.channelDefaultClub,
+    directedClubId.value,
   )
 })
 const walletClubId = computed(
-  () => directedClubId.value ?? (Number(walletClub.value?.club_id) || undefined),
+  () => directedClubId.value ?? resolveWalletClubId(walletClub.value),
 )
 const walletBalance = computed(() => {
   if (!gameStore.isRealUser) return 0
-  if (directedClubId.value) {
-    return Number(walletClub.value?.user_gold ?? 0)
-  }
-  return Number(walletClub.value?.user_gold ?? userInfoStore.userInfo?.user?.gold ?? 0)
+  return resolveWalletClubGold(walletClub.value)
 })
 const hasConfiguredPayTypes = computed(
   () => (walletStore.goldPriceData?.pay_types?.length ?? 0) > 0,

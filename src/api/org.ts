@@ -1035,11 +1035,13 @@ export async function postOrgClubUserRemaRksApi(
 // 对齐 cocos WebOrgClubUserWalletRelationGrant.API
 export async function postOrgClubUserWalletRelationGrantApi(
   payload: OrgClubUserWalletRelationGrantRequest = {} as OrgClubUserWalletRelationGrantRequest,
+  clubId?: number | string,
 ): Promise<ApiResponse<OrgClubUserWalletRelationGrantResponseData>> {
   const endpoint = '/org/club/user/wallet/relation/grant'
   const response = await http.post<ApiResponse<OrgClubUserWalletRelationGrantResponseData>>(
     endpoint,
     payload,
+    { xClub: clubId },
   )
   return response.data
 }

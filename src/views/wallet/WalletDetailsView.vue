@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import sharpBgUrl from '@/assets/images/wallet/bg_sharp.webp'
 import bannerBgUrl from '@/assets/images/card_bg3.png'
@@ -22,6 +22,11 @@ import {
   multiLanguageTemplateVersion,
   resolveTemplateTextByKey,
 } from '@/utils/multiLanguageTemplate'
+import {
+  resolveWalletClub,
+  resolveWalletClubGold,
+  resolveWalletClubId,
+} from '@/utils/walletClub'
 
 const UC_BILL_TAB = 1
 
@@ -29,23 +34,21 @@ const userInfoStore = useUserInfoStore()
 const router = useRouter()
 const route = useRoute()
 const userInfo = computed(() => userInfoStore.userInfo?.user)
+const walletClub = computed(() =>
+  resolveWalletClub(
+    userInfoStore.clubList,
+    userInfoStore.currentClubId,
+    userInfoStore.channelDefaultClub,
+    route.query.clubId,
+  ),
+)
+const walletClubId = computed(() => resolveWalletClubId(walletClub.value))
+const walletBalance = computed(() => resolveWalletClubGold(walletClub.value))
 
 const logs = ref<UserBillWallet[]>([])
 const clubGold = ref<number | null>(null)
 
-const walletClubId = computed(() => {
-  const raw = Array.isArray(route.query.clubId) ? route.query.clubId[0] : route.query.clubId
-  const fromQuery = Number(raw)
-  if (Number.isFinite(fromQuery) && fromQuery > 0) {
-    return fromQuery
-  }
-  const fallback = Number(
-    userInfoStore.currentClub?.club_id ?? userInfoStore.clubList[0]?.club_id ?? 0,
-  )
-  return Number.isFinite(fallback) && fallback > 0 ? fallback : 0
-})
-
-const balanceText = computed(() => formatUC(clubGold.value ?? Number(userInfo.value?.gold ?? 0)))
+const balanceText = computed(() => formatUC(clubGold.value ?? walletBalance.value))
 
 function formatAmount(record: UserBillWallet): string {
   const val = record.gold_change ?? 0
@@ -104,29 +107,28 @@ function formatRecordName(record: UserBillWallet): string {
 }
 
 function goGiftUc(): void {
-  void router.push('/wallet/gift-uc')
+  void router.push({ path: '/wallet/gift-uc', query: route.query })
 }
 
-async function fetchLogs(): Promise<void> {
+let walletRequestVersion = 0
+
+async function fetchLogs(clubId: number, requestVersion: number): Promise<void> {
   const res = await postUserBillApi({
-    club_id: walletClubId.value,
+    club_id: clubId,
     gold_type: 1,
     origin_type: 0,
     limit: 20,
     offset: 0,
     order_type: 2,
   })
+  if (requestVersion !== walletRequestVersion) return
   logs.value = res.code === 0 ? (res.data?.list ?? []) : []
 }
 
-async function fetchClubBalance(): Promise<void> {
-  const clubId = walletClubId.value
-  if (!clubId) {
-    clubGold.value = null
-    return
-  }
+async function fetchClubBalance(clubId: number, requestVersion: number): Promise<void> {
   try {
     const res = await postClubUserWalletApi({ club_id: clubId })
+    if (requestVersion !== walletRequestVersion) return
     if (res.code === 0 && res.data) {
       const data = res.data as Record<string, unknown>
       const raw = data.user_gold ?? data.gold ?? data.golds ?? data.balance ?? 0
@@ -135,15 +137,26 @@ async function fetchClubBalance(): Promise<void> {
       clubGold.value = null
     }
   } catch (error) {
+    if (requestVersion !== walletRequestVersion) return
     console.error('Failed to fetch club balance', error)
     clubGold.value = null
   }
 }
 
-onMounted(() => {
-  void fetchLogs()
-  void fetchClubBalance()
-})
+watch(
+  walletClubId,
+  (clubId) => {
+    const requestVersion = ++walletRequestVersion
+    clubGold.value = null
+    if (!clubId) {
+      logs.value = []
+      return
+    }
+    void fetchLogs(clubId, requestVersion)
+    void fetchClubBalance(clubId, requestVersion)
+  },
+  { immediate: true },
+)
 </script>
 
 <template>

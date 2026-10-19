@@ -53,7 +53,6 @@ const displayUser = computed(() => {
     userID: userInfoStore.userInfo?.user.un_id || '-',
     avatar: userInfoStore.userInfo?.user.avatar || '',
     diamond: gameStore.isRealUser ? (userInfoStore.userInfo?.user.diamonds ?? 0) : 0,
-    gold: userInfoStore.userInfo?.user.gold ?? 0,
   }
 })
 

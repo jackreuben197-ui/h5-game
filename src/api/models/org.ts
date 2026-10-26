@@ -2055,6 +2055,9 @@ export interface OrgTribeInfoByClubInfo {
   name?: string // 联盟名称
   random_id?: number // 联盟随机ID
   logo?: string // 联盟头像
+  safari_icon_url?: string // 联盟桌面图标
+  safari_label?: string // 联盟桌面名称
+  room_logo?: string // 联盟牌桌图标
 
   [key: string]: unknown
 }

@@ -15,6 +15,9 @@ import {
   isIosThirdPartyBrowser,
 } from '@/utils/iosWebClip'
 import { sanitizeRichHtml } from '@/utils/safeHtml'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { isChannelPackageHost } from '@/utils/channelPackage'
+import { resolveSafariWebAppConfig } from '@/utils/safariWebApp'
 import {
   isExternalLinkIframeModeEnabled,
   openExternalLinkFrame,
@@ -288,11 +291,17 @@ async function onSecondaryAction(): Promise<void> {
       // 部署可能位于站点子路径，用 BASE_URL 解析成绝对地址，
       // 避免固定 '/' 打到站点根导致图标 404（manifest 用的也是同款相对路径）。
       const appBaseUrl = new URL(import.meta.env.BASE_URL, window.location.href).toString()
+      const club = isChannelPackageHost()
+        ? await useUserInfoStore().ensureChannelDefaultClub()
+        : null
+      const appConfig = resolveSafariWebAppConfig(
+        club,
+        new URL('icon-192.png', appBaseUrl).toString(),
+      )
       await installIosWebClip({
-        label: 'Newpkr',
+        label: appConfig.label,
         url: appBaseUrl,
-        // 用 manifest 里同一张 192 图标，避免重复打包
-        iconUrl: new URL('icon-192.png', appBaseUrl).toString(),
+        iconUrl: appConfig.iconUrl,
       })
       // location.href 跳转后，iOS Safari 会接管显示"是否允许下载描述文件"对话框，
       // 不需要再 toast；以下是兜底（极少数情况跳转未生效）

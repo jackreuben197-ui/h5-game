@@ -1,17 +1,14 @@
-import type { OrgClubSearchInfoData } from '@/api/models/org'
-
 function normalizedText(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
 }
 
 function normalizedHttpUrl(value: unknown): string {
   const raw = normalizedText(value)
-  if (!raw || typeof window === 'undefined') {
-    return ''
-  }
+  if (!raw) return ''
 
   try {
-    const url = new URL(raw, window.location.href)
+    const base = typeof window === 'undefined' ? 'https://platform.invalid/' : window.location.href
+    const url = new URL(raw, base)
     return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : ''
   } catch {
     return ''
@@ -19,15 +16,9 @@ function normalizedHttpUrl(value: unknown): string {
 }
 
 function ensureMeta(name: string): HTMLMetaElement | null {
-  if (typeof document === 'undefined') {
-    return null
-  }
-
+  if (typeof document === 'undefined') return null
   const existing = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`)
-  if (existing) {
-    return existing
-  }
-
+  if (existing) return existing
   const meta = document.createElement('meta')
   meta.name = name
   document.head.appendChild(meta)
@@ -35,43 +26,51 @@ function ensureMeta(name: string): HTMLMetaElement | null {
 }
 
 function ensureLink(rel: string): HTMLLinkElement | null {
-  if (typeof document === 'undefined') {
-    return null
-  }
-
+  if (typeof document === 'undefined') return null
   const existing = document.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`)
-  if (existing) {
-    return existing
-  }
-
+  if (existing) return existing
   const link = document.createElement('link')
   link.rel = rel
   document.head.appendChild(link)
   return link
 }
 
-/**
- * 将俱乐部 CMS 中的 Safari 配置同步到当前文档。
- * apple-touch-icon 的优先级高于 manifest 图标，适合按域名异步加载配置的场景。
- */
-export function applySafariWebAppConfig(club: OrgClubSearchInfoData | null | undefined): void {
-  if (!club || typeof document === 'undefined') {
-    return
-  }
+export interface SafariAppConfigSource {
+  safari_icon_url?: string
+  safari_label?: string
+  tribe_safari_icon_url?: string
+  tribe_safari_label?: string
+}
 
-  const label = normalizedText(club.safari_label)
-  if (label) {
-    document.title = label
-    ensureMeta('apple-mobile-web-app-title')?.setAttribute('content', label)
+/** 桌面名称和图标分别按俱乐部、联盟、平台回退。 */
+export function resolveSafariWebAppConfig(
+  club: SafariAppConfigSource | null | undefined,
+  platformIconUrl = '/icon.png',
+  platformLabel = 'Newpkr',
+): { label: string; iconUrl: string; hasCustomIcon: boolean } {
+  const label =
+    normalizedText(club?.safari_label) ||
+    normalizedText(club?.tribe_safari_label) ||
+    normalizedText(platformLabel) ||
+    'Newpkr'
+  const customIconUrl =
+    normalizedHttpUrl(club?.safari_icon_url) || normalizedHttpUrl(club?.tribe_safari_icon_url)
+  return {
+    label,
+    iconUrl: customIconUrl || normalizedHttpUrl(platformIconUrl),
+    hasCustomIcon: Boolean(customIconUrl),
   }
+}
 
-  const iconUrl = normalizedHttpUrl(club.safari_icon_url)
-  if (iconUrl) {
-    const touchIcon = ensureLink('apple-touch-icon')
-    touchIcon?.setAttribute('href', iconUrl)
+/** 同步 Safari 主屏幕元数据；空配置时恢复平台默认图标和名称。 */
+export function applySafariWebAppConfig(club: SafariAppConfigSource | null | undefined): void {
+  if (typeof document === 'undefined') return
+  const config = resolveSafariWebAppConfig(club)
+  document.title = config.label
+  ensureMeta('apple-mobile-web-app-title')?.setAttribute('content', config.label)
+  ensureLink('apple-touch-icon')?.setAttribute('href', config.iconUrl)
 
-    const favicon = ensureLink('icon')
-    favicon?.setAttribute('href', iconUrl)
-    favicon?.setAttribute('type', 'image/png')
-  }
+  const favicon = ensureLink('icon')
+  favicon?.setAttribute('href', config.hasCustomIcon ? config.iconUrl : '/favicon.svg')
+  favicon?.setAttribute('type', config.hasCustomIcon ? 'image/png' : 'image/svg+xml')
 }

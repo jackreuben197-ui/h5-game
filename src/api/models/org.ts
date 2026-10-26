@@ -1178,6 +1178,10 @@ export interface OrgClubSearchInfoData {
   club_name?: string // 俱乐部名称
   invitation_code?: string // 俱乐部邀请码，供自定义域名注册使用
   logo?: string // 俱乐部头像
+  tribe_random_id?: number // 所属联盟随机ID
+  tribe_safari_icon_url?: string // 联盟桌面图标
+  tribe_safari_label?: string // 联盟桌面名称
+  tribe_room_logo?: string // 联盟牌桌图标
   safari_icon_url?: string // Safari 添加到主屏幕使用的图标
   safari_label?: string // Safari 添加到主屏幕使用的名称
   safari_base_url?: string // 自定义域名（仅 domain，不含协议）
@@ -2492,6 +2496,9 @@ export interface OrgClubData {
   safari_label?: string
   safari_base_url?: string
   room_logo?: string
+  tribe_safari_icon_url?: string
+  tribe_safari_label?: string
+  tribe_room_logo?: string
   random_id?: number
   upper_limit?: number
   club_members?: number
@@ -2818,6 +2825,9 @@ export interface OrgClubApplyTribeListDataElement {
 
 export interface OrgTribeSearchByIdData {
   random_id?: number // 联盟随机id
+  safari_icon_url?: string // 联盟桌面图标
+  safari_label?: string // 联盟桌面名称
+  room_logo?: string // 联盟牌桌图标
   bring_in_auto_switch?: number // 自动带入开关
   room_permissions?: unknown // 房间权限
 

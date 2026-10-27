@@ -80,7 +80,6 @@ import { useGameStore } from '@/stores/game'
 import { pinia } from '@/stores/pinia'
 import { type ClubInfo, useUserInfoStore } from '@/stores/userInfo'
 import { writeClubListCache } from '@/utils/userClubListCache'
-import { withTribeAppConfig } from '@/utils/tribeAppConfig'
 import { isExperienceUserInfo } from '@/session/experienceIdentity'
 
 type ApiRequestExtOptions = HttpRequestOptionsExt
@@ -298,17 +297,11 @@ export async function getUserClubApi(): Promise<ApiResponse<unknown>> {
   // 每次请求都更新 clubList 全局缓存；currentClub 默认取第一条，可手动切换。
   const userInfoStore = useUserInfoStore(pinia)
   const responseH5Menu = extractH5Menu(body.data)
-  const clubList = await Promise.all(
-    extractClubList(body.data).map((club) =>
-      withTribeAppConfig(
-        club.h5_menu === undefined && responseH5Menu !== undefined
-          ? { ...club, h5_menu: responseH5Menu }
-          : club,
-      ),
-    ),
+  const clubList = extractClubList(body.data).map((club) =>
+    club.h5_menu === undefined && responseH5Menu !== undefined
+      ? { ...club, h5_menu: responseH5Menu }
+      : club,
   )
-  // 联盟请求期间可能已切换账号，避免旧俱乐部和品牌配置覆盖新会话。
-  if (requestToken && useGameStore(pinia).sessionToken.trim() !== requestToken) return body
   userInfoStore.setClubList(clubList)
   // 落地到当前用户级 IndexedDB（user_cache_${userId}，H5/Cocos 共用），供下次启动秒开。
   const gameStore = useGameStore(pinia)

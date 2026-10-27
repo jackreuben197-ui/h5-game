@@ -4,7 +4,6 @@ import type { OrgClubSearchInfoData, OrgClubData } from '@/api/models/org'
 import { postOrgClubDefaultApi } from '@/api/org'
 import StorageKey from '@/constants/storageKey'
 import { dzpkPersistStorage } from '@/utils/localStore'
-import { withTribeAppConfig } from '@/utils/tribeAppConfig'
 import {
   copyStorageToMainDomain,
   extractInviteCodeFromSubdomain,
@@ -232,8 +231,7 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
           if (Number(response.code) !== 0) {
             throw new Error(String(response.msg || '渠道俱乐部加载失败'))
           }
-          const defaultClub = normalizeDefaultClub(response.data?.club)
-          const club = defaultClub ? await withTribeAppConfig(defaultClub) : null
+          const club = normalizeDefaultClub(response.data?.club)
           const responseH5Menu = Number(response.data?.h5_menu)
           if (club && club.h5_menu === undefined && Number.isFinite(responseH5Menu)) {
             club.h5_menu = responseH5Menu

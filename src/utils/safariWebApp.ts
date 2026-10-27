@@ -38,23 +38,16 @@ function ensureLink(rel: string): HTMLLinkElement | null {
 export interface SafariAppConfigSource {
   safari_icon_url?: string
   safari_label?: string
-  tribe_safari_icon_url?: string
-  tribe_safari_label?: string
 }
 
-/** 桌面名称和图标分别按俱乐部、联盟、平台回退。 */
+/** 服务端已按俱乐部、联盟优先级返回最终字段；空值才回退平台。 */
 export function resolveSafariWebAppConfig(
   club: SafariAppConfigSource | null | undefined,
   platformIconUrl = '/icon.png',
   platformLabel = 'Newpkr',
 ): { label: string; iconUrl: string; hasCustomIcon: boolean } {
-  const label =
-    normalizedText(club?.safari_label) ||
-    normalizedText(club?.tribe_safari_label) ||
-    normalizedText(platformLabel) ||
-    'Newpkr'
-  const customIconUrl =
-    normalizedHttpUrl(club?.safari_icon_url) || normalizedHttpUrl(club?.tribe_safari_icon_url)
+  const label = normalizedText(club?.safari_label) || normalizedText(platformLabel) || 'Newpkr'
+  const customIconUrl = normalizedHttpUrl(club?.safari_icon_url)
   return {
     label,
     iconUrl: customIconUrl || normalizedHttpUrl(platformIconUrl),

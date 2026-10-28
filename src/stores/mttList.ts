@@ -114,6 +114,7 @@ function mapRelateTribeClubList(relateList: WsRoomTribeClubRelate[]): Array<Reco
 
 function toMttListRecordFromWsRecord(record: WsUserMttRecord): MttListRecord {
   return {
+    is_top: toSafeInt(record.is_top),
     match_id: toSafeInt(record.match_id),
     name: record.name || '',
     game_type: toSafeInt(record.game_type),

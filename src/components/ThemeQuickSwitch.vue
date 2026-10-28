@@ -6,7 +6,9 @@ import { t } from '@/i18n'
 
 const { isDark, setModeAnimated } = useTheme()
 
-const targetThemeLabel = computed(() => (isDark.value ? t('UIComponent_Text9') : t('UIComponent_Text10')))
+const targetThemeLabel = computed(() =>
+  isDark.value ? t('UIComponent_Text9') : t('UIComponent_Text10'),
+)
 
 function toggleTheme(): void {
   setModeAnimated(isDark.value ? 'light' : 'dark')
@@ -20,8 +22,10 @@ function toggleTheme(): void {
     type="button"
     role="switch"
     :aria-checked="isDark"
-    :aria-label="t('UIComponent_Text8') + (targetThemeLabel) + t('UIGameplaySetting_DesktopSetting_Theme')"
-    :title="t('UIComponent_Text8') + (targetThemeLabel) + t('UIGameplaySetting_DesktopSetting_Theme')"
+    :aria-label="
+      t('UIComponent_Text8') + targetThemeLabel + t('UIGameplaySetting_DesktopSetting_Theme')
+    "
+    :title="t('UIComponent_Text8') + targetThemeLabel + t('UIGameplaySetting_DesktopSetting_Theme')"
     @click.stop="toggleTheme"
   >
     <span class="theme-quick-switch__moon" aria-hidden="true"></span>
@@ -129,8 +133,8 @@ function toggleTheme(): void {
   top: 0.017rem;
   left: 0.02rem;
   z-index: 1;
-  width: 0.369rem;
-  height: 0.369rem;
+  width: 0.36rem;
+  height: 0.36rem;
   border-radius: 50%;
   background: #f9f9f9;
   transform: translateX(0.307rem);

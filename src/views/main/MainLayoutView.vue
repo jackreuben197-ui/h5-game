@@ -5,10 +5,12 @@ import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBgLightUrl from '@/assets/images/main_bg_light.png'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
 import { useGameStore } from '@/stores/game'
+import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 
 const route = useRoute()
 const tabsStore = useMainTabsStore()
 const gameStore = useGameStore()
+const { isVersionC } = useChannelBottomMenu()
 
 // 背景素材由 CSS 根据 data-theme 选择，切换主题时无需重建页面。
 const backgroundStyle = computed(() => ({
@@ -37,6 +39,7 @@ watch(
     class="main-layout"
     :class="{
       'main-layout--home': isHomeRoute,
+      'main-layout--channel-c': isVersionC && (isHomeRoute || String(route.name).startsWith('channel-c-')),
       'main-layout--primary': isPrimaryLayout,
       'main-layout--guest': isGuestPreview,
       'main-layout--authenticated': isPrimaryLayout && !isGuestPreview,
@@ -97,5 +100,14 @@ watch(
   // 子页面容器只负责承载内容，不再单独接管滚动。
   flex: 1;
   min-height: 0;
+}
+
+.main-layout--channel-c {
+  @include theme-light {
+    background: radial-gradient(ellipse at 0 0, #bfe3fc 0, transparent 65%), #f3f4f6;
+  }
+  .main-layout-content {
+    padding-top: var(--app-content-safe-area-top, env(safe-area-inset-top));
+  }
 }
 </style>

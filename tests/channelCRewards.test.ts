@@ -1,0 +1,44 @@
+import assert from 'node:assert/strict'
+import { registerHooks } from 'node:module'
+import test from 'node:test'
+import { POKER_SMALL_BLINDS_BY_LEVEL } from '../src/constants/pokerBlinds.ts'
+
+const hooks = registerHooks({
+  resolve(specifier, context, nextResolve) {
+    if (specifier === '@/constants/pokerBlinds') {
+      return nextResolve(new URL('../src/constants/pokerBlinds.ts', import.meta.url).href, context)
+    }
+    return nextResolve(specifier, context)
+  },
+})
+const { gameRewardGroups } = await import('../src/features/channelC/rewards.ts')
+hooks.deregister()
+
+test('reward levels use the defined small blinds and keep all six middle stakes', () => {
+  const expected = [
+    [0.1, 0.2, 0.3, 0.4, 0.5],
+    [1, 2, 3, 4, 5],
+    [10, 15, 20, 25, 30, 50],
+    [100, 200, 300, 500, 1000],
+  ]
+  assert.deepEqual(Object.values(POKER_SMALL_BLINDS_BY_LEVEL), expected)
+  assert.deepEqual(
+    gameRewardGroups.map((group) => group.map((tier) => tier.smallBlind)),
+    expected,
+  )
+})
+
+test('reward blind pairs double the small blind without fractional rounding artifacts or k abbreviations', () => {
+  assert.deepEqual(
+    gameRewardGroups[0]!.map((tier) => tier.blind),
+    ['0.1/0.2', '0.2/0.4', '0.3/0.6', '0.4/0.8', '0.5/1'],
+  )
+  assert.deepEqual(
+    gameRewardGroups[2]!.map((tier) => tier.blind),
+    ['10/20', '15/30', '20/40', '25/50', '30/60', '50/100'],
+  )
+  assert.deepEqual(
+    gameRewardGroups[3]!.map((tier) => tier.blind),
+    ['100/200', '200/400', '300/600', '500/1000', '1000/2000'],
+  )
+})

@@ -41,6 +41,7 @@ import HomeBannerSwiper from '@/components/HomeBannerSwiper.vue'
 import HomeTopBar from '@/components/HomeTopBar.vue'
 import MainBottomTab from '@/components/Tabbar/MainBottomTab.vue'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
+import { useChannelCVersionRouting } from '@/composables/useChannelCVersionRouting'
 import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
 import { requireRealUser } from '@/session/realUserGate'
 import {
@@ -84,6 +85,7 @@ interface RoomGroupExpandedCachePayload {
 const ROOM_GROUP_EXPANDED_CACHE_VERSION = 1
 
 const router = useRouter()
+useChannelCVersionRouting()
 const gameStore = useGameStore()
 const displayPlatformDiamond = usePlatformDiamondVisibility()
 const roomListStore = useRoomListStore()

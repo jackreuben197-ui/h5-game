@@ -7,6 +7,8 @@ import {
 import { useGameStore } from '@/stores/game'
 import { useWalletStore } from '@/stores/wallet'
 import { useLoginModalStore } from '@/stores/loginModal'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { resolveChannelMenu } from '@/features/channelC/mock'
 import { pinia } from '@/stores/pinia'
 import { createLogger } from '@/utils/logger'
 import { isChannelDiamondFreeMode, isChannelPackageHost } from '@/utils/channelPackage'
@@ -166,6 +168,17 @@ router.beforeEach(async (to, from) => {
   const token = gameStore.sessionToken
   const isRealUser = gameStore.isRealUser
   const isChannelPackage = isChannelPackageHost()
+  const sectionRoutes = ['game-list', 'match-index', 'channel-c-poker', 'channel-c-mtt']
+  if (isChannelPackage && sectionRoutes.includes(String(to.name))) {
+    const club = useUserInfoStore(pinia).channelDefaultClub
+    const versionC = resolveChannelMenu(club) === 3
+    if (club) {
+      if (versionC && to.name === 'game-list') return { name: 'channel-c-poker', query: to.query }
+      if (versionC && to.name === 'match-index') return { name: 'channel-c-mtt', query: to.query }
+      if (!versionC && to.name === 'channel-c-poker') return { name: 'game-list', query: to.query }
+      if (!versionC && to.name === 'channel-c-mtt') return { name: 'match-index', query: to.query }
+    }
+  }
   log.info('beforeEach', {
     from: from.fullPath || '<init>',
     to: to.fullPath,

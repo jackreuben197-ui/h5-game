@@ -1,0 +1,227 @@
+<script setup lang="ts">
+import {
+  computed,
+  nextTick,
+  onActivated,
+  onBeforeUnmount,
+  onDeactivated,
+  onMounted,
+  ref,
+  toRef,
+  watch,
+} from 'vue'
+import { t } from '@/i18n'
+import { useChannelCFeed } from '@/composables/useChannelCFeed'
+import { useChannelCFilters } from '@/composables/useChannelCFilters'
+import { useChannelCDataReady } from '@/composables/useChannelCDataReady'
+import { useChannelCNavigation } from '@/composables/useChannelCNavigation'
+import { useChannelCVersionRouting } from '@/composables/useChannelCVersionRouting'
+import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
+import { useRoomListStore } from '@/stores/roomList'
+import {
+  buildChannelCFeed,
+  buildWaterfallColumns,
+  type ChannelCSection,
+} from '@/features/channelC/model'
+import ChannelCHeader from './ChannelCHeader.vue'
+import ChannelCFilters from './ChannelCFilters.vue'
+import ChannelCOverlays from './ChannelCOverlays.vue'
+import ChannelCPokerCard from './ChannelCPokerCard.vue'
+import ChannelCMttCard from './ChannelCMttCard.vue'
+
+const props = withDefaults(defineProps<{ section?: ChannelCSection; ready?: boolean }>(), {
+  section: 'home',
+  ready: undefined,
+})
+const { club, clubId, tribeId, visibleRooms, visibleMatches, tournamentSeries } = useChannelCFeed()
+useChannelCVersionRouting()
+const ready = useChannelCDataReady(toRef(props, 'ready'))
+const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages()
+const roomStore = useRoomListStore()
+const root = ref<HTMLElement | null>(null)
+const overlays = ref<InstanceType<typeof ChannelCOverlays> | null>(null)
+const {
+  pokerFilter,
+  blindFilter,
+  tournamentFilter,
+  mttFilter,
+  blinds,
+  tournamentTypes,
+  filteredRooms,
+  filteredMatches,
+  resetFilters,
+} = useChannelCFilters(visibleRooms, visibleMatches, tournamentSeries)
+const now = ref(Date.now())
+let clock: ReturnType<typeof setInterval> | undefined
+
+const banner = computed(() =>
+  String(club.value?.banner_c || club.value?.banner || bannerImages.value[0] || ''),
+)
+const tournamentName = computed(() => t(visibleMatches.value[0]?.name || 'MTT'))
+const cards = computed(() =>
+  buildChannelCFeed(
+    props.section === 'poker' ? filteredRooms.value : visibleRooms.value,
+    props.section === 'mtt' ? filteredMatches.value : visibleMatches.value,
+    props.section,
+    now.value,
+    tournamentSeries.value,
+  ),
+)
+const columns = computed(() => buildWaterfallColumns(cards.value))
+const listLabel = computed(() =>
+  t(
+    props.section === 'home'
+      ? 'UIChannelC_Recommendations'
+      : props.section === 'poker'
+        ? 'UIChannelC_AllTables'
+        : 'UIChannelC_AllMatches',
+  ),
+)
+const { joiningId, joinRoom, openMatch } = useChannelCNavigation(saveScroll)
+
+function container() {
+  return root.value?.closest<HTMLElement>('.main-layout-content')
+}
+function scrollKey(section = props.section) {
+  return `channel-c-${section}`
+}
+function saveScroll() {
+  const element = container()
+  if (element) roomStore.saveScrollPosition(scrollKey(), element.scrollTop)
+}
+async function restoreScroll() {
+  await nextTick()
+  const element = container()
+  if (element && ready.value) element.scrollTop = roomStore.getScrollPosition(scrollKey())
+}
+function activate() {
+  if (!clock)
+    clock = setInterval(() => {
+      now.value = Date.now()
+    }, 1000)
+  void restoreScroll()
+}
+function deactivate() {
+  saveScroll()
+  clearInterval(clock)
+  clock = undefined
+}
+
+onMounted(() => {
+  activate()
+  if (props.section === 'home') void fetchLobbyBannerImages()
+})
+onActivated(activate)
+onDeactivated(deactivate)
+onBeforeUnmount(deactivate)
+watch(ready, (value) => {
+  if (value) void restoreScroll()
+})
+watch(
+  () => props.section,
+  (_next, previous) => {
+    const element = container()
+    if (element) roomStore.saveScrollPosition(scrollKey(previous), element.scrollTop)
+    resetFilters()
+    void restoreScroll()
+  },
+)
+</script>
+
+<template>
+  <div ref="root" class="channel-c-page">
+    <ChannelCHeader
+      v-if="section === 'home'"
+      :banner="banner"
+      :club-name="club?.club_name || ''"
+      @action="overlays?.open($event)"
+    />
+    <ChannelCFilters
+      v-else
+      v-model:poker="pokerFilter"
+      v-model:blind="blindFilter"
+      v-model:mtt="mttFilter"
+      v-model:tournament="tournamentFilter"
+      :section="section"
+      :blinds="blinds"
+      :tournament-types="tournamentTypes"
+    />
+    <div v-if="!ready" class="c-empty"><van-loading size="24" />{{ t('UIChannelC_Loading') }}</div>
+    <div v-else-if="cards.length" class="c-waterfall" :aria-label="listLabel">
+      <div v-for="(column, index) in columns" :key="index" class="c-waterfall-column">
+        <template v-for="card in column" :key="card.key">
+          <ChannelCPokerCard
+            v-if="card.kind === 'poker'"
+            :room="card.room"
+            :room-logo="club?.room_logo"
+            :joining="joiningId === String(card.room.rid)"
+            @join="joinRoom"
+          />
+          <ChannelCMttCard
+            v-else
+            :match="card.match"
+            :size="card.size"
+            :now="now"
+            @open="openMatch"
+          />
+        </template>
+      </div>
+    </div>
+    <div v-else class="c-empty">
+      <van-icon name="search" size="32" />
+      <p>{{ t(section === 'home' ? 'UIChannelC_NoRecommendations' : 'UIChannelC_NoResults') }}</p>
+      <button v-if="section !== 'home'" type="button" @click="resetFilters">
+        {{ t('UIChannelC_ResetFilters') }}
+      </button>
+    </div>
+    <ChannelCOverlays
+      v-if="section === 'home'"
+      ref="overlays"
+      :club-id="clubId"
+      :tribe-id="tribeId"
+      :club-name="club?.club_name || ''"
+      :announcement="club?.announcement || ''"
+      :tournament-name="tournamentName"
+    />
+  </div>
+</template>
+
+<style scoped lang="scss">
+.channel-c-page {
+  width: 100%;
+  max-width: 10rem;
+  margin: 0 auto;
+  padding: 0 0.256rem 0.25rem;
+}
+.c-waterfall {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 0.18rem;
+}
+.c-waterfall-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  min-width: 0;
+}
+.c-empty {
+  display: flex;
+  min-height: 5rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  color: var(--c-text-muted);
+  font-size: 0.34rem;
+}
+.c-empty button {
+  padding: 0.15rem 0.4rem;
+  border: 0;
+  border-radius: 0.3rem;
+  color: #fff;
+  background: #69beff;
+  font: inherit;
+  cursor: pointer;
+}
+</style>

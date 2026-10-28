@@ -28,6 +28,7 @@ import LoginSession from '@/session/loginSession'
 import { isBridgeHandshakeDone, onBridgeHandshakeDone } from '@/bridge/core/cocosBridgeChannel'
 import { ensureWsProxyConnected } from '@/bridge/ws'
 import { waitForH5FirstPaint } from '@/utils/firstPaint'
+import ChannelCHome from '@/components/ChannelC/ChannelCHome.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -42,7 +43,7 @@ const isChannelPackage = computed(() => {
   void appConfigStore.globalConfig
   return isChannelPackageHost()
 })
-const { isVersionB: isChannelMenuVersionB } = useChannelBottomMenu()
+const { isVersionB: isChannelMenuVersionB, isVersionC } = useChannelBottomMenu()
 
 const noticeScrollRef = ref<HTMLElement | null>(null)
 const noticeItemRef = ref<HTMLElement | null>(null)
@@ -213,6 +214,11 @@ const requestedHomeSection = computed<'mtt' | 'poker' | null>(() => {
     : route.query.section
   return rawSection === 'mtt' || rawSection === 'poker' ? rawSection : null
 })
+watch([isVersionC, requestedHomeSection], ([versionC, section]) => {
+  if (versionC && section) {
+    void router.replace({ name: section === 'poker' ? 'channel-c-poker' : 'channel-c-mtt' })
+  }
+}, { immediate: true })
 
 // 渠道包在首页信息区下按 A/B 与可见列表决定内容；官方包始终使用专区豆腐块布局。
 const homeContentModeRaw = computed<HomeContentMode>(() => {
@@ -661,7 +667,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+  <ChannelCHome v-if="isVersionC" :ready="homeContentReady" />
   <div
+    v-else
     class="home-page"
     :class="{ 'home-page--mtt': homeContentReady && homeContentMode === 'mtt' }"
   >

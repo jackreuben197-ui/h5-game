@@ -131,6 +131,9 @@ function readParam(
 }
 
 export function isChannelPackageHost(hostname: string = window.location.hostname): boolean {
+  // 本地带邀请码联调时仍走真实渠道接口，不注入演示俱乐部或牌桌。
+  const localHost = hostname === 'localhost' || /^127(?:\.\d{1,3}){3}$/.test(hostname)
+  if (import.meta.env?.DEV && localHost && parseInviteParamsFromLocation().inviteCode) return true
   // 渠道包联调：取消下面两行注释可强制按渠道域名处理。
   // void hostname
   if (TEST_CHANNEL_INVITE_CODE) return true

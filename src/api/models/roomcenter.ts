@@ -900,6 +900,10 @@ export interface RoomUser {
 
 // 牌桌详情结构（字段来自旧版 roomList 页面）。
 export interface RoomRecord {
+  /** 服务端热门推荐标记：1/true 推荐；缺省不进入热门推荐。 */
+  is_top?: number | boolean
+  gameplay_description?: string
+  table_feature?: string
   rid: number | string
   name?: string
   game_type: number
@@ -1014,6 +1018,12 @@ export interface MttListRequest {
 
 // MTT 列表项（字段保持宽松，便于首页统计与列表页共用）。
 export interface MttListRecord {
+  /** 服务端热门推荐标记：1/true 推荐；缺省不进入热门推荐。 */
+  is_top?: number | boolean
+  tournament_label?: string
+  hunter_on?: number
+  hunter_bonus?: number
+  snowball_on?: number
   match_id?: number
   name?: string
   game_type?: number

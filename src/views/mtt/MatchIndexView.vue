@@ -11,10 +11,12 @@ import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
 import { t } from '@/i18n'
 import { ensureExperienceSession } from '@/session/experienceSession'
 import { useMttListStore } from '@/stores/mttList'
+import { useChannelCVersionRouting } from '@/composables/useChannelCVersionRouting'
 
 type MttTabName = 'all' | 'poker' | 'mahjong'
 
 const activeTab = ref<MttTabName>('all')
+useChannelCVersionRouting()
 const mttListStore = useMttListStore()
 const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages()
 

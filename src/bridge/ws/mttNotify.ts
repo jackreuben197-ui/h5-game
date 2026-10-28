@@ -38,6 +38,7 @@ export interface WsRoomTribeClubRelate {
 }
 
 export interface WsUserMttRecord {
+  is_top: number
   gold_type: number
   match_id: number
   start_time: number
@@ -132,6 +133,7 @@ function mapTribeClubRelate(item: PbRoomTribeClubRelate): WsRoomTribeClubRelate 
 
 function mapUserMttRecord(record: PbUserMttRecord): WsUserMttRecord {
   return {
+    is_top: toSafeInt(record.getIsTop()),
     gold_type: toSafeInt(record.getGoldType()),
     match_id: toSafeInt(record.getMatchId()),
     start_time: toSafeInt(record.getStartTime()),

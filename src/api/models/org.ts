@@ -1189,7 +1189,8 @@ export interface OrgClubSearchInfoData {
   pretty_id?: number // 靓号 >0则是靓号 =0不是靓号
   club_subscription_id?: number // 会员id
   diamond_room_switch?: number // 渠道平台钻石桌及比赛：1 开，2 关，缺失默认关
-  h5_menu?: number // 渠道包 H5 底部导航：2-版本 A，其他值-版本 B
+  h5_menu?: number // 渠道包 H5 底部导航：1=B，2=A，3=C（C 暂定）
+  banner_c?: string // 渠道 C 独立 banner，CMS 原图 375×69
 
   [key: string]: unknown
 }
@@ -2557,7 +2558,8 @@ export interface OrgClubData {
   freeze_status?: number
   invitation_code?: string
   diamond_room_switch?: number // 渠道平台钻石桌及比赛：1 开，2 关，缺失默认关
-  h5_menu?: number // 渠道包 H5 底部导航：2-版本 A，其他值-版本 B
+  h5_menu?: number // 渠道包 H5 底部导航：1=B，2=A，3=C（C 暂定）
+  banner_c?: string // 渠道 C 独立 banner，CMS 原图 375×69
 
   [key: string]: unknown
 }

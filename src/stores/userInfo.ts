@@ -216,7 +216,10 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       // （Cocos 预览通常是 :7456），此时必须按测试邀请码正常初始化。
       if (hostname === 'localhost' && !isChannelPackageHost(hostname)) return null
       // “邀请码.二维码域名”必须按邀请码查询，不能当成俱乐部独立 CNAME 域名。
-      const channelInviteCode = extractInviteCodeFromSubdomain(hostname)
+      const localInviteCode = import.meta.env.DEV && (hostname === 'localhost' || hostname.startsWith('127.'))
+        ? resolveInviteCode(hostname)
+        : ''
+      const channelInviteCode = localInviteCode || extractInviteCodeFromSubdomain(hostname)
       const baseUrl = channelInviteCode ? '' : resolveSafariBaseUrl(hostname)
       const inviteCode = channelInviteCode || (baseUrl ? '' : resolveInviteCode(hostname))
       const payload = baseUrl

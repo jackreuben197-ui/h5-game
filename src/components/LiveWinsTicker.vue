@@ -10,6 +10,8 @@ import img1 from '@/assets/images/img1.png'
 import gameHarvestImg from '@/assets/images/game_harvest.png'
 import gameTigerImg from '@/assets/images/game_tiger.png'
 import gameGoldCityImg from '@/assets/images/game_gold_city.png'
+import headingBg from '@/assets/images/live_wins_heading_bg.svg'
+import headingArrow from '@/assets/images/live_wins_heading_arrow.svg'
 
 export interface LiveWinItem {
   id: string | number
@@ -30,9 +32,9 @@ const props = withDefaults(
     headingText?: string
   }>(),
   {
-    slideInterval: 3800,
-    slideSpeed: 950,
-    countDuration: 1850,
+    slideInterval: 2500,
+    slideSpeed: 1500,
+    countDuration: 3000,
     currencySymbol: '¥',
     headingText: '实时爆奖',
   },
@@ -129,6 +131,7 @@ interface ActiveCardState {
   raw: LiveWinItem
   displayedAmount: string
   isCounting: boolean
+  countPhase: number
   showTag: boolean
   showTagBounce: boolean
   currentAmountNum: number
@@ -143,8 +146,11 @@ const cardQueue = ref<ActiveCardState[]>([])
 const trackRef = shallowRef<HTMLElement | null>(null)
 const containerRef = shallowRef<HTMLElement | null>(null)
 const isSliding = ref(false)
+const isRevealing = ref(true)
+let revealTimer: ReturnType<typeof setTimeout> | null = null
 const slideTranslateX = ref(0)
-const cardStepWidth = ref(152) // Responsive width: exactly 2 cards visible with gap
+const CARD_GAP = 3.5
+const cardStepWidth = ref(160 + CARD_GAP)
 
 // Auto-play timer
 let slideTimer: ReturnType<typeof setTimeout> | null = null
@@ -163,6 +169,7 @@ function initQueue() {
     raw: item,
     displayedAmount: formatCurrency(item.finalAmount),
     isCounting: false,
+    countPhase: 0,
     showTag: !!item.tag && item.tag.trim() !== '',
     showTagBounce: false,
     currentAmountNum: item.finalAmount,
@@ -171,70 +178,80 @@ function initQueue() {
 
 // Calculate responsive step width (2 cards visible simultaneously with 6px gap)
 function updateCardDimensions() {
-  if (!containerRef.value) return
-  const availableWidth = containerRef.value.clientWidth
-  // Exactly 2 cards per view with 6px gap
-  const gap = 6
-  const singleCardWidth = Math.max(132, Math.floor((availableWidth - gap) / 2))
-  cardStepWidth.value = singleCardWidth + gap
+  const el = containerRef.value
+  if (!el) return
+  const style = getComputedStyle(el)
+  const horizontalPadding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight)
+  const availableWidth = el.clientWidth - horizontalPadding
+  if (availableWidth <= 0) return
+  const nextStep = (availableWidth - CARD_GAP) / 2 + CARD_GAP
+  if (Math.abs(nextStep - cardStepWidth.value) < 0.5) return
+  cardStepWidth.value = nextStep
+  if (!isSliding.value && !isDragging.value) slideTranslateX.value = 0
 }
 
-/**
- * Requirement 2 & 3: Count-up, bouncing, and coordinated tag animation
- */
-function animateCardEntry(card: ActiveCardState, customStartAmount?: number) {
-  // Cancel any existing animation on this card
+let resizeObserver: ResizeObserver | null = null
+
+function hasTag(tag?: string) {
+  return !!tag && tag.trim() !== ''
+}
+
+function tagLabel(tag?: string) {
+  if (!tag) return ''
+  return `X ${tag.trim().replace(/^[xX×]\s*/, '')}`
+}
+
+function animateCardEntry(card: ActiveCardState) {
   if (card.rafId) cancelAnimationFrame(card.rafId)
   if (card.timerId) clearTimeout(card.timerId)
 
   const targetAmount = card.raw.finalAmount
-  // Start from ~35% of target amount, closely matching the video
-  const startAmount =
-    customStartAmount !== undefined ? customStartAmount : Math.max(0, targetAmount * 0.35)
+  const startAmount = Math.max(0, targetAmount * 0.26)
   const duration = props.countDuration
 
   card.isCounting = true
+  card.countPhase = 1
   card.currentAmountNum = startAmount
   card.displayedAmount = formatCurrency(startAmount)
 
-  const hasValidTag = !!card.raw.tag && card.raw.tag.trim() !== ''
-  // Requirement 3: If tag is blank, neither display it nor trigger its animation
-  if (!hasValidTag) {
+  if (!hasTag(card.raw.tag)) {
     card.showTag = false
     card.showTagBounce = false
   } else {
-    // Hide initially, then pop-in and bounce as amount reaches climax
     card.showTag = false
     card.showTagBounce = false
-
-    // Coordinate tag appearance at ~80% of count-up duration
-    const tagTriggerDelay = duration * 0.8
     card.timerId = setTimeout(() => {
       card.showTag = true
       card.showTagBounce = true
-    }, tagTriggerDelay)
+    }, TAG_POP_DELAY)
   }
 
   const startTime = performance.now()
+  const pulseStep = duration / 3
+  let pulsesFired = 0
 
   const step = (now: number) => {
     const elapsed = now - startTime
     const progress = Math.min(1, elapsed / duration)
+    const currentVal = startAmount + (targetAmount - startAmount) * progress
 
-    // Ease-out cubic curve for natural smooth deceleration
-    const easeOutProgress = 1 - Math.pow(1 - progress, 3)
-    const currentVal = startAmount + (targetAmount - startAmount) * easeOutProgress
+    const pulsesDue = Math.min(3, Math.floor((elapsed + PULSE_LEAD) / pulseStep))
+    if (pulsesDue > pulsesFired) {
+      pulsesFired = pulsesDue
+      pulseAmount(card.raw.id)
+    }
 
     card.currentAmountNum = currentVal
     card.displayedAmount = formatCurrency(currentVal)
+    card.countPhase = progress < 1 / 3 ? 1 : progress < 2 / 3 ? 2 : 3
 
     if (progress < 1) {
       card.rafId = requestAnimationFrame(step)
     } else {
-      // END PRECISELY AT CONFIGURED FINAL AMOUNT (cent accuracy)
       card.currentAmountNum = targetAmount
       card.displayedAmount = formatCurrency(targetAmount)
       card.isCounting = false
+      card.countPhase = 0
       card.rafId = undefined
     }
   }
@@ -242,177 +259,279 @@ function animateCardEntry(card: ActiveCardState, customStartAmount?: number) {
   card.rafId = requestAnimationFrame(step)
 }
 
-/**
- * Requirement 1: Slide card right-to-left seamlessly
- * Incoming card starts count-up animation as it glides in from the right!
- */
-function triggerSlide(customSpeed?: number) {
-  if (isSliding.value || cardQueue.value.length < 3) return
-  isSliding.value = true
-  const duration = customSpeed || props.slideSpeed
+const TAG_POP_DELAY = 2800
+const PULSE_LEAD = 120
+const PULSE_KEYFRAMES: Keyframe[] = [
+  { transform: 'scale(1)' },
+  { transform: 'scale(1.35)', offset: 0.45 },
+  { transform: 'scale(1)' },
+]
 
-  // The card at index 2 is entering the view into the right slot!
-  // Start its count-up and bounce animation as it slides in!
-  const incomingCard = cardQueue.value[2]
-  if (incomingCard) {
-    animateCardEntry(incomingCard)
-  }
+const amountEls = new Map<string | number, HTMLElement>()
 
-  // Translate track by 1 card step to the left
-  slideTranslateX.value = -cardStepWidth.value
-
-  setTimeout(() => {
-    // Seamless queue shift: move first card to the tail
-    const shifted = cardQueue.value.shift()
-    if (shifted) {
-      cardQueue.value.push(shifted)
-    }
-
-    // Reset translation with transition disabled (instant, zero flicker)
-    slideTranslateX.value = 0
-    isSliding.value = false
-
-    // Schedule next auto slide
-    scheduleNextSlide()
-  }, duration)
+function setAmountEl(id: string | number, el: unknown) {
+  if (el instanceof HTMLElement) amountEls.set(id, el)
+  else amountEls.delete(id)
 }
 
-/**
- * Slide card left-to-right (User Swiping Right)
- */
-function triggerSlideRight(customSpeed?: number) {
-  if (isSliding.value || cardQueue.value.length < 3) return
-  isSliding.value = true
-  const duration = customSpeed || props.slideSpeed
+function pulseAmount(id: string | number) {
+  const el = amountEls.get(id)
+  if (!el || typeof el.animate !== 'function') return
+  el.animate(PULSE_KEYFRAMES, { duration: 400, easing: 'ease-in-out' })
+}
 
-  // Move the last card to the head
-  const popped = cardQueue.value.pop()
-  if (popped) {
-    cardQueue.value.unshift(popped)
+const transitionMs = ref(0)
+const isDragging = ref(false)
+const VISIBLE_CARDS = 2
+let dragMoved = false
+let pointerId: number | null = null
+let startX = 0
+let startY = 0
+let axisLocked: 'x' | 'y' | null = null
+let settleTimer: ReturnType<typeof setTimeout> | null = null
+let dragBase = 0
+let lastMoveX = 0
+let lastMoveT = 0
+let velocityX = 0
+let revealed = new Set<number>()
+
+function rotateForward(count: number) {
+  for (let i = 0; i < count; i++) {
+    const shifted = cardQueue.value.shift()
+    if (shifted) cardQueue.value.push(shifted)
   }
+}
 
-  // Immediately place track at -cardStepWidth without transition
-  slideTranslateX.value = -cardStepWidth.value
+function rotateBackward(count: number) {
+  for (let i = 0; i < count; i++) {
+    const last = cardQueue.value.pop()
+    if (last) cardQueue.value.unshift(last)
+  }
+}
 
-  // Next frame animate back to 0
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      slideTranslateX.value = 0
-      setTimeout(() => {
-        isSliding.value = false
-        scheduleNextSlide()
-      }, duration)
-    })
-  })
+function clearSettle() {
+  if (settleTimer) {
+    clearTimeout(settleTimer)
+    settleTimer = null
+  }
+}
+
+function resetTrack() {
+  transitionMs.value = 0
+  slideTranslateX.value = 0
+  isSliding.value = false
 }
 
 function scheduleNextSlide() {
   if (slideTimer) clearTimeout(slideTimer)
-
   slideTimer = setTimeout(() => {
     triggerSlide()
   }, props.slideInterval)
 }
 
-// ── Touch & Mouse Swipe / Drag Handling ──
-const isDragging = ref(false)
-const dragStartX = ref(0)
-const dragStartY = ref(0)
-const dragOffsetX = ref(0)
-let isHorizontalDrag = false
-let hasDragged = false
+function triggerSlide() {
+  if (isSliding.value || pointerId !== null || cardQueue.value.length < 3) return
+  isSliding.value = true
 
-function onTouchStart(e: TouchEvent) {
-  if (isSliding.value) return
-  if (slideTimer) clearTimeout(slideTimer)
-  const touch = e.touches[0]
-  dragStartX.value = touch.clientX
-  dragStartY.value = touch.clientY
-  dragOffsetX.value = 0
-  isDragging.value = true
-  isHorizontalDrag = false
-  hasDragged = false
-}
-
-function onTouchMove(e: TouchEvent) {
-  if (!isDragging.value || isSliding.value) return
-  const touch = e.touches[0]
-  const diffX = touch.clientX - dragStartX.value
-  const diffY = touch.clientY - dragStartY.value
-
-  if (!isHorizontalDrag) {
-    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 6) {
-      isHorizontalDrag = true
-    } else if (Math.abs(diffY) > 8) {
-      // User is scrolling vertically, let browser scroll naturally
-      isDragging.value = false
-      return
-    }
+  const incomingCard = cardQueue.value[VISIBLE_CARDS]
+  if (incomingCard) {
+    animateCardEntry(incomingCard)
   }
 
-  if (isHorizontalDrag) {
-    if (e.cancelable) e.preventDefault()
-    dragOffsetX.value = diffX
-    if (Math.abs(diffX) > 8) {
-      hasDragged = true
+  transitionMs.value = props.slideSpeed
+  slideTranslateX.value = -cardStepWidth.value
+
+  clearSettle()
+  settleTimer = setTimeout(() => {
+    rotateForward(1)
+    resetTrack()
+    scheduleNextSlide()
+  }, props.slideSpeed)
+}
+
+function currentTrackOffset(): number {
+  const el = trackRef.value
+  if (!el) return slideTranslateX.value
+  const transform = getComputedStyle(el).transform
+  if (!transform || transform === 'none') return slideTranslateX.value
+  const matrix = new DOMMatrixReadOnly(transform)
+  return Number.isFinite(matrix.m41) ? matrix.m41 : slideTranslateX.value
+}
+
+function visibleRange(): [number, number] {
+  const step = cardStepWidth.value
+  const first = Math.max(0, Math.floor(-slideTranslateX.value / step))
+  const last = Math.min(
+    cardQueue.value.length - 1,
+    Math.ceil(-slideTranslateX.value / step) + VISIBLE_CARDS - 1,
+  )
+  return [first, last]
+}
+
+function revealVisible(animate: boolean) {
+  const [first, last] = visibleRange()
+  for (let i = first; i <= last; i++) {
+    if (revealed.has(i)) continue
+    revealed.add(i)
+    if (animate) {
+      const card = cardQueue.value[i]
+      if (card) animateCardEntry(card)
     }
   }
 }
 
-function onTouchEnd() {
-  if (!isDragging.value) return
-  isDragging.value = false
-  const offset = dragOffsetX.value
-  dragOffsetX.value = 0
+function settleTo(idx: number) {
+  const step = cardStepWidth.value
+  const maxIdx = cardQueue.value.length - VISIBLE_CARDS
+  const finalIdx = Math.max(0, Math.min(maxIdx, idx))
+  const target = -finalIdx * step
+  const remaining = Math.abs(target - slideTranslateX.value)
+  const duration =
+    remaining < 1 ? 0 : Math.max(160, Math.round(props.slideSpeed * Math.min(1, remaining / step)))
 
-  if (offset < -35) {
-    // Swiped Left -> advance to next card
-    triggerSlide(props.slideSpeed * 0.75)
-  } else if (offset > 35) {
-    // Swiped Right -> return to previous card
-    triggerSlideRight(props.slideSpeed * 0.75)
+  for (let i = finalIdx; i < finalIdx + VISIBLE_CARDS; i++) {
+    if (revealed.has(i)) continue
+    revealed.add(i)
+    const card = cardQueue.value[i]
+    if (card) animateCardEntry(card)
+  }
+
+  isSliding.value = true
+  transitionMs.value = duration
+  slideTranslateX.value = target
+
+  clearSettle()
+  settleTimer = setTimeout(() => {
+    rotateForward(finalIdx)
+    resetTrack()
+    scheduleNextSlide()
+  }, duration)
+}
+
+function resumeAfterPointer() {
+  if (slideTranslateX.value !== 0) {
+    settleTo(Math.round(-slideTranslateX.value / cardStepWidth.value))
   } else {
-    // Rebound smoothly back to 0
     scheduleNextSlide()
   }
 }
 
-function onMouseDown(e: MouseEvent) {
-  if (isSliding.value) return
+function releasePointer(id: number) {
+  const el = containerRef.value
+  if (el && el.hasPointerCapture(id)) {
+    el.releasePointerCapture(id)
+  }
+}
+
+function onPointerDown(e: PointerEvent) {
+  if (cardQueue.value.length < VISIBLE_CARDS + 2) return
+  if (e.pointerType === 'mouse' && e.button !== 0) return
+  pointerId = e.pointerId
+  startX = e.clientX
+  startY = e.clientY
+  lastMoveX = e.clientX
+  lastMoveT = performance.now()
+  velocityX = 0
+  axisLocked = null
+  dragMoved = false
+  isDragging.value = false
   if (slideTimer) clearTimeout(slideTimer)
-  dragStartX.value = e.clientX
-  dragStartY.value = e.clientY
-  dragOffsetX.value = 0
+
+  if (isSliding.value) {
+    const offset = currentTrackOffset()
+    clearSettle()
+    transitionMs.value = 0
+    slideTranslateX.value = offset
+    isSliding.value = false
+  }
+  revealed = new Set()
+  revealVisible(false)
+  containerRef.value?.setPointerCapture(e.pointerId)
+}
+
+function beginDrag() {
   isDragging.value = true
-  isHorizontalDrag = true
-  hasDragged = false
+  dragMoved = true
+  const step = cardStepWidth.value
+  const reserve = Math.max(0, Math.floor((cardQueue.value.length - VISIBLE_CARDS) / 2))
+  rotateBackward(reserve)
+  revealed = new Set([...revealed].map((i) => i + reserve))
+  dragBase = slideTranslateX.value - reserve * step
+  transitionMs.value = 0
+  slideTranslateX.value = dragBase
 }
 
-function onMouseMove(e: MouseEvent) {
-  if (!isDragging.value || isSliding.value) return
-  const diffX = e.clientX - dragStartX.value
-  dragOffsetX.value = diffX
-  if (Math.abs(diffX) > 8) {
-    hasDragged = true
+function onPointerMove(e: PointerEvent) {
+  if (pointerId !== e.pointerId) return
+  const dx = e.clientX - startX
+  const dy = e.clientY - startY
+
+  if (!axisLocked) {
+    if (Math.abs(dx) < 4 && Math.abs(dy) < 4) return
+    axisLocked = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
+    if (axisLocked === 'y') {
+      releasePointer(e.pointerId)
+      pointerId = null
+      resumeAfterPointer()
+      return
+    }
+    beginDrag()
+  }
+
+  if (axisLocked === 'x') {
+    const now = performance.now()
+    const dt = now - lastMoveT
+    if (dt >= 8) {
+      const instant = (e.clientX - lastMoveX) / dt
+      velocityX = velocityX * 0.6 + instant * 0.4
+      lastMoveX = e.clientX
+      lastMoveT = now
+    }
+    const step = cardStepWidth.value
+    const minT = -(cardQueue.value.length - VISIBLE_CARDS) * step
+    slideTranslateX.value = Math.max(minT, Math.min(0, dragBase + dx))
+    revealVisible(true)
   }
 }
 
-function onMouseUp() {
-  onTouchEnd()
-}
-
-function onMouseLeave() {
-  if (isDragging.value) {
-    onTouchEnd()
+function finishDrag() {
+  const step = cardStepWidth.value
+  const pos = -slideTranslateX.value / step
+  const stale = performance.now() - lastMoveT > 120
+  let idx = Math.round(pos)
+  if (!stale && Math.abs(velocityX) > 0.35) {
+    idx = velocityX < 0 ? Math.ceil(pos) : Math.floor(pos)
   }
+  settleTo(idx)
 }
 
-function handleCardClick(card: LiveWinItem) {
-  if (hasDragged) {
-    hasDragged = false
+function onPointerUp(e: PointerEvent) {
+  if (pointerId !== e.pointerId) return
+  pointerId = null
+  releasePointer(e.pointerId)
+
+  if (!isDragging.value) {
+    resumeAfterPointer()
     return
   }
-  emit('click-card', card)
+  isDragging.value = false
+  finishDrag()
+}
+
+function onPointerCancel(e: PointerEvent) {
+  if (pointerId !== e.pointerId) return
+  pointerId = null
+  if (isDragging.value) {
+    isDragging.value = false
+    settleTo(Math.round(-slideTranslateX.value / cardStepWidth.value))
+  } else {
+    resumeAfterPointer()
+  }
+}
+
+function onCardClick(card: ActiveCardState) {
+  if (dragMoved) return
+  emit('click-card', card.raw)
 }
 
 // Split heading into individual characters for crisp vertical layout
@@ -424,10 +543,17 @@ onMounted(() => {
   initQueue()
   nextTick(() => {
     updateCardDimensions()
-    window.addEventListener('resize', updateCardDimensions)
-    // Start initial animations on 2nd card counting up to 30,551.04
+    revealTimer = setTimeout(() => {
+      isRevealing.value = false
+    }, 900)
+    if (typeof ResizeObserver !== 'undefined' && containerRef.value) {
+      resizeObserver = new ResizeObserver(() => updateCardDimensions())
+      resizeObserver.observe(containerRef.value)
+    } else {
+      window.addEventListener('resize', updateCardDimensions)
+    }
     if (cardQueue.value[1]) {
-      animateCardEntry(cardQueue.value[1], 12000.0)
+      animateCardEntry(cardQueue.value[1])
     }
     scheduleNextSlide()
   })
@@ -435,6 +561,10 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (slideTimer) clearTimeout(slideTimer)
+  if (settleTimer) clearTimeout(settleTimer)
+  if (revealTimer) clearTimeout(revealTimer)
+  resizeObserver?.disconnect()
+  resizeObserver = null
   window.removeEventListener('resize', updateCardDimensions)
   cardQueue.value.forEach((card) => {
     if (card.rafId) cancelAnimationFrame(card.rafId)
@@ -445,119 +575,74 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="live-wins-wrapper">
-    <!-- Main Ticker Banner -->
-    <div class="live-wins-ticker-box">
-      <!-- 1. Fixed "Live Wins" Heading (Left Side) -->
-      <div class="live-wins-heading-col">
-        <div class="heading-vertical-text">
-          <span v-for="(char, idx) in headingChars" :key="idx" class="heading-char">
-            {{ char }}
-          </span>
+    <div class="live-wins-box">
+      <div class="live-wins-heading">
+        <img :src="headingBg" alt="" class="live-wins-heading__bg" draggable="false" />
+        <div class="live-wins-heading__text">
+          <span v-for="(char, idx) in headingChars" :key="idx" class="live-wins-heading__char">{{ char }}</span>
         </div>
+        <img :src="headingArrow" alt="" class="live-wins-heading__arrow" draggable="false" />
       </div>
 
-      <!-- 2. Sliding Viewport (Right Side) with Swipe Support -->
       <div
         ref="containerRef"
         class="live-wins-viewport"
         :class="{ 'is-dragging': isDragging }"
-        @touchstart.passive="onTouchStart"
-        @touchmove="onTouchMove"
-        @touchend="onTouchEnd"
-        @touchcancel="onTouchEnd"
-        @mousedown="onMouseDown"
-        @mousemove="onMouseMove"
-        @mouseup="onMouseUp"
-        @mouseleave="onMouseLeave"
+        @pointerdown="onPointerDown"
+        @pointermove="onPointerMove"
+        @pointerup="onPointerUp"
+        @pointercancel="onPointerCancel"
+        @lostpointercapture="onPointerCancel"
       >
         <div
           ref="trackRef"
           class="live-wins-track"
-          :class="{ 'is-sliding': isSliding }"
+          :class="{ 'is-revealing': isRevealing }"
           :style="{
-            transform: `translate3d(${slideTranslateX + (isDragging ? dragOffsetX : 0)}px, 0, 0)`,
-            transitionDuration: isSliding ? `${props.slideSpeed}ms` : '0ms',
+            transform: `translate3d(${slideTranslateX}px, 0, 0)`,
+            transitionDuration: `${transitionMs}ms`,
+            gap: `${CARD_GAP}px`,
           }"
         >
           <div
             v-for="(card, index) in cardQueue"
             :key="card.raw.id"
-            class="live-win-card clickable-card"
-            :class="{
-              'active-first': index === 0,
-              'active-second': index === 1,
-            }"
-            :style="{ width: `${cardStepWidth - 6}px` }"
-            @click="handleCardClick(card.raw)"
+            class="live-win-card"
+            :style="{ width: `calc((100% - ${CARD_GAP}px) / 2)`, '--reveal-order': index }"
+            @click="onCardClick(card)"
           >
-            <!-- Floating Win Tag Pill (Positioned Absolute at Top Right - Never pushed by big amounts!) -->
-            <div
-              v-if="card.showTag && card.raw.tag && card.raw.tag.trim() !== ''"
-              class="win-tag-pill"
-              :class="{ 'bounce-in': card.showTagBounce }"
-            >
-              <span class="tag-multiplier">{{ card.raw.tag }}</span>
-              <!-- Glowing Fire Flame Icon with 爆 (Matching reference media_1793295459515_33695103.jpg) -->
-              <span class="tag-flame-icon">
-                <svg class="flame-svg" viewBox="0 0 22 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <defs>
-                    <linearGradient id="fireOuterGrad" x1="11" y1="0" x2="11" y2="26" gradientUnits="userSpaceOnUse">
-                      <stop offset="0%" stop-color="#FF6B3D" />
-                      <stop offset="30%" stop-color="#F5472E" />
-                      <stop offset="70%" stop-color="#E52B1E" />
-                      <stop offset="100%" stop-color="#B81414" />
-                    </linearGradient>
-                    <filter id="fireGlowEffect" x="-20%" y="-20%" width="140%" height="140%">
-                      <feDropShadow dx="0" dy="0" stdDeviation="1" flood-color="#FF4520" flood-opacity="0.8" />
-                    </filter>
-                  </defs>
-                  <path
-                    d="M11 0.5C10.4 3.2 8.5 5.5 6.5 7.8C4 10.5 2.5 13.5 2.5 17C2.5 21.7 6.3 25.5 11 25.5C15.7 25.5 19.5 21.7 19.5 17C19.5 13 17 9.8 14.5 7.2C14.1 6.8 13.6 6.3 13.2 5.8C13.7 7.9 13.1 10.1 11.9 11.6C11.5 10.4 11.6 8.7 12.1 7.4C12.5 6 12.5 4.1 12 2.5C11.6 1.7 11.3 0.9 11 0.5Z"
-                    fill="url(#fireOuterGrad)"
-                    filter="url(#fireGlowEffect)"
-                  />
-                  <text x="11" y="19" text-anchor="middle" font-size="8.5" font-weight="900" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">爆</text>
-                </svg>
-              </span>
-            </div>
-
-            <!-- Game Avatar -->
-            <div class="card-avatar-box">
-              <img
-                :src="card.raw.gameIcon || cowboyBlueSvg"
-                :alt="card.raw.gameTitle"
-                class="card-avatar-img"
-              />
-              <span v-if="card.raw.platformTag" class="card-platform-pill">
-                {{ card.raw.platformTag }}
-              </span>
-            </div>
-
-            <!-- Card Content -->
-            <div class="card-detail-col">
-              <!-- Top Row: Amount (Full width available now - never squished by tag!) -->
-              <div class="amount-row">
+            <div class="live-win-card__body">
+              <div class="live-win-card__art">
+                <img
+                  :src="card.raw.gameIcon || cowboyBlueSvg"
+                  :alt="card.raw.gameTitle"
+                  draggable="false"
+                />
+              </div>
+              <div class="live-win-card__info">
                 <div
-                  class="win-amount-wrap"
-                  :class="{
-                    'is-counting': card.isCounting,
-                    'is-settled': !card.isCounting,
-                  }"
+                  :ref="(el) => setAmountEl(card.raw.id, el)"
+                  v-fit-text="{ maxLines: 1, minScale: 0.7 }"
+                  class="live-win-card__amount"
+                  :class="card.countPhase ? `is-counting phase-${card.countPhase}` : ''"
                 >
-                  <span class="currency-symbol">{{ currencySymbol }}</span>
-                  <span class="amount-number">{{ card.displayedAmount }}</span>
+                  {{ currencySymbol }} {{ card.displayedAmount }}
+                </div>
+                <div class="live-win-card__title" :title="card.raw.gameTitle">
+                  {{ card.raw.gameTitle }}
+                </div>
+                <div class="live-win-card__user">
+                  {{ card.raw.username }}
                 </div>
               </div>
+            </div>
 
-              <!-- Middle: Game Title -->
-              <div class="game-title-text" :title="card.raw.gameTitle">
-                {{ card.raw.gameTitle }}
-              </div>
-
-              <!-- Bottom: Username -->
-              <div class="username-text">
-                {{ card.raw.username }}
-              </div>
+            <div
+              v-if="card.showTag && hasTag(card.raw.tag)"
+              class="live-win-card__tag"
+              :class="{ 'is-popping': card.showTagBounce }"
+            >
+              {{ tagLabel(card.raw.tag) }}
             </div>
           </div>
         </div>
@@ -568,339 +653,247 @@ onBeforeUnmount(() => {
 
 <style scoped lang="scss">
 .live-wins-wrapper {
-  margin: 6px 12px 6px;
+  margin: 0.1282rem 0.3077rem 0.1538rem;
   position: relative;
   user-select: none;
   box-sizing: border-box;
 }
 
-// ── Main Ticker Box ──
-.live-wins-ticker-box {
-  position: relative;
+.live-wins-box {
   display: flex;
   align-items: center;
-  height: 56px;
-  background: rgba(26, 23, 32, 0.75); // Naturally blends with h5-game project background
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-  box-sizing: border-box;
+  gap: 0.0897rem;
+  height: 1.641rem;
 }
 
-// ── Fixed Left Heading Column ──
-.live-wins-heading-col {
-  width: 32px;
-  height: 100%;
-  flex-shrink: 0;
-  background: rgba(20, 18, 25, 0.85); // Warm dark tone matching page background
-  border-right: 1px solid rgba(255, 255, 255, 0.07);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.live-wins-heading {
   position: relative;
-  z-index: 5;
-  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.25);
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1.641rem;
 
-  .heading-vertical-text {
+  &__bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    pointer-events: none;
+    -webkit-user-drag: none;
+  }
+
+  &__text {
+    position: absolute;
+    left: 0.2564rem;
+    top: 0.2051rem;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    line-height: 1.05;
+    width: 0.3077rem;
+  }
 
-    .heading-char {
-      font-size: 10px;
-      font-weight: 700;
-      color: #b8b3be;
-      letter-spacing: -0.5px;
+  &__char {
+    font-size: 0.3077rem;
+    line-height: 0.3077rem;
+    font-weight: 700;
+    color: #000;
+    text-align: center;
+  }
+
+  &__arrow {
+    position: absolute;
+    left: 0.7179rem;
+    top: 0.7179rem;
+    width: 0.1026rem;
+    height: 0.1795rem;
+    display: block;
+    pointer-events: none;
+    -webkit-user-drag: none;
+  }
+}
+
+.live-wins-viewport {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  touch-action: pan-y;
+  cursor: grab;
+
+  &.is-dragging {
+    cursor: grabbing;
+
+    .live-win-card,
+    .live-win-card:active {
+      transform: none;
     }
   }
 }
 
-// ── Sliding Viewport (Right Side) ──
-.live-wins-viewport {
-  flex: 1;
-  height: 100%;
-  overflow: hidden;
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  padding: 0 4px;
-  background: transparent; // Clean transparent, matching h5-game project background
-  touch-action: pan-y;
-  cursor: grab;
-  user-select: none;
-  -webkit-user-select: none;
-
-  &.is-dragging {
-    cursor: grabbing;
-  }
-}
-
-// ── Track ──
 .live-wins-track {
   display: flex;
-  align-items: flex-end;
-  gap: 6px;
+  align-items: center;
   width: 100%;
   height: 100%;
-  padding-bottom: 5px;
-  box-sizing: border-box;
   will-change: transform;
-
-  &.is-sliding {
-    transition-property: transform;
-    transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
-  }
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-// ── Individual Card ──
 .live-win-card {
+  position: relative;
   flex-shrink: 0;
-  height: 38px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 2px 6px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 7px;
-  position: relative; // Anchor for absolute floating tag!
-  overflow: visible;  // Allows floating pill to extend above top!
+  height: 1.641rem;
   box-sizing: border-box;
+  border-radius: 0.1282rem;
+  border: 1px solid rgba(235, 235, 235, 0.16);
+  background: rgba(255, 255, 255, 0.16);
+  overflow: hidden;
   cursor: pointer;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    transform 0.15s ease;
+  transition: transform 0.15s ease;
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.07);
-    border-color: rgba(255, 255, 255, 0.1);
+  .is-revealing > & {
+    animation: liveWinCardReveal 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) backwards;
+    animation-delay: calc(var(--reveal-order, 0) * 80ms);
   }
 
   &:active {
     transform: scale(0.97);
-    background: rgba(255, 255, 255, 0.1);
-  }
-}
-
-// ── Avatar ──
-.card-avatar-box {
-  width: 34px;
-  height: 34px;
-  flex-shrink: 0;
-  position: relative;
-  border-radius: 6px;
-  overflow: hidden;
-  background: #252a37;
-
-  .card-avatar-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
   }
 
-  .card-platform-pill {
+  &__body {
     position: absolute;
-    top: 1px;
-    left: 1px;
-    font-size: 8px;
-    padding: 0 2px;
-    background: rgba(0, 0, 0, 0.65);
-    color: #d1d5db;
-    border-radius: 3px;
-    font-weight: 700;
-    line-height: 1.1;
-    transform: scale(0.85);
-    transform-origin: top left;
-  }
-}
-
-// ── Detail Column ──
-.card-detail-col {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 1px;
-}
-
-// ── Amount Row ──
-.amount-row {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  height: 15px;
-  margin-top: 1px;
-  overflow: hidden;
-}
-
-// ── Win Amount Styles & Bouncing Effect ──
-.win-amount-wrap {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 1.5px;
-  font-family:
-    'DIN Alternate',
-    'DIN Next LT Pro',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
-  font-weight: 700;
-  white-space: nowrap;
-  transform-origin: left center;
-  transition:
-    color 0.35s ease,
-    transform 0.25s ease;
-
-  .currency-symbol {
-    font-size: 9.5px;
-    line-height: 1;
-    font-weight: 800;
-  }
-
-  .amount-number {
-    font-size: 11.5px;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-  }
-
-  // Settled State: Warm gold/amber color matching screenshot
-  &.is-settled {
-    color: #f68b36;
-    transform: scale(1);
-  }
-
-  // Counting & Bouncing State: Vivid bright yellow with rhythmic scale oscillation
-  &.is-counting {
-    color: #ffe853;
-    text-shadow: 0 0 8px rgba(255, 232, 83, 0.6);
-    animation: amountBounceAnim 0.32s ease-in-out infinite alternate;
-  }
-}
-
-// Rhythmic Count-up bouncing keyframes
-@keyframes amountBounceAnim {
-  0% {
-    transform: scale(1);
-  }
-  100% {
-    transform: scale(1.14);
-  }
-}
-
-// ── Win Tag Pill & Bounce In Effect ──
-// Exactly matching reference media_1793295459515_33695103.jpg: warm brick-amber gradient, flame with 爆
-.win-tag-pill {
-  position: absolute;
-  top: -11px;
-  right: 3px;
-  z-index: 10;
-  pointer-events: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 2.5px;
-  height: 14px;
-  padding: 0 3px 0 5px;
-  background: linear-gradient(135deg, rgba(87, 49, 56, 0.95) 0%, rgba(58, 36, 44, 0.95) 100%);
-  border: 0.8px solid rgba(142, 85, 72, 0.85);
-  border-radius: 7px 7px 7px 2.5px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-  transform-origin: center bottom;
-  box-sizing: border-box;
-
-  .tag-multiplier {
-    font-size: 9px;
-    font-weight: 700;
-    color: #ffffff;
-    line-height: 1;
-    letter-spacing: -0.2px;
-    font-family: 'DIN Alternate', 'DIN Next LT Pro', -apple-system, sans-serif;
-  }
-
-  .tag-flame-icon {
-    display: inline-flex;
+    left: 0.1538rem;
+    top: 0.1538rem;
+    right: 0.1538rem;
+    height: 1.3333rem;
+    display: flex;
     align-items: center;
-    justify-content: center;
-    line-height: 1;
-    filter: drop-shadow(0 0 2.5px rgba(245, 71, 46, 0.8));
+    gap: 0.2308rem;
+  }
 
-    .flame-svg {
-      width: 11px;
-      height: 13px;
+  &__art {
+    flex-shrink: 0;
+    width: 1.3846rem;
+    height: 1.3333rem;
+    border-radius: 0.1026rem;
+    overflow: hidden;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
       display: block;
-      transform-origin: center bottom;
-      animation: flameFlicker 1.8s ease-in-out infinite alternate;
+      pointer-events: none;
+      -webkit-user-drag: none;
     }
   }
 
-  // Requirement 3: Bouncing amplitude and rebound rhythm (elevated upwards, never dipping into numbers)
-  &.bounce-in {
-    animation: tagBounceInAnim 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  &__info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.0769rem;
+  }
+
+  &__amount {
+    font-family: Arimo, Arial, Helvetica, sans-serif;
+    font-size: 0.3846rem;
+    line-height: 0.4359rem;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    will-change: transform;
+
+    &.is-counting {
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    &.phase-1 {
+      background-image: linear-gradient(180deg, #a0d911 30.34%, #eaff8f 69.37%);
+    }
+
+    &.phase-2 {
+      background-image: linear-gradient(180deg, #fadb14 28.04%, #fffb8f 69.37%);
+    }
+
+    &.phase-3 {
+      background-image: linear-gradient(180deg, #fa8c16 30.34%, #ffd591 69.37%);
+    }
+  }
+
+  &__title,
+  &__user {
+    font-size: 0.2051rem;
+    line-height: 1.2;
+    color: rgba(255, 255, 255, 0.81);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__tag {
+    position: absolute;
+    top: -0.0256rem;
+    right: -0.0733rem;
+    z-index: 2;
+    padding: 0.0492rem 0.2482rem;
+    border-radius: 0.1498rem;
+    background: #ea366b;
+    color: #f3f4f6;
+    font-size: 0.2247rem;
+    line-height: 0.282rem;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+
+    &.is-popping {
+      animation: liveWinTagPop 0.5s ease-in-out forwards;
+    }
   }
 }
 
-@keyframes flameFlicker {
-  0% {
-    transform: scale(1) rotate(0deg);
-    filter: brightness(1);
+:root[data-theme='light'] .live-win-card {
+  border-color: #ebebeb;
+  background: #fff;
+
+  .live-win-card__amount {
+    color: #000;
   }
-  50% {
-    transform: scale(1.08) rotate(-1.5deg);
-    filter: brightness(1.2);
-  }
-  100% {
-    transform: scale(1.02) rotate(1.5deg);
-    filter: brightness(1.05);
+
+  .live-win-card__title,
+  .live-win-card__user {
+    color: rgba(0, 0, 0, 0.5);
   }
 }
 
-@keyframes tagBounceInAnim {
+@keyframes liveWinCardReveal {
   0% {
     opacity: 0;
-    transform: scale(0.2) translateY(-4px);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.22) translateY(-3px);
-  }
-  70% {
-    transform: scale(0.94) translateY(0);
-  }
-  85% {
-    transform: scale(1.06) translateY(-1px);
+    transform: translate3d(0, 0.2rem, 0);
   }
   100% {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: translateZ(0);
   }
 }
 
-// ── Game Title ──
-.game-title-text {
-  font-size: 9.5px;
-  color: #a6afc2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.15;
-}
-
-// ── Username ──
-.username-text {
-  font-size: 8.5px;
-  color: #727c93;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.1;
+@keyframes liveWinTagPop {
+  0% {
+    opacity: 0;
+    transform: translateY(1.0256rem) scale(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-0.2564rem) scale(1.2);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 </style>

@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import bannerYangduoduo from '@/assets/images/banner_yangduoduo.png'
 import bannerVipBonus from '@/assets/images/banner_vip_bonus.png'
+import bannerIphoneDuo from '@/assets/images/casino_banner_iphone_duo.png'
 
 const props = withDefaults(
   defineProps<{
-    autoplayDuration?: number // Duration in ms each banner stays (default 3500ms)
-    transitionDuration?: number // Slide transition speed in ms (default 500ms)
+    autoplayDuration?: number
+    transitionDuration?: number
   }>(),
   {
     autoplayDuration: 3500,
@@ -15,6 +16,12 @@ const props = withDefaults(
 )
 
 const banners = [
+  {
+    id: 'iphone_duo',
+    img: bannerIphoneDuo,
+    alt: 'iPhone Duo 免费赛 总奖池 32,888',
+    link: '#',
+  },
   {
     id: 'yangduoduo',
     img: bannerYangduoduo,
@@ -29,28 +36,207 @@ const banners = [
   },
 ]
 
-const currentIndex = ref(0)
-const isTransitioning = ref(false)
+const count = banners.length
+const loop = count > 1
+const COPIES = 3
+
+const slides = computed(() => {
+  if (!loop) return banners.map((b, i) => ({ ...b, key: `${b.id}-${i}` }))
+  const out: Array<(typeof banners)[number] & { key: string }> = []
+  for (let c = 0; c < COPIES; c++) {
+    banners.forEach((b, i) => out.push({ ...b, key: `${b.id}-${c}-${i}` }))
+  }
+  return out
+})
+
+const position = ref(loop ? count : 0)
+const transitionMs = ref(0)
+const dragOffset = ref(0)
+const isDragging = ref(false)
+const isAnimating = ref(false)
 const progressKey = ref(0)
-let timer: ReturnType<typeof setTimeout> | null = null
+const viewportRef = ref<HTMLElement | null>(null)
+const trackRef = ref<HTMLElement | null>(null)
 
-function nextBanner() {
-  if (isTransitioning.value) return
-  isTransitioning.value = true
-  currentIndex.value = (currentIndex.value + 1) % banners.length
-  progressKey.value++
+let autoplayTimer: ReturnType<typeof setTimeout> | null = null
+let settleTimer: ReturnType<typeof setTimeout> | null = null
 
-  setTimeout(() => {
-    isTransitioning.value = false
-    scheduleNext()
-  }, props.transitionDuration)
+let pointerId: number | null = null
+let startX = 0
+let startY = 0
+let axisLocked: 'x' | 'y' | null = null
+let dragStartOffset = 0
+let lastMoveX = 0
+let lastMoveT = 0
+let velocityX = 0
+
+const trackStyle = computed(() => ({
+  transform: `translate3d(calc(${-position.value * 100}% + ${dragOffset.value}px), 0, 0)`,
+  transitionDuration: `${transitionMs.value}ms`,
+}))
+
+function clearTimers() {
+  if (autoplayTimer) {
+    clearTimeout(autoplayTimer)
+    autoplayTimer = null
+  }
+  if (settleTimer) {
+    clearTimeout(settleTimer)
+    settleTimer = null
+  }
 }
 
 function scheduleNext() {
-  if (timer) clearTimeout(timer)
-  timer = setTimeout(() => {
-    nextBanner()
-  }, props.autoplayDuration)
+  if (autoplayTimer) clearTimeout(autoplayTimer)
+  autoplayTimer = setTimeout(() => goTo(position.value + 1), props.autoplayDuration)
+}
+
+function normalize(pos: number) {
+  let p = pos
+  while (p < count) p += count
+  while (p >= 2 * count) p -= count
+  return p
+}
+
+function viewportWidth() {
+  return viewportRef.value?.clientWidth || 1
+}
+
+function goTo(target: number, durationMs = props.transitionDuration) {
+  if (!loop) return
+  const clamped = Math.max(0, Math.min(COPIES * count - 1, target))
+  isAnimating.value = true
+  transitionMs.value = durationMs
+  dragOffset.value = 0
+  position.value = clamped
+  progressKey.value++
+
+  if (settleTimer) clearTimeout(settleTimer)
+  settleTimer = setTimeout(() => {
+    transitionMs.value = 0
+    position.value = normalize(position.value)
+    isAnimating.value = false
+    scheduleNext()
+  }, durationMs)
+}
+
+function currentTrackOffset(): number {
+  const el = trackRef.value
+  if (!el) return -position.value * viewportWidth() + dragOffset.value
+  const transform = getComputedStyle(el).transform
+  if (!transform || transform === 'none') return -position.value * viewportWidth() + dragOffset.value
+  const matrix = new DOMMatrixReadOnly(transform)
+  return Number.isFinite(matrix.m41) ? matrix.m41 : -position.value * viewportWidth()
+}
+
+function releasePointer(id: number) {
+  const el = viewportRef.value
+  if (el && el.hasPointerCapture(id)) {
+    el.releasePointerCapture(id)
+  }
+}
+
+function onPointerDown(e: PointerEvent) {
+  if (!loop) return
+  if (e.pointerType === 'mouse' && e.button !== 0) return
+  pointerId = e.pointerId
+  startX = e.clientX
+  startY = e.clientY
+  lastMoveX = e.clientX
+  lastMoveT = performance.now()
+  velocityX = 0
+  axisLocked = null
+  isDragging.value = false
+  clearTimers()
+
+  if (isAnimating.value) {
+    const offset = currentTrackOffset()
+    transitionMs.value = 0
+    dragOffset.value = offset + position.value * viewportWidth()
+    isAnimating.value = false
+  }
+  dragStartOffset = dragOffset.value
+  viewportRef.value?.setPointerCapture(e.pointerId)
+}
+
+function onPointerMove(e: PointerEvent) {
+  if (pointerId !== e.pointerId) return
+  const dx = e.clientX - startX
+  const dy = e.clientY - startY
+
+  if (!axisLocked) {
+    if (Math.abs(dx) < 4 && Math.abs(dy) < 4) return
+    axisLocked = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
+    if (axisLocked === 'y') {
+      releasePointer(e.pointerId)
+      pointerId = null
+      resumeAfterPointer()
+      return
+    }
+    isDragging.value = true
+    transitionMs.value = 0
+  }
+
+  if (axisLocked === 'x') {
+    const now = performance.now()
+    const dt = now - lastMoveT
+    if (dt >= 8) {
+      const instant = (e.clientX - lastMoveX) / dt
+      velocityX = velocityX * 0.6 + instant * 0.4
+      lastMoveX = e.clientX
+      lastMoveT = now
+    }
+    const width = viewportWidth()
+    const maxRight = position.value * width
+    const maxLeft = -(COPIES * count - 1 - position.value) * width
+    dragOffset.value = Math.max(maxLeft, Math.min(maxRight, dragStartOffset + dx))
+  }
+}
+
+function settleFromOffset() {
+  const width = viewportWidth()
+  const pos = position.value - dragOffset.value / width
+  const stale = performance.now() - lastMoveT > 120
+  let target = Math.round(pos)
+  if (!stale && Math.abs(velocityX) > 0.35) {
+    target = velocityX < 0 ? Math.ceil(pos) : Math.floor(pos)
+  }
+  const remaining = Math.abs(target - pos) * width
+  const duration = Math.max(180, Math.round(props.transitionDuration * Math.min(1, remaining / width)))
+  goTo(target, duration)
+}
+
+function resumeAfterPointer() {
+  if (dragOffset.value !== 0) {
+    settleFromOffset()
+  } else {
+    scheduleNext()
+  }
+}
+
+function finishDrag(e: PointerEvent) {
+  if (pointerId !== e.pointerId) return
+  pointerId = null
+  releasePointer(e.pointerId)
+
+  if (!isDragging.value) {
+    resumeAfterPointer()
+    return
+  }
+  isDragging.value = false
+  settleFromOffset()
+}
+
+function onPointerCancel(e: PointerEvent) {
+  if (pointerId !== e.pointerId) return
+  pointerId = null
+  if (isDragging.value) {
+    isDragging.value = false
+    velocityX = 0
+    settleFromOffset()
+  } else {
+    resumeAfterPointer()
+  }
 }
 
 onMounted(() => {
@@ -58,36 +244,38 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  if (timer) clearTimeout(timer)
+  clearTimers()
 })
 </script>
 
 <template>
   <div class="casino-promo-banner-container">
-    <div class="banner-viewport">
-      <!-- Sliding Track -->
-      <div
-        class="banner-track"
-        :style="{
-          transform: `translate3d(-${currentIndex * 100}%, 0, 0)`,
-          transitionDuration: isTransitioning ? `${props.transitionDuration}ms` : '0ms',
-        }"
-      >
+    <div
+      ref="viewportRef"
+      class="banner-viewport"
+      :class="{ 'is-dragging': isDragging }"
+      @pointerdown="onPointerDown"
+      @pointermove="onPointerMove"
+      @pointerup="finishDrag"
+      @pointercancel="onPointerCancel"
+      @lostpointercapture="onPointerCancel"
+    >
+      <div ref="trackRef" class="banner-track" :style="trackStyle">
         <div
-          v-for="(banner, index) in banners"
-          :key="banner.id"
+          v-for="(slide, index) in slides"
+          :key="slide.key"
           class="banner-slide"
-          :class="{ 'is-active': index === currentIndex }"
+          :class="{ 'is-active': index === position }"
         >
-          <img :src="banner.img" :alt="banner.alt" class="banner-img" />
+          <img :src="slide.img" :alt="slide.alt" class="banner-img" draggable="false" />
         </div>
       </div>
 
-      <!-- Glowing Animated Progress Bar (Matching Video & Screenshot) -->
       <div class="banner-progress-track">
         <div
           :key="progressKey"
           class="banner-progress-bar"
+          :class="{ 'is-paused': isDragging }"
           :style="{
             animationDuration: `${props.autoplayDuration}ms`,
           }"
@@ -99,7 +287,7 @@ onBeforeUnmount(() => {
 
 <style scoped lang="scss">
 .casino-promo-banner-container {
-  margin: 6px 12px 6px;
+  margin: 0.1538rem 0.2308rem 0;
   position: relative;
   user-select: none;
 }
@@ -107,15 +295,18 @@ onBeforeUnmount(() => {
 .banner-viewport {
   position: relative;
   width: 100%;
-  aspect-ratio: 356 / 56;
-  max-height: 58px;
-  border-radius: 10px;
+  aspect-ratio: 372 / 69;
+  border-radius: 0.2564rem;
+  border: 0.5px solid #00ffbc;
+  box-sizing: border-box;
   overflow: hidden;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
-  background: rgba(26, 23, 32, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #181b24;
+  touch-action: pan-y;
+  cursor: grab;
+
+  &.is-dragging {
+    cursor: grabbing;
+  }
 }
 
 .banner-track {
@@ -137,8 +328,15 @@ onBeforeUnmount(() => {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center bottom;
     display: block;
+    pointer-events: none;
+    -webkit-user-drag: none;
   }
+}
+
+:root[data-theme='light'] .banner-viewport {
+  border-width: 1px;
 }
 
 // ── Glowing Bottom Progress Bar ──
@@ -161,6 +359,10 @@ onBeforeUnmount(() => {
   animation-name: progressFill;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
+
+  &.is-paused {
+    animation-play-state: paused;
+  }
 }
 
 @keyframes progressFill {

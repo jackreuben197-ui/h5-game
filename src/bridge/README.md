@@ -1,5 +1,7 @@
 # Bridge 目录说明
 
+返回 [开发入口](../../README.md) · [会话与接口参考](../../docs/development/integration.md)
+
 本文档说明 `src/bridge` 各子目录职责边界，目标是让后续改动能快速判断”代码该放哪里”。
 
 ## 0. 协议来源：本地 vs 共享包

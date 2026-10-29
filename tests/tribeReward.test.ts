@@ -4,6 +4,7 @@ import { registerHooks } from 'node:module'
 import {
   enqueueReward,
   hideRewardQueue,
+  rewardReceiptSourceKey,
   showNextReward,
   type RewardReceipt,
   type RewardReceiptQueue,
@@ -104,6 +105,19 @@ function queue() {
 function receipt(id: string, source: RewardReceipt['source'] = 'activity'): RewardReceipt {
   return { orderNo: id, source, rewardGold: 100, rewards: [] }
 }
+
+test('queued reward descriptions follow recharge source and the server activity kind', () => {
+  const { state, remember } = queue()
+  enqueueReward(state, { ...receipt('hand'), rewardKind: 1 }, remember, false)
+  enqueueReward(state, { ...receipt('invite'), rewardKind: 2 }, remember, false)
+  showNextReward(state, true)
+  assert.equal(rewardReceiptSourceKey(state.current!), 'UIChannelC_GameReward')
+  state.current = null
+  showNextReward(state, true)
+  assert.equal(rewardReceiptSourceKey(state.current!), 'UIChannelC_InviteTitle')
+  assert.equal(rewardReceiptSourceKey(receipt('recharge', 'recharge')), 'UIRechargeReward_RechargeSource')
+  assert.equal(rewardReceiptSourceKey({ ...receipt('future'), rewardKind: 99 }), 'UIRechargeReward_ReceivedTitle')
+})
 
 test('activity rewards queue during gameplay and appear once after returning to H5', () => {
   const { state, remember } = queue()

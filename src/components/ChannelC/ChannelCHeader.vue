@@ -4,7 +4,9 @@ import { useRouter } from 'vue-router'
 import { t } from '@/i18n'
 import { useTheme } from '@/composables/useTheme'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { useGameStore } from '@/stores/game'
 import { requireRealUser } from '@/session/realUserGate'
+import GuestAuthActions from '@/components/GuestAuthActions.vue'
 import ThemeQuickSwitch from '@/components/ThemeQuickSwitch.vue'
 import logo from '@/assets/channelC/logo.png'
 import search from '@/assets/channelC/search.svg'
@@ -24,6 +26,7 @@ defineEmits<{ action: [action: ChannelCAction] }>()
 const router = useRouter()
 const { isDark } = useTheme()
 const user = useUserInfoStore()
+const gameStore = useGameStore()
 const avatar = computed(() => user.userInfo?.user?.avatar || defaultAvatar)
 const bannerUrl = computed(() => props.banner?.trim() || defaultBanner)
 const actions: Array<{ key: ChannelCAction; label: string; icon: string }> = [
@@ -48,6 +51,7 @@ function fallbackBanner(event: Event) {
   <header class="c-header">
     <img class="c-logo" :src="logo" alt="POKER" />
     <div class="c-header-actions">
+      <GuestAuthActions class="c-auth-actions" />
       <button
         type="button"
         class="c-search"
@@ -57,6 +61,7 @@ function fallbackBanner(event: Event) {
         <img :src="search" alt="" />
       </button>
       <button
+        v-if="gameStore.isRealUser"
         type="button"
         class="c-message"
         :aria-label="t('UIMine_MsgSystemContent')"
@@ -65,6 +70,7 @@ function fallbackBanner(event: Event) {
         <img :src="isDark ? messageDark : messageLight" alt="" />
       </button>
       <button
+        v-if="gameStore.isRealUser"
         type="button"
         class="c-user"
         :aria-label="t('UIMine_UserInfoSetting_title')"
@@ -107,6 +113,7 @@ function fallbackBanner(event: Event) {
 }
 .c-logo {
   width: 3.795rem;
+  min-width: 0;
   height: 1.436rem;
   margin-top: 0.02rem;
   margin-left: 0.1rem;
@@ -114,8 +121,13 @@ function fallbackBanner(event: Event) {
 }
 .c-header-actions {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 0.256rem;
+}
+.c-auth-actions {
+  --guest-auth-button-height: 0.82rem;
+  --guest-auth-button-padding: 0 0.4rem;
 }
 .c-header-actions button {
   display: grid;

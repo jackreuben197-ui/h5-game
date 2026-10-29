@@ -5,6 +5,8 @@ export interface RewardReceipt {
   rewardGold: number
   rewards: RechargeRewardItem[]
   source: 'recharge' | 'activity'
+  /** 155 活动奖励类型：1 对局，2 邀新；133 充值通知不带此字段。 */
+  rewardKind?: number
 }
 export interface TribeActivityRewardNotification extends RewardReceipt {
   source: 'activity'
@@ -17,6 +19,14 @@ export interface RewardReceiptQueue {
   current: RewardReceipt | null
   pending: RewardReceipt[]
 }
+
+export function rewardReceiptSourceKey(receipt: RewardReceipt): string {
+  if (receipt.source === 'recharge') return 'UIRechargeReward_RechargeSource'
+  if (receipt.rewardKind === 1) return 'UIChannelC_GameReward'
+  if (receipt.rewardKind === 2) return 'UIChannelC_InviteTitle'
+  return 'UIRechargeReward_ReceivedTitle'
+}
+
 export function showNextReward(queue: RewardReceiptQueue, visible: boolean): void {
   if (!queue.current && visible) queue.current = queue.pending.shift() ?? null
 }

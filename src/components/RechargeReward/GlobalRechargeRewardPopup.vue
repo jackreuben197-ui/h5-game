@@ -6,6 +6,7 @@ import { useTribeRewardStore } from '@/stores/tribeReward'
 import {
   enqueueReward,
   hideRewardQueue,
+  rewardReceiptSourceKey,
   showNextReward,
   type RewardReceiptQueue,
 } from '@/features/tribeReward/notification'
@@ -203,6 +204,7 @@ onBeforeUnmount(() => {
                 ? 'UIRechargeReward_CombinedDescription'
                 : 'UIRechargeReward_CoinsDescription'
               : 'UIRechargeReward_ReceivedDescription',
+            t(rewardReceiptSourceKey(current)),
           )
         }}
       </p>

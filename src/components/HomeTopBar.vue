@@ -1,38 +1,15 @@
 <script setup lang="ts">
-import { t } from '@/i18n'
-import { requireRealUser } from '@/session/realUserGate'
-import { useGameStore } from '@/stores/game'
+import GuestAuthActions from '@/components/GuestAuthActions.vue'
 
 withDefaults(defineProps<{ standalone?: boolean }>(), {
   standalone: false,
 })
-
-const gameStore = useGameStore()
-
-function openGuestAuth(mode: 'login' | 'register'): void {
-  requireRealUser(undefined, { mode })
-}
 </script>
 
 <template>
   <div class="home-top-bar" :class="{ 'home-top-bar--standalone': standalone }">
     <span class="home-top-bar__logo">POKER</span>
-    <div v-if="!gameStore.isRealUser" class="home-top-bar__actions">
-      <button
-        class="home-top-bar__btn home-top-bar__btn--register"
-        type="button"
-        @click="openGuestAuth('register')"
-      >
-        {{ t('UILogin_TitleRegister') }}
-      </button>
-      <button
-        class="home-top-bar__btn home-top-bar__btn--login"
-        type="button"
-        @click="openGuestAuth('login')"
-      >
-        {{ t('UIGuild_MemberManagerSortByLastLoginTime') }}
-      </button>
-    </div>
+    <GuestAuthActions />
   </div>
 </template>
 
@@ -67,50 +44,6 @@ function openGuestAuth(mode: 'login' | 'register'): void {
 
   @include theme-light {
     color: #000;
-  }
-}
-
-.home-top-bar__actions {
-  display: flex;
-  gap: 0.1rem;
-}
-
-.home-top-bar__btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.18rem 0.75rem;
-  border: 0;
-  border-radius: 0.56rem;
-  font-family: 'PingFang SC', sans-serif;
-  font-size: 0.34rem;
-  font-weight: 500;
-  white-space: nowrap;
-  cursor: pointer;
-
-  &:active {
-    opacity: 0.85;
-  }
-}
-
-.home-top-bar__btn--register {
-  color: rgba(0, 0, 0, 0.82);
-  background: rgba(174, 174, 174, 0.52);
-  box-shadow: 0.01rem 0.01rem 0.03rem rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(0.14rem);
-
-  @include theme-light {
-    color: #fff;
-  }
-}
-
-.home-top-bar__btn--login {
-  color: #fff;
-  background: linear-gradient(157deg, #05e7ae 0%, #027a5c 100%);
-  backdrop-filter: blur(0.55rem);
-
-  @include theme-light {
-    background: var(--c-brand);
   }
 }
 </style>

@@ -82,7 +82,7 @@ test('register returns login fields while invite_register returns only the regis
     email: 'player@example.com',
     password: 'hashed',
     invite_code: 'club-code',
-    inviter_random_id: 123456,
+    random_id: 123456,
   }
   state.data = { token: 'registered-token' }
   const registered = await user.postUserRegisterApi(payload)
@@ -92,6 +92,8 @@ test('register returns login fields while invite_register returns only the regis
   assert.equal(invited.data, 'player@example.com')
   assert.equal(state.calls[0][0], '/user/register')
   assert.equal(state.calls[1][0], '/user/invite_register')
-  assert.equal(state.calls[0][1].inviter_random_id, 123456)
+  assert.equal(state.calls[0][1].random_id, 123456)
+  assert.equal(state.calls[1][1].random_id, 123456)
+  assert.equal('inviter_random_id' in state.calls[0][1], false)
   assert.equal(state.calls[1][1].invite_code, 'club-code')
 })

@@ -21,8 +21,8 @@ const show = defineModel<boolean>('show', { required: true })
     :card-style="{
       background: 'rgba(0, 0, 0, 0.1)',
       border: 'var(--reward-card-border)',
-      backdropFilter: 'blur(72px)',
-      WebkitBackdropFilter: 'blur(72px)',
+      backdropFilter: 'none',
+      WebkitBackdropFilter: 'none',
     }"
   >
     <template #title>
@@ -57,9 +57,17 @@ const show = defineModel<boolean>('show', { required: true })
   max-width: calc(100vw - 0.5128rem);
 }
 
+// 虚化与 Vant 淡入位于同一层，避免父层 opacity 动画隔断内层的背景采样。
+.game-dialog.c-reward-dialog.van-dialog {
+  border-radius: var(--reward-card-radius) !important;
+  backdrop-filter: blur(72px);
+  -webkit-backdrop-filter: blur(72px);
+}
+
 // GameDialog 会 teleport；活动弹窗专用类隔离全局主题覆盖。
 .c-reward-dialog {
   --reward-card-border: #{r(0.2)} solid rgba(242, 242, 242, 0.6);
+  --reward-card-radius: #{r(21.988)};
   --reward-heading-size: #{r(21.988)};
   --reward-close-size: #{r(28.811)};
   --reward-close-top: #{r(-7.58)};
@@ -68,10 +76,8 @@ const show = defineModel<boolean>('show', { required: true })
     gap: r(4.58);
     padding: r(20.47) r(14.96) r(19.47);
     border: r(0.2) solid rgba(242, 242, 242, 0.6);
-    border-radius: r(21.988);
+    border-radius: var(--reward-card-radius);
     background: rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(72px);
-    -webkit-backdrop-filter: blur(72px);
     box-shadow: inset r(-2.275) r(-2.275) r(10.615) rgba(255, 255, 255, 0.4),
       inset r(1.516) r(2.275) r(23.86) rgba(255, 255, 255, 0.64),
       0 r(5.307) r(13.648) rgba(0, 0, 0, 0.19);
@@ -129,6 +135,7 @@ const show = defineModel<boolean>('show', { required: true })
 }
 .c-reward-dialog--recharge {
   --reward-card-border: #{r(1.227)} solid rgba(242, 242, 242, 0.6);
+  --reward-card-radius: #{r(27.372)};
   --reward-heading-size: #{r(26.429)};
   --reward-close-size: #{r(35.867)};
   --reward-close-top: #{r(-12.3)};
@@ -137,10 +144,10 @@ const show = defineModel<boolean>('show', { required: true })
     gap: r(13.22);
     padding: r(25.5) r(19.54) r(26.8);
     border-width: r(1.227);
-    border-radius: r(27.372);
   }
 }
 .c-reward-dialog--invite {
+  --reward-card-radius: #{r(24.724)};
   --reward-heading-size: #{r(26.429)};
   --reward-close-size: #{r(32.396)};
   --reward-close-top: #{r(-9.38)};
@@ -148,7 +155,6 @@ const show = defineModel<boolean>('show', { required: true })
   .game-dialog__card {
     gap: r(11.68);
     padding: r(23.67) r(17.7) r(15.15);
-    border-radius: r(24.724);
   }
 }
 </style>

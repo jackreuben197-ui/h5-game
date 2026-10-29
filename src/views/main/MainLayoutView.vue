@@ -116,6 +116,10 @@ watch(
   .main-layout-content {
     padding-top: var(--app-content-safe-area-top, env(safe-area-inset-top));
   }
+  .module-slot {
+    // 长列表必须撑开内容容器，底部菜单的预留空间才能计入滚动范围。
+    flex: 1 0 auto;
+  }
 }
 
 .main-layout--search .main-layout-content {

@@ -1,4 +1,4 @@
-/** 普通邀请人使用已有随机 ID；只接受可精确序列化为 JSON 整数的正数。 */
+/** 邀请人使用已有玩家随机 ID；只接受可精确序列化为 JSON 整数的正数。 */
 export function normalizeInviterRandomId(value: unknown): number | undefined {
   if (typeof value !== 'number' && typeof value !== 'string') return undefined
   if (!/^\d+$/.test(String(value).trim())) return undefined
@@ -9,9 +9,23 @@ export function normalizeInviterRandomId(value: unknown): number | undefined {
 export function withPlayerInviter<T extends { invite_code?: string }>(
   payload: T,
   inviter: unknown,
-): T & { inviter_random_id?: number } {
+): T & { random_id?: number } {
   const id = normalizeInviterRandomId(inviter)
-  return id && payload.invite_code?.trim() ? { ...payload, inviter_random_id: id } : payload
+  return id && payload.invite_code?.trim() ? { ...payload, random_id: id } : payload
+}
+
+export function appendInvitationRandomId(baseUrl: string, inviter: unknown): string {
+  const id = normalizeInviterRandomId(inviter)
+  if (!baseUrl || !id) return baseUrl
+  const url = new URL(baseUrl)
+  const [path, query = ''] = url.hash.slice(1).split('?')
+  const params = new URLSearchParams(query)
+  url.searchParams.delete('inviter_random_id')
+  url.searchParams.delete('random_id')
+  params.delete('inviter_random_id')
+  params.set('random_id', String(id))
+  url.hash = `${path || '/'}?${params}`
+  return url.toString()
 }
 
 export function buildPlayerInvitationUrl(
@@ -25,8 +39,7 @@ export function buildPlayerInvitationUrl(
   const [path, query = ''] = url.hash.slice(1).split('?')
   const params = new URLSearchParams(query)
   params.set('invite_code', inviteCode.trim())
-  params.set('inviter_random_id', String(id))
   params.set('mode', 'register')
   url.hash = `${path || '/'}?${params}`
-  return url.toString()
+  return appendInvitationRandomId(url.toString(), id)
 }

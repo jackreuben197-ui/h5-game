@@ -102,7 +102,7 @@ test('player invitation passes the existing random id only together with a targe
   assert.deepEqual(withPlayerInviter({ invite_code: 'club-code', email: 'a@b.com' }, '123456'), {
     invite_code: 'club-code',
     email: 'a@b.com',
-    inviter_random_id: 123456,
+    random_id: 123456,
   })
   assert.deepEqual(withPlayerInviter({ invite_code: '' }, 123456), { invite_code: '' })
   assert.deepEqual(withPlayerInviter({ invite_code: 'club-code' }, 0), { invite_code: 'club-code' })
@@ -119,7 +119,8 @@ test('player invite URLs include both values on custom domains and preserve exis
   assert.equal(url.hostname, 'club.example')
   assert.equal(params.get('source'), 'qr')
   assert.equal(params.get('invite_code'), 'club-code')
-  assert.equal(params.get('inviter_random_id'), '123456')
+  assert.equal(params.get('random_id'), '123456')
+  assert.equal(params.has('inviter_random_id'), false)
   assert.equal(params.get('mode'), 'register')
   assert.equal(params.has('i'), false)
 })

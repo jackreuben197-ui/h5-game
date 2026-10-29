@@ -988,7 +988,12 @@ async function generateInviteQrCode(): Promise<void> {
     userInfoStore.channelDefaultClub,
   )
   const url = isAgent.value && agentInviteCode.value
-    ? buildChannelAgentInviteUrl(agentInviteCode.value, clubInviteCode, safariBaseUrl)
+    ? buildChannelAgentInviteUrl(
+        agentInviteCode.value,
+        clubInviteCode,
+        safariBaseUrl,
+        agentShareRandomId.value || userInfoStore.userInfo?.user?.un_id,
+      )
     : buildChannelPlayerInviteUrl(userInfoStore.userInfo?.user?.un_id, clubInviteCode, safariBaseUrl)
 
   try {

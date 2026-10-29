@@ -133,8 +133,8 @@ function toggleTheme(): void {
   top: 0.017rem;
   left: 0.02rem;
   z-index: 1;
-  width: 0.36rem;
-  height: 0.36rem;
+  width: 0.366rem;
+  height: 0.366rem;
   border-radius: 50%;
   background: #f9f9f9;
   transform: translateX(0.307rem);

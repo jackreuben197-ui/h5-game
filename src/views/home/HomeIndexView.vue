@@ -667,7 +667,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <ChannelCHome v-if="isVersionC" :ready="homeContentReady" />
+  <ChannelCHome
+    v-if="isVersionC"
+    :ready="homeContentReady"
+    :club-management="canManageChannelClub"
+  />
   <div
     v-else
     class="home-page"
@@ -900,20 +904,19 @@ onBeforeUnmount(() => {
         </div>
       </Transition>
     </div>
-
-    <div v-if="showChannelFloatingActions" class="floating-action-area">
-      <button
-        v-if="canManageChannelClub"
-        class="floating-menu-btn"
-        type="button"
-        :aria-label="t('UIClub_ClubManager')"
-        @click="goToClubDetail"
-      >
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-    </div>
+  </div>
+  <div v-if="showChannelFloatingActions" class="floating-action-area">
+    <button
+      v-if="canManageChannelClub"
+      class="floating-menu-btn"
+      type="button"
+      :aria-label="t('UIClub_ClubManager')"
+      @click="goToClubDetail"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
   </div>
 </template>
 

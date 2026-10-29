@@ -124,8 +124,8 @@ export interface UserRegisterRequest {
   platform?: number
   // 邀请码。
   invite_code?: string
-  // 普通邀请人的随机 ID；非 0 时必须同时传目标俱乐部 invite_code。
-  inviter_random_id?: number
+  // 分享链接中邀请人的玩家随机 ID，与本次 invite_code 一起提交。
+  random_id?: number
   // 绑定邀请码唯一id（代理）
   trace_hash?: string
   [key: string]: unknown

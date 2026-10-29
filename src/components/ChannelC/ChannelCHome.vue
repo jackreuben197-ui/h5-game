@@ -24,10 +24,18 @@ import ChannelCFilters from './ChannelCFilters.vue'
 import ChannelCOverlays from './ChannelCOverlays.vue'
 import ChannelCWaterfall from './ChannelCWaterfall.vue'
 
-const props = withDefaults(defineProps<{ section?: ChannelCSection; ready?: boolean }>(), {
-  section: 'home',
-  ready: undefined,
-})
+const props = withDefaults(
+  defineProps<{
+    section?: ChannelCSection
+    ready?: boolean
+    clubManagement?: boolean
+  }>(),
+  {
+    section: 'home',
+    ready: undefined,
+    clubManagement: false,
+  },
+)
 const { club, clubId, tribeId, visibleRooms, visibleMatches, tournamentSeries } = useChannelCFeed()
 useChannelCVersionRouting()
 const ready = useChannelCDataReady(toRef(props, 'ready'))
@@ -121,7 +129,11 @@ watch(
 </script>
 
 <template>
-  <div ref="root" class="channel-c-page">
+  <div
+    ref="root"
+    class="channel-c-page"
+    :class="{ 'channel-c-page--club-management': section === 'home' && clubManagement }"
+  >
     <ChannelCHeader
       v-if="section === 'home'"
       :banner="banner"
@@ -174,6 +186,12 @@ watch(
   max-width: 10rem;
   margin: 0 auto;
   padding: 0 0.256rem 0.25rem;
+}
+@media (max-width: 599px) {
+  .channel-c-page--club-management {
+    // 为右下角管理入口留出空间，末张卡片仍可完整滚出。
+    padding-bottom: 1.2rem;
+  }
 }
 .c-empty {
   display: flex;

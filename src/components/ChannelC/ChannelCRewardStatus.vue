@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { t } from '@/i18n'
 import checkIcon from '@/assets/channelC/reward-check.svg'
-withDefaults(defineProps<{ credited: boolean; kind?: 'game' | 'invite' }>(), { kind: 'game' })
+withDefaults(defineProps<{ credited: boolean; completed?: boolean; kind?: 'game' | 'invite' }>(), {
+  kind: 'game',
+})
 </script>
 
 <template>
@@ -9,7 +11,17 @@ withDefaults(defineProps<{ credited: boolean; kind?: 'game' | 'invite' }>(), { k
     <span v-if="credited" class="c-reward-status-icon" aria-hidden="true">
       <img class="c-reward-status-check" :src="checkIcon" alt="" />
     </span>
-    <span class="c-reward-status-copy">{{ t(credited ? 'UIChannelC_Credited' : 'UIChannelC_Pending') }}</span>
+    <span class="c-reward-status-copy">
+{{
+      t(
+        credited
+          ? 'UIChannelC_Credited'
+          : completed
+            ? 'UIHappyShop_PrizeGiving'
+            : 'UIChannelC_Pending',
+      )
+    }}
+</span>
   </span>
 </template>
 

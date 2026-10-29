@@ -2,6 +2,7 @@ import { defineConfig, loadEnv, type Plugin } from 'vite'
 import { fileURLToPath, URL } from 'node:url'
 import { extname } from 'node:path'
 import { readFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import vue from '@vitejs/plugin-vue'
 import legacy from '@vitejs/plugin-legacy'
 import Components from 'unplugin-vue-components/vite'
@@ -20,12 +21,14 @@ function holdemPbInjectPlugin(): Plugin {
   const VIRTUAL_PATH = '/libs/holdem-pb.js'
   const PUBLIC_PATH = './libs/holdem-pb.js'
   let resolvedFile = ''
+  let runtimeVersion = ''
 
   return {
     name: 'holdem-pb-inject',
     configResolved() {
       // 用 import.meta.resolve 这种新 API 不通用；直接拼 node_modules 路径稳。
       resolvedFile = fileURLToPath(new URL(`./node_modules/${PKG_FILE}`, import.meta.url))
+      runtimeVersion = createHash('sha256').update(readFileSync(resolvedFile)).digest('hex').slice(0, 12)
     },
     // dev：拦截 /libs/holdem-pb.js，直接从 node_modules 流回
     configureServer(server) {
@@ -33,7 +36,7 @@ function holdemPbInjectPlugin(): Plugin {
         try {
           const buf = readFileSync(resolvedFile)
           res.setHeader('Content-Type', 'application/javascript')
-          res.setHeader('Cache-Control', 'public, max-age=3600')
+          res.setHeader('Cache-Control', 'no-store')
           res.end(buf)
         } catch (e) {
           res.statusCode = 500
@@ -54,9 +57,11 @@ function holdemPbInjectPlugin(): Plugin {
     transformIndexHtml: {
       order: 'pre',
       handler(html) {
-        const tag = `<script src="${PUBLIC_PATH}" charset="utf-8"></script>`
-        // 已经手动插过就不重复加
-        if (html.includes(PUBLIC_PATH)) return html
+        const src = `${PUBLIC_PATH}?v=${runtimeVersion}`
+        const scriptSrc = /(src=["'])\.\/libs\/holdem-pb\.js(?:\?[^"']*)?(["'])/
+        // 内容更新后换 URL，避免新业务代码仍加载浏览器缓存的旧 protobuf。
+        if (scriptSrc.test(html)) return html.replace(scriptSrc, `$1${src}$2`)
+        const tag = `<script src="${src}" charset="utf-8"></script>`
         return html.replace('</head>', `    ${tag}\n  </head>`)
       },
     },

@@ -65,7 +65,7 @@ test('supports snake_case and JSON reward data compatibility', () => {
   assert.equal(shouldShowRechargeReward(notification), true)
 })
 
-test('normalizes price-list reward tiers and divides all monetary values by 100', () => {
+test('keeps recharge ranges in UC and converts only ticket values from cents', () => {
   const tiers = normalizeRechargeRewardTiers([
     {
       start_amount: 100,
@@ -83,8 +83,8 @@ test('normalizes price-list reward tiers and divides all monetary values by 100'
 
   assert.deepEqual(tiers, [
     {
-      startAmount: 1,
-      endAmount: 10_000,
+      startAmount: 100,
+      endAmount: 1_000_000,
       rewards: [
         {
           propId: 654,
@@ -186,10 +186,10 @@ test('UC-only and combined rewards are eligible without converting UC to cents',
 
 test('existing recharge config keeps reward_tribe_gold and multilingual props, including UC-only tiers', () => {
   const tiers = normalizeRechargeRewardTiers([
-    { start_amount: 10000, end_amount: 15000, reward_tribe_gold: 100, rewards: [] },
+    { start_amount: 100, end_amount: 150, reward_tribe_gold: 100, rewards: [] },
     {
-      start_amount: 15000,
-      end_amount: 20000,
+      start_amount: 150,
+      end_amount: 200,
       reward_tribe_gold: 200,
       rewards: [
         {
@@ -215,4 +215,13 @@ test('existing recharge config keeps reward_tribe_gold and multilingual props, i
     })?.rewardGold,
     100,
   )
+})
+
+test('recharge config accepts the final reward_gold field without scaling the reward coins', () => {
+  const tiers = normalizeRechargeRewardTiers([
+    { start_amount: 100, end_amount: 150, reward_gold: 100, rewards: [] },
+  ])
+  assert.equal(tiers[0]?.startAmount, 100)
+  assert.equal(tiers[0]?.endAmount, 150)
+  assert.equal(tiers[0]?.rewardGold, 100)
 })

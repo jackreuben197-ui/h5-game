@@ -17,4 +17,5 @@ fi
 cd "$ROOT_DIR"
 echo "# updating @silenthill/agreement-web ..."
 corepack "$PACKAGE_MANAGER" update @silenthill/agreement-web
+node scripts/check-protocol.mjs
 echo "# done. protocol runtime and pnpm-lock.yaml are updated"

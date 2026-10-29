@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { requireRealUser } from '@/session/realUserGate'
+import { useGameStore } from '@/stores/game'
+import { useTribeRewardStore } from '@/stores/tribeReward'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 import ClubNoticeDialog from '@/components/Club/ClubNoticeDialog.vue'
 import { useClubNoticePopup } from '@/composables/useClubNoticePopup'
@@ -16,6 +19,8 @@ const props = defineProps<{
   tournamentName: string
 }>()
 const active = ref<RewardKind | null>(null)
+const rewards = useTribeRewardStore()
+const game = useGameStore()
 const showGame = computed({
   get: () => active.value === 'game',
   set: (value) => {
@@ -45,10 +50,27 @@ function open(action: ChannelCAction) {
       clubId: props.clubId,
       tribeId: props.tribeId,
     })
-  } else {
+  } else if (requireRealUser(() => open(action))) {
     active.value = action
   }
 }
+
+function loadRewards(force = false) {
+  if (active.value && game.isRealUser) void rewards.load(props.clubId, force)
+}
+watch([active, () => props.clubId, () => game.sessionToken, () => game.loginUserId], () =>
+  loadRewards(),
+)
+watch(
+  () => game.isRealUser,
+  (real) => {
+    if (!real) active.value = null
+  },
+)
+watch(
+  () => rewards.revision,
+  () => loadRewards(true),
+)
 
 defineExpose({ open })
 </script>
@@ -61,7 +83,27 @@ defineExpose({ open })
     :ignoring="ignoring"
     @ignore="ignore"
   />
-  <ChannelCGameRewards v-model:show="showGame" :tournament-name="tournamentName" />
-  <ChannelCRechargeRewards v-model:show="showRecharge" :tournament-name="tournamentName" :club-id="clubId" />
-  <ChannelCInviteRewards v-model:show="showInvite" />
+  <ChannelCGameRewards
+    v-model:show="showGame"
+    :tournament-name="tournamentName"
+    :groups="rewards.presentation.groups"
+    :loading="rewards.loading"
+    :failed="rewards.failed"
+    @retry="loadRewards()"
+  />
+  <ChannelCRechargeRewards
+    v-model:show="showRecharge"
+    :tournament-name="tournamentName"
+    :data="rewards.presentation.recharge"
+    :loading="rewards.loading"
+    :failed="rewards.failed"
+    @retry="loadRewards()"
+  />
+  <ChannelCInviteRewards
+    v-model:show="showInvite"
+    :data="rewards.presentation.invite"
+    :loading="rewards.loading"
+    :failed="rewards.failed"
+    @retry="loadRewards()"
+  />
 </template>

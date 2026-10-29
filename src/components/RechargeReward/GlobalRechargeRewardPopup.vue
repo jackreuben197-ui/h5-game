@@ -1,6 +1,14 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, watch } from 'vue'
 import { Code, subscribeH5WsCode } from '@/bridge/ws/messageCenter'
+import { decodeTribeActivityReward } from '@/bridge/ws/tribeActivityRewardNotify'
+import { useTribeRewardStore } from '@/stores/tribeReward'
+import {
+  enqueueReward,
+  hideRewardQueue,
+  showNextReward,
+  type RewardReceiptQueue,
+} from '@/features/tribeReward/notification'
 import { decodeUserOrderAudit } from '@/bridge/ws/orderAuditNotify'
 import { dispatchRechargeOrderSucceeded } from '@/features/rechargeReward/channel'
 import {
@@ -19,10 +27,12 @@ const MAX_SEEN_ORDERS = 100
 
 const { t } = useTextI18n()
 const gameStore = useGameStore()
-const current = ref<RechargeRewardNotification | null>(null)
-const queue: RechargeRewardNotification[] = []
+const rewards = useTribeRewardStore()
+const receipts = reactive<RewardReceiptQueue>({ current: null, pending: [] })
+const current = computed(() => receipts.current)
 const memorySeenOrders = new Set<string>()
 let stopOrderAuditListener: (() => void) | null = null
+let stopActivityRewardListener: (() => void) | null = null
 
 function storageKey(): string {
   return `${SEEN_ORDER_STORAGE_PREFIX}:${gameStore.loginUserId || 'unknown'}`
@@ -70,24 +80,31 @@ function isH5Visible(): boolean {
 }
 
 function showNext(): void {
-  if (current.value || !isH5Visible()) return
-  current.value = queue.shift() || null
+  showNextReward(receipts, isH5Visible())
 }
 
 function dismiss(): void {
-  current.value = null
+  receipts.current = null
   showNext()
 }
 
 function discardPending(): void {
-  current.value = null
-  queue.splice(0, queue.length)
+  receipts.current = null
+  receipts.pending = []
 }
 
 function onH5VisibilityChange(event: Event): void {
   const visible = Boolean((event as CustomEvent<{ visible?: boolean }>).detail?.visible)
-  if (!visible) discardPending()
+  if (visible) void nextTick(showNext)
+  else hideRewardQueue(receipts)
 }
+
+watch(
+  () => [gameStore.loginUserId, gameStore.isRealUser] as const,
+  ([userId, real], [previousUserId]) => {
+    if (!real || (previousUserId && previousUserId !== userId)) discardPending()
+  },
+)
 
 function displayRewardName(reward: RechargeRewardItem): string {
   // propName may be a template key such as PROP2023.... The template map is restored from
@@ -98,14 +115,25 @@ function displayRewardName(reward: RechargeRewardItem): string {
 
 function enqueueNotification(notification: RechargeRewardNotification | null): void {
   if (!shouldShowRechargeReward(notification)) return
+  enqueueReward(
+    receipts,
+    {
+      ...notification,
+      rewardGold: notification.rewardGold ?? 0,
+      source: 'recharge',
+    },
+    rememberOrder,
+    isH5Visible(),
+  )
+}
 
-  // Mark the order consumed before checking visibility. Messages received at the table are intentionally
-  // discarded and must not become a deferred popup after returning to H5.
-  if (!rememberOrder(notification.orderNo)) return
-  if (!isH5Visible()) return
-
-  queue.push(notification)
-  showNext()
+function onActivityReward(rawBuffer: ArrayBufferLike): void {
+  if (!gameStore.isRealUser) return
+  const notification = decodeTribeActivityReward(rawBuffer)
+  if (!notification) return
+  if (enqueueReward(receipts, notification, rememberOrder, isH5Visible())) {
+    rewards.invalidate(notification.tribeId, notification.clubId)
+  }
 }
 
 function handleOrderAudit(notification: RechargeRewardNotification | null): void {
@@ -125,12 +153,17 @@ onMounted(() => {
   stopOrderAuditListener = subscribeH5WsCode(Code.MSG_S_USER_ORDER_AUDIT, (message) => {
     onOrderAudit(message.rawBuffer)
   })
+  stopActivityRewardListener = subscribeH5WsCode(Code.MSG_S_TRIBE_ACTIVITY_REWARD, (message) => {
+    onActivityReward(message.rawBuffer)
+  })
   window.addEventListener('h5:visibility-change', onH5VisibilityChange)
 })
 
 onBeforeUnmount(() => {
   stopOrderAuditListener?.()
   stopOrderAuditListener = null
+  stopActivityRewardListener?.()
+  stopActivityRewardListener = null
   window.removeEventListener('h5:visibility-change', onH5VisibilityChange)
   discardPending()
 })
@@ -179,7 +212,7 @@ onBeforeUnmount(() => {
           <img class="reward-popup__coin-image" :src="rewardCoin" alt="" />
           <div class="reward-popup__item-copy">
             <p>
-              <span>{{ t('UIChannelC_AllianceCoin') }} (UC)</span>
+              <span>{{ t('UIChannelC_AllianceCoin') }}</span>
               <strong>+{{ current.rewardGold }}</strong>
             </p>
           </div>
@@ -242,9 +275,12 @@ onBeforeUnmount(() => {
   text-align: center;
   border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: 28px;
-  background: radial-gradient(circle at 50% 8%, rgba(255, 202, 94, 0.16), transparent 32%),
+  background:
+    radial-gradient(circle at 50% 8%, rgba(255, 202, 94, 0.16), transparent 32%),
     linear-gradient(150deg, rgba(115, 65, 94, 0.97), rgba(74, 49, 84, 0.98));
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.4), inset 0 1px rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.4),
+    inset 0 1px rgba(255, 255, 255, 0.2);
 }
 
 .reward-popup__close {

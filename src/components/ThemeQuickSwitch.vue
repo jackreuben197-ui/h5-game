@@ -60,7 +60,7 @@ function toggleTheme(): void {
   }
 
   &::before {
-    background: linear-gradient(144deg, #69beff 8%, #2d84c7 72%);
+    background: linear-gradient(144deg, #69beff 8%, #69beff 72%);
     opacity: 1;
   }
 

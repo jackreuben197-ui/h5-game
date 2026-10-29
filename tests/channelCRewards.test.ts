@@ -11,14 +11,19 @@ const hooks = registerHooks({
     return nextResolve(specifier, context)
   },
 })
-const {
-  gameRewardGroups,
-  buildGameRewardGroups,
-  buildInviteRewardTiers,
-  toRechargeActivityTiers,
-  rewardProgress,
-} = await import('../src/features/channelC/rewards.ts')
+const { buildGameRewardGroups, buildInviteRewardTiers, toRechargeActivityTiers, rewardProgress } =
+  await import('../src/features/channelC/rewards.ts')
 hooks.deregister()
+const gameRewardGroups = buildGameRewardGroups(
+  Object.values(POKER_SMALL_BLINDS_BY_LEVEL)
+    .flat()
+    .map((blind) => ({
+      sb: Math.round(blind * 100),
+      hand_count: 50,
+      reward_gold: 100,
+      rewards: [],
+    })),
+)
 
 test('reward levels use the defined small blinds and keep all six middle stakes', () => {
   const expected = [

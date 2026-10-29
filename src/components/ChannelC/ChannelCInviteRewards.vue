@@ -1,60 +1,80 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { t } from '@/i18n'
-import {
-  inviteRewardMock,
-  rewardProgress,
-  type InviteRewardTier,
-} from '@/features/channelC/rewards'
+import { rewardProgress, type InviteRewardTier } from '@/features/channelC/rewards'
+import ChannelCRewardLoadState from './ChannelCRewardLoadState.vue'
 import ChannelCRewardFrame from './ChannelCRewardFrame.vue'
 import ChannelCRewardItems from './ChannelCRewardItems.vue'
 import ChannelCRewardHint from './ChannelCRewardHint.vue'
 import ChannelCRewardStatus from './ChannelCRewardStatus.vue'
-const props = defineProps<{ data?: { validInvites: number; tiers: InviteRewardTier[] } }>()
+defineProps<{
+  data: { validInvites: number; tiers: InviteRewardTier[] }
+  loading?: boolean
+  failed?: boolean
+}>()
+defineEmits<{ retry: [] }>()
 const show = defineModel<boolean>('show', { required: true })
-const activity = computed(() => props.data ?? inviteRewardMock)
 </script>
 
 <template>
   <ChannelCRewardFrame v-model:show="show" kind="invite" :title="t('UIChannelC_InviteTitle')">
     <p class="c-reward-intro">{{ t('UIChannelC_InviteIntro') }}</p>
-    <div class="c-invite-total">
-      <p>{{ t('UIChannelC_ValidInvites') }}</p>
-      <div>
-        <strong>{{ activity.validInvites }}</strong>
-        <span>{{ t('Common_People') }}</span>
-      </div>
-    </div>
-    <div v-for="tier in activity.tiers" :key="tier.target" class="c-invite-tier">
-      <div class="c-invite-target">
-        <strong>{{ t('UIChannelC_InviteTarget', tier.target) }}</strong>
-        <p>{{ t('UIChannelC_TargetPeople', tier.target) }}</p>
-      </div>
-      <div class="c-invite-progress">
-        <div class="c-invite-reward">
-          <ChannelCRewardItems :reward="tier" kind="invite" />
-          <ChannelCRewardStatus :credited="tier.credited" kind="invite" />
+    <ChannelCRewardLoadState :loading="loading" :failed="failed" @retry="$emit('retry')">
+      <div class="c-invite-total">
+        <p>{{ t('UIChannelC_ValidInvites') }}</p>
+        <div>
+          <strong>{{ data.validInvites }}</strong>
+          <span>{{ t('Common_People') }}</span>
         </div>
-        <p class="c-invite-progress-copy">
-          <span>{{ t('UIChannelC_InviteProgress', activity.validInvites, tier.target) }}</span>
-          <span>{{ Math.round(rewardProgress(activity.validInvites, tier.target)) }}%</span>
-        </p>
-        <div
-          class="c-reward-meter"
-          role="progressbar"
-          :aria-label="t('UIChannelC_InviteProgress', activity.validInvites, tier.target)"
-          :aria-valuenow="rewardProgress(activity.validInvites, tier.target)"
-          :aria-valuemin="0"
-          :aria-valuemax="100"
-        >
-          <i :style="{ width: `${rewardProgress(activity.validInvites, tier.target)}%` }"></i>
-        </div>
-        <p v-if="activity.validInvites < tier.target" class="c-invite-remaining">
-          {{ t('UIChannelC_RemainingPeople', tier.target - activity.validInvites) }}
-        </p>
       </div>
-    </div>
-    <p v-if="!activity.tiers.length" class="c-reward-empty">{{ t('UIChannelC_NoRewards') }}</p>
+      <div v-for="tier in data.tiers" :key="tier.target" class="c-invite-tier">
+        <div class="c-invite-target">
+          <strong>{{ t('UIChannelC_InviteTarget', tier.target) }}</strong>
+          <p>{{ t('UIChannelC_TargetPeople', tier.target) }}</p>
+        </div>
+        <div class="c-invite-progress">
+          <div class="c-invite-reward">
+            <ChannelCRewardItems :reward="tier" kind="invite" />
+            <ChannelCRewardStatus
+              :credited="tier.credited"
+              :completed="tier.completed"
+              kind="invite"
+            />
+          </div>
+          <p class="c-invite-progress-copy">
+            <span>
+{{
+              t('UIChannelC_InviteProgress', tier.current ?? data.validInvites, tier.target)
+            }}
+</span>
+            <span>
+{{
+                Math.round(rewardProgress(tier.current ?? data.validInvites, tier.target))
+              }}%
+</span>
+          </p>
+          <div
+            class="c-reward-meter"
+            role="progressbar"
+            :aria-label="
+              t('UIChannelC_InviteProgress', tier.current ?? data.validInvites, tier.target)
+            "
+            :aria-valuenow="rewardProgress(tier.current ?? data.validInvites, tier.target)"
+            :aria-valuemin="0"
+            :aria-valuemax="100"
+          >
+            <i
+              :style="{
+                width: `${rewardProgress(tier.current ?? data.validInvites, tier.target)}%`,
+              }"
+            ></i>
+          </div>
+          <p v-if="(tier.current ?? data.validInvites) < tier.target" class="c-invite-remaining">
+            {{ t('UIChannelC_RemainingPeople', tier.target - (tier.current ?? data.validInvites)) }}
+          </p>
+        </div>
+      </div>
+      <p v-if="!data.tiers.length" class="c-reward-empty">{{ t('UIChannelC_NoRewards') }}</p>
+    </ChannelCRewardLoadState>
     <ChannelCRewardHint kind="invite" />
     <div class="c-invite-rule">
       <span class="c-invite-info" aria-hidden="true">i</span>

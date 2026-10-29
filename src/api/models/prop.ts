@@ -91,8 +91,8 @@ export interface PropGoldPriceListData {
   total?: number // 总条目数
   list?: PropGoldPriceListGoldInfo[] // 金币信息列表
   pay_types?: PropGoldPriceListPayType[] // 支付方式列表
-  first_recharge_reward?: PropGoldPriceListRechargeRewardTier[] // 首充礼，金额字段单位为分
-  daily_recharge_reward?: PropGoldPriceListRechargeRewardTier[] // 充值礼，金额字段单位为分
+  first_recharge_reward?: PropGoldPriceListRechargeRewardTier[] // 首充礼，充值区间单位为 UC
+  daily_recharge_reward?: PropGoldPriceListRechargeRewardTier[] // 充值礼，充值区间单位为 UC
   /** 联盟直充：为 true 时订单列表走 /order/club/order_list?my_order */
   from_tribe?: boolean
 
@@ -100,8 +100,9 @@ export interface PropGoldPriceListData {
 }
 
 export interface PropGoldPriceListRechargeRewardTier {
-  start_amount?: number // 充值区间起始金额，单位为分
-  end_amount?: number // 充值区间结束金额，单位为分
+  start_amount?: number // 充值区间起始金额，单位为 UC
+  end_amount?: number // 充值区间结束金额，单位为 UC
+  reward_gold?: number // 奖励联盟币数量（UC）
   reward_tribe_gold?: number // 已有充值配置字段，联盟币数量（UC），不除以 100
   rewards?: PropGoldPriceListRechargeReward[]
 
@@ -1064,4 +1065,47 @@ export interface PropUserPropListGameProp {
 
 export interface PropUserPropUsedData {
   [key: string]: unknown
+}
+
+// /api/prop/tribe/reward/info：H5 活动配置与当前玩家进度。
+export type TribeRewardType = 'all' | 'hand' | 'invite' | 'first_recharge' | 'daily_recharge'
+export interface TribeRewardInfoRequest {
+  club_id: number
+  reward_type?: TribeRewardType
+}
+export interface TribeRewardProp {
+  prop_id: number
+  quantity: number
+  prop_name?: string
+  prop_value?: number
+}
+export interface TribeRewardBundle {
+  reward_gold: number
+  rewards?: TribeRewardProp[] | null
+}
+export interface TribeRewardProgress {
+  current_count: number
+  completed: boolean
+  earned: boolean
+  rewarded: boolean
+  delivered: boolean
+}
+export interface TribeHandReward extends TribeRewardBundle, TribeRewardProgress {
+  sb: number
+  hand_count: number
+}
+export interface TribeInviteReward extends TribeRewardBundle, TribeRewardProgress {
+  invite_count: number
+}
+export interface TribeRechargeReward extends TribeRewardBundle {
+  start_amount: number // 充值区间起始金额，UC
+  end_amount: number // 充值区间结束金额，UC
+}
+export interface TribeRewardInfoData {
+  tribe_id: number
+  hand_reward_club_id: number
+  hand_reward?: TribeHandReward[]
+  invite_reward?: TribeInviteReward[]
+  first_recharge_reward?: TribeRechargeReward[]
+  daily_recharge_reward?: TribeRechargeReward[]
 }

@@ -20,7 +20,9 @@ defineEmits<{ open: [match: MttListRecord] }>()
 const matchName = computed(() => {
   void multiLanguageTemplateVersion.value
   const rawName = props.match.name || ''
-  return resolveTemplateTextByKey(rawName, getLocale()) || t(rawName) || `MTT #${props.match.match_id}`
+  return (
+    resolveTemplateTextByKey(rawName, getLocale()) || t(rawName) || `MTT #${props.match.match_id}`
+  )
 })
 const failedCover = ref(false)
 watch(
@@ -193,7 +195,7 @@ const actionText = computed(() =>
 .c-mtt-time {
   margin: 0.025rem 0 0;
   color: #86878e;
-  font-size: 0.244rem;
+  font-size: 0.24rem;
   line-height: 0.333rem;
   white-space: nowrap;
   overflow: hidden;

@@ -1,16 +1,23 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { t } from '@/i18n'
-import { gameRewardGroups, rewardProgress, type GameRewardTier } from '@/features/channelC/rewards'
+import { rewardProgress, type GameRewardTier } from '@/features/channelC/rewards'
+import ChannelCRewardLoadState from './ChannelCRewardLoadState.vue'
 import ChannelCRewardFrame from './ChannelCRewardFrame.vue'
 import ChannelCRewardItems from './ChannelCRewardItems.vue'
 import ChannelCRewardHint from './ChannelCRewardHint.vue'
 import ChannelCRewardStatus from './ChannelCRewardStatus.vue'
-const props = defineProps<{ tournamentName: string; groups?: GameRewardTier[][] }>()
+const props = defineProps<{
+  tournamentName: string
+  groups: GameRewardTier[][]
+  loading?: boolean
+  failed?: boolean
+}>()
+defineEmits<{ retry: [] }>()
 const show = defineModel<boolean>('show', { required: true })
 const level = ref(1)
 const levels = ['UIGuild_Tiny', 'UIGuild_Small', 'UIGuild_Middle', 'UIGuild_Big']
-const tiers = computed(() => (props.groups ?? gameRewardGroups)[level.value] ?? [])
+const tiers = computed(() => props.groups[level.value] ?? [])
 </script>
 
 <template>
@@ -29,58 +36,60 @@ const tiers = computed(() => (props.groups ?? gameRewardGroups)[level.value] ?? 
         {{ t(key) }}
       </button>
     </div>
-    <table class="c-game-rewards">
-      <colgroup>
-        <col class="c-game-blind-col" />
-        <col class="c-game-progress-col" />
-        <col class="c-game-reward-col" />
-        <col class="c-game-status-col" />
-      </colgroup>
-      <thead>
-        <tr>
-          <th>
-            {{ t('adaptation20006') }}<small>{{ t('UIChannelC_BlindPair') }}</small>
-          </th>
-          <th>{{ t('UIChannelC_ProgressHands') }}</th>
-          <th>{{ t('MTT_State_Reward') }}</th>
-          <th>{{ t('state') }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          v-for="tier in tiers"
-          :key="tier.sb"
-          :class="{ 'c-game-bonus-row': tier.rewards.length }"
-        >
-          <td
-            class="c-reward-amount"
-            :class="{ 'c-reward-amount--compact': tier.blind.length > 6 }"
+    <ChannelCRewardLoadState :loading="loading" :failed="failed" @retry="$emit('retry')">
+      <table class="c-game-rewards">
+        <colgroup>
+          <col class="c-game-blind-col" />
+          <col class="c-game-progress-col" />
+          <col class="c-game-reward-col" />
+          <col class="c-game-status-col" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th>
+              {{ t('adaptation20006') }}<small>{{ t('UIChannelC_BlindPair') }}</small>
+            </th>
+            <th>{{ t('UIChannelC_ProgressHands') }}</th>
+            <th>{{ t('MTT_State_Reward') }}</th>
+            <th>{{ t('state') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="tier in tiers"
+            :key="tier.sb"
+            :class="{ 'c-game-bonus-row': tier.rewards.length }"
           >
-            {{ tier.blind }}
-          </td>
-          <td>
-            <p class="c-game-progress-copy">
-              <b>{{ tier.played }}</b>{{ t('UIChannelC_HandCount', '', tier.required) }}
-            </p>
-            <div
-              class="c-reward-meter"
-              role="progressbar"
-              :aria-label="t('UIChannelC_HandCount', tier.played, tier.required)"
-              :aria-valuenow="rewardProgress(tier.played, tier.required)"
-              :aria-valuemin="0"
-              :aria-valuemax="100"
+            <td
+              class="c-reward-amount"
+              :class="{ 'c-reward-amount--compact': tier.blind.length > 6 }"
             >
-              <i :style="{ width: `${rewardProgress(tier.played, tier.required)}%` }"></i>
-            </div>
-          </td>
-          <td><ChannelCRewardItems :reward="tier" :tournament-name="tournamentName" /></td>
-          <td><ChannelCRewardStatus :credited="tier.credited" /></td>
-        </tr>
-        <tr v-if="!tiers.length">
-          <td colspan="4" class="c-reward-empty">{{ t('UIChannelC_NoRewards') }}</td>
-        </tr>
-      </tbody>
-    </table>
+              {{ tier.blind }}
+            </td>
+            <td>
+              <p class="c-game-progress-copy">
+                <b>{{ tier.played }}</b>{{ t('UIChannelC_HandCount', '', tier.required) }}
+              </p>
+              <div
+                class="c-reward-meter"
+                role="progressbar"
+                :aria-label="t('UIChannelC_HandCount', tier.played, tier.required)"
+                :aria-valuenow="rewardProgress(tier.played, tier.required)"
+                :aria-valuemin="0"
+                :aria-valuemax="100"
+              >
+                <i :style="{ width: `${rewardProgress(tier.played, tier.required)}%` }"></i>
+              </div>
+            </td>
+            <td><ChannelCRewardItems :reward="tier" :tournament-name="tournamentName" /></td>
+            <td><ChannelCRewardStatus :credited="tier.credited" :completed="tier.completed" /></td>
+          </tr>
+          <tr v-if="!tiers.length">
+            <td colspan="4" class="c-reward-empty">{{ t('UIChannelC_NoRewards') }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </ChannelCRewardLoadState>
     <ChannelCRewardHint />
   </ChannelCRewardFrame>
 </template>

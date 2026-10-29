@@ -1,53 +1,25 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { t } from '@/i18n'
 import { requireRealUser } from '@/session/realUserGate'
-import { toRechargeActivityTiers, type RechargeActivityTier } from '@/features/channelC/rewards'
-import { useWalletStore } from '@/stores/wallet'
+import type { RechargeActivityTier } from '@/features/channelC/rewards'
+import ChannelCRewardLoadState from './ChannelCRewardLoadState.vue'
 import ChannelCRewardFrame from './ChannelCRewardFrame.vue'
 import ChannelCRewardItems from './ChannelCRewardItems.vue'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import coin from '@/assets/icons/wallet/ic_coins.png'
 const props = defineProps<{
   tournamentName: string
-  clubId?: number
-  previewTiers?: { first: RechargeActivityTier[]; daily: RechargeActivityTier[] }
+  data: { first: RechargeActivityTier[]; daily: RechargeActivityTier[] }
+  loading?: boolean
+  failed?: boolean
 }>()
+defineEmits<{ retry: [] }>()
 const show = defineModel<boolean>('show', { required: true })
 const mode = ref<'first' | 'daily'>('first')
 const router = useRouter()
-const wallet = useWalletStore()
-const loading = ref(false)
-const failed = ref(false)
-let requestVersion = 0
-const tiers = computed(
-  () =>
-    props.previewTiers?.[mode.value] ??
-    toRechargeActivityTiers(
-      mode.value === 'first' ? wallet.firstRechargeRewardTiers : wallet.dailyRechargeRewardTiers,
-    ),
-)
-async function loadRewards() {
-  if (props.previewTiers) return
-  const version = ++requestVersion
-  loading.value = true
-  failed.value = false
-  try {
-    await wallet.loadPriceList(props.clubId)
-  } catch {
-    if (version === requestVersion) failed.value = true
-  } finally {
-    if (version === requestVersion) loading.value = false
-  }
-}
-watch(
-  [show, () => props.clubId],
-  ([visible]) => {
-    if (visible) void loadRewards()
-  },
-  { immediate: true },
-)
+const tiers = computed(() => props.data[mode.value])
 function recharge() {
   if (!requireRealUser(recharge)) return
   show.value = false
@@ -84,15 +56,8 @@ function recharge() {
         }}
       </p>
     </div>
-    <div class="c-recharge-tiers" :aria-busy="loading">
-      <p v-if="loading" class="c-reward-empty">
-        <van-loading size="18" />{{ t('UIChannelC_Loading') }}
-      </p>
-      <div v-else-if="failed" class="c-reward-empty">
-        <p>{{ t('UIChannelC_RewardLoadFailed') }}</p>
-        <button type="button" @click="loadRewards">{{ t('UIChannelC_Retry') }}</button>
-      </div>
-      <template v-else>
+    <ChannelCRewardLoadState :loading="loading" :failed="failed" @retry="$emit('retry')">
+      <div class="c-recharge-tiers">
         <div
           v-for="(tier, index) in tiers"
           :key="`${tier.from}-${tier.to}-${index}`"
@@ -109,8 +74,8 @@ function recharge() {
           <ChannelCRewardItems :reward="tier" :tournament-name="tournamentName" kind="recharge" />
         </div>
         <p v-if="!tiers.length" class="c-reward-empty">{{ t('UIChannelC_NoRewards') }}</p>
-      </template>
-    </div>
+      </div>
+    </ChannelCRewardLoadState>
     <div class="c-recharge-rules">
       <p>
         {{

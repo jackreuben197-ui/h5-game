@@ -119,14 +119,16 @@ export function normalizeRechargeRewardTiers(value: unknown): RechargeRewardTier
 
       const rewardGold = Math.max(
         0,
-        Math.floor(toNumber(firstPresent(item.rewardGold, item.reward_tribe_gold))),
+        Math.floor(
+          toNumber(firstPresent(item.rewardGold, item.reward_gold, item.reward_tribe_gold)),
+        ),
       )
       if (rewards.length === 0 && rewardGold === 0) return null
       return {
-        startAmount: centsToAmount(
+        startAmount: toNumber(
           firstPresent(item.startAmount, item.start_amount, item.minAmount, item.min_amount),
         ),
-        endAmount: centsToAmount(
+        endAmount: toNumber(
           firstPresent(item.endAmount, item.end_amount, item.maxAmount, item.max_amount),
         ),
         rewards,

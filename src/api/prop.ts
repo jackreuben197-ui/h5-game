@@ -1,6 +1,8 @@
 import http, { type HttpRequestOptionsExt } from '@/api/http'
 import type { ApiResponse } from '@/api/models/common'
 import type {
+  TribeRewardInfoRequest,
+  TribeRewardInfoData,
   BagCurrentPendantListRequest,
   BagCurrentPendantListResponseData,
   BagPendantListRequest,
@@ -463,5 +465,16 @@ export async function postPropWheelUserHandNumApi(
 ): Promise<ApiResponse<PropWheelUserHandNumResponseData>> {
   const endpoint = '/prop/wheel/user/handnum'
   const response = await http.post<ApiResponse<PropWheelUserHandNumResponseData>>(endpoint, payload)
+  return response.data
+}
+
+/** 真实账号的 H5 活动奖励配置与进度；不调用 CMS 管理接口。 */
+export async function postPropTribeRewardInfoApi(
+  payload: TribeRewardInfoRequest,
+): Promise<ApiResponse<TribeRewardInfoData>> {
+  const response = await http.post<ApiResponse<TribeRewardInfoData>>(
+    '/prop/tribe/reward/info',
+    payload,
+  )
   return response.data
 }

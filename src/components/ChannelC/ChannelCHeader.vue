@@ -108,6 +108,8 @@ function fallbackBanner(event: Event) {
 .c-logo {
   width: 3.795rem;
   height: 1.436rem;
+  margin-top: 0.02rem;
+  margin-left: 0.1rem;
   object-fit: contain;
 }
 .c-header-actions {
@@ -155,14 +157,15 @@ function fallbackBanner(event: Event) {
   align-items: center;
   justify-content: space-between;
   min-height: 1.59rem;
-  gap: 0.25rem;
+  gap: 0.2rem;
 }
 .c-quick-actions {
   display: grid;
-  flex: 1;
+  width: 6.7rem;
   min-width: 0;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.14rem;
+  margin-top: 0.15rem;
 }
 .c-quick-actions button {
   display: flex;
@@ -184,7 +187,7 @@ function fallbackBanner(event: Event) {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   max-width: 100%;
-  height: .6rem;
+  height: 0.6rem;
   overflow: hidden;
   overflow-wrap: anywhere;
   text-align: center;

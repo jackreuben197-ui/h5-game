@@ -111,8 +111,11 @@ onBeforeUnmount(() => {
   max-height: 58px;
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  background: #181b24;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  background: rgba(26, 23, 32, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .banner-track {

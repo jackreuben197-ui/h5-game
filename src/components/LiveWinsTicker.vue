@@ -246,9 +246,10 @@ function animateCardEntry(card: ActiveCardState, customStartAmount?: number) {
  * Requirement 1: Slide card right-to-left seamlessly
  * Incoming card starts count-up animation as it glides in from the right!
  */
-function triggerSlide() {
+function triggerSlide(customSpeed?: number) {
   if (isSliding.value || cardQueue.value.length < 3) return
   isSliding.value = true
+  const duration = customSpeed || props.slideSpeed
 
   // The card at index 2 is entering the view into the right slot!
   // Start its count-up and bounce animation as it slides in!
@@ -273,7 +274,36 @@ function triggerSlide() {
 
     // Schedule next auto slide
     scheduleNextSlide()
-  }, props.slideSpeed)
+  }, duration)
+}
+
+/**
+ * Slide card left-to-right (User Swiping Right)
+ */
+function triggerSlideRight(customSpeed?: number) {
+  if (isSliding.value || cardQueue.value.length < 3) return
+  isSliding.value = true
+  const duration = customSpeed || props.slideSpeed
+
+  // Move the last card to the head
+  const popped = cardQueue.value.pop()
+  if (popped) {
+    cardQueue.value.unshift(popped)
+  }
+
+  // Immediately place track at -cardStepWidth without transition
+  slideTranslateX.value = -cardStepWidth.value
+
+  // Next frame animate back to 0
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      slideTranslateX.value = 0
+      setTimeout(() => {
+        isSliding.value = false
+        scheduleNextSlide()
+      }, duration)
+    })
+  })
 }
 
 function scheduleNextSlide() {
@@ -282,6 +312,107 @@ function scheduleNextSlide() {
   slideTimer = setTimeout(() => {
     triggerSlide()
   }, props.slideInterval)
+}
+
+// ── Touch & Mouse Swipe / Drag Handling ──
+const isDragging = ref(false)
+const dragStartX = ref(0)
+const dragStartY = ref(0)
+const dragOffsetX = ref(0)
+let isHorizontalDrag = false
+let hasDragged = false
+
+function onTouchStart(e: TouchEvent) {
+  if (isSliding.value) return
+  if (slideTimer) clearTimeout(slideTimer)
+  const touch = e.touches[0]
+  dragStartX.value = touch.clientX
+  dragStartY.value = touch.clientY
+  dragOffsetX.value = 0
+  isDragging.value = true
+  isHorizontalDrag = false
+  hasDragged = false
+}
+
+function onTouchMove(e: TouchEvent) {
+  if (!isDragging.value || isSliding.value) return
+  const touch = e.touches[0]
+  const diffX = touch.clientX - dragStartX.value
+  const diffY = touch.clientY - dragStartY.value
+
+  if (!isHorizontalDrag) {
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 6) {
+      isHorizontalDrag = true
+    } else if (Math.abs(diffY) > 8) {
+      // User is scrolling vertically, let browser scroll naturally
+      isDragging.value = false
+      return
+    }
+  }
+
+  if (isHorizontalDrag) {
+    if (e.cancelable) e.preventDefault()
+    dragOffsetX.value = diffX
+    if (Math.abs(diffX) > 8) {
+      hasDragged = true
+    }
+  }
+}
+
+function onTouchEnd() {
+  if (!isDragging.value) return
+  isDragging.value = false
+  const offset = dragOffsetX.value
+  dragOffsetX.value = 0
+
+  if (offset < -35) {
+    // Swiped Left -> advance to next card
+    triggerSlide(props.slideSpeed * 0.75)
+  } else if (offset > 35) {
+    // Swiped Right -> return to previous card
+    triggerSlideRight(props.slideSpeed * 0.75)
+  } else {
+    // Rebound smoothly back to 0
+    scheduleNextSlide()
+  }
+}
+
+function onMouseDown(e: MouseEvent) {
+  if (isSliding.value) return
+  if (slideTimer) clearTimeout(slideTimer)
+  dragStartX.value = e.clientX
+  dragStartY.value = e.clientY
+  dragOffsetX.value = 0
+  isDragging.value = true
+  isHorizontalDrag = true
+  hasDragged = false
+}
+
+function onMouseMove(e: MouseEvent) {
+  if (!isDragging.value || isSliding.value) return
+  const diffX = e.clientX - dragStartX.value
+  dragOffsetX.value = diffX
+  if (Math.abs(diffX) > 8) {
+    hasDragged = true
+  }
+}
+
+function onMouseUp() {
+  onTouchEnd()
+}
+
+function onMouseLeave() {
+  if (isDragging.value) {
+    onTouchEnd()
+  }
+}
+
+function handleCardClick(card: LiveWinItem) {
+  if (hasDragged) {
+    hasDragged = false
+    return
+  }
+  emit('click-card', card)
 }
 
 // Split heading into individual characters for crisp vertical layout
@@ -325,14 +456,26 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <!-- 2. Sliding Viewport (Right Side) -->
-      <div ref="containerRef" class="live-wins-viewport">
+      <!-- 2. Sliding Viewport (Right Side) with Swipe Support -->
+      <div
+        ref="containerRef"
+        class="live-wins-viewport"
+        :class="{ 'is-dragging': isDragging }"
+        @touchstart.passive="onTouchStart"
+        @touchmove="onTouchMove"
+        @touchend="onTouchEnd"
+        @touchcancel="onTouchEnd"
+        @mousedown="onMouseDown"
+        @mousemove="onMouseMove"
+        @mouseup="onMouseUp"
+        @mouseleave="onMouseLeave"
+      >
         <div
           ref="trackRef"
           class="live-wins-track"
           :class="{ 'is-sliding': isSliding }"
           :style="{
-            transform: `translate3d(${slideTranslateX}px, 0, 0)`,
+            transform: `translate3d(${slideTranslateX + (isDragging ? dragOffsetX : 0)}px, 0, 0)`,
             transitionDuration: isSliding ? `${props.slideSpeed}ms` : '0ms',
           }"
         >
@@ -345,7 +488,7 @@ onBeforeUnmount(() => {
               'active-second': index === 1,
             }"
             :style="{ width: `${cardStepWidth - 6}px` }"
-            @click="emit('click-card', card.raw)"
+            @click="handleCardClick(card.raw)"
           >
             <!-- Floating Win Tag Pill (Positioned Absolute at Top Right - Never pushed by big amounts!) -->
             <div
@@ -354,18 +497,18 @@ onBeforeUnmount(() => {
               :class="{ 'bounce-in': card.showTagBounce }"
             >
               <span class="tag-multiplier">{{ card.raw.tag }}</span>
-              <!-- Glowing Fire Flame Icon -->
+              <!-- Glowing Fire Flame Icon with 爆 (Matching reference media_1793295459515_33695103.jpg) -->
               <span class="tag-flame-icon">
                 <svg class="flame-svg" viewBox="0 0 22 26" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <defs>
                     <linearGradient id="fireOuterGrad" x1="11" y1="0" x2="11" y2="26" gradientUnits="userSpaceOnUse">
-                      <stop offset="0%" stop-color="#FFEA00" />
-                      <stop offset="25%" stop-color="#FF6B00" />
-                      <stop offset="65%" stop-color="#FF1A1A" />
-                      <stop offset="100%" stop-color="#B30000" />
+                      <stop offset="0%" stop-color="#FF6B3D" />
+                      <stop offset="30%" stop-color="#F5472E" />
+                      <stop offset="70%" stop-color="#E52B1E" />
+                      <stop offset="100%" stop-color="#B81414" />
                     </linearGradient>
                     <filter id="fireGlowEffect" x="-20%" y="-20%" width="140%" height="140%">
-                      <feDropShadow dx="0" dy="0" stdDeviation="1.2" flood-color="#FF4500" flood-opacity="0.9" />
+                      <feDropShadow dx="0" dy="0" stdDeviation="1" flood-color="#FF4520" flood-opacity="0.8" />
                     </filter>
                   </defs>
                   <path
@@ -373,7 +516,7 @@ onBeforeUnmount(() => {
                     fill="url(#fireOuterGrad)"
                     filter="url(#fireGlowEffect)"
                   />
-                  <text x="11" y="19.5" text-anchor="middle" font-size="8" font-weight="900" fill="#FFFFFF" fill-opacity="0.95" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">倍</text>
+                  <text x="11" y="19" text-anchor="middle" font-size="8.5" font-weight="900" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">爆</text>
                 </svg>
               </span>
             </div>
@@ -437,11 +580,13 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   height: 56px;
-  background: #191c26;
+  background: rgba(26, 23, 32, 0.75); // Naturally blends with h5-game project background
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
   box-sizing: border-box;
 }
 
@@ -450,14 +595,14 @@ onBeforeUnmount(() => {
   width: 32px;
   height: 100%;
   flex-shrink: 0;
-  background: #14161f;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(20, 18, 25, 0.85); // Warm dark tone matching page background
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   z-index: 5;
-  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.3);
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.25);
 
   .heading-vertical-text {
     display: flex;
@@ -469,7 +614,7 @@ onBeforeUnmount(() => {
     .heading-char {
       font-size: 10px;
       font-weight: 700;
-      color: #9aa0b0;
+      color: #b8b3be;
       letter-spacing: -0.5px;
     }
   }
@@ -484,6 +629,15 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: flex-end;
   padding: 0 4px;
+  background: transparent; // Clean transparent, matching h5-game project background
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+
+  &.is-dragging {
+    cursor: grabbing;
+  }
 }
 
 // ── Track ──
@@ -511,7 +665,8 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 6px;
   padding: 2px 6px;
-  background: rgba(255, 255, 255, 0.025);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 7px;
   position: relative; // Anchor for absolute floating tag!
   overflow: visible;  // Allows floating pill to extend above top!
@@ -519,11 +674,17 @@ onBeforeUnmount(() => {
   cursor: pointer;
   transition:
     background 0.15s ease,
+    border-color 0.15s ease,
     transform 0.15s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
 
   &:active {
     transform: scale(0.97);
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.1);
   }
 }
 
@@ -637,7 +798,7 @@ onBeforeUnmount(() => {
 }
 
 // ── Win Tag Pill & Bounce In Effect ──
-// Positioned absolute floating on top right of the card, elevated above amount so balance is never blocked
+// Exactly matching reference media_1793295459515_33695103.jpg: warm brick-amber gradient, flame with 爆
 .win-tag-pill {
   position: absolute;
   top: -11px;
@@ -646,11 +807,11 @@ onBeforeUnmount(() => {
   pointer-events: none;
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  height: 13.5px;
-  padding: 0 4px;
-  background: linear-gradient(135deg, rgba(58, 48, 22, 0.96), rgba(38, 32, 14, 0.96));
-  border: 0.8px solid rgba(220, 180, 60, 0.85);
+  gap: 2.5px;
+  height: 14px;
+  padding: 0 3px 0 5px;
+  background: linear-gradient(135deg, rgba(87, 49, 56, 0.95) 0%, rgba(58, 36, 44, 0.95) 100%);
+  border: 0.8px solid rgba(142, 85, 72, 0.85);
   border-radius: 7px 7px 7px 2.5px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
   transform-origin: center bottom;
@@ -670,11 +831,11 @@ onBeforeUnmount(() => {
     align-items: center;
     justify-content: center;
     line-height: 1;
-    filter: drop-shadow(0 0 2px rgba(255, 69, 0, 0.85));
+    filter: drop-shadow(0 0 2.5px rgba(245, 71, 46, 0.8));
 
     .flame-svg {
-      width: 10px;
-      height: 12px;
+      width: 11px;
+      height: 13px;
       display: block;
       transform-origin: center bottom;
       animation: flameFlicker 1.8s ease-in-out infinite alternate;
@@ -726,7 +887,7 @@ onBeforeUnmount(() => {
 // ── Game Title ──
 .game-title-text {
   font-size: 9.5px;
-  color: #9299a9;
+  color: #a6afc2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -736,7 +897,7 @@ onBeforeUnmount(() => {
 // ── Username ──
 .username-text {
   font-size: 8.5px;
-  color: #5c6273;
+  color: #727c93;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

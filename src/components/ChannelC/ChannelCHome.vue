@@ -18,16 +18,11 @@ import { useChannelCNavigation } from '@/composables/useChannelCNavigation'
 import { useChannelCVersionRouting } from '@/composables/useChannelCVersionRouting'
 import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
 import { useRoomListStore } from '@/stores/roomList'
-import {
-  buildChannelCFeed,
-  buildWaterfallColumns,
-  type ChannelCSection,
-} from '@/features/channelC/model'
+import { buildChannelCFeed, type ChannelCSection } from '@/features/channelC/model'
 import ChannelCHeader from './ChannelCHeader.vue'
 import ChannelCFilters from './ChannelCFilters.vue'
 import ChannelCOverlays from './ChannelCOverlays.vue'
-import ChannelCPokerCard from './ChannelCPokerCard.vue'
-import ChannelCMttCard from './ChannelCMttCard.vue'
+import ChannelCWaterfall from './ChannelCWaterfall.vue'
 
 const props = withDefaults(defineProps<{ section?: ChannelCSection; ready?: boolean }>(), {
   section: 'home',
@@ -36,7 +31,7 @@ const props = withDefaults(defineProps<{ section?: ChannelCSection; ready?: bool
 const { club, clubId, tribeId, visibleRooms, visibleMatches, tournamentSeries } = useChannelCFeed()
 useChannelCVersionRouting()
 const ready = useChannelCDataReady(toRef(props, 'ready'))
-const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages()
+const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages('c')
 const roomStore = useRoomListStore()
 const root = ref<HTMLElement | null>(null)
 const overlays = ref<InstanceType<typeof ChannelCOverlays> | null>(null)
@@ -54,9 +49,7 @@ const {
 const now = ref(Date.now())
 let clock: ReturnType<typeof setInterval> | undefined
 
-const banner = computed(() =>
-  String(club.value?.banner_c || club.value?.banner || bannerImages.value[0] || ''),
-)
+const banner = computed(() => bannerImages.value[0] || '')
 const tournamentName = computed(() => t(visibleMatches.value[0]?.name || 'MTT'))
 const cards = computed(() =>
   buildChannelCFeed(
@@ -67,7 +60,6 @@ const cards = computed(() =>
     tournamentSeries.value,
   ),
 )
-const columns = computed(() => buildWaterfallColumns(cards.value))
 const listLabel = computed(() =>
   t(
     props.section === 'home'
@@ -147,26 +139,16 @@ watch(
       :tournament-types="tournamentTypes"
     />
     <div v-if="!ready" class="c-empty"><van-loading size="24" />{{ t('UIChannelC_Loading') }}</div>
-    <div v-else-if="cards.length" class="c-waterfall" :aria-label="listLabel">
-      <div v-for="(column, index) in columns" :key="index" class="c-waterfall-column">
-        <template v-for="card in column" :key="card.key">
-          <ChannelCPokerCard
-            v-if="card.kind === 'poker'"
-            :room="card.room"
-            :room-logo="club?.room_logo"
-            :joining="joiningId === String(card.room.rid)"
-            @join="joinRoom"
-          />
-          <ChannelCMttCard
-            v-else
-            :match="card.match"
-            :size="card.size"
-            :now="now"
-            @open="openMatch"
-          />
-        </template>
-      </div>
-    </div>
+    <ChannelCWaterfall
+      v-else-if="cards.length"
+      :cards="cards"
+      :label="listLabel"
+      :now="now"
+      :room-logo="club?.room_logo"
+      :joining-id="joiningId"
+      @join="joinRoom"
+      @open="openMatch"
+    />
     <div v-else class="c-empty">
       <van-icon name="search" size="32" />
       <p>{{ t(section === 'home' ? 'UIChannelC_NoRecommendations' : 'UIChannelC_NoResults') }}</p>
@@ -192,18 +174,6 @@ watch(
   max-width: 10rem;
   margin: 0 auto;
   padding: 0 0.256rem 0.25rem;
-}
-.c-waterfall {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: start;
-  gap: 0.18rem;
-}
-.c-waterfall-column {
-  display: flex;
-  flex-direction: column;
-  gap: 0.18rem;
-  min-width: 0;
 }
 .c-empty {
   display: flex;

@@ -49,12 +49,15 @@ import { Loading } from 'vant'
 import { DEBUG_ACCOUNTS, type DebugAccount } from '@/constants/debugAccounts'
 import {
   resolveInviteCode,
+  resolveInviterRandomId,
   resolveTraceHash,
   shouldOpenRegisterMode,
   resolveAgentInviteCode,
   clearAgentInviteCodeCache,
   isChannelPackageHost,
 } from '@/utils/channelPackage'
+import { withPlayerInviter } from '@/utils/playerInvitation'
+import type { UserRegisterRequest } from '@/api/models/user'
 import ProtocolView from './components/ProtocolView.vue'
 import LoginPhoneAreaView from './components/LoginPhoneAreaView.vue'
 
@@ -521,7 +524,7 @@ async function handleRegister(target: string) {
     : null
   const effectiveInviteCode = linkInviteCode || String(channelClub?.invitation_code || '').trim()
 
-  const payload: Record<string, string | number> = {
+  const payload: UserRegisterRequest = {
     password: md5(form.password.trim()),
     code: form.code.trim(),
     platform: 5,
@@ -541,7 +544,9 @@ async function handleRegister(target: string) {
   } else {
     payload.email = target
   }
-  const res = await postUserRegisterApi(payload)
+  const res = await postUserRegisterApi(
+    withPlayerInviter(payload, resolveInviterRandomId(effectiveInviteCode)),
+  )
   if (res.code !== 0) {
     throw new Error(res.message || `error: ${res.code}`)
   }

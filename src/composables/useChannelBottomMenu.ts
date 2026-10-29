@@ -8,7 +8,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import { filterVisibleMttRecords } from '@/utils/mttVisibility'
 import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
-import { resolveChannelMenu } from '@/features/channelC/mock'
+import { resolveChannelMenu } from '@/features/channelC/menu'
 
 function toSafeInt(value: unknown): number {
   const num = Number(value)
@@ -54,7 +54,7 @@ export function useChannelBottomMenu() {
       h5Menu.value !== undefined &&
       Number(h5Menu.value) === 1,
   )
-  // 暂定 CMS 枚举：1=B、2=A、3=C，待服务端联调确认。
+  // 服务端菜单枚举：1=B、2=A、3=C。
   const isVersionC = computed(() => isChannelPackage.value && h5Menu.value === 3)
 
   const hasPoker = computed(() =>

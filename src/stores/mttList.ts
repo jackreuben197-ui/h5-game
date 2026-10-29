@@ -1,3 +1,5 @@
+import { mergeMttListPage } from '@/utils/mttListMerge'
+import { mttDisplayPatch } from '@/utils/lobbyDisplayFields'
 import { defineStore } from 'pinia'
 import {
   getAllMttSngIdsApi,
@@ -114,6 +116,7 @@ function mapRelateTribeClubList(relateList: WsRoomTribeClubRelate[]): Array<Reco
 
 function toMttListRecordFromWsRecord(record: WsUserMttRecord): MttListRecord {
   return {
+    ...(record.mtt_banner_url_c !== undefined ? { mtt_banner_url_c: record.mtt_banner_url_c } : {}),
     is_top: toSafeInt(record.is_top),
     match_id: toSafeInt(record.match_id),
     name: record.name || '',
@@ -403,9 +406,10 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
           }
 
           const records = Array.isArray(response.data?.mtt_list) ? response.data.mtt_list : []
-          if (records.length) {
-            nextRecords.push(...records)
-          }
+          const changes = Array.isArray(response.data?.mtt_change_list)
+            ? response.data.mtt_change_list
+            : []
+          nextRecords.push(...mergeMttListPage(records, changes, this.records))
         }
 
         if (resolveMttSessionKey() !== sessionKey) return false
@@ -597,6 +601,7 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
 
       currentList[index] = {
         ...currentItem,
+        ...mttDisplayPatch(mttChange),
         status,
         participants: toSafeInt(mttChange.participants),
         series_id: toSafeInt(mttChange.series_id),

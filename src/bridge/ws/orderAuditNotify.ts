@@ -26,9 +26,7 @@ function callMethod(target: DynamicMethodRecord, names: string[]): unknown {
 
 function messageToRecord(message: DynamicMethodRecord): DynamicRecord {
   const raw = callMethod(message, ['toObject'])
-  return raw && typeof raw === 'object' && !Array.isArray(raw)
-    ? (raw as DynamicRecord)
-    : {}
+  return raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as DynamicRecord) : {}
 }
 
 function rewardMessageToRecord(value: unknown): DynamicRecord | null {
@@ -42,6 +40,7 @@ function rewardMessageToRecord(value: unknown): DynamicRecord | null {
     ['propValue', callMethod(target, ['getPropValue', 'getValue', 'getItemValue'])],
     ['quantity', callMethod(target, ['getQuantity', 'getNum', 'getCount', 'getAmount'])],
     ['propIcon', callMethod(target, ['getPropIcon', 'getIcon', 'getIconUrl'])],
+    ['multiLanguage', callMethod(target, ['getMultiLanguage'])],
   ]
   candidateValues.forEach(([key, candidate]) => {
     if (candidate !== undefined && candidate !== null) methodValues[key] = candidate
@@ -103,15 +102,22 @@ export function decodeUserOrderAudit(
   }
 
   try {
-    const message = ServerMessageUserOrderAudit.deserializeBinary(packet.body) as unknown as DynamicMethodRecord
+    const message = ServerMessageUserOrderAudit.deserializeBinary(
+      packet.body,
+    ) as unknown as DynamicMethodRecord
     const objectValue = messageToRecord(message)
     const decoded = {
       ...objectValue,
       orderNo: callMethod(message, ['getOrderNo']) ?? objectValue.orderNo,
       status: callMethod(message, ['getStatus']) ?? objectValue.status,
-      orderCategory:
-        callMethod(message, ['getOrderCategory']) ?? objectValue.orderCategory,
+      orderCategory: callMethod(message, ['getOrderCategory']) ?? objectValue.orderCategory,
       orderType: callMethod(message, ['getOrderType']) ?? objectValue.orderType,
+      rewardGold:
+        callMethod(message, ['getRewardGold', 'getRewardTribeGold']) ??
+        objectValue.rewardGold ??
+        objectValue.reward_gold ??
+        objectValue.rewardTribeGold ??
+        objectValue.reward_tribe_gold,
       rewards: readRewards(message, objectValue),
     }
     const normalized = normalizeRechargeRewardNotification(decoded)

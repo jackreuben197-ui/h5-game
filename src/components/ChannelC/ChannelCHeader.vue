@@ -11,6 +11,7 @@ import search from '@/assets/channelC/search.svg'
 import messageLight from '@/assets/channelC/message.svg'
 import messageDark from '@/assets/channelC/message-dark.svg'
 import defaultAvatar from '@/assets/images/default_avatar.png'
+import defaultBanner from '@/assets/images/home_header_1.png'
 import game from '@/assets/channelC/game-reward.svg'
 import notice from '@/assets/channelC/announcement.svg'
 import recharge from '@/assets/channelC/recharge-reward.svg'
@@ -18,12 +19,13 @@ import invite from '@/assets/channelC/invite-reward.svg'
 import support from '@/assets/channelC/support.svg'
 import type { ChannelCAction } from '@/features/channelC/rewards'
 
-defineProps<{ banner: string; clubName: string }>()
+const props = defineProps<{ banner: string; clubName: string }>()
 defineEmits<{ action: [action: ChannelCAction] }>()
 const router = useRouter()
 const { isDark } = useTheme()
 const user = useUserInfoStore()
 const avatar = computed(() => user.userInfo?.user?.avatar || defaultAvatar)
+const bannerUrl = computed(() => props.banner?.trim() || defaultBanner)
 const actions: Array<{ key: ChannelCAction; label: string; icon: string }> = [
   { key: 'game', label: 'UIChannelC_GameReward', icon: game },
   { key: 'notice', label: 'UIChannelC_Announcements', icon: notice },
@@ -34,6 +36,11 @@ const actions: Array<{ key: ChannelCAction; label: string; icon: string }> = [
 
 function openAccount(path: string) {
   if (requireRealUser(() => openAccount(path))) void router.push(path)
+}
+
+function fallbackBanner(event: Event) {
+  const image = event.target as HTMLImageElement
+  if (image.getAttribute('src') !== defaultBanner) image.src = defaultBanner
 }
 </script>
 
@@ -86,7 +93,7 @@ function openAccount(path: string) {
     <ThemeQuickSwitch class="c-theme-switch" />
   </div>
   <div class="c-banner">
-    <img v-if="banner" :src="banner" :alt="clubName" />
+    <img :src="bannerUrl" :alt="clubName" @error="fallbackBanner" />
   </div>
 </template>
 
@@ -195,7 +202,7 @@ function openAccount(path: string) {
 }
 .c-banner {
   width: 100%;
-  aspect-ratio: 375 / 69;
+  aspect-ratio: 372 / 69;
   margin: 0.075rem 0 0.128rem;
   border-radius: 0.282rem;
   overflow: hidden;

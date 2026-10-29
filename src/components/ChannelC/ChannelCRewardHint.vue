@@ -1,38 +1,59 @@
 <script setup lang="ts">
 import { t } from '@/i18n'
-import gift from '@/assets/icons/wallet/ic_gift.png'
+import giftIcon from '@/assets/channelC/reward-gift.svg'
+withDefaults(defineProps<{ kind?: 'game' | 'invite' }>(), { kind: 'game' })
 </script>
 
 <template>
-  <div class="c-reward-hint">
-    <img :src="gift" alt="" />
+  <div class="c-reward-hint" :class="`c-reward-hint--${kind}`">
+    <img :src="giftIcon" alt="" />
     <div>
       <strong>{{ t('UIChannelC_AutoReward') }}</strong>
-      <p>{{ t('UIChannelC_RewardLocation') }}</p>
+      <p>{{ t('UIChannelC_CoinRewardLocation') }}</p>
+      <p>{{ t('UIChannelC_TicketRewardLocation') }}</p>
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
+@use './reward-common' as *;
 .c-reward-hint {
   display: flex;
   align-items: center;
-  gap: 0.24rem;
-  margin-top: 0.22rem;
-  padding: 0.25rem;
-  border: 1px solid #b2f7e53b;
-  border-radius: 0.24rem;
-  background: #ffffff0a;
-  font-size: 0.29rem;
-  line-height: 1.6;
+  gap: r(15.16);
+  min-height: r(64.447);
+  margin-top: r(12.2);
+  padding: r(6.06) r(12) r(6.06) r(27.3);
+  border: r(0.758) solid #ffffff29;
+  border-radius: r(9.098);
+  background: #ffffff14;
+  font-size: r(11.373);
+  line-height: 1.3;
 }
 .c-reward-hint img {
-  width: 1.1rem;
-  height: 1.1rem;
-  object-fit: contain;
+  flex: none;
+  width: r(47.008);
+  height: auto;
 }
-p {
-  margin: 0.08rem 0 0;
-  font-size: 0.26rem;
+.c-reward-hint p {
+  margin: r(3) 0 0;
+  color: #bcdbd1;
+  font-size: r(9.857);
+}
+.c-reward-hint--invite {
+  gap: r(12.78);
+  min-height: r(69.908);
+  margin-top: r(5.96);
+  padding: r(6.82) r(10) r(6.82) r(22.17);
+  border-color: #ffffff1a;
+  border-radius: r(10.23);
+  font-size: r(11.935);
+  img {
+    width: r(52.857);
+  }
+  p {
+    margin-top: r(4);
+    font-size: r(10.23);
+  }
 }
 </style>

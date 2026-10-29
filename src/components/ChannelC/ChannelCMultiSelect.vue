@@ -104,8 +104,10 @@ function selectAll() {
     flex: none;
   }
   @include theme-light {
-    background: #fff;
-    color: #17191e;
+    &:not(.selected) {
+      background: #fff;
+      color: #17191e;
+    }
   }
   &.selected {
     background: #69beff;

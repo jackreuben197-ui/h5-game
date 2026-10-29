@@ -34,7 +34,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { generateQrCodeUrl } from '@/utils/qrcode'
 import {
   buildChannelAgentInviteUrl,
-  buildChannelClubInviteUrl,
+  buildChannelPlayerInviteUrl,
   resolveChannelClubInviteFields,
 } from '@/utils/channelPackage'
 import { formatUC } from '@/utils/roomVisibility'
@@ -989,7 +989,7 @@ async function generateInviteQrCode(): Promise<void> {
   )
   const url = isAgent.value && agentInviteCode.value
     ? buildChannelAgentInviteUrl(agentInviteCode.value, clubInviteCode, safariBaseUrl)
-    : buildChannelClubInviteUrl(clubInviteCode, safariBaseUrl)
+    : buildChannelPlayerInviteUrl(userInfoStore.userInfo?.user?.un_id, clubInviteCode, safariBaseUrl)
 
   try {
     imgInviteQr.value = await generateQrCodeUrl(url, { size: 720, margin: 2 })

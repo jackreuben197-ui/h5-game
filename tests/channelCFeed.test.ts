@@ -17,66 +17,26 @@ const hooks = registerHooks({
 const {
   buildChannelCFeed,
   buildWaterfallColumns,
-  getOccupiedSeats,
   getMttStage,
   getCardSize,
   isRecommended,
   estimateCardHeight,
   matchesMttFilter,
   getPokerKind,
-  roomDescription,
   sortChannelCMtt,
 } = await import('../src/features/channelC/model.ts')
-hooks.deregister()
-const { resolveChannelMenu, withChannelCRoomFields } = await import(
-  '../src/features/channelC/mock.ts'
+const { getOccupiedSeats, roomDescription, getRoomTimeText, getRoomBuyIn } = await import(
+  '../src/features/channelC/pokerCard.ts'
 )
+hooks.deregister()
+const { resolveChannelMenu } = await import('../src/features/channelC/menu.ts')
 
-test('channel menu samples 75% once per club and respects an explicit server C configuration', () => {
-  assert.equal(
-    resolveChannelMenu({ club_id: 'test-c', h5_menu: 2 }, () => 0.749),
-    3,
-  )
-  assert.equal(
-    resolveChannelMenu({ club_id: 'test-ab', h5_menu: 1 }, () => 0.75),
-    1,
-  )
-  assert.equal(
-    resolveChannelMenu({ club_id: 'test-c', h5_menu: 2 }, () => 0.99),
-    3,
-  )
-  assert.equal(
-    resolveChannelMenu({ club_id: 'server-c', h5_menu: 3 }, () => 0.99),
-    3,
-  )
-  assert.equal(
-    resolveChannelMenu(null, () => 0),
-    2,
-  )
-})
-
-test('field mocks only annotate real records and never replace server facts or configured fields', () => {
-  const sourceRoom = {
-    rid: 9911,
-    game_type: 0,
-    poker_type: 0,
-    sb: 200,
-    name: 'Actual table',
-    users: [{ seat: 6, avatar: 'server-avatar' }],
-    is_top: false,
-    gameplay_description: 'server description',
-    table_feature: '',
-  }
-  const decoratedRoom = withChannelCRoomFields(sourceRoom)
-  assert.deepEqual(decoratedRoom, sourceRoom)
-  assert.notEqual(decoratedRoom, sourceRoom)
-  assert.equal(decoratedRoom.users, sourceRoom.users)
-  const missingFields = { rid: 9913, game_type: 1, poker_type: 0, sb: 100 }
-  const first = withChannelCRoomFields(missingFields)
-  assert.deepEqual(withChannelCRoomFields(missingFields), first)
-  assert.deepEqual(missingFields, { rid: 9913, game_type: 1, poker_type: 0, sb: 100 })
-  assert.equal(Object.hasOwn(first, 'users'), false)
-  assert.equal(Object.hasOwn(first, 'is_top'), false)
+test('channel menu follows the server enum with A as the unconfigured default', () => {
+  assert.equal(resolveChannelMenu({ h5_menu: 1 }), 1)
+  assert.equal(resolveChannelMenu({ h5_menu: 2 }), 2)
+  assert.equal(resolveChannelMenu({ h5_menu: 3 }), 3)
+  assert.equal(resolveChannelMenu(null), 2)
+  assert.equal(resolveChannelMenu({ h5_menu: 0 }), 2)
 })
 
 const now = Date.parse('2026-10-27T08:00:00Z')
@@ -106,13 +66,13 @@ function match(match_id: number, extra: Partial<MttListRecord> = {}): MttListRec
 
 test('only the real is_top flag enables recommendation; missing flags and legacy mocks do not', () => {
   assert.equal(isRecommended({ is_top: 1 }), true)
-  assert.equal(isRecommended({ is_top: true }), true)
-  assert.equal(isRecommended({ is_top: '1' }), true)
+  assert.equal(isRecommended({ is_top: true }), false)
+  assert.equal(isRecommended({ is_top: '1' }), false)
   for (const value of [0, false, undefined, null, 2, '0']) {
     assert.equal(isRecommended({ is_top: value }), false)
   }
-  const legacyRoom = room(101, { is_top: undefined, is_recommended: true })
-  const legacyMatch = match(101, { is_top: 0, is_recommended: true })
+  const legacyRoom = room(101, { is_top: undefined, is_recommended: true, is_hot: true })
+  const legacyMatch = match(101, { is_top: 0, is_recommended: true, is_hot: true })
   assert.deepEqual(buildChannelCFeed([legacyRoom], [legacyMatch], 'home', now), [])
   assert.equal(buildChannelCFeed([legacyRoom], [], 'poker', now).length, 1)
   assert.equal(buildChannelCFeed([], [legacyMatch], 'mtt', now).length, 1)
@@ -274,33 +234,95 @@ test('seats preserve physical numbers, omit empty/invalid/duplicate seats and ke
   )
   assert.deepEqual(
     eight.find((item) => item.seat === 1),
-    { seat: 1, user: { seat: 1 }, x: 25, y: 81 },
+    { seat: 1, user: { seat: 1 }, x: 25, y: 81.8 },
   )
   const nine = getOccupiedSeats(
     room(1, { seat_count: 9, users: Array.from({ length: 9 }, (_, i) => ({ seat: i + 1 })) }),
   )
   assert.equal(nine.length, 9)
-  assert.deepEqual([nine[0]!.x, nine[0]!.y], [25, 81])
+  assert.deepEqual([nine[0]!.x, nine[0]!.y], [25, 81.8])
   assert.deepEqual(
     nine.slice(6).map((item) => item.x),
-    [76, 59, 42],
+    [75.5, 59.1, 42.1],
   )
   const eightAtLegacyTable = getOccupiedSeats(
     room(1, { seat_count: 9, users: [{ seat: 7 }, { seat: 8 }] }),
   )
   assert.deepEqual(
     eightAtLegacyTable.map((item) => item.x),
-    [75, 50],
+    [75.5, 59.1],
   )
 })
 
 test('game types, optional descriptions, and tournament filters follow their data fields', () => {
   assert.equal(getPokerKind(room(1, { game_type: 3 })), 'plo')
   assert.equal(getPokerKind(room(1, { poker_type: 2 })), 'short')
-  assert.deepEqual(roomDescription(room(1, { gameplay_description: ' ', table_feature: '' })), [])
-  assert.deepEqual(roomDescription(room(1, { table_feature: '欢乐竞技' })), ['欢乐竞技'])
+  assert.deepEqual(roomDescription(room(1, { room_intro: ' ', room_features: '' })), [])
+  assert.deepEqual(roomDescription(room(1, { room_features: '欢乐竞技' })), ['欢乐竞技'])
   assert.equal(matchesMttFilter(match(1, { apply_fee_pool: 0 }), 'free'), true)
   assert.equal(matchesMttFilter(match(1, { apply_fee_pool: 100 }), 'paid'), true)
   assert.equal(matchesMttFilter(match(1, { hunter_on: 1 }), 'hunter'), true)
   assert.equal(matchesMttFilter(match(1, { snowball_on: 0 }), 'snowball'), false)
+})
+
+test('new room descriptions use server fields and never fill missing fields with old mock data', () => {
+  assert.deepEqual(
+    roomDescription(room(1, { room_intro: '  真实简介 ', room_features: '真实特色' })),
+    ['真实简介', '真实特色'],
+  )
+  assert.deepEqual(
+    roomDescription(room(1, { gameplay_description: '旧模拟', table_feature: '旧模拟' })),
+    [],
+  )
+  const without = buildChannelCFeed([room(1)], [], 'poker', now)[0]!
+  const withBoth = buildChannelCFeed(
+    [room(1, { room_intro: '简介', room_features: '特色' })],
+    [],
+    'poker',
+    now,
+  )[0]!
+  assert.equal(estimateCardHeight(withBoth) - estimateCardHeight(without), 38)
+})
+
+test('seats 1 through 7 remain fixed, seat 8 centers only on an eight-seat table', () => {
+  const users = Array.from({ length: 9 }, (_, i) => ({ seat: i + 1 }))
+  const eight = getOccupiedSeats(room(1, { seat_count: 8, users: users.slice(0, 8) }))
+  const nine = getOccupiedSeats(room(1, { seat_count: 9, users }))
+  for (const count of [2, 6, 7, 8]) {
+    const seats = getOccupiedSeats(room(1, { seat_count: count, users: users.slice(0, count) }))
+    assert.deepEqual(seats.slice(0, Math.min(count, 7)), nine.slice(0, Math.min(count, 7)))
+  }
+  assert.equal(eight[7]?.x, 49.7)
+  assert.equal(nine[7]?.x, 59.1)
+  assert.equal(nine[8]?.x, 42.1)
+  const sparse = getOccupiedSeats(room(1, { seat_count: 9, users: [{ seat: 8 }] }))
+  assert.equal(sparse[0]?.x, 59.1)
+  assert.equal(sparse.length, 1)
+})
+
+test('room time follows start time and duration, updates with now and clamps expired/future tables', () => {
+  const table = room(1, {
+    start_time: new Date(now - (4 * 3600 + 32 * 60) * 1000).toISOString(),
+    play_duration: 8 * 3600,
+  })
+  assert.equal(getRoomTimeText(table, now), '3h 28m/8h')
+  assert.equal(getRoomTimeText(table, now + 60000), '3h 27m/8h')
+  assert.equal(getRoomTimeText(table, now + 4 * 3600000), '0s/8h')
+  assert.equal(
+    getRoomTimeText(
+      room(1, { start_time: new Date(now + 1000).toISOString(), play_duration: 3600 }),
+      now,
+    ),
+    '1h/1h',
+  )
+  assert.equal(getRoomTimeText(room(1, { play_duration: 600 }), now), '10m/10m')
+  assert.equal(getRoomTimeText(room(1), now), '0s/0s')
+})
+
+test('buy-in uses the real minimum BB multiplier and small blind without changing source data', () => {
+  const table = room(1, { sb: 100, min_rate: 444 })
+  assert.equal(getRoomBuyIn(table), 88800)
+  assert.equal(getRoomBuyIn(room(2, { sb: 10, min_rate: 50 })), 1000)
+  assert.equal(getRoomBuyIn(room(3)), 0)
+  assert.equal(table.min_rate, 444)
 })

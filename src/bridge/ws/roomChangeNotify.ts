@@ -1,3 +1,4 @@
+import { readRoomDisplayFields, type RoomDisplayFields } from '@/utils/lobbyDisplayFields'
 import type { RoomRecord } from '@/api/models/roomcenter'
 import { createLogger } from '@/utils/logger'
 import {
@@ -33,7 +34,7 @@ export interface WsRoomTribeClubRelate {
   club_ids: number[]
 }
 
-export interface WsRoomChangePayload {
+export interface WsRoomChangePayload extends RoomDisplayFields {
   rid: number
   status: number
   empty_seat: number
@@ -99,6 +100,7 @@ function mapRoomRecord(room: PbRoomRecord): RoomRecord {
   const createTime = toSafeInt(room.getCreateTime())
 
   return {
+    ...readRoomDisplayFields(room as PbRoomRecord & Parameters<typeof readRoomDisplayFields>[0]),
     rid: toSafeInt(room.getRid()),
     name: room.getName() || '',
     room_type: toSafeInt(room.getRoomType()),
@@ -147,6 +149,7 @@ function mapRoomRecord(room: PbRoomRecord): RoomRecord {
 
 function mapRoomChange(change: PbRoomChange): WsRoomChangePayload {
   return {
+    ...readRoomDisplayFields(change as PbRoomChange & Parameters<typeof readRoomDisplayFields>[0]),
     rid: toSafeInt(change.getRid()),
     status: toSafeInt(change.getStatus()),
     empty_seat: toSafeInt(change.getEmptySeat()),

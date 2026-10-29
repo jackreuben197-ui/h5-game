@@ -11,7 +11,13 @@ const hooks = registerHooks({
     return nextResolve(specifier, context)
   },
 })
-const { gameRewardGroups } = await import('../src/features/channelC/rewards.ts')
+const {
+  gameRewardGroups,
+  buildGameRewardGroups,
+  buildInviteRewardTiers,
+  toRechargeActivityTiers,
+  rewardProgress,
+} = await import('../src/features/channelC/rewards.ts')
 hooks.deregister()
 
 test('reward levels use the defined small blinds and keep all six middle stakes', () => {
@@ -41,4 +47,84 @@ test('reward blind pairs double the small blind without fractional rounding arti
     gameRewardGroups[3]!.map((tier) => tier.blind),
     ['100/200', '200/400', '300/600', '500/1000', '1000/2000'],
   )
+})
+
+test('CMS hand configs preserve zero rewards, multiple props, and independent credited state', () => {
+  const groups = buildGameRewardGroups(
+    [
+      { sb: 100, hand_count: 50, reward_gold: 0, rewards: [] },
+      {
+        sb: 500,
+        hand_count: 20,
+        reward_gold: 100,
+        rewards: [
+          { prop_id: 662, quantity: 3, prop_value: 50000, multi_language: 'PROP_TICKET' },
+          { prop_id: 663, quantity: 1, prop_value: 20000 },
+        ],
+      },
+    ],
+    new Map([[100, { current: 50, credited: false }]]),
+  )
+  assert.deepEqual(
+    groups.map((group) => group.map((tier) => tier.blind)),
+    [[], ['1/2', '5/10'], [], []],
+  )
+  assert.equal(groups[1]![0]!.reward_gold, 0)
+  assert.deepEqual(groups[1]![0]!.rewards, [])
+  assert.equal(groups[1]![0]!.credited, false)
+  assert.equal(groups[1]![1]!.reward_gold, 100)
+  assert.deepEqual(
+    groups[1]![1]!.rewards.map((prop) => [prop.prop_id, prop.quantity, prop.value]),
+    [
+      [662, 3, 500],
+      [663, 1, 200],
+    ],
+  )
+  assert.equal(groups[1]![1]!.rewards[0]!.multi_language, 'PROP_TICKET')
+  assert.deepEqual(buildGameRewardGroups([]), [[], [], [], []])
+})
+
+test('invite tiers keep all qualifying thresholds and use explicit credit records', () => {
+  const tiers = buildInviteRewardTiers(
+    [
+      { invite_count: 20, reward_gold: 500, rewards: [] },
+      { invite_count: 10, reward_gold: 100, rewards: [{ prop_id: 662, quantity: 1 }] },
+    ],
+    new Set([10]),
+  )
+  assert.deepEqual(
+    tiers.map((tier) => [tier.target, tier.credited]),
+    [
+      [10, true],
+      [20, false],
+    ],
+  )
+  assert.equal(tiers[0]!.rewards[0]!.quantity, 1)
+})
+
+test('recharge presentation retains normalized amounts and server metadata', () => {
+  const tiers = toRechargeActivityTiers([
+    {
+      startAmount: 100,
+      endAmount: 150,
+      rewards: [
+        {
+          propId: 662,
+          propName: 'PROP_TICKET',
+          propValue: 500,
+          quantity: 2,
+          propIcon: '',
+          multiLanguage: { cn_name: '门票' },
+        },
+      ],
+    },
+  ])
+  assert.equal(tiers[0]!.from, 100)
+  assert.equal(tiers[0]!.to, 150)
+  assert.equal(tiers[0]!.rewards[0]!.value, 500)
+  assert.deepEqual(tiers[0]!.rewards[0]!.multi_language, { cn_name: '门票' })
+  assert.equal(rewardProgress(12, 10), 100)
+  assert.equal(rewardProgress(-1, 10), 0)
+  assert.equal(rewardProgress(1, 0), 0)
+  assert.equal(rewardProgress(NaN, 10), 0)
 })

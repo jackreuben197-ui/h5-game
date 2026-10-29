@@ -7,15 +7,24 @@ import { formatUC } from '@/utils/roomVisibility'
 import defaultLarge from '@/assets/channelC/mtt-default-large.png'
 import defaultMedium from '@/assets/channelC/mtt-default-medium.png'
 import defaultSmall from '@/assets/channelC/mtt-default-small.png'
-import { t } from '@/i18n'
+import { getLocale, t } from '@/i18n'
+import {
+  multiLanguageTemplateVersion,
+  resolveTemplateTextByKey,
+} from '@/utils/multiLanguageTemplate'
 
 const props = withDefaults(defineProps<{ match: MttListRecord; now: number; size?: CardSize }>(), {
   size: 'large',
 })
 defineEmits<{ open: [match: MttListRecord] }>()
+const matchName = computed(() => {
+  void multiLanguageTemplateVersion.value
+  const rawName = props.match.name || ''
+  return resolveTemplateTextByKey(rawName, getLocale()) || t(rawName) || `MTT #${props.match.match_id}`
+})
 const failedCover = ref(false)
 watch(
-  () => props.match.mtt_banner_url,
+  () => props.match.mtt_banner_url_c,
   () => {
     failedCover.value = false
   },
@@ -24,7 +33,9 @@ const defaultCover = computed(
   () => ({ large: defaultLarge, medium: defaultMedium, small: defaultSmall })[props.size],
 )
 const cover = computed(() =>
-  failedCover.value ? defaultCover.value : props.match.mtt_banner_url?.trim() || defaultCover.value,
+  failedCover.value
+    ? defaultCover.value
+    : props.match.mtt_banner_url_c?.trim() || defaultCover.value,
 )
 const stage = computed(() => getMttStage(props.match, props.now))
 const statusText = computed(() =>
@@ -61,8 +72,8 @@ const actionText = computed(() =>
       </span>
     </div>
     <div class="c-mtt-details">
-      <strong class="c-mtt-name" :title="t(match.name || '')">
-        {{ t(match.name || '') || `MTT #${match.match_id}` }}
+      <strong class="c-mtt-name" :title="matchName">
+        {{ matchName }}
       </strong>
       <p class="c-prize">
         {{ t('UIMTT_zongjiangjin') }}

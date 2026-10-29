@@ -1,13 +1,9 @@
-import type {
-  MttListRecord,
-  MttSeriesInfoRecord,
-  RoomRecord,
-  RoomUser,
-} from '@/api/models/roomcenter'
+import type { MttListRecord, MttSeriesInfoRecord, RoomRecord } from '@/api/models/roomcenter'
 import { sortRoomRecordsForDisplay } from '@/utils/roomListSort'
 import { isMttRegistered } from '@/utils/mttRegistration'
 import { resolveSeriesLayoutByType } from '@/utils/mttCardLayout'
 import { toTimestampMs } from '@/utils/time'
+import { roomDescription } from '@/features/channelC/pokerCard'
 
 export type ChannelCSection = 'home' | 'poker' | 'mtt'
 export type CardSize = 'large' | 'medium' | 'small'
@@ -19,7 +15,7 @@ export type LobbyCard =
 
 export const MTT_ARTWORK_HEIGHT: Record<CardSize, number> = { large: 225, medium: 152, small: 89 }
 export const isRecommended = (record: { is_top?: unknown }): boolean =>
-  record.is_top === true || Number(record.is_top) === 1
+  record.is_top === 1
 
 export function getCardSize(seriesType: unknown, total = 0): CardSize {
   const type = Number(seriesType)
@@ -74,7 +70,7 @@ export function sortChannelCMtt(records: MttListRecord[], now = Date.now()): Mtt
 export function buildChannelCFeed(
   rooms: RoomRecord[],
   matches: MttListRecord[],
-  section: ChannelCSection,
+  section: ChannelCSection | 'search',
   now = Date.now(),
   series: readonly MttSeriesInfoRecord[] = [],
 ): LobbyCard[] {
@@ -102,6 +98,14 @@ export function buildChannelCFeed(
   }))
   if (section === 'poker') return tables
   if (section === 'mtt') return mtts
+  return interleaveChannelCCards(tables, mtts)
+}
+
+/** 首页与搜索共用的 3 桌 + 1 MTT 混排，保留所有不足一组的剩余结果。 */
+export function interleaveChannelCCards(
+  tables: readonly LobbyCard[],
+  mtts: readonly LobbyCard[],
+): LobbyCard[] {
   const feed: LobbyCard[] = []
   let tableIndex = 0
   let matchIndex = 0
@@ -126,12 +130,6 @@ export function matchesMttFilter(match: MttListRecord, filter: MttFilter): boole
   return true
 }
 
-export function roomDescription(room: RoomRecord): string[] {
-  return [room.gameplay_description?.trim(), room.table_feature?.trim()].filter(
-    (text): text is string => Boolean(text),
-  )
-}
-
 export function estimateCardHeight(card: LobbyCard): number {
   return card.kind === 'mtt'
     ? MTT_ARTWORK_HEIGHT[card.size] + 60
@@ -139,7 +137,7 @@ export function estimateCardHeight(card: LobbyCard): number {
 }
 
 /** 首排左右顶部对齐，之后按已排高度放入较短列；列内始终保持输入顺序。 */
-export function buildWaterfallColumns(cards: LobbyCard[]): [LobbyCard[], LobbyCard[]] {
+export function buildWaterfallColumns(cards: readonly LobbyCard[]): [LobbyCard[], LobbyCard[]] {
   const columns: [LobbyCard[], LobbyCard[]] = [[], []]
   const heights = [0, 0]
   cards.forEach((card) => {
@@ -148,36 +146,4 @@ export function buildWaterfallColumns(cards: LobbyCard[]): [LobbyCard[], LobbyCa
     heights[column]! += estimateCardHeight(card) + 7
   })
   return columns
-}
-
-// 固定锚点：1 左下、2 九点、3/4/5 顶部、6 三点；7/8 底部。
-const SEATS_8 = [
-  [25, 81],
-  [10, 56],
-  [25, 32],
-  [50, 24],
-  [75, 32],
-  [90, 56],
-  [75, 81],
-  [50, 87],
-]
-const SEATS_9 = [...SEATS_8.slice(0, 6), [76, 81], [59, 87], [42, 87]]
-
-export function getOccupiedSeats(
-  room: RoomRecord,
-): Array<{ seat: number; user: RoomUser; x: number; y: number }> {
-  const users = Array.isArray(room.users) ? room.users : []
-  const positions = users.some((user) => Number(user.seat) === 9) ? SEATS_9 : SEATS_8
-  const seen = new Set<number>()
-  return users
-    .flatMap((user) => {
-      const seat = Number(user.seat)
-      // 不猜测座位，也不把旁观者填进空位。
-      if (!Number.isInteger(seat) || seat < 1 || seat > positions.length || seen.has(seat))
-        return []
-      seen.add(seat)
-      const [x, y] = positions[seat - 1]!
-      return [{ seat, user, x: x!, y: y! }]
-    })
-    .sort((a, b) => a.seat - b.seat)
 }

@@ -124,13 +124,21 @@ export interface UserRegisterRequest {
   platform?: number
   // 邀请码。
   invite_code?: string
+  // 普通邀请人的随机 ID；非 0 时必须同时传目标俱乐部 invite_code。
+  inviter_random_id?: number
   // 绑定邀请码唯一id（代理）
   trace_hash?: string
   [key: string]: unknown
 }
 
+// /user/invite_register 只返回手机号/邮箱，不返回登录 token。
+export type UserInviteRegisterRequest = UserRegisterRequest
+export type UserInviteRegisterData = string
+
 // /user/register 响应 data。
 export interface UserRegisterData {
+  token?: string
+  expire_at?: number
   // 用户 id。
   userId?: number
   [key: string]: unknown

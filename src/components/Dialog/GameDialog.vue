@@ -6,6 +6,7 @@ import {
   computed,
   useAttrs,
   useSlots,
+  type CSSProperties,
   type StyleValue,
   type VNode,
 } from 'vue'
@@ -45,6 +46,7 @@ const props = withDefaults(
     bodyMaxHeight?: string
     cardStyle?: StyleValue
     bodyStyle?: StyleValue
+    overlayStyle?: CSSProperties
     /** 关闭前回调，return false 阻止关闭 */
     beforeClose?: (action: string) => boolean | Promise<boolean>
   }>(),
@@ -63,6 +65,7 @@ const props = withDefaults(
     bodyMaxHeight: '12rem',
     cardStyle: undefined,
     bodyStyle: undefined,
+    overlayStyle: () => ({ backgroundColor: 'rgba(12, 12, 12, 0.6)' }),
     beforeClose: undefined,
   },
 )
@@ -138,7 +141,7 @@ const bodyStyles = computed<StyleValue>(() => [
     :show-confirm-button="false"
     :show-cancel-button="false"
     :before-close="beforeClose"
-    :overlay-style="{ backgroundColor: 'rgba(12, 12, 12, 0.6)' }"
+    :overlay-style="overlayStyle"
     class="game-dialog"
     :style="dialogStyle"
     v-bind="attrs"

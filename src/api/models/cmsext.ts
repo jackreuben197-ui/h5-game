@@ -1,3 +1,10 @@
+import type { RoomDisplayFields, MttDisplayFields } from '@/utils/lobbyDisplayFields'
+
+export interface MttTemplateConfig extends MttDisplayFields {
+  mtt_banner_url?: string
+  [key: string]: unknown
+}
+
 // 该文件由迁移脚本从 cocos Request 自动生成并做结构化转换。
 // 前缀: /api/cmsext
 
@@ -274,7 +281,7 @@ export interface CmsExtHotUpdateTemplateListResponseData extends CmsExtHotUpdate
 }
 
 export interface CmsExtHotUpdateTemplateListData {
-  data?: unknown[] // 房间模板数据
+  data?: RoomConfigRequest[] | null // 房间模板数据
   last_update_time?: number // 最后更新时间
 
   [key: string]: unknown
@@ -370,7 +377,7 @@ export interface CmsExtMiniGameTribeConfigCreateData {
 
 // /api/cmsext/mtt/config/create (CmsExtMttConfigCreate)
 export interface CmsExtMttConfigCreateRequest {
-  template?: unknown // MTT模板配置
+  template?: MttTemplateConfig // MTT模板配置
   enter_before?: number // 提前进桌的多少秒（开赛前）
   start_time?: number // 开赛时间戳(秒)
   apply_time?: number // 报名时间戳(秒)
@@ -403,7 +410,7 @@ export interface CmsExtMttCreateData {
 
 // /api/cmsext/mtt/template/create (CmsExtMttTemplateCreate)
 export interface CmsExtMttTemplateCreateRequest {
-  template?: unknown // MTT模板配置
+  template?: MttTemplateConfig // MTT模板配置
   enter_before?: number // 提前进桌的多少秒（开赛前）
   start_time?: number // 开赛时间戳(秒)
   apply_time?: number // 报名时间戳(秒)
@@ -413,6 +420,7 @@ export interface CmsExtMttTemplateCreateRequest {
 }
 
 export interface CmsExtMttTemplateCreateResponseData {
+  template?: MttTemplateConfig
   [key: string]: unknown
 }
 
@@ -446,14 +454,14 @@ export interface CmsExtMttTemplateListData {
   limit?: number
   offset?: number
   total?: number
-  templates?: unknown[]
+  templates?: MttTemplateConfig[]
 
   [key: string]: unknown
 }
 
 // /api/cmsext/mtt/template/update (CmsExtMttTemplateUpdate)
 export interface CmsExtMttTemplateUpdateRequest {
-  template?: unknown // MTT模板配置
+  template?: MttTemplateConfig // MTT模板配置
   enter_before?: number // 提前进桌的多少秒（开赛前）
   start_time?: number // 开赛时间戳(秒)
   apply_time?: number // 报名时间戳(秒)
@@ -463,6 +471,7 @@ export interface CmsExtMttTemplateUpdateRequest {
 }
 
 export interface CmsExtMttTemplateUpdateResponseData {
+  template?: MttTemplateConfig
   [key: string]: unknown
 }
 
@@ -475,6 +484,7 @@ export interface CmsExtMttTemplateWeekSwitchUpdateRequest {
 }
 
 export interface CmsExtMttTemplateWeekSwitchUpdateResponseData {
+  template?: MttTemplateConfig
   [key: string]: unknown
 }
 
@@ -486,7 +496,7 @@ export interface OrgRoomBatchCreateRequest {
 export type OrgRoomBatchCreateResponseData = number
 
 // /api/cmsext/room/club/config/create (OrgRoomClubCreate)
-export interface OrgRoomClubCreateRequest {
+export interface OrgRoomClubCreateRequest extends RoomDisplayFields {
   name?: string // 房间名称
   room_config?: RoomConfigRequest // 房间配置信息
 
@@ -498,7 +508,7 @@ export interface OrgRoomClubCreateResponseData extends OrgRoomClubCreateData {
 }
 
 // /api/cmsext/room/config/create (OrgRoomConfigCreate)
-export interface OrgRoomConfigCreateRequest {
+export interface OrgRoomConfigCreateRequest extends RoomDisplayFields {
   name?: string // 房间名称
   room_config?: RoomConfigRequest // 房间配置请求
   standard?: boolean // 是否一键创建
@@ -564,13 +574,13 @@ export interface CmsExtRoomTemplate0ResponseData extends CmsExtRoomTemplate0Data
 }
 
 export interface CmsExtRoomTemplate0Data {
-  data?: unknown
+  data?: RoomConfigRequest
 
   [key: string]: unknown
 }
 
 // /api/cmsext/room/template/create (OrgCreateTemplate)
-export interface OrgCreateTemplateRequest {
+export interface OrgCreateTemplateRequest extends RoomDisplayFields {
   name?: string // 模版名称
   room_config?: RoomConfigRequest // 房间配置
 
@@ -578,6 +588,7 @@ export interface OrgCreateTemplateRequest {
 }
 
 export interface OrgCreateTemplateResponseData {
+  data?: RoomConfigRequest
   [key: string]: unknown
 }
 
@@ -627,7 +638,7 @@ export interface CmsExtRoomTemplateStatusData {
 }
 
 // /api/cmsext/room/template/update (OrgUpdateTemplate)
-export interface OrgUpdateTemplateRequest {
+export interface OrgUpdateTemplateRequest extends RoomDisplayFields {
   id?: number // 房间 ID
   name?: string // 房间名称
   room_config?: RoomConfigRequest // 房间配置信息
@@ -640,9 +651,9 @@ export interface OrgUpdateTemplateResponseData extends OrgUpdateTemplateData {
 }
 
 // /api/cmsext/room/tribe/config/create (CmsExtRoomTribeConfigCreate)
-export interface CmsExtRoomTribeConfigCreateRequest {
+export interface CmsExtRoomTribeConfigCreateRequest extends RoomDisplayFields {
   name?: string // 房间名称
-  room_config?: unknown // 房间配置
+  room_config?: RoomConfigRequest // 房间配置
 
   [key: string]: unknown
 }
@@ -653,7 +664,7 @@ export interface CmsExtRoomTribeConfigCreateResponseData extends CmsExtRoomTribe
 
 export interface CmsExtRoomTribeConfigCreateData {
   room_id?: number // 房间id
-  room_config?: unknown // 房间配置
+  room_config?: RoomConfigRequest // 房间配置
 
   [key: string]: unknown
 }
@@ -689,6 +700,7 @@ export interface CmsExtRoomUserTemplateListResponseData extends CmsExtRoomUserTe
 }
 
 export interface CmsExtRoomUserTemplateListData {
+  data?: RoomConfigRequest[]
   [key: string]: unknown
 }
 
@@ -905,13 +917,14 @@ export interface OrgTemplateDeleteData {
 }
 
 export interface OrgUpdateTemplateData {
+  data?: RoomConfigRequest
   [key: string]: unknown
 }
 
-export interface RoomConfigResponse {
+export interface RoomConfigResponse extends RoomDisplayFields {
   [key: string]: unknown
 }
 
-export interface RoomConfigRequest {
+export interface RoomConfigRequest extends RoomDisplayFields {
   [key: string]: unknown
 }

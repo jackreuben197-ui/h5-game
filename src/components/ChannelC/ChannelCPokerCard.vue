@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { RoomRecord } from '@/api/models/roomcenter'
-import { getOccupiedSeats, getPokerKind } from '@/features/channelC/model'
+import { getPokerKind } from '@/features/channelC/model'
+import { getOccupiedSeats, getRoomBuyIn, getRoomTimeText } from '@/features/channelC/pokerCard'
 import { getRoomPlayerCount, formatUC } from '@/utils/roomVisibility'
 import nlh from '@/assets/images/table_bg_nlh.png'
 // 保留已导入素材的原文件名。
@@ -13,19 +14,18 @@ import mushroom from '@/assets/icons/table_icon_mushroom.png'
 import squid from '@/assets/icons/table_icon_squid.png'
 import critical from '@/assets/icons/table_icon_critical.png'
 import aof from '@/assets/icons/table_icon_Aof.png'
-import people from '@/assets/channelC/players.svg'
 import chips from '@/assets/icons/icon_chips.png'
 import { t } from '@/i18n'
 
-const props = defineProps<{ room: RoomRecord; roomLogo?: string; joining?: boolean }>()
+const props = defineProps<{ room: RoomRecord; now: number; roomLogo?: string; joining?: boolean }>()
 defineEmits<{ join: [room: RoomRecord] }>()
 const kind = computed(() => getPokerKind(props.room))
 const background = computed(() => ({ nlh, plo, short: shortDeck })[kind.value])
 const gameName = computed(() => ({ nlh: 'NLH', plo: 'PLO', short: 'SHORT DECK' })[kind.value])
 const descriptions = computed(() =>
   [
-    { label: 'UITexasRule_RlNZ1ysZ', value: props.room.gameplay_description },
-    { label: 'UIChannelC_TableFeature', value: props.room.table_feature },
+    { label: 'UITexasRule_RlNZ1ysZ', value: props.room.room_intro },
+    { label: 'UIChannelC_TableFeature', value: props.room.room_features },
   ]
     .filter((row) => row.value?.trim())
     .map((row) => `${t(row.label)}: ${t(row.value!.trim())}`),
@@ -33,6 +33,8 @@ const descriptions = computed(() =>
 const seats = computed(() => getOccupiedSeats(props.room))
 const playerCount = computed(() => getRoomPlayerCount(props.room))
 const seatCount = computed(() => Math.max(2, Number(props.room.seat_count) || 8))
+const timeText = computed(() => getRoomTimeText(props.room, props.now))
+const buyIn = computed(() => formatUC(getRoomBuyIn(props.room)))
 const specialModes = computed(() =>
   [
     { show: Number(props.room.mushroom_mode) > 0, label: 'UIMush', icon: mushroom },
@@ -51,15 +53,18 @@ function fallbackAvatar(event: Event) {
   <article class="c-poker-card" :aria-label="room.name || t('UITexasReport_Label_AllBarPZ')">
     <div class="c-table-art">
       <img class="c-table-bg" :src="background" alt="" />
-      <span class="c-playing"><i></i>{{ t('UIChannelC_Playing', playerCount, seatCount) }}</span>
-      <div class="c-table-label" :class="{ 'c-table-label--special': specialModes.length > 0 }">
-        <strong>{{ gameName }}</strong>
+      <span class="c-playing">
+        <span>{{ t('UIChannelC_Playing', playerCount, seatCount) }}</span>
+      </span>
+      <div class="c-table-label">
         <div v-if="specialModes.length" class="c-special-modes">
           <span v-for="mode in specialModes" :key="mode.label">
             <img :src="mode.icon" alt="" />
             <span class="c-mode-name" :title="t(mode.label)">{{ t(mode.label) }}</span>
           </span>
         </div>
+        <strong v-else>{{ gameName }}</strong>
+        <span class="c-table-time">{{ timeText }}</span>
       </div>
       <img
         v-for="seat in seats"
@@ -87,14 +92,15 @@ function fallbackAvatar(event: Event) {
       <div class="c-room-meta">
         <strong :title="room.name">{{ room.name || t('UITexasReport_Label_AllBarPZ') }}</strong>
         <div class="c-stakes">
-          <span>
-            <img :src="chips" :alt="t('adaptation20006')" />{{ formatUC(Number(room.sb) || 0) }}/{{
-              formatUC((Number(room.sb) || 0) * 2)
-            }}
-          </span>
-          <span>
-            <img :src="people" :alt="t('UIMatchFilter_5MWvUt')" />{{ playerCount }}/{{ seatCount
-            }}{{ t('Common_People') }}
+          <span class="c-stakes-pill">
+            <span class="c-stakes-blind">
+              <img class="c-uc-icon" :src="chips" :alt="t('adaptation20006')" />
+              <span>
+                {{ formatUC(Number(room.sb) || 0) }}/{{ formatUC((Number(room.sb) || 0) * 2) }}
+              </span>
+            </span>
+            <span class="c-stakes-divider" aria-hidden="true"></span>
+            <span class="c-buy-in">{{ t('MTT_xq_buy') }} {{ buyIn }}</span>
           </span>
         </div>
       </div>
@@ -146,16 +152,18 @@ function fallbackAvatar(event: Event) {
   white-space: nowrap;
 }
 
-.c-playing i {
-  width: 0.17rem;
-  height: 0.17rem;
+.c-playing::before {
+  content: '';
+  flex: none;
+  width: 0.1748rem;
+  height: 0.1748rem;
   border-radius: 50%;
-  background: #00e3ae;
+  background: #00f0a0;
 }
 
 .c-table-label {
   position: absolute;
-  top: 58%;
+  top: 58.8%;
   left: 17%;
   right: 17%;
   transform: translateY(-50%);
@@ -163,19 +171,15 @@ function fallbackAvatar(event: Event) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.025rem;
-  font-size: 0.22rem;
+  gap: 0.01rem;
+  font-size: 0.205rem;
   color: #fff;
   text-align: center;
-  line-height: 1.15;
+  line-height: 1;
   text-shadow: 0 1px 3px #0005;
 }
-.c-table-label--special {
-  top: 52%;
-}
-
 .c-table-label strong {
-  font-size: 0.22rem;
+  font-size: 0.205rem;
   letter-spacing: 0.012rem;
 }
 
@@ -186,6 +190,13 @@ function fallbackAvatar(event: Event) {
   flex-wrap: nowrap;
   gap: 0.04rem;
   font-size: 0.16rem;
+}
+
+.c-table-time {
+  font-size: 0.182rem;
+  line-height: 1.1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .c-special-modes > span {
@@ -202,8 +213,8 @@ function fallbackAvatar(event: Event) {
 
 .c-special-modes img {
   flex: none;
-  width: 0.25rem;
-  height: 0.25rem;
+  width: 0.18rem;
+  height: 0.18rem;
   object-fit: contain;
 }
 
@@ -267,26 +278,49 @@ function fallbackAvatar(event: Event) {
 .c-stakes {
   display: flex;
   align-items: center;
-  gap: 0.06rem;
   padding-top: 0.035rem;
-  font-size: 0.195rem;
+  font-size: 0.202rem;
   white-space: nowrap;
+  min-width: 0;
 }
 
-.c-stakes span {
+.c-stakes-pill {
   display: flex;
   align-items: center;
-  gap: 0.035rem;
-  padding: 0.01rem 0.06rem;
+  gap: 0.08rem;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0.042rem 0.09rem;
   border-radius: 0.2rem;
   background: #fff;
   color: #17191e;
+  line-height: 1;
 }
 
-.c-stakes img {
-  width: 0.18rem;
-  height: 0.18rem;
+.c-stakes-blind {
+  display: flex;
+  align-items: center;
+  gap: 0.026rem;
+  flex: none;
+}
+
+.c-uc-icon {
+  width: 0.23rem;
+  height: 0.23rem;
   object-fit: contain;
+}
+
+.c-stakes-divider {
+  flex: none;
+  width: 0.5px;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.61);
+}
+
+.c-buy-in {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .c-join {

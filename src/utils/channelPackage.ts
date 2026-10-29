@@ -1,3 +1,4 @@
+import { buildPlayerInvitationUrl, normalizeInviterRandomId } from '@/utils/playerInvitation'
 import StorageKey from '@/constants/storageKey'
 import type { PrivateUcChargeConfigItem, PrivateUcFeeType } from '@bridge-protocol'
 import type {
@@ -43,6 +44,7 @@ interface ParsedQueryParams {
   inviteCode: string
   traceHash: string
   agentInviteCode: string
+  inviterRandomId?: number
   mode: string
 }
 
@@ -522,6 +524,7 @@ export function parseInviteParamsFromLocation(
     inviteCode: readParam(searchParams, hashParams, 'invite_code'),
     traceHash: readParam(searchParams, hashParams, 'trace_hash') || agentInviteCode,
     agentInviteCode,
+    inviterRandomId: normalizeInviterRandomId(readParam(searchParams, hashParams, 'inviter_random_id')),
     mode: readParam(searchParams, hashParams, 'mode'),
   }
 }
@@ -562,14 +565,26 @@ export function resolveAgentInviteCode(): string {
 }
 
 /**
- * 将 URL 中的参数 i（代理邀请码）缓存到本地存储。
- * 在应用启动时调用，确保首次打开分享链接时参数不丢失。
+ * 缓存链接中的代理或普通邀请参数，并避免两种邀请来源混用。
+ * 在应用启动时调用，确保进入其他页面后注册仍保留来源。
  */
 export function cacheAgentInviteCodeIfPresent(): void {
   const parsed = parseInviteParamsFromLocation()
+  if (parsed.inviterRandomId) {
+    try {
+      localStore.setItem(StorageKey.PLAYER_INVITATION, {
+        id: parsed.inviterRandomId,
+        inviteCode: resolveInviteCode(),
+      })
+      localStore.removeItem(StorageKey.AGENT_INVITE_CODE)
+    } catch {
+      // 存储不可用时仍可从当前邀请链接读取。
+    }
+  }
   if (parsed.agentInviteCode) {
     try {
       localStore.setItem(StorageKey.AGENT_INVITE_CODE, parsed.agentInviteCode)
+      localStore.removeItem(StorageKey.PLAYER_INVITATION)
     } catch (error) {
       console.warn('[channelPackage] failed to cache agentInviteCode:', error)
     }
@@ -577,15 +592,46 @@ export function cacheAgentInviteCodeIfPresent(): void {
 }
 
 /**
- * 清除本地缓存的代理邀请码。
+ * 清除本地缓存的代理和普通邀请参数。
  * 在登录/注册成功后调用。
  */
 export function clearAgentInviteCodeCache(): void {
   try {
     localStore.removeItem(StorageKey.AGENT_INVITE_CODE)
+    localStore.removeItem(StorageKey.PLAYER_INVITATION)
   } catch {
     // localStorage 不可用时忽略
   }
+}
+
+export function resolveInviterRandomId(inviteCode: string): number | undefined {
+  if (!inviteCode.trim()) return undefined
+  const parsed = parseInviteParamsFromLocation()
+  const sourceClub = resolveInviteCode()
+  if (parsed.inviterRandomId && (!sourceClub || sourceClub === inviteCode)) {
+    return parsed.inviterRandomId
+  }
+  try {
+    const cached = localStore.getItem<{ id?: number; inviteCode?: string } | null>(
+      StorageKey.PLAYER_INVITATION,
+      null,
+    )
+    return cached?.inviteCode === inviteCode ? normalizeInviterRandomId(cached.id) : undefined
+  } catch {
+    return undefined
+  }
+}
+
+export function buildChannelPlayerInviteUrl(
+  inviter: unknown,
+  clubInviteCode?: string,
+  safariBaseUrl?: string,
+): string {
+  return buildPlayerInvitationUrl(
+    buildChannelClubInviteUrl(clubInviteCode, safariBaseUrl),
+    readString(clubInviteCode),
+    inviter,
+  )
 }
 
 export function shouldOpenRegisterMode(): boolean {

@@ -119,8 +119,10 @@ const mttOptions = [
   cursor: pointer;
 
   @include theme-light {
-    background: #fff;
-    color: #17191e;
+    &:not(.selected) {
+      background: #fff;
+      color: #17191e;
+    }
   }
 }
 .c-filter.selected {

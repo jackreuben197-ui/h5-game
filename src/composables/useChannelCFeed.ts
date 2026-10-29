@@ -6,7 +6,6 @@ import { useAppConfigStore } from '@/stores/appConfig'
 import { usePlatformDiamondVisibility } from '@/composables/usePlatformDiamondVisibility'
 import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
 import { filterVisibleMttRecords } from '@/utils/mttVisibility'
-import { withChannelCRoomFields } from '@/features/channelC/mock'
 
 export function useChannelCFeed() {
   const rooms = useRoomListStore()
@@ -21,13 +20,11 @@ export function useChannelCFeed() {
   )
   const visibleRooms = computed(() => {
     if (!clubId.value) return []
-    return rooms.records
-      .filter(
-        (room) =>
-          Number(room.game_type) < 5 &&
-          checkIsShowForClubAndTribe(room, clubId.value, tribeId.value, true, diamond.value),
-      )
-      .map(withChannelCRoomFields)
+    return rooms.records.filter(
+      (room) =>
+        Number(room.game_type) < 5 &&
+        checkIsShowForClubAndTribe(room, clubId.value, tribeId.value, true, diamond.value),
+    )
   })
   const visibleMatches = computed(() => {
     if (!clubId.value) return []

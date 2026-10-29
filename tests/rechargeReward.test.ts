@@ -149,3 +149,70 @@ test('local UI mock combines first-recharge and daily-recharge rewards at the te
     [500, 633, 100],
   )
 })
+
+test('UC-only and combined rewards are eligible without converting UC to cents', () => {
+  const base = { order_no: 'uc-order', status: 2, order_type: 1, reward_gold: 100, rewards: [] }
+  const notification = normalizeRechargeRewardNotification(base)
+  assert.equal(notification?.rewardGold, 100)
+  assert.equal(shouldShowRechargeReward(notification), true)
+  assert.equal(
+    shouldShowRechargeReward(normalizeRechargeRewardNotification({ ...base, status: 3 })),
+    false,
+  )
+  assert.equal(
+    shouldShowRechargeReward(normalizeRechargeRewardNotification({ ...base, order_type: 2 })),
+    false,
+  )
+  assert.equal(
+    shouldShowRechargeReward(normalizeRechargeRewardNotification({ ...base, reward_gold: -1 })),
+    false,
+  )
+  const combined = normalizeRechargeRewardNotification({
+    ...base,
+    rewards: [
+      {
+        prop_id: 662,
+        quantity: 2,
+        prop_value: 50000,
+        multi_language: { cn_name: '门票', us_name: 'Ticket' },
+      },
+    ],
+  })
+  assert.equal(combined?.rewardGold, 100)
+  assert.equal(combined?.rewards[0]?.propValue, 500)
+  assert.deepEqual(combined?.rewards[0]?.multiLanguage, { cn_name: '门票', us_name: 'Ticket' })
+  assert.equal(shouldShowRechargeReward(combined), true)
+})
+
+test('existing recharge config keeps reward_tribe_gold and multilingual props, including UC-only tiers', () => {
+  const tiers = normalizeRechargeRewardTiers([
+    { start_amount: 10000, end_amount: 15000, reward_tribe_gold: 100, rewards: [] },
+    {
+      start_amount: 15000,
+      end_amount: 20000,
+      reward_tribe_gold: 200,
+      rewards: [
+        {
+          prop_id: 662,
+          prop_value: 50000,
+          quantity: 3,
+          multi_language: { cn_name: '门票', us_name: 'Ticket' },
+        },
+      ],
+    },
+  ])
+  assert.equal(tiers.length, 2)
+  assert.deepEqual(tiers[0], { startAmount: 100, endAmount: 150, rewardGold: 100, rewards: [] })
+  assert.equal(tiers[1]?.rewardGold, 200)
+  assert.equal(tiers[1]?.rewards[0]?.propValue, 500)
+  assert.deepEqual(tiers[1]?.rewards[0]?.multiLanguage, { cn_name: '门票', us_name: 'Ticket' })
+  assert.equal(
+    normalizeRechargeRewardNotification({
+      orderNo: 'uc',
+      status: 2,
+      orderType: 1,
+      reward_tribe_gold: 100,
+    })?.rewardGold,
+    100,
+  )
+})

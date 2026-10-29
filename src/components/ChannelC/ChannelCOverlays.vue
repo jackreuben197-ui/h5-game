@@ -62,6 +62,6 @@ defineExpose({ open })
     @ignore="ignore"
   />
   <ChannelCGameRewards v-model:show="showGame" :tournament-name="tournamentName" />
-  <ChannelCRechargeRewards v-model:show="showRecharge" :tournament-name="tournamentName" />
+  <ChannelCRechargeRewards v-model:show="showRecharge" :tournament-name="tournamentName" :club-id="clubId" />
   <ChannelCInviteRewards v-model:show="showInvite" />
 </template>

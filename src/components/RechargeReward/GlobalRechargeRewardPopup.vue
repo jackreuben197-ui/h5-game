@@ -3,20 +3,16 @@ import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { Code, subscribeH5WsCode } from '@/bridge/ws/messageCenter'
 import { decodeUserOrderAudit } from '@/bridge/ws/orderAuditNotify'
 import { dispatchRechargeOrderSucceeded } from '@/features/rechargeReward/channel'
-import { createMockRechargeRewardNotification } from '@/features/rechargeReward/mock'
 import {
   isSuccessfulRechargeOrder,
   shouldShowRechargeReward,
   type RechargeRewardItem,
   type RechargeRewardNotification,
 } from '@/features/rechargeReward/model'
-import { getLocale } from '@/i18n'
 import { useTextI18n } from '@/i18n/useTextI18n'
+import { rewardItemName } from '@/features/rechargeReward/display'
+import rewardCoin from '@/assets/icons/wallet/ic_coins.png'
 import { useGameStore } from '@/stores/game'
-import {
-  multiLanguageTemplateVersion,
-  resolveTemplateTextByKey,
-} from '@/utils/multiLanguageTemplate'
 
 const SEEN_ORDER_STORAGE_PREFIX = 'h5_recharge_reward_seen_v1'
 const MAX_SEEN_ORDERS = 100
@@ -97,12 +93,7 @@ function displayRewardName(reward: RechargeRewardItem): string {
   // propName may be a template key such as PROP2023.... The template map is restored from
   // public_cache/multi_language_template; reading its version keeps an already-open popup in sync
   // when the asynchronous IndexedDB restore completes.
-  void multiLanguageTemplateVersion.value
-  const templateName = resolveTemplateTextByKey(reward.propName, getLocale())
-  if (templateName) return templateName
-
-  const translated = t(reward.propName)
-  return translated === reward.propName ? reward.propName : translated
+  return rewardItemName(reward.propName, reward.multiLanguage)
 }
 
 function enqueueNotification(notification: RechargeRewardNotification | null): void {
@@ -135,10 +126,6 @@ onMounted(() => {
     onOrderAudit(message.rawBuffer)
   })
   window.addEventListener('h5:visibility-change', onH5VisibilityChange)
-
-  // if (import.meta.env.DEV) {
-  //   handleOrderAudit(createMockRechargeRewardNotification())
-  // }
 })
 
 onBeforeUnmount(() => {
@@ -176,10 +163,27 @@ onBeforeUnmount(() => {
 
       <h2 class="reward-popup__title">{{ t('UIRechargeReward_ReceivedTitle') }}</h2>
       <p class="reward-popup__description">
-        {{ t('UIRechargeReward_ReceivedDescription') }}
+        {{
+          t(
+            current.rewardGold
+              ? current.rewards.length
+                ? 'UIRechargeReward_CombinedDescription'
+                : 'UIRechargeReward_CoinsDescription'
+              : 'UIRechargeReward_ReceivedDescription',
+          )
+        }}
       </p>
 
       <div class="reward-popup__list">
+        <div v-if="current.rewardGold" class="reward-popup__item">
+          <img class="reward-popup__coin-image" :src="rewardCoin" alt="" />
+          <div class="reward-popup__item-copy">
+            <p>
+              <span>{{ t('UIChannelC_AllianceCoin') }} (UC)</span>
+              <strong>+{{ current.rewardGold }}</strong>
+            </p>
+          </div>
+        </div>
         <div
           v-for="reward in current.rewards"
           :key="`${reward.propId}-${reward.propName}`"
@@ -238,12 +242,9 @@ onBeforeUnmount(() => {
   text-align: center;
   border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: 28px;
-  background:
-    radial-gradient(circle at 50% 8%, rgba(255, 202, 94, 0.16), transparent 32%),
+  background: radial-gradient(circle at 50% 8%, rgba(255, 202, 94, 0.16), transparent 32%),
     linear-gradient(150deg, rgba(115, 65, 94, 0.97), rgba(74, 49, 84, 0.98));
-  box-shadow:
-    0 18px 48px rgba(0, 0, 0, 0.4),
-    inset 0 1px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.4), inset 0 1px rgba(255, 255, 255, 0.2);
 }
 
 .reward-popup__close {
@@ -347,6 +348,13 @@ onBeforeUnmount(() => {
   object-fit: contain;
 }
 
+.reward-popup__coin-image {
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
 .reward-popup__ticket {
   fill: none;
   stroke: #ffdc69;
@@ -365,6 +373,7 @@ onBeforeUnmount(() => {
   flex: 1;
   align-items: baseline;
   gap: 5px;
+  flex-wrap: wrap;
 }
 
 .reward-popup__item-copy p {
@@ -372,15 +381,15 @@ onBeforeUnmount(() => {
   min-width: 0;
   align-items: baseline;
   gap: 6px;
+  flex-wrap: wrap;
   margin: 0;
   font-family: var(--wallet-font-cn);
   font-size: 14px;
 }
 
 .reward-popup__item-copy p span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .reward-popup__item-copy strong {

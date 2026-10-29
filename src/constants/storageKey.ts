@@ -85,6 +85,8 @@ export default class StorageKey {
   static soundIsOpen = 'soundIsOpen'
   // 渠道代理邀请码缓存（首次打开分享链接时缓存参数 i）。
   static AGENT_INVITE_CODE = 'AGENT_INVITE_CODE'
+  // 普通邀请人与目标俱乐部一起缓存，注册成功后清除。
+  static PLAYER_INVITATION = 'PLAYER_INVITATION'
   // 大厅 H5 展示弹窗最近一次展示的本地日期（YYYY-MM-DD），过 0 点重置。
   static H5_DISPLAY_LAST_SHOWN_DATE = 'H5_DISPLAY_LAST_SHOWN_DATE'
 }

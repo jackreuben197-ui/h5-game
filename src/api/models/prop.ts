@@ -102,6 +102,7 @@ export interface PropGoldPriceListData {
 export interface PropGoldPriceListRechargeRewardTier {
   start_amount?: number // 充值区间起始金额，单位为分
   end_amount?: number // 充值区间结束金额，单位为分
+  reward_tribe_gold?: number // 已有充值配置字段，联盟币数量（UC），不除以 100
   rewards?: PropGoldPriceListRechargeReward[]
 
   [key: string]: unknown
@@ -110,6 +111,7 @@ export interface PropGoldPriceListRechargeRewardTier {
 export interface PropGoldPriceListRechargeReward {
   prop_id?: number
   prop_name?: string
+  multi_language?: unknown // 道具名称多语言模板（cn_name/us_name/br_name 等）
   prop_value?: number // 道具价值，单位为分
   quantity?: number
 

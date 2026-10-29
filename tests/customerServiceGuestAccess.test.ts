@@ -17,6 +17,11 @@ test('customer-service requests allow authenticated guest accounts', async () =>
   `)
   const hooks = registerHooks({
     resolve(specifier, context, nextResolve) {
+      if (specifier === '@/utils/lobbyDisplayFields')
+        return {
+          url: new URL('../src/utils/lobbyDisplayFields.ts', import.meta.url).href,
+          shortCircuit: true,
+        }
       if (specifier === '@/api/http') return { url: httpMockUrl, shortCircuit: true }
       return nextResolve(specifier, context)
     },
@@ -106,10 +111,7 @@ test('table support chat restores H5 visibility and returns to Cocos when closed
     'utf8',
   )
 
-  assert.match(
-    tableSource,
-    /panelType: 'supportChat',\s*ensureVisible: true,/,
-  )
+  assert.match(tableSource, /panelType: 'supportChat',\s*ensureVisible: true,/)
   assert.match(actionSource, /returnToCocosOnClose: payload\.ensureVisible === true/)
   assert.match(
     chatSource,

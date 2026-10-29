@@ -143,7 +143,8 @@ const cardQueue = ref<ActiveCardState[]>([])
 const trackRef = shallowRef<HTMLElement | null>(null)
 const containerRef = shallowRef<HTMLElement | null>(null)
 const isSliding = ref(false)
-const slideTranslateX = ref(0)
+const trackTranslateX = ref(0)
+const trackTransitionMs = ref(0)
 const cardStepWidth = ref(152) // Responsive width: exactly 2 cards visible with gap
 
 // Auto-play timer
@@ -258,8 +259,9 @@ function triggerSlide(customSpeed?: number) {
     animateCardEntry(incomingCard)
   }
 
-  // Translate track by 1 card step to the left
-  slideTranslateX.value = -cardStepWidth.value
+  // Smoothly glide track to -cardStepWidth
+  trackTransitionMs.value = duration
+  trackTranslateX.value = -cardStepWidth.value
 
   setTimeout(() => {
     // Seamless queue shift: move first card to the tail
@@ -269,7 +271,8 @@ function triggerSlide(customSpeed?: number) {
     }
 
     // Reset translation with transition disabled (instant, zero flicker)
-    slideTranslateX.value = 0
+    trackTransitionMs.value = 0
+    trackTranslateX.value = 0
     isSliding.value = false
 
     // Schedule next auto slide
@@ -280,7 +283,7 @@ function triggerSlide(customSpeed?: number) {
 /**
  * Slide card left-to-right (User Swiping Right)
  */
-function triggerSlideRight(customSpeed?: number) {
+function triggerSlideRight(customSpeed?: number, currentOffset: number = 0) {
   if (isSliding.value || cardQueue.value.length < 3) return
   isSliding.value = true
   const duration = customSpeed || props.slideSpeed
@@ -291,14 +294,18 @@ function triggerSlideRight(customSpeed?: number) {
     cardQueue.value.unshift(popped)
   }
 
-  // Immediately place track at -cardStepWidth without transition
-  slideTranslateX.value = -cardStepWidth.value
+  // Immediately place track at (currentOffset - cardStepWidth) with 0ms transition
+  // This preserves the exact visual pixel position the user was holding!
+  trackTransitionMs.value = 0
+  trackTranslateX.value = currentOffset - cardStepWidth.value
 
-  // Next frame animate back to 0
+  // Next frame animate smoothly to 0
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      slideTranslateX.value = 0
+      trackTransitionMs.value = duration
+      trackTranslateX.value = 0
       setTimeout(() => {
+        trackTransitionMs.value = 0
         isSliding.value = false
         scheduleNextSlide()
       }, duration)
@@ -316,9 +323,10 @@ function scheduleNextSlide() {
 
 // ── Touch & Mouse Swipe / Drag Handling ──
 const isDragging = ref(false)
-const dragStartX = ref(0)
-const dragStartY = ref(0)
-const dragOffsetX = ref(0)
+let dragStartX = 0
+let dragStartY = 0
+let dragStartTime = 0
+let dragOffsetX = 0
 let isHorizontalDrag = false
 let hasDragged = false
 
@@ -326,9 +334,10 @@ function onTouchStart(e: TouchEvent) {
   if (isSliding.value) return
   if (slideTimer) clearTimeout(slideTimer)
   const touch = e.touches[0]
-  dragStartX.value = touch.clientX
-  dragStartY.value = touch.clientY
-  dragOffsetX.value = 0
+  dragStartX = touch.clientX
+  dragStartY = touch.clientY
+  dragStartTime = performance.now()
+  dragOffsetX = 0
   isDragging.value = true
   isHorizontalDrag = false
   hasDragged = false
@@ -337,8 +346,8 @@ function onTouchStart(e: TouchEvent) {
 function onTouchMove(e: TouchEvent) {
   if (!isDragging.value || isSliding.value) return
   const touch = e.touches[0]
-  const diffX = touch.clientX - dragStartX.value
-  const diffY = touch.clientY - dragStartY.value
+  const diffX = touch.clientX - dragStartX
+  const diffY = touch.clientY - dragStartY
 
   if (!isHorizontalDrag) {
     if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 6) {
@@ -352,7 +361,9 @@ function onTouchMove(e: TouchEvent) {
 
   if (isHorizontalDrag) {
     if (e.cancelable) e.preventDefault()
-    dragOffsetX.value = diffX
+    dragOffsetX = diffX
+    trackTransitionMs.value = 0
+    trackTranslateX.value = diffX
     if (Math.abs(diffX) > 8) {
       hasDragged = true
     }
@@ -362,27 +373,41 @@ function onTouchMove(e: TouchEvent) {
 function onTouchEnd() {
   if (!isDragging.value) return
   isDragging.value = false
-  const offset = dragOffsetX.value
-  dragOffsetX.value = 0
+  const distance = dragOffsetX
+  const elapsed = performance.now() - dragStartTime
+  const velocity = elapsed > 0 ? distance / elapsed : 0
+  dragOffsetX = 0
 
-  if (offset < -35) {
-    // Swiped Left -> advance to next card
-    triggerSlide(props.slideSpeed * 0.75)
-  } else if (offset > 35) {
-    // Swiped Right -> return to previous card
-    triggerSlideRight(props.slideSpeed * 0.75)
+  if (distance < -30 || (velocity < -0.25 && distance < -10)) {
+    // Swiped Left -> advance to next card smoothly from current finger position!
+    const remaining = Math.abs(-cardStepWidth.value - distance)
+    const animDuration = Math.max(220, Math.min(480, Math.round(remaining * 2.2)))
+    triggerSlide(animDuration)
+  } else if (distance > 30 || (velocity > 0.25 && distance > 10)) {
+    // Swiped Right -> return to previous card smoothly from current finger position!
+    const remaining = Math.abs(distance)
+    const animDuration = Math.max(220, Math.min(480, Math.round(remaining * 2.2)))
+    triggerSlideRight(animDuration, distance)
   } else {
-    // Rebound smoothly back to 0
-    scheduleNextSlide()
+    // Small drag: spring smoothly back to 0
+    isSliding.value = true
+    trackTransitionMs.value = 240
+    trackTranslateX.value = 0
+    setTimeout(() => {
+      trackTransitionMs.value = 0
+      isSliding.value = false
+      scheduleNextSlide()
+    }, 240)
   }
 }
 
 function onMouseDown(e: MouseEvent) {
   if (isSliding.value) return
   if (slideTimer) clearTimeout(slideTimer)
-  dragStartX.value = e.clientX
-  dragStartY.value = e.clientY
-  dragOffsetX.value = 0
+  dragStartX = e.clientX
+  dragStartY = e.clientY
+  dragStartTime = performance.now()
+  dragOffsetX = 0
   isDragging.value = true
   isHorizontalDrag = true
   hasDragged = false
@@ -390,8 +415,10 @@ function onMouseDown(e: MouseEvent) {
 
 function onMouseMove(e: MouseEvent) {
   if (!isDragging.value || isSliding.value) return
-  const diffX = e.clientX - dragStartX.value
-  dragOffsetX.value = diffX
+  const diffX = e.clientX - dragStartX
+  dragOffsetX = diffX
+  trackTransitionMs.value = 0
+  trackTranslateX.value = diffX
   if (Math.abs(diffX) > 8) {
     hasDragged = true
   }
@@ -475,8 +502,9 @@ onBeforeUnmount(() => {
           class="live-wins-track"
           :class="{ 'is-sliding': isSliding }"
           :style="{
-            transform: `translate3d(${slideTranslateX + (isDragging ? dragOffsetX : 0)}px, 0, 0)`,
-            transitionDuration: isSliding ? `${props.slideSpeed}ms` : '0ms',
+            transform: `translate3d(${trackTranslateX}px, 0, 0)`,
+            transitionDuration: `${trackTransitionMs}ms`,
+            transitionTimingFunction: 'cubic-bezier(0.25, 1, 0.5, 1)',
           }"
         >
           <div

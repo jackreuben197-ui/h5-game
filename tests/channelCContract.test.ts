@@ -7,7 +7,7 @@ import {
   readRoomDisplayFields,
   roomDisplayPatch,
 } from '../src/utils/lobbyDisplayFields.ts'
-import { mergeMttListPage } from '../src/utils/mttListMerge.ts'
+import { mergeMttListPage, reconcileMttListResponse } from '../src/utils/mttListMerge.ts'
 import {
   buildPlayerInvitationUrl,
   normalizeInviterRandomId,
@@ -123,4 +123,16 @@ test('player invite URLs include both values on custom domains and preserve exis
   assert.equal(params.has('inviter_random_id'), false)
   assert.equal(params.get('mode'), 'register')
   assert.equal(params.has('i'), false)
+})
+
+
+test('full list snapshots retain updates, additions and removals received during the request', () => {
+  const original = [{ match_id: 1, participants: 0 }, { match_id: 2, participants: 0 }, { match_id: 3, participants: 0 }]
+  const latest = [{ ...original[0], participants: 7 }, original[2], { match_id: 4, participants: 2 }]
+  const result = reconcileMttListResponse(
+    [{ match_id: 1, participants: 0 }, { match_id: 2, participants: 0 }, { match_id: 3, participants: 5 }],
+    original,
+    latest,
+  )
+  assert.deepEqual(result, [{ match_id: 1, participants: 7 }, { match_id: 3, participants: 5 }, { match_id: 4, participants: 2 }])
 })

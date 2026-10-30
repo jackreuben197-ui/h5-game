@@ -19,3 +19,26 @@ export function mergeMttListPage(
   }
   return [...page.values()]
 }
+
+/** 请求发出后收到的推送或报名结果优先于旧 HTTP 快照，包括新增和移除。 */
+export function reconcileMttListResponse(
+  incoming: readonly MttListRecord[],
+  requested: readonly MttListRecord[],
+  current: readonly MttListRecord[],
+): MttListRecord[] {
+  const requestedById = new Map(requested.map((record) => [Number(record.match_id), record]))
+  const currentById = new Map(current.map((record) => [Number(record.match_id), record]))
+  const result = new Map<number, MttListRecord>()
+  for (const record of incoming) {
+    const id = Number(record.match_id)
+    const previous = requestedById.get(id)
+    const latest = currentById.get(id)
+    if (previous && !latest) continue
+    result.set(id, latest && latest !== previous ? latest : record)
+  }
+  for (const record of current) {
+    const id = Number(record.match_id)
+    if (!result.has(id) && record !== requestedById.get(id)) result.set(id, record)
+  }
+  return [...result.values()]
+}

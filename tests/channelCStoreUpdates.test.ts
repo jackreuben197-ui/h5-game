@@ -4,7 +4,7 @@ import { registerHooks } from 'node:module'
 
 const moduleUrl = (source: string) => `data:text/javascript,${encodeURIComponent(source)}`
 const stubUrl = moduleUrl(`
-  export const state = { mtt: null };
+  export const state = { mtt: null, matchResponse: null, matchRequests: [], matchResponder: null, session: { loginUserId: '1', sessionToken: 'token' } };
   export const defineStore = (_id, options) => () => {
     const store = options.state();
     for (const [key, action] of Object.entries(options.actions)) store[key] = action.bind(store);
@@ -14,14 +14,14 @@ const stubUrl = moduleUrl(`
   export const getRoomsDetailApi = () => {};
   export const postRoomcenterUserContrastRoomsApi = () => {};
   export const getAllMttSngIdsApi = () => {};
-  export const postRoomCenterUserMatchListApi = () => {};
+  export const postRoomCenterUserMatchListApi = async (payload) => { state.matchRequests.push(payload); return state.matchResponder ? state.matchResponder(payload) : state.matchResponse; };
   export const Code = {};
   export const subscribeH5WsCode = () => {};
   export const subscribeH5WsCodes = () => {};
   export const decodeRoomChangeNotifyFromRawPacket = () => null;
   export const ROOM_CHANGE_TYPE = { ADD: 1, UPDATE: 2 };
   export const decodeHoldemPacket = () => null;
-  export const useGameStore = () => ({ loginUserId: '1', sessionToken: 'token' });
+  export const useGameStore = () => state.session;
   export const bulkUpsertRooms = () => {};
   export const loadRoomsByRids = () => {};
   export const readScopeMeta = () => {};
@@ -153,28 +153,66 @@ test('MTT WebSocket update clears only C artwork and recommendation, and persist
   assert.equal(saved, true)
 })
 
-test('MTT detail participant count updates the registered card and accepts a real zero', () => {
+test('a registration refresh reads the list API without waiting for 151 or a detail page', async () => {
   const store = useMttListStore()
-  store.records = [{ match_id: 1, mtt_buy: 1, participants: 0, name: 'match' }]
-  let saved = 0
-  store.persistMttListCache = () => { saved++ }
-
-  store.setMttParticipants(1, 5)
+  store.records = [{ match_id: 1, mtt_buy: 1, participants: 0, name: 'match' }, { match_id: 2, participants: 9 }]
+  state.matchRequests = []
+  state.matchResponder = null
+  state.matchResponse = { code: 0, data: { mtt_change_list: [{ match_id: 1, participants: 5, mtt_buy: 1 }] } }
+  assert.equal(await store.refreshMttRecord(1), true)
+  assert.deepEqual(state.matchRequests, [{ mtt_ids: [1], sng_ids: [], room_type: 0 }])
   assert.equal(store.records[0]?.participants, 5)
   assert.equal(store.records[0]?.mtt_buy, 1)
   assert.equal(store.records[0]?.name, 'match')
-  assert.equal(saved, 1)
-
-  for (const invalid of [undefined, Number.NaN, -1, Infinity]) {
-    store.setMttParticipants(1, invalid)
-  }
-  store.setMttParticipants(2, 10)
-  store.setMttParticipants(1, 5)
-  assert.equal(store.records[0]?.participants, 5)
-  assert.equal(saved, 1)
+  assert.equal(store.records[1]?.participants, 9)
 
   store.setMttRegistered(1, false)
-  store.setMttParticipants(1, 0)
+  state.matchResponse = { code: 0, data: { mtt_change_list: [{ match_id: 1, participants: 0, mtt_buy: 0 }] } }
+  await store.refreshMttRecord(1)
   assert.equal(store.records[0]?.participants, 0)
   assert.equal(store.records[0]?.mtt_buy, 0)
+})
+
+test('single-match refresh preserves fields omitted by a partial response', async () => {
+  const store = useMttListStore()
+  store.records = [{ match_id: 1, participants: 0, mtt_buy: 1, name: 'match', status: 0 }]
+  state.matchRequests = []
+  state.matchResponder = null
+  state.matchResponse = { code: 0, data: { mtt_change_list: [{ match_id: 1, participants: 1 }] } }
+  await store.refreshMttRecord(1)
+  assert.deepEqual(state.matchRequests, [{ mtt_ids: [1], sng_ids: [], room_type: 0 }])
+  assert.equal(store.records[0]?.participants, 1)
+  assert.equal(store.records[0]?.mtt_buy, 1)
+  state.matchResponse = { code: 0, data: { mtt_change_list: [{ match_id: 1, mtt_buy: 0 }] } }
+  await store.refreshMttRecord(1)
+  assert.equal(store.records[0]?.participants, 1)
+  assert.equal(store.records[0]?.mtt_buy, 0)
+})
+
+test('a delayed HTTP response cannot overwrite a newer participant notification', async () => {
+  const store = useMttListStore()
+  store.records = [{ match_id: 1, status: 0, participants: 0 }]
+  let finish
+  state.matchResponder = () => new Promise((resolve) => { finish = resolve })
+  const refresh = store.refreshMttRecord(1)
+  state.mtt = { changeType: 2, sendTimestamp: 200, mttChange: { match_id: 1, status: 0, participants: 8 } }
+  store.applyUserMttChangeNotify(new ArrayBuffer(0))
+  finish({ code: 0, data: { mtt_list: [{ match_id: 1, status: 0, participants: 0 }] } })
+  await refresh
+  assert.equal(store.records[0]?.participants, 8)
+  state.matchResponder = null
+})
+
+test('a participant response from the previous account is discarded', async () => {
+  const store = useMttListStore()
+  store.records = [{ match_id: 1, participants: 0 }]
+  let finish
+  state.matchResponder = () => new Promise((resolve) => { finish = resolve })
+  const refresh = store.refreshMttRecord(1)
+  state.session.loginUserId = '2'
+  finish({ code: 0, data: { mtt_list: [{ match_id: 1, participants: 6 }] } })
+  assert.equal(await refresh, false)
+  assert.equal(store.records[0]?.participants, 0)
+  state.session.loginUserId = '1'
+  state.matchResponder = null
 })

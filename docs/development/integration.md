@@ -303,9 +303,11 @@ sendMessage(
             → 调用原有 Sitdown，继续买入/余额不足充值流程
 ```
 
-H5 事务入口是 `src/session/cocosTableSitdownAuth.ts`。`syncPostAuthData()` 必须同时确认 WS、用户信息和
+H5 事务入口是 `src/session/cocosTableSitdownAuth.ts`。正常联调和生产环境的 `syncPostAuthData()` 必须同时确认 WS、用户信息和
 俱乐部列表同步成功，不能在俱乐部请求失败时误判为“用户未加入俱乐部”。事务期间无论成功或异常都要
 恢复 Cocos WS 写入。
+
+纯 H5 本地测试使用 `corepack pnpm dev:h5`（`.env.h5`）。只有 `DEV=true` 且 `VITE_H5_ONLY=true` 时，普通 H5 登录才不等待 WS；真实用户资料、俱乐部列表、token 及账号类型校验仍必需。返回结果用 `websocketRequired=false` 表示这一差异，不把未连接伪装为 `websocketSynced=true`。WS 保留一次后台连接与真实推送，失败不自动重连；Cocos 消息不下发。牌桌内登录事务继续要求 WS 就绪。生产构建即便误带该开关，也不放宽约束。
 
 相关跨端协议：
 

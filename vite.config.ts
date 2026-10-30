@@ -214,6 +214,8 @@ export default defineConfig(({ mode, command }) => {
 
   return {
     base: './',
+    // 纯 H5 模式单独缓存，避免与 Cocos 联调的依赖预构建互相覆盖。
+    cacheDir: mode === 'h5' ? 'node_modules/.vite-h5' : undefined,
     define: {
       // 运行时可读取构建元信息（版本号、依赖、构建时间）。
       __APP_INFO__: JSON.stringify(appInfo),

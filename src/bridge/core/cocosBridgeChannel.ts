@@ -16,6 +16,7 @@ import {
 } from '@bridge-protocol'
 import StorageKey from '@/constants/storageKey'
 import { createLogger } from '@/utils/logger'
+import { isH5OnlyDevMode } from '@/utils/h5OnlyDev'
 import { localStore } from '@/utils/localStore'
 import { showGameToast } from '@/components/Toast'
 import { showLocalBridgeDialog } from '../channels/dialogChannel'
@@ -343,6 +344,7 @@ export function sendBridgeMessage<TPayload>(
   options: SendBridgeMessageOptions = {},
 ): BridgeMessage<TPayload> {
   const message = createBridgeMessage(action, payload, options)
+  if (isH5OnlyDevMode()) return message
   logH5OutgoingNonForwardAction(message)
   postToCocos(message)
   return message

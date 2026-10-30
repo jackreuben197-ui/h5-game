@@ -34,13 +34,21 @@ pnpm dev
 
 Vite 配置端口为 `80`，以终端输出的实际地址为准。配置了 `h5.com` hosts 时可通过该域名联调；不要求修改源码中的域名。
 
-需要使用普通本地端口时，同时覆盖 WS 代理地址，避免 HTTP 已改到新端口而 WS 仍连接 localhost:80：
+只测试 H5、没有 Cocos 时，使用独立模式（固定端口 5174）：
 
 ```bash
-VITE_WS_PROXY_URL=ws://127.0.0.1:5174/api/channel/ pnpm dev --host 127.0.0.1 --port 5174
+corepack pnpm dev:h5
 ```
 
-也可在被 Git 忽略的 `.env.local` / `.env.development.local` 中配置本机覆盖项。修改环境变量后重启 Vite。
+访问 `http://127.0.0.1:5174/?invite_code=<测试邀请码>#/home`。该模式使用真实接口；用户资料和俱乐部加载完成即可登录，WS 在后台尝试连接，可用时继续接收真实推送。连接失败不自动重连，不等待或向 Cocos 下发消息。WS 查询仍要求实际连接成功，不伪造结果；刷新页面可重新尝试连接。
+
+正常 H5 / Cocos 联调可指定普通本地端口：
+
+```bash
+corepack pnpm dev --host 127.0.0.1 --port 5174 --strictPort
+```
+
+开发 WS 使用同源路径 `/api/channel/`，自动沿用当前主机和端口。可在被 Git 忽略的 `.env.local` / `.env.development.local` 中配置本机覆盖项。修改环境变量或在两种模式之间切换时重启 Vite。
 
 `predev` 自动检查 protobuf 并同步语言运行文件。`sync:i18n` 优先使用同级 `../h5-cc-i18n/dist/`，不存在时才读取依赖包；遇到旧文案时先检查脚本输出的来源。
 
@@ -53,7 +61,8 @@ VITE_WS_PROXY_URL=ws://127.0.0.1:5174/api/channel/ pnpm dev --host 127.0.0.1 --p
 | `VITE_API_BASE_URL` | `.env` 为 `https://test2.awanptest.com/api`；开发环境为同源 `/api` |
 | `VITE_PROXY_TARGET` | 开发 HTTP / WS 代理目标，默认 `https://test2.awanptest.com` |
 | `VITE_PROXY_IM_TARGET` | `/api/imoss` 的独立代理目标，见 Vite 配置 |
-| `VITE_WS_PROXY_URL` | 指定完整 WS 代理地址时优先使用；开发配置为 `ws://localhost/api/channel/` |
+| `VITE_WS_PROXY_URL` | WS 代理地址；开发配置为同源 `/api/channel/`，也支持完整 ws/wss URL |
+| `VITE_H5_ONLY` | `pnpm dev:h5` 使用的开发开关：不以 WS 为登录前提，禁止自动重连和 Cocos 下发；生产构建不生效 |
 | `VITE_WS_URL_TEMPLATE` | 无 WS 代理且连接参数未提供完整 URL 时，用模板和服务端端口拼接；`{0}` 替换为 `:端口` |
 | `VITE_BRIDGE_TARGET` | `pokerqueen`（默认）或 `h5-cc-game`，决定 Bridge 协议来源 |
 | `VITE_DEBUG_CONSOLE` | 开发默认加载调试面板；生产需显式设为 `true` |
@@ -92,6 +101,7 @@ localhost / IP 只有在 Vite 开发模式且显式提供 `invite_code` 时才�
 | 命令 | 作用 |
 | --- | --- |
 | `pnpm dev` | 启动 Vite；前置协议检查与语言同步 |
+| `pnpm dev:h5` | 纯 H5 本地测试，使用 5174 端口及独立依赖缓存；同样执行前置检查 |
 | `pnpm build` | 前置检查后执行 `vue-tsc -b` 和生产构建，产物为 `dist/` |
 | `pnpm build:debug` | 带 source map 的类型检查与构建 |
 | `pnpm build:analyze` | 输出 bundle 分析数据 |

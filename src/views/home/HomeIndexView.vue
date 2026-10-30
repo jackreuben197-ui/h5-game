@@ -28,6 +28,7 @@ import LoginSession from '@/session/loginSession'
 import { isBridgeHandshakeDone, onBridgeHandshakeDone } from '@/bridge/core/cocosBridgeChannel'
 import { ensureWsProxyConnected } from '@/bridge/ws'
 import { waitForH5FirstPaint } from '@/utils/firstPaint'
+import { isH5OnlyDevMode } from '@/utils/h5OnlyDev'
 import ChannelCHome from '@/components/ChannelC/ChannelCHome.vue'
 
 const router = useRouter()
@@ -75,6 +76,11 @@ async function ensureHomeWebSocket(forceExistingConnection = false): Promise<voi
 function startHomeWebSocketAfterCocosReady(): void {
   stopHomeWsBridgeReadyListener?.()
   stopHomeWsBridgeReadyListener = null
+
+  if (isH5OnlyDevMode()) {
+    void ensureHomeWebSocket()
+    return
+  }
 
   if (isBridgeHandshakeDone()) {
     void ensureHomeWebSocket()

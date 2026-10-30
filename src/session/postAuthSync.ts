@@ -14,12 +14,10 @@ import { useGameStore } from '@/stores/game'
 import { pinia } from '@/stores/pinia'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { localStore } from '@/utils/localStore'
+import { isH5OnlyDevMode } from '@/utils/h5OnlyDev'
 import { ensureMultiLanguageTemplateLoaded } from '@/utils/multiLanguageTemplate'
 import { readClubListCache } from '@/utils/userClubListCache'
-import {
-  isChannelPackageHost,
-  normalizePrivateUcConfig,
-} from '@/utils/channelPackage'
+import { isChannelPackageHost, normalizePrivateUcConfig } from '@/utils/channelPackage'
 
 let inFlightToken = ''
 let inFlightPromise: Promise<PostAuthProfileSyncResult> | null = null
@@ -30,6 +28,7 @@ interface PostAuthProfileSyncResult {
 }
 
 export interface PostAuthSyncResult extends PostAuthProfileSyncResult {
+  websocketRequired: boolean
   websocketSynced: boolean
 }
 
@@ -37,10 +36,15 @@ function combinePostAuthSync(
   websocketSync: Promise<boolean>,
   profileSync: Promise<PostAuthProfileSyncResult>,
 ): Promise<PostAuthSyncResult> {
-  return Promise.all([websocketSync, profileSync]).then(([websocketSynced, profile]) => ({
-    websocketSynced,
-    ...profile,
-  }))
+  const websocketRequired = !isH5OnlyDevMode()
+  // 纯 H5 测试保留后台 WS 推送，但真实身份确认不受 WS 连接失败或超时影响。
+  return Promise.all([websocketRequired ? websocketSync : false, profileSync]).then(
+    ([websocketSynced, profile]) => ({
+      websocketRequired,
+      websocketSynced,
+      ...profile,
+    }),
+  )
 }
 
 // 登录成功 / 启动时持有有效 token 都走这里：把首页无关的拉取/同步集中起来，避免必须切到首页才触发。
@@ -49,6 +53,7 @@ export function syncPostAuthData(): Promise<PostAuthSyncResult> {
   const token = gameStore.sessionToken.trim()
   if (!token || gameStore.isGuestAccount) {
     return Promise.resolve({
+      websocketRequired: !isH5OnlyDevMode(),
       websocketSynced: false,
       userInfoSynced: false,
       userClubSynced: false,
@@ -105,7 +110,8 @@ async function runPostAuthSync(token: string): Promise<PostAuthProfileSyncResult
     await userInfoStore.ensureChannelDefaultClub()
   }
 
-  await appConfigStore.restorePublicConfigCache()
+  await appConfigStore
+    .restorePublicConfigCache()
     .then(() => {
       if (appConfigStore.globalConfig) {
         forwardGlobalConfigToCocos(appConfigStore.globalConfig)
@@ -171,7 +177,8 @@ async function runPostAuthSync(token: string): Promise<PostAuthProfileSyncResult
 
   // 配置和多语言不参与身份确认，后台刷新即可；登录弹窗只等待用户、俱乐部和 WS。
   void Promise.allSettled([
-    appConfigStore.ensureFreshGlobalConfig(token)
+    appConfigStore
+      .ensureFreshGlobalConfig(token)
       .then((loaded) => {
         if (loaded && appConfigStore.globalConfig) {
           forwardGlobalConfigToCocos(appConfigStore.globalConfig)
@@ -184,29 +191,29 @@ async function runPostAuthSync(token: string): Promise<PostAuthProfileSyncResult
     // 私域版本只拉独立 UC 收费配置，不请求钻石收费列表。
     isPrivateUcPackage
       ? postPrivateUcConfigApi({})
-        .then((res) => {
-          if (gameStore.sessionToken.trim() !== token) return
-          if (Number(res.code) === 0 && res.data) {
-            appConfigStore.setPrivateUcConfig(normalizePrivateUcConfig(res.data))
-          }
-          forwardDiamondConfigToCocos(appConfigStore.diamondConfig ?? {})
-          forwardPrivateUcChargeConfigToCocos(appConfigStore.privateUcChargeConfig)
-        })
-        .catch((error) => {
-          console.warn('[post-auth-sync] sync private UC config failed:', error)
-          forwardDiamondConfigToCocos(appConfigStore.diamondConfig ?? {})
-          forwardPrivateUcChargeConfigToCocos(appConfigStore.privateUcChargeConfig)
-        })
+          .then((res) => {
+            if (gameStore.sessionToken.trim() !== token) return
+            if (Number(res.code) === 0 && res.data) {
+              appConfigStore.setPrivateUcConfig(normalizePrivateUcConfig(res.data))
+            }
+            forwardDiamondConfigToCocos(appConfigStore.diamondConfig ?? {})
+            forwardPrivateUcChargeConfigToCocos(appConfigStore.privateUcChargeConfig)
+          })
+          .catch((error) => {
+            console.warn('[post-auth-sync] sync private UC config failed:', error)
+            forwardDiamondConfigToCocos(appConfigStore.diamondConfig ?? {})
+            forwardPrivateUcChargeConfigToCocos(appConfigStore.privateUcChargeConfig)
+          })
       : postDiamondConfigApi({})
-        .then((res) => {
-          if (res.code === 0 && res.data) {
-            appConfigStore.setDiamondConfig(res.data)
-            forwardDiamondConfigToCocos(appConfigStore.diamondConfig)
-          }
-        })
-        .catch((error) => {
-          console.warn('[post-auth-sync] sync diamond config failed:', error)
-        }),
+          .then((res) => {
+            if (res.code === 0 && res.data) {
+              appConfigStore.setDiamondConfig(res.data)
+              forwardDiamondConfigToCocos(appConfigStore.diamondConfig)
+            }
+          })
+          .catch((error) => {
+            console.warn('[post-auth-sync] sync diamond config failed:', error)
+          }),
 
     ensureMultiLanguageTemplateLoaded().catch((error) => {
       console.warn('[post-auth-sync] sync multi-language template failed:', error)

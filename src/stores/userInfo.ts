@@ -4,6 +4,7 @@ import type { OrgClubSearchInfoData, OrgClubData } from '@/api/models/org'
 import { postOrgClubDefaultApi } from '@/api/org'
 import StorageKey from '@/constants/storageKey'
 import { dzpkPersistStorage } from '@/utils/localStore'
+import { useAppConfigStore } from '@/stores/appConfig'
 import {
   copyStorageToMainDomain,
   extractInviteCodeFromSubdomain,
@@ -215,21 +216,28 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       // 普通本地开发无需请求渠道俱乐部；但渠道包模拟同样运行在 localhost
       // （Cocos 预览通常是 :7456），此时必须按测试邀请码正常初始化。
       if (hostname === 'localhost' && !isChannelPackageHost(hostname)) return null
-      // “邀请码.二维码域名”必须按邀请码查询，不能当成俱乐部独立 CNAME 域名。
-      const localInviteCode = import.meta.env.DEV && (hostname === 'localhost' || hostname.startsWith('127.'))
-        ? resolveInviteCode(hostname)
-        : ''
-      const channelInviteCode = localInviteCode || extractInviteCodeFromSubdomain(hostname)
-      const baseUrl = channelInviteCode ? '' : resolveSafariBaseUrl(hostname)
-      const inviteCode = channelInviteCode || (baseUrl ? '' : resolveInviteCode(hostname))
-      const payload = baseUrl
-        ? { base_url: baseUrl }
-        : inviteCode
-          ? { invite_code: inviteCode }
-          : {}
-
       channelDefaultClubInFlight = (async () => {
         try {
+          // 所有调用方共用此门槛：域名列表未取得时绝不能请求 /default，
+          // 也不能提前构造 base_url 后在配置返回后继续使用旧参数。
+          if (!(await useAppConfigStore().ensurePlatformDomainsReady())) {
+            return this.channelDefaultClub
+          }
+          if (!isChannelPackageHost(hostname)) return null
+
+          // “邀请码.二维码域名”必须按邀请码查询，不能当成俱乐部独立 CNAME 域名。
+          const localInviteCode = import.meta.env?.DEV && (hostname === 'localhost' || hostname.startsWith('127.'))
+            ? resolveInviteCode(hostname)
+            : ''
+          const channelInviteCode = localInviteCode || extractInviteCodeFromSubdomain(hostname)
+          const baseUrl = channelInviteCode ? '' : resolveSafariBaseUrl(hostname)
+          const inviteCode = channelInviteCode || (baseUrl ? '' : resolveInviteCode(hostname))
+          const payload = baseUrl
+            ? { base_url: baseUrl }
+            : inviteCode
+              ? { invite_code: inviteCode }
+              : {}
+
           const response = await postOrgClubDefaultApi(payload)
           if (Number(response.code) !== 0) {
             throw new Error(String(response.msg || '渠道俱乐部加载失败'))

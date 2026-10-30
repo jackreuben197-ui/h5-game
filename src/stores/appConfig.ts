@@ -30,6 +30,7 @@ import {
 
 interface AppConfigState {
   globalConfig: GlobalConfigData | null
+  platformDomainsReady: boolean
   diamondConfig: DiamondConfigMap | null
   privateUcChargeConfig: PrivateUcChargeConfigItemExt[]
   privateUcMttRecordFeeConfig: MttRecordFeeConfig | null
@@ -101,6 +102,7 @@ function buildDiamondConfigMap(raw: DiamondConfigData): DiamondConfigMap {
 export const useAppConfigStore = defineStore('h5-appConfig-store', {
   state: (): AppConfigState => ({
     globalConfig: null,
+    platformDomainsReady: false,
     diamondConfig: null,
     privateUcChargeConfig: getPrivateUcChargeConfigs(),
     privateUcMttRecordFeeConfig: null,
@@ -138,7 +140,7 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
   actions: {
     setGlobalConfig(config: GlobalConfigData): void {
       this.globalConfig = config
-      configurePlatformDomains(config)
+      this.platformDomainsReady = configurePlatformDomains(config)
       void persistGlobalConfig(config, StorageKey.APP_CONFIG_CACHE)
         .catch((error) => {
           console.warn('[appConfig] persist app_config cache failed:', error)
@@ -161,10 +163,13 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
             }
             const config = extractGuestGlobalConfig(response.data)
             // 普通补拉只填空；首屏后台刷新允许替换本地缓存，但不能覆盖期间
-            // 由真实登录 postAuthSync 写入的另一份新配置。
+            // 由真实登录 postAuthSync 写入的另一份新配置。域名尚未就绪时，
+            // 必须用服务端响应替换缓存，不能因缓存抢先恢复而跳过域名配置。
             if (
               config &&
-              (!this.globalConfig || (forceRefresh && this.globalConfig === configBeforeRequest))
+              (!this.globalConfig ||
+                !this.platformDomainsReady ||
+                (forceRefresh && this.globalConfig === configBeforeRequest))
             ) {
               this.setGlobalConfig(config)
             }
@@ -177,6 +182,14 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
           })
       }
       await guestGlobalConfigPromise
+    },
+    async ensurePlatformDomainsReady(): Promise<boolean> {
+      // 缓存只用于首屏展示；本次会话必须先取得服务端域名列表，避免旧缓存
+      // 缺少新二维码域名时把“邀请码.平台域名”误当成俱乐部自定义域名。
+      if (!this.platformDomainsReady) {
+        await this.ensureGuestGlobalConfig(true)
+      }
+      return this.platformDomainsReady
     },
     // 登录态下每个 token 会话至少确认一次服务端最新配置；并发调用共享同一请求。
     async ensureFreshGlobalConfig(sessionKey: string): Promise<boolean> {

@@ -17,6 +17,7 @@ import {
   findConfiguredBaseDomain,
   isChannelPackageHostname,
   isConfiguredDomainHostname,
+  isPlatformDomainListAvailable,
   parseActivePlatformDomains,
 } from '@/utils/channelHost'
 
@@ -71,7 +72,7 @@ function normalizeDomainOrigin(value: unknown, fallbackProtocol: string): string
 
 export function configurePlatformDomains(
   config: PlatformDomainGlobalConfig | null | undefined,
-): void {
+): boolean {
   const typeOneDomains = parseActivePlatformDomains(config?.plat_domain_qrcode_info, 1)
   const typeTwoDomains = parseActivePlatformDomains(config?.plat_domain_main_info, 2)
 
@@ -81,6 +82,14 @@ export function configurePlatformDomains(
   )
   // domain_type=1 专门用于生成俱乐部邀请二维码链接。
   platformQrCodeDomains = typeOneDomains
+
+  // 内置官方域名不能证明服务端域名列表已就绪；两份列表均需成功解析，
+  // 且至少有一个生效域名，才能安全地区分邀请码子域名和独立 CNAME。
+  return (
+    isPlatformDomainListAvailable(config?.plat_domain_qrcode_info) &&
+    isPlatformDomainListAvailable(config?.plat_domain_main_info) &&
+    typeOneDomains.length + typeTwoDomains.length > 0
+  )
 }
 
 export function getPlatformMainDomains(): readonly string[] {

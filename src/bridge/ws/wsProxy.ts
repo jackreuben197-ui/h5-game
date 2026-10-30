@@ -20,6 +20,7 @@ import { useGameStore } from '@/stores/game'
 import { pinia } from '@/stores/pinia'
 import { localStore } from '@/utils/localStore'
 import { createLogger } from '@/utils/logger'
+import { isH5OnlyDevMode, resolveWsProxyUrl } from '@/utils/h5OnlyDev'
 import {
   decodeHoldemCode,
   decodeHoldemPacket,
@@ -125,7 +126,7 @@ export interface H5WaitWsPacketOptions {
 function resolveWsUrl(payload: WsConnectPayload): string {
   const proxyUrl = (import.meta.env.VITE_WS_PROXY_URL || '').trim()
   if (proxyUrl) {
-    return proxyUrl
+    return resolveWsProxyUrl(proxyUrl, window.location.href)
   }
 
   if (typeof payload.url === 'string' && payload.url.trim()) {
@@ -379,6 +380,7 @@ function getReconnectDelay(attempt: number): number {
 }
 
 function scheduleReconnect(): void {
+  if (isH5OnlyDevMode()) return
   if (!shouldAutoReconnect || !wsUrl || reconnectTimer !== null) {
     return
   }
@@ -419,6 +421,10 @@ function scheduleReconnect(): void {
 
 // 主动触发一次立即重连（visibility/online/force/heartbeat 超时统一入口）。
 function triggerReconnect(reason: WsReconnectingPayload['reason']): void {
+  if (isH5OnlyDevMode()) {
+    closeWs({ code: 1000, reason: 'h5-only connection unavailable' })
+    return
+  }
   if (!wsUrl) {
     log.info('triggerReconnect skipped: no wsUrl', { reason })
     return
@@ -762,9 +768,9 @@ function connectWs(payload: WsConnectPayload): void {
     return
   }
 
-  shouldAutoReconnect = true
+  shouldAutoReconnect = !isH5OnlyDevMode()
   clearReconnectTimer()
-  bindPageLifecycleListeners()
+  if (!isH5OnlyDevMode()) bindPageLifecycleListeners()
 
   // Cocos 主动 force 重连：复位失败状态，让本次重连重新开始计数与计时。
   if (payload.force) {

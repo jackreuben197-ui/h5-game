@@ -484,7 +484,7 @@ async function runLoginTransaction(target: string, replacingExperienceAccount: b
   // 弹窗以完整身份切换为成功边界，避免先关闭后再由页面补齐用户态。
   const syncResult = await syncPostAuthData()
   if (
-    !syncResult.websocketSynced ||
+    (syncResult.websocketRequired && !syncResult.websocketSynced) ||
     !syncResult.userInfoSynced ||
     !syncResult.userClubSynced ||
     gameStore.sessionToken.trim() !== token ||

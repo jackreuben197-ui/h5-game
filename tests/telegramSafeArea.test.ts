@@ -98,6 +98,8 @@ test('late safe area is forwarded after the Cocos handshake without resending to
   const code = transpileModule(source, { compilerOptions: { module: ModuleKind.CommonJS } }).outputText
   const app = boot()
   const sent: Array<{ action: string; payload: any }> = []
+  let h5Only = false
+  const bridge: Record<string, any> = {}
   app.window.__CC_READY__ = true
   app.window.CocosBridge = { sendMessage(action: string, payload: any) { sent.push({ action, payload }) } }
   const modules: Record<string, unknown> = {
@@ -109,9 +111,10 @@ test('late safe area is forwarded after the Cocos handshake without resending to
     '@/constants/storageKey': { default: { TOKEN: 'token' } },
     '@/utils/localStore': { localStore: { getItem: () => 'existing-token' } },
     '@/utils/logger': { createLogger: () => ({ info() {}, debug() {}, warn() {} }) },
+    '@/utils/h5OnlyDev': { isH5OnlyDevMode: () => h5Only },
     '@/components/Toast': {}, '../channels/dialogChannel': {},
   }
-  runInNewContext(code, { window: app.window, exports: {}, Blob,
+  runInNewContext(code, { window: app.window, exports: bridge, Blob,
     require: (name: string) => {
       assert.ok(name in modules, `unexpected dependency ${name}`)
       return modules[name]
@@ -125,6 +128,9 @@ test('late safe area is forwarded after the Cocos handshake without resending to
   assert.equal(sent[1].action, 'h5Ready')
   assert.equal(sent[1].payload.safeArea.top, 109)
   assert.equal('token' in sent[1].payload, false)
+  h5Only = true
+  bridge.sendBridgeMessage('wsReconnecting', { attempt: 1 })
+  assert.equal(sent.length, 2)
 })
 
 const sdkLoader = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]

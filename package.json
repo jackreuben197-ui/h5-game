@@ -11,6 +11,7 @@
     "predev": "pnpm check:protocol && pnpm sync:i18n",
     "prebuild": "pnpm check:protocol && pnpm sync:i18n",
     "dev": "vite",
+    "dev:h5": "pnpm dev --mode h5 --host 127.0.0.1 --port 5174 --strictPort",
     "build": "vue-tsc -b && vite build",
     "build:debug": "vue-tsc -b && VITE_BUILD_SOURCEMAP=true vite build",
     "build:analyze": "vue-tsc -b && vite build --mode analyze",

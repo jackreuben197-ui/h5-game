@@ -78,9 +78,13 @@ test('the existing club sharing flow includes the club code on a custom domain p
   })
 })
 
-test('player share URLs carry random_id through navigation into the registration body', () => {
+test('player share URLs map random_id to inviter_random_id in the registration body after navigation', () => {
   withLocation('https://official.example/#/club', () => {
-    window.location.href = channel.buildChannelPlayerInviteUrl(123456, 'club-code', 'https://custom.example')
+    window.location.href = channel.buildChannelPlayerInviteUrl(
+      123456,
+      'club-code',
+      'https://custom.example',
+    )
     channel.cacheAgentInviteCodeIfPresent()
     window.location.hash = '/home'
     const payload = withPlayerInviter(
@@ -90,7 +94,7 @@ test('player share URLs carry random_id through navigation into the registration
     assert.deepEqual(payload, {
       invite_code: 'club-code',
       email: 'player@example.com',
-      random_id: 123456,
+      inviter_random_id: 123456,
     })
     channel.clearAgentInviteCodeCache()
   })
@@ -99,7 +103,10 @@ test('player share URLs carry random_id through navigation into the registration
 test('agent QR URLs preserve the agent code and random_id together across navigation', () => {
   withLocation('https://official.example/#/club', () => {
     window.location.href = channel.buildChannelAgentInviteUrl(
-      'agent-code', 'club-code', 'https://custom.example', 654321,
+      'agent-code',
+      'club-code',
+      'https://custom.example',
+      654321,
     )
     assert.equal(channel.parseInviteParamsFromLocation().inviterRandomId, 654321)
     assert.equal(channel.resolveAgentInviteCode(), 'agent-code')
@@ -107,10 +114,13 @@ test('agent QR URLs preserve the agent code and random_id together across naviga
     window.location.hash = '/home'
     const code = channel.resolveAgentInviteCode()
     assert.equal(code, 'agent-code')
-    assert.deepEqual(withPlayerInviter({ invite_code: code }, channel.resolveInviterRandomId(code)), {
-      invite_code: 'agent-code',
-      random_id: 654321,
-    })
+    assert.deepEqual(
+      withPlayerInviter({ invite_code: code }, channel.resolveInviterRandomId(code)),
+      {
+        invite_code: 'agent-code',
+        inviter_random_id: 654321,
+      },
+    )
     assert.equal(channel.resolveInviterRandomId('another-agent'), undefined)
     channel.clearAgentInviteCodeCache()
     assert.equal(channel.resolveInviterRandomId(code), undefined)
@@ -130,30 +140,41 @@ test('random_id is read from either query location, takes precedence over the le
   for (const id of ['0', '-1', '1.5', 'abc', '9007199254740992']) {
     withLocation(`https://club.example/#/?invite_code=club-code&random_id=${id}`, () => {
       assert.equal(channel.parseInviteParamsFromLocation().inviterRandomId, undefined)
-      assert.deepEqual(withPlayerInviter({ invite_code: 'club-code' }, channel.resolveInviterRandomId('club-code')), {
-        invite_code: 'club-code',
-      })
+      assert.deepEqual(
+        withPlayerInviter(
+          { invite_code: 'club-code' },
+          channel.resolveInviterRandomId('club-code'),
+        ),
+        {
+          invite_code: 'club-code',
+        },
+      )
     })
   }
 })
 
-test('legacy invitation links are still submitted using the new registration field', () => {
+test('inviter_random_id invitation links keep the server registration field after navigation', () => {
   withLocation('https://club.example/#/?invite_code=club-code&inviter_random_id=123456', () => {
     channel.cacheAgentInviteCodeIfPresent()
     window.location.hash = '/home'
-    assert.deepEqual(withPlayerInviter({ invite_code: 'club-code' }, channel.resolveInviterRandomId('club-code')), {
-      invite_code: 'club-code',
-      random_id: 123456,
-    })
+    assert.deepEqual(
+      withPlayerInviter({ invite_code: 'club-code' }, channel.resolveInviterRandomId('club-code')),
+      {
+        invite_code: 'club-code',
+        inviter_random_id: 123456,
+      },
+    )
     channel.clearAgentInviteCodeCache()
   })
 })
 
 test('cached agent links use the current sharer ID without losing routes or attribution', () => {
-  const shared = new URL(appendInvitationRandomId(
-    'https://club.example/?random_id=111111&source=app#/home?i=agent-code&inviter_random_id=222222',
-    123456,
-  ))
+  const shared = new URL(
+    appendInvitationRandomId(
+      'https://club.example/?random_id=111111&source=app#/home?i=agent-code&inviter_random_id=222222',
+      123456,
+    ),
+  )
   const hash = new URLSearchParams(shared.hash.split('?')[1])
   assert.equal(shared.searchParams.get('source'), 'app')
   assert.equal(shared.searchParams.has('random_id'), false)

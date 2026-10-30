@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { registerHooks } from 'node:module'
+import { withPlayerInviter } from '../src/utils/playerInvitation.ts'
 
 const moduleUrl = (source: string) => `data:text/javascript,${encodeURIComponent(source)}`
 const stubUrl = moduleUrl(`
@@ -76,14 +77,16 @@ test('Banner lobby and Banner list call their separate existing endpoints with t
   assert.equal(state.calls[1][1].display_scene, 1)
 })
 
-test('register returns login fields while invite_register returns only the registered contact', async () => {
+test('both registration endpoints submit inviter_random_id and preserve their distinct responses', async () => {
   state.calls = []
-  const payload = {
-    email: 'player@example.com',
-    password: 'hashed',
-    invite_code: 'club-code',
-    random_id: 123456,
-  }
+  const payload = withPlayerInviter(
+    {
+      email: 'player@example.com',
+      password: 'hashed',
+      invite_code: 'club-code',
+    },
+    123456,
+  )
   state.data = { token: 'registered-token' }
   const registered = await user.postUserRegisterApi(payload)
   assert.equal(registered.data?.token, 'registered-token')
@@ -92,8 +95,11 @@ test('register returns login fields while invite_register returns only the regis
   assert.equal(invited.data, 'player@example.com')
   assert.equal(state.calls[0][0], '/user/register')
   assert.equal(state.calls[1][0], '/user/invite_register')
-  assert.equal(state.calls[0][1].random_id, 123456)
-  assert.equal(state.calls[1][1].random_id, 123456)
-  assert.equal('inviter_random_id' in state.calls[0][1], false)
+  for (const [, body] of state.calls) {
+    assert.equal(body.inviter_random_id, 123456)
+    assert.equal('random_id' in body, false)
+    assert.equal(body.email, 'player@example.com')
+    assert.equal(body.password, 'hashed')
+  }
   assert.equal(state.calls[1][1].invite_code, 'club-code')
 })

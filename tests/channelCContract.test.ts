@@ -102,7 +102,7 @@ test('player invitation passes the existing random id only together with a targe
   assert.deepEqual(withPlayerInviter({ invite_code: 'club-code', email: 'a@b.com' }, '123456'), {
     invite_code: 'club-code',
     email: 'a@b.com',
-    random_id: 123456,
+    inviter_random_id: 123456,
   })
   assert.deepEqual(withPlayerInviter({ invite_code: '' }, 123456), { invite_code: '' })
   assert.deepEqual(withPlayerInviter({ invite_code: 'club-code' }, 0), { invite_code: 'club-code' })

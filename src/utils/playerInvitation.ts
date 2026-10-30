@@ -9,9 +9,10 @@ export function normalizeInviterRandomId(value: unknown): number | undefined {
 export function withPlayerInviter<T extends { invite_code?: string }>(
   payload: T,
   inviter: unknown,
-): T & { random_id?: number } {
+): T & { inviter_random_id?: number } {
   const id = normalizeInviterRandomId(inviter)
-  return id && payload.invite_code?.trim() ? { ...payload, random_id: id } : payload
+  // 链接中的 random_id 在注册接口中必须映射为 inviter_random_id。
+  return id && payload.invite_code?.trim() ? { ...payload, inviter_random_id: id } : payload
 }
 
 export function appendInvitationRandomId(baseUrl: string, inviter: unknown): string {

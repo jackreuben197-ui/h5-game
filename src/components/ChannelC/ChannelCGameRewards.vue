@@ -109,13 +109,13 @@ const tiers = computed(() => props.groups[level.value] ?? [])
   width: 18.1%;
 }
 .c-game-progress-col {
-  width: 34%;
+  width: 28.9%;
 }
 .c-game-reward-col {
   width: 29%;
 }
 .c-game-status-col {
-  width: 18.9%;
+  width: 24%;
 }
 .c-game-rewards th,
 .c-game-rewards td {

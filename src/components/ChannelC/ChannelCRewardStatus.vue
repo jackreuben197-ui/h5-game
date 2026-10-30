@@ -12,16 +12,16 @@ withDefaults(defineProps<{ credited: boolean; completed?: boolean; kind?: 'game'
       <img class="c-reward-status-check" :src="checkIcon" alt="" />
     </span>
     <span class="c-reward-status-copy">
-{{
-      t(
-        credited
-          ? 'UIChannelC_Credited'
-          : completed
-            ? 'UIHappyShop_PrizeGiving'
-            : 'UIChannelC_Pending',
-      )
-    }}
-</span>
+      {{
+        t(
+          credited
+            ? 'UIChannelC_Credited'
+            : completed
+              ? 'UIHappyShop_PrizeGiving'
+              : 'UIChannelC_Pending',
+        )
+      }}
+    </span>
   </span>
 </template>
 
@@ -32,7 +32,7 @@ withDefaults(defineProps<{ credited: boolean; completed?: boolean; kind?: 'game'
   align-items: center;
   justify-content: center;
   gap: r(3);
-  min-width: r(56.107);
+  min-width: r(72);
   min-height: r(20.471);
   padding: r(2) r(4);
   border: r(0.758) solid rgba(197, 148, 53, 0.43);
@@ -70,7 +70,7 @@ withDefaults(defineProps<{ credited: boolean; completed?: boolean; kind?: 'game'
   height: auto;
 }
 .c-reward-status--invite {
-  min-width: r(59.677);
+  min-width: r(78);
   min-height: r(23.018);
   font-size: r(11.083);
   .c-reward-status-icon {

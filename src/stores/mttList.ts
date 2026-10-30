@@ -633,6 +633,17 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
       this.persistMttListCache()
     },
 
+    // 详情刷新（含报名、退赛后）同步服务端人数，避免列表只更新报名状态。
+    setMttParticipants(matchId: number, participants: number | undefined): void {
+      if (participants == null || !Number.isFinite(participants) || participants < 0) return
+      const index = this.records.findIndex((item) => toSafeInt(item.match_id) === toSafeInt(matchId))
+      if (index < 0 || this.records[index].participants === participants) return
+      const nextRecords = this.records.slice()
+      nextRecords[index] = { ...nextRecords[index], participants }
+      this.records = nextRecords
+      this.persistMttListCache()
+    },
+
     // 对齐 Unity UserSngChangeNotify：当前 H5 不渲染 SNG 列表，但保持本地索引同步。
     applyUserSngChangeNotify(rawBuffer: ArrayBufferLike): void {
       const payload = decodeUserSngChangeNotifyFromRawPacket(rawBuffer)

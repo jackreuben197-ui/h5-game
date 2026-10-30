@@ -1,7 +1,6 @@
 import type { MttListRecord, MttSeriesInfoRecord, RoomRecord } from '@/api/models/roomcenter'
 import { sortRoomRecordsForDisplay } from '@/utils/roomListSort'
 import { isMttRegistered } from '@/utils/mttRegistration'
-import { resolveSeriesLayoutByType } from '@/utils/mttCardLayout'
 import { toTimestampMs } from '@/utils/time'
 import { roomDescription } from '@/features/channelC/pokerCard'
 
@@ -17,11 +16,10 @@ export const MTT_ARTWORK_HEIGHT: Record<CardSize, number> = { large: 225, medium
 export const isRecommended = (record: { is_top?: unknown }): boolean =>
   record.is_top === 1
 
-export function getCardSize(seriesType: unknown, total = 0): CardSize {
-  const type = Number(seriesType)
-  if (![1, 2, 3].includes(type)) return 'large'
-  const layout = resolveSeriesLayoutByType(type, total)
-  return layout === 'lg' ? 'large' : layout === 'md' ? 'medium' : 'small'
+export function getCardSize(seriesType: unknown): CardSize {
+  // C 版按系列配置直接展示；不随筛选结果数量提升卡片尺寸。
+  const sizes: Record<number, CardSize> = { 1: 'large', 2: 'medium', 3: 'small' }
+  return sizes[Number(seriesType)] || 'medium'
 }
 
 // 和现有牌桌分组一致：poker_type=2 是短牌，game_type=1/2/3 是奥马哈。
@@ -74,13 +72,9 @@ export function buildChannelCFeed(
   now = Date.now(),
   series: readonly MttSeriesInfoRecord[] = [],
 ): LobbyCard[] {
-  const seriesById = new Map(series.map((item) => [Number(item.id), item]))
-  const seriesCounts = new Map<number, number>()
-  // 推荐过滤不改变后台系列的实际场次数，避免同一赛事在首页和比赛页尺寸不同。
-  matches.forEach((match) => {
-    const id = Number(match.series_id)
-    if (id > 0) seriesCounts.set(id, (seriesCounts.get(id) || 0) + 1)
-  })
+  const seriesById = new Map(
+    series.filter((item) => Number(item.id) > 0).map((item) => [Number(item.id), item]),
+  )
   const tables: LobbyCard[] = sortRoomRecordsForDisplay(
     section === 'home' ? rooms.filter(isRecommended) : rooms,
   ).map((room) => ({ key: `poker-${room.rid}`, kind: 'poker', room }))
@@ -91,10 +85,7 @@ export function buildChannelCFeed(
     key: `mtt-${match.match_id}`,
     kind: 'mtt',
     match,
-    size: getCardSize(
-      seriesById.get(Number(match.series_id))?.type,
-      seriesCounts.get(Number(match.series_id)),
-    ),
+    size: getCardSize(seriesById.get(Number(match.series_id))?.type),
   }))
   if (section === 'poker') return tables
   if (section === 'mtt') return mtts

@@ -77,6 +77,7 @@ test('installed protocol decodes MTT C artwork separately from the A/B artwork',
   const match = new pb.UserMttRecord()
   match.setMatchId(201)
   match.setIsTop(1)
+  match.setParticipants(12)
   match.setMttBannerUrl('ab.png')
   match.setMttBannerUrlC('c.png')
   const message = new pb.ServerMessageUserMttChangeNotify()
@@ -84,6 +85,7 @@ test('installed protocol decodes MTT C artwork separately from the A/B artwork',
   message.setMtt(match)
   const decoded = decodeUserMttChangeNotifyFromRawPacket(serverPacket(151, message))
   assert.equal(decoded?.mtt?.is_top, 1)
+  assert.equal(decoded?.mtt?.participants, 12)
   assert.equal(decoded?.mtt?.mtt_banner_url, 'ab.png')
   assert.equal(decoded?.mtt?.mtt_banner_url_c, 'c.png')
 })
@@ -97,6 +99,18 @@ test('MTT binary changes include zero and empty C artwork without dropping defau
   const decoded = decodeUserMttChangeNotifyFromRawPacket(serverPacket(151, message))
   assert.equal(decoded?.mttChange?.is_top, 0)
   assert.equal(decoded?.mttChange?.mtt_banner_url_c, '')
+  assert.equal(decoded?.mttChange?.participants, 0)
+})
+
+test('MTT participant changes decode from real binary notifications', () => {
+  const change = new pb.UserMttRecordChange()
+  change.setMatchId(201)
+  change.setParticipants(8)
+  const message = new pb.ServerMessageUserMttChangeNotify()
+  message.setChangeType(2)
+  message.setMttChange(change)
+  const decoded = decodeUserMttChangeNotifyFromRawPacket(serverPacket(151, message))
+  assert.equal(decoded?.mttChange?.participants, 8)
 })
 
 test('155 decodes actual binary activity awards with UC and localized ticket keys', () => {

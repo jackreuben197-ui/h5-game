@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { GameDialog } from '@/components/Dialog'
 import { t } from '@/i18n'
 
@@ -8,11 +9,21 @@ export interface ClubNoticeContent {
   dateText: string
 }
 
-defineProps<{
-  clubName: string
-  notice: ClubNoticeContent | null
-  ignoring: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    clubName: string
+    notice: ClubNoticeContent | ClubNoticeContent[] | null
+    ignoring?: boolean
+    showIgnore?: boolean
+  }>(),
+  {
+    ignoring: false,
+    showIgnore: true,
+  },
+)
+const displayedNotices = computed(() =>
+  Array.isArray(props.notice) ? props.notice : props.notice ? [props.notice] : [],
+)
 const show = defineModel<boolean>('show', { required: true })
 defineEmits<{ ignore: [] }>()
 </script>
@@ -26,10 +37,13 @@ defineEmits<{ ignore: [] }>()
   >
     <div class="club-notice-body">
       <div class="club-notice-club-pill">{{ clubName }}</div>
-      <p class="club-notice-title">{{ notice?.title }}</p>
-      <p class="club-notice-date">{{ notice?.dateText }}</p>
-      <p class="club-notice-content">{{ notice?.content }}</p>
+      <div v-for="(item, index) in displayedNotices" :key="index" class="club-notice-entry">
+        <p class="club-notice-title">{{ item.title }}</p>
+        <p class="club-notice-date">{{ item.dateText }}</p>
+        <p class="club-notice-content">{{ item.content }}</p>
+      </div>
       <button
+        v-if="showIgnore"
         class="club-notice-ignore-btn"
         type="button"
         :disabled="ignoring"
@@ -47,6 +61,13 @@ defineEmits<{ ignore: [] }>()
   flex-direction: column;
   align-items: center;
   gap: 0.16rem;
+}
+.club-notice-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.16rem;
+  width: 100%;
 }
 .club-notice-club-pill {
   padding: 0.187rem 0.293rem;

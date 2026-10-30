@@ -125,3 +125,45 @@ test('localized names are searchable without replacing the original server name'
   assert.equal(cards[0]?.kind === 'poker' && cards[0].room, rooms[0])
   assert.equal(rooms[0]?.name, 'table-name-key')
 })
+
+test('MTT names match the current language and suffix while preserving IDs and server records', () => {
+  const matches = [match(42, { name: 'MTT2025-01' })]
+  const names = {
+    cn: '周末锦标赛-01',
+    en: 'Weekend Tournament-01',
+    pt: 'Torneio de Fim de Semana-01',
+  }
+  for (const [locale, localizedName] of Object.entries(names)) {
+    const resolveName = (name: string, kind: 'poker' | 'mtt') =>
+      kind === 'mtt' && name === 'MTT2025-01' ? localizedName : name
+    const search = (query: string) =>
+      buildChannelCSearchFeed([], matches, query, [], now, resolveName)
+
+    for (const query of [localizedName.slice(0, -3), '-01', '42']) {
+      const cards = search(query)
+      assert.equal(cards.length, 1)
+      assert.equal(cards[0]?.kind === 'mtt' && cards[0].match, matches[0])
+    }
+    for (const [otherLocale, otherName] of Object.entries(names)) {
+      if (otherLocale !== locale) assert.equal(search(otherName).length, 0)
+    }
+    assert.equal(search('MTT2025').length, 0)
+  }
+  assert.equal(matches[0]?.name, 'MTT2025-01')
+})
+
+test('MTT names fall back to the ordinary dictionary or server name when no template matches', () => {
+  const matches = [
+    match(1, { name: 'dictionary-key' }),
+    match(2, { name: 'Custom Tournament' }),
+  ]
+  const resolveName = (name: string) => (name === 'dictionary-key' ? '普通词典比赛名' : name)
+  assert.deepEqual(
+    buildChannelCSearchFeed([], matches, '词典比赛', [], now, resolveName).map((card) => card.key),
+    ['mtt-1'],
+  )
+  assert.deepEqual(
+    buildChannelCSearchFeed([], matches, 'custom', [], now, resolveName).map((card) => card.key),
+    ['mtt-2'],
+  )
+})

@@ -78,19 +78,14 @@ test('only the real is_top flag enables recommendation; missing flags and legacy
   assert.equal(buildChannelCFeed([], [legacyMatch], 'mtt', now).length, 1)
 })
 
-test('MTT sizes share A/B series types and count rules, with large as the C default', () => {
+test('MTT sizes follow series types directly, with medium as the C default', () => {
   assert.deepEqual(
-    [1, 2, 3].map((type) => getCardSize(type, 6)),
+    [1, 2, 3].map((type) => getCardSize(type)),
     ['large', 'medium', 'small'],
   )
-  assert.deepEqual(
-    [1, 2, 3].map((type) => getCardSize(type, 1)),
-    ['large', 'large', 'large'],
-  )
-  assert.equal(getCardSize(3, 2), 'medium')
-  assert.equal(getCardSize(3, 3), 'small')
-  for (const value of [undefined, null, 0, 4, 'unknown']) {
-    assert.equal(getCardSize(value, 6), 'large')
+  assert.equal(getCardSize('3'), 'small')
+  for (const value of [undefined, null, 0, 4, 'unknown', Number.NaN]) {
+    assert.equal(getCardSize(value), 'medium')
   }
 })
 
@@ -110,21 +105,41 @@ test('series configuration controls actual and waterfall sizes before recommenda
   const recommended = buildChannelCFeed([], records, 'home', now, series)
   assert.deepEqual(
     all.map((card) => (card.kind === 'mtt' ? card.size : null)),
-    ['medium', 'medium', 'small', 'small', 'small', 'large', 'large', 'large'],
+    ['medium', 'medium', 'small', 'small', 'small', 'medium', 'medium', 'medium'],
   )
   assert.deepEqual(
     recommended.map((card) => (card.kind === 'mtt' ? [card.match.match_id, card.size] : null)),
     [
       [1, 'medium'],
       [3, 'small'],
-      [6, 'large'],
-      [7, 'large'],
-      [8, 'large'],
+      [6, 'medium'],
+      [7, 'medium'],
+      [8, 'medium'],
     ],
   )
-  assert.deepEqual(recommended.map(estimateCardHeight), [212, 149, 285, 285, 285])
+  assert.deepEqual(recommended.map(estimateCardHeight), [212, 149, 212, 212, 212])
   assert.equal(all[0]?.kind === 'mtt' && all[0].match, records[0])
   assert.equal(Object.hasOwn(records[0]!, 'card_size'), false)
+})
+
+test('single matches retain the configured series size across pages and filtered lists', () => {
+  const records = [
+    match(1, { series_id: 10 }),
+    match(2, { series_id: 20 }),
+    match(3, { series_id: 30 }),
+    match(4),
+  ]
+  const series = [{ id: 10, type: 1 }, { id: 20, type: 2 }, { id: 30, type: 3 }]
+  for (const section of ['home', 'mtt', 'search'] as const) {
+    assert.deepEqual(
+      buildChannelCFeed([], records, section, now, series).map((card) =>
+        card.kind === 'mtt' ? card.size : null,
+      ),
+      ['large', 'medium', 'small', 'medium'],
+    )
+  }
+  const filtered = buildChannelCFeed([], [records[2]!], 'mtt', now, series)
+  assert.equal(filtered[0]?.kind === 'mtt' && filtered[0].size, 'small')
 })
 
 test('recommendation feed filters before ranking and interleaves 3 tables then 1 MTT', () => {

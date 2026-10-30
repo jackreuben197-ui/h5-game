@@ -79,5 +79,5 @@ export function useClubNoticePopup() {
     }
   }
 
-  return { show, ignoring, current, open, ignore }
+  return { show, ignoring, current, notices, open, ignore }
 }

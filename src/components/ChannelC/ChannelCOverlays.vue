@@ -39,7 +39,7 @@ const showInvite = computed({
     if (!value) active.value = null
   },
 })
-const { show: showNotice, ignoring, current, open: openNotice, ignore } = useClubNoticePopup()
+const { show: showNotice, notices, open: openNotice } = useClubNoticePopup()
 
 function open(action: ChannelCAction) {
   if (action === 'notice') {
@@ -79,9 +79,8 @@ defineExpose({ open })
   <ClubNoticeDialog
     v-model:show="showNotice"
     :club-name="clubName"
-    :notice="current"
-    :ignoring="ignoring"
-    @ignore="ignore"
+    :notice="notices"
+    :show-ignore="false"
   />
   <ChannelCGameRewards
     v-model:show="showGame"

@@ -20,6 +20,9 @@ const backgroundStyle = computed(() => ({
 
 const isHomeRoute = computed(() => route.name === 'lobby')
 const isSearchRoute = computed(() => route.name === 'channel-c-search')
+const hideBottomMenu = computed(
+  () => isSearchRoute.value || (isVersionC.value && route.name === 'message'),
+)
 const isChannelCPage = computed(
   () =>
     isSearchRoute.value ||
@@ -47,6 +50,7 @@ watch(
       'main-layout--home': isHomeRoute,
       'main-layout--channel-c': isChannelCPage,
       'main-layout--search': isSearchRoute,
+      'main-layout--without-tabs': hideBottomMenu,
       'main-layout--primary': isPrimaryLayout,
       'main-layout--guest': isGuestPreview,
       'main-layout--authenticated': isPrimaryLayout && !isGuestPreview,
@@ -65,7 +69,7 @@ watch(
       </section>
     </div>
     <!-- 公共底部导航：跨模块复用。 -->
-    <MainBottomTab v-if="!isSearchRoute" />
+    <MainBottomTab v-if="!hideBottomMenu" />
   </div>
 </template>
 
@@ -124,6 +128,9 @@ watch(
 
 .main-layout--search .main-layout-content {
   padding-top: var(--app-content-safe-area-top, env(safe-area-inset-top));
+}
+
+.main-layout--without-tabs .main-layout-content {
   padding-bottom: env(safe-area-inset-bottom);
 }
 </style>

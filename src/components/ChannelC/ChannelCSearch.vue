@@ -6,7 +6,11 @@ import { useChannelCDataReady } from '@/composables/useChannelCDataReady'
 import { useChannelCNavigation } from '@/composables/useChannelCNavigation'
 import { buildChannelCSearchFeed } from '@/features/channelC/search'
 import searchIcon from '@/assets/channelC/search.svg'
-import { t } from '@/i18n'
+import { getLocale, t } from '@/i18n'
+import {
+  multiLanguageTemplateVersion,
+  resolveTemplateTextByKey,
+} from '@/utils/multiLanguageTemplate'
 import ChannelCWaterfall from './ChannelCWaterfall.vue'
 
 const router = useRouter()
@@ -20,16 +24,19 @@ const now = ref(Date.now())
 let clock: ReturnType<typeof setInterval> | undefined
 
 const hasQuery = computed(() => Boolean(query.value.trim()))
-const cards = computed(() =>
-  buildChannelCSearchFeed(
+const cards = computed(() => {
+  void multiLanguageTemplateVersion.value
+  const locale = getLocale()
+  return buildChannelCSearchFeed(
     visibleRooms.value,
     visibleMatches.value,
     query.value,
     tournamentSeries.value,
     now.value,
-    t,
-  ),
-)
+    (name, kind) =>
+      (kind === 'mtt' && resolveTemplateTextByKey(name, locale)) || t(name),
+  )
+})
 
 function finishEditing() {
   searchInput.value?.blur()
@@ -85,7 +92,7 @@ onBeforeUnmount(() => clearInterval(clock))
           :cards="cards"
           :now="now"
           :label="t('club_join_2')"
-          :room-logo="club?.room_logo"
+          :desktop-icon-url="club?.safari_icon_url"
           :joining-id="joiningId"
           @join="joinRoom"
           @open="openMatch"

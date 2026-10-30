@@ -83,11 +83,16 @@ const mttOptions = [
 @use '@/styles/mixins' as *;
 
 .c-filter-row {
+  position: sticky;
+  top: var(--app-content-safe-area-top, env(safe-area-inset-top, 0px));
+  z-index: 3;
   display: flex;
   align-items: center;
   gap: 0.128rem;
   min-width: 0;
-  padding: 0.25rem 0;
+  margin: 0 -0.256rem;
+  padding: 0.25rem 0.256rem;
+  background: var(--c-page);
 }
 .c-filter-options {
   display: flex;

@@ -4,12 +4,12 @@ import type { RoomRecord } from '@/api/models/roomcenter'
 import { getPokerKind } from '@/features/channelC/model'
 import { getOccupiedSeats, getRoomBuyIn, getRoomTimeText } from '@/features/channelC/pokerCard'
 import { getRoomPlayerCount, formatUC } from '@/utils/roomVisibility'
+import { resolveSafariWebAppConfig } from '@/utils/safariWebApp'
 import nlh from '@/assets/images/table_bg_nlh.png'
 // 保留已导入素材的原文件名。
 import plo from '@/assets/images/tbale_bg_plo.png'
 import shortDeck from '@/assets/images/table_bg_6+.png'
 import defaultAvatar from '@/assets/images/default_avatar.png'
-import defaultClubLogo from '@/assets/images/club_default_logo.png'
 import mushroom from '@/assets/icons/table_icon_mushroom.png'
 import squid from '@/assets/icons/table_icon_squid.png'
 import critical from '@/assets/icons/table_icon_critical.png'
@@ -17,8 +17,12 @@ import aof from '@/assets/icons/table_icon_Aof.png'
 import chips from '@/assets/icons/icon_chips.png'
 import { t } from '@/i18n'
 
-const props = defineProps<{ room: RoomRecord; now: number; roomLogo?: string; joining?: boolean }>()
+const props = defineProps<{ room: RoomRecord; now: number; desktopIconUrl?: string; joining?: boolean }>()
 defineEmits<{ join: [room: RoomRecord] }>()
+const platformIconUrl = resolveSafariWebAppConfig(null).iconUrl
+const desktopIcon = computed(
+  () => resolveSafariWebAppConfig({ safari_icon_url: props.desktopIconUrl }).iconUrl,
+)
 const kind = computed(() => getPokerKind(props.room))
 const background = computed(() => ({ nlh, plo, short: shortDeck })[kind.value])
 const gameName = computed(() => ({ nlh: 'NLH', plo: 'PLO', short: 'SHORT DECK' })[kind.value])
@@ -37,9 +41,13 @@ const timeText = computed(() => getRoomTimeText(props.room, props.now))
 const buyIn = computed(() => formatUC(getRoomBuyIn(props.room)))
 const specialModes = computed(() =>
   [
-    { show: Number(props.room.mushroom_mode) > 0, label: 'UIMush', icon: mushroom },
-    { show: Number(props.room.squid_on) === 1, label: 'UISquid', icon: squid },
-    { show: Number(props.room.critical_hit) === 1, label: 'UIHitGamePlayTips1', icon: critical },
+    { show: Number(props.room.mushroom_mode) > 0, label: 'OpCodeString_ROOMMUSHFEE', icon: mushroom },
+    {
+      show: Number(props.room.squid_on) === 1 || Number(props.room.squid_base) > 0,
+      label: 'OpCodeString_ROOMSQUIDFEE',
+      icon: squid,
+    },
+    { show: Number(props.room.critical_hit) === 1, label: 'OpCodeString_ROOMCHITFEE', icon: critical },
     { show: Number(props.room.limit_bet_type) === 2, label: 'AOF', icon: aof },
   ].filter((mode) => mode.show),
 )
@@ -47,10 +55,19 @@ function fallbackAvatar(event: Event) {
   const img = event.target as HTMLImageElement
   if (img.src !== defaultAvatar) img.src = defaultAvatar
 }
+function fallbackDesktopIcon(event: Event) {
+  const img = event.target as HTMLImageElement
+  if (img.src !== platformIconUrl) img.src = platformIconUrl
+}
 </script>
 
 <template>
-  <article class="c-poker-card" :aria-label="room.name || t('UITexasReport_Label_AllBarPZ')">
+  <article
+    class="c-poker-card"
+    :aria-label="room.name || t('UITexasReport_Label_AllBarPZ')"
+    :aria-busy="joining"
+    @click="!joining && $emit('join', room)"
+  >
     <div class="c-table-art">
       <img class="c-table-bg" :src="background" alt="" />
       <span class="c-playing">
@@ -59,8 +76,8 @@ function fallbackAvatar(event: Event) {
       <div class="c-table-label">
         <div v-if="specialModes.length" class="c-special-modes">
           <span v-for="mode in specialModes" :key="mode.label">
-            <img :src="mode.icon" alt="" />
             <span class="c-mode-name" :title="t(mode.label)">{{ t(mode.label) }}</span>
+            <img :src="mode.icon" alt="" />
           </span>
         </div>
         <strong v-else>{{ gameName }}</strong>
@@ -85,9 +102,9 @@ function fallbackAvatar(event: Event) {
     <div class="c-room-details">
       <img
         class="c-club-avatar"
-        :src="roomLogo || defaultClubLogo"
+        :src="desktopIcon"
         :alt="t('UIClub_Info')"
-        @error="($event.target as HTMLImageElement).src = defaultClubLogo"
+        @error="fallbackDesktopIcon"
       />
       <div class="c-room-meta">
         <strong :title="room.name">{{ room.name || t('UITexasReport_Label_AllBarPZ') }}</strong>
@@ -104,7 +121,7 @@ function fallbackAvatar(event: Event) {
           </span>
         </div>
       </div>
-      <button type="button" class="c-join" :disabled="joining" @click="$emit('join', room)">
+      <button type="button" class="c-join" :disabled="joining" @click.stop="$emit('join', room)">
         {{ t(joining ? 'UIChannelC_Joining' : 'UIClub_RoomJoin') }}
       </button>
     </div>
@@ -118,6 +135,7 @@ function fallbackAvatar(event: Event) {
   border: 1px solid rgba(15, 118, 110, 0.13);
   border-radius: 0.23rem;
   background: #ecfcf9;
+  cursor: pointer;
 }
 
 .c-table-art {
@@ -213,8 +231,8 @@ function fallbackAvatar(event: Event) {
 
 .c-special-modes img {
   flex: none;
-  width: 0.18rem;
-  height: 0.18rem;
+  width: 0.26rem;
+  height: 0.26rem;
   object-fit: contain;
 }
 

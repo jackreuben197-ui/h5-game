@@ -150,9 +150,13 @@ async function loadDetail(force = false): Promise<void> {
     if (!force) return
   }
   const request = (async () => {
+    const id = matchId.value
     try {
-      const res = await getRoomcenterMttDetailApi(matchId.value)
-      if (res.code === 0 && res.data) detailData.value = res.data
+      const res = await getRoomcenterMttDetailApi(id)
+      if (res.code === 0 && res.data) {
+        detailData.value = res.data
+        mttListStore.setMttParticipants(id, res.data.mtt?.participants)
+      }
     } catch (error) {
       console.error("[MttDetailView] " + t('UIPayWithdrawBtn01') + " MTT " + t('UIClub_DetailFail'), error)
     }

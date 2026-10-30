@@ -156,7 +156,7 @@ watch(
       :cards="cards"
       :label="listLabel"
       :now="now"
-      :room-logo="club?.room_logo"
+      :desktop-icon-url="club?.safari_icon_url"
       :joining-id="joiningId"
       @join="joinRoom"
       @open="openMatch"

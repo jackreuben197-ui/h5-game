@@ -149,5 +149,32 @@ test('MTT WebSocket update clears only C artwork and recommendation, and persist
   assert.equal(store.records[0]?.is_top, 0)
   assert.equal(store.records[0]?.mtt_banner_url_c, '')
   assert.equal(store.records[0]?.mtt_banner_url, 'ab.png')
+  assert.equal(store.records[0]?.participants, 2)
   assert.equal(saved, true)
+})
+
+test('MTT detail participant count updates the registered card and accepts a real zero', () => {
+  const store = useMttListStore()
+  store.records = [{ match_id: 1, mtt_buy: 1, participants: 0, name: 'match' }]
+  let saved = 0
+  store.persistMttListCache = () => { saved++ }
+
+  store.setMttParticipants(1, 5)
+  assert.equal(store.records[0]?.participants, 5)
+  assert.equal(store.records[0]?.mtt_buy, 1)
+  assert.equal(store.records[0]?.name, 'match')
+  assert.equal(saved, 1)
+
+  for (const invalid of [undefined, Number.NaN, -1, Infinity]) {
+    store.setMttParticipants(1, invalid)
+  }
+  store.setMttParticipants(2, 10)
+  store.setMttParticipants(1, 5)
+  assert.equal(store.records[0]?.participants, 5)
+  assert.equal(saved, 1)
+
+  store.setMttRegistered(1, false)
+  store.setMttParticipants(1, 0)
+  assert.equal(store.records[0]?.participants, 0)
+  assert.equal(store.records[0]?.mtt_buy, 0)
 })

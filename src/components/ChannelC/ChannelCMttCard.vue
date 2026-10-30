@@ -4,6 +4,7 @@ import type { MttListRecord } from '@/api/models/roomcenter'
 import { getMttStage, MTT_ARTWORK_HEIGHT, type CardSize } from '@/features/channelC/model'
 import { formatDateTime } from '@/utils/time'
 import { formatUC } from '@/utils/roomVisibility'
+import { isMttRegistered } from '@/utils/mttRegistration'
 import defaultLarge from '@/assets/channelC/mtt-default-large.png'
 import defaultMedium from '@/assets/channelC/mtt-default-medium.png'
 import defaultSmall from '@/assets/channelC/mtt-default-small.png'
@@ -14,7 +15,7 @@ import {
 } from '@/utils/multiLanguageTemplate'
 
 const props = withDefaults(defineProps<{ match: MttListRecord; now: number; size?: CardSize }>(), {
-  size: 'large',
+  size: 'medium',
 })
 defineEmits<{ open: [match: MttListRecord] }>()
 const matchName = computed(() => {
@@ -52,20 +53,12 @@ const statusText = computed(() =>
   ),
 )
 const actionText = computed(() =>
-  t(
-    {
-      registered: 'MTT_State_Registered',
-      registering: 'MTT-Apply',
-      waiting: 'UIMine_RecordItemsNormal',
-      running: 'UICopyFriendRoomEnterRoom',
-      finished: 'UIMine_RecordItemsNormal',
-    }[stage.value],
-  ),
+  t(isMttRegistered(props.match) ? 'MTT_State_Registered' : 'MTT-Apply'),
 )
 </script>
 
 <template>
-  <article class="c-mtt-card">
+  <article class="c-mtt-card" @click="$emit('open', match)">
     <div class="c-mtt-art" :style="{ aspectRatio: `180 / ${MTT_ARTWORK_HEIGHT[size]}` }">
       <img class="c-mtt-cover" :src="cover" alt="" @error="failedCover = true" />
       <span class="c-mtt-status"><i :class="stage"></i>{{ statusText }}</span>
@@ -96,7 +89,7 @@ const actionText = computed(() =>
           )
         }}
       </p>
-      <button class="c-mtt-action" type="button" @click="$emit('open', match)">
+      <button class="c-mtt-action" type="button" @click.stop="$emit('open', match)">
         {{ actionText }}
       </button>
     </div>
@@ -110,6 +103,7 @@ const actionText = computed(() =>
   border-radius: 0.256rem;
   background: #fff;
   color: #17191e;
+  cursor: pointer;
 }
 
 .c-mtt-art {

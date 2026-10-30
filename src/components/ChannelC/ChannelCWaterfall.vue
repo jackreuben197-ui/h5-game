@@ -9,7 +9,7 @@ const props = defineProps<{
   cards: readonly LobbyCard[]
   now: number
   label: string
-  roomLogo?: string
+  desktopIconUrl?: string
   joiningId?: string | null
 }>()
 defineEmits<{ join: [room: RoomRecord]; open: [match: MttListRecord] }>()
@@ -24,7 +24,7 @@ const columns = computed(() => buildWaterfallColumns(props.cards))
           v-if="card.kind === 'poker'"
           :room="card.room"
           :now="now"
-          :room-logo="roomLogo"
+          :desktop-icon-url="desktopIconUrl"
           :joining="joiningId === String(card.room.rid)"
           @join="$emit('join', $event)"
         />

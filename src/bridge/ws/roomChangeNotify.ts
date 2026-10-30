@@ -8,7 +8,7 @@ import {
   type RoomRecord as PbRoomRecord,
   type RoomTribeClubRelate as PbRoomTribeClubRelate,
   type RoomUserInfo as PbRoomUserInfo,
-} from '@holdem-pb'
+} from '@silenthill/agreement-web'
 import { decodeHoldemPacket } from './holdemPacket'
 
 const log = createLogger('[roomChangeNotify]')

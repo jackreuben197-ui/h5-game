@@ -7,7 +7,7 @@ import {
   type UserMttRecordChange as PbUserMttRecordChange,
   type UserSNGRecord as PbUserSNGRecord,
   type UserSNGRecordChange as PbUserSNGRecordChange,
-} from '@holdem-pb'
+} from '@silenthill/agreement-web'
 import { readMttDisplayFields, type MttDisplayFields } from '@/utils/lobbyDisplayFields'
 import { decodeHoldemPacket } from './holdemPacket'
 

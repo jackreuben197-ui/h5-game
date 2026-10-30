@@ -1,7 +1,7 @@
 import {
   ServerMessageUserDiamondChange,
   ServerMessageUserGoldChange,
-} from '@holdem-pb'
+} from '@silenthill/agreement-web'
 import { decodeHoldemPacket } from './holdemPacket'
 
 export interface WsUserDiamondChangePayload {

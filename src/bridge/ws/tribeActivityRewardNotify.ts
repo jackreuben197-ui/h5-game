@@ -1,4 +1,4 @@
-import { Code, ServerMessageTribeActivityReward } from '@holdem-pb'
+import { Code, ServerMessageTribeActivityReward } from '@silenthill/agreement-web'
 import type { TribeActivityRewardNotification } from '@/features/tribeReward/notification'
 import { decodeHoldemPacket } from './holdemPacket'
 import { createLogger } from '@/utils/logger'

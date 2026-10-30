@@ -13,7 +13,7 @@ export interface RechargeRewardNotification {
   orderCategory: number
   orderType: number
   rewards: RechargeRewardItem[]
-  /** 联盟币数量，沿用 reward_gold 的 UC 单位，不按道具价值的分单位换算。 */
+  /** 133 的 reward_recharge_amount 已由服务端换算并四舍五入为整数 UC，直接展示。 */
   rewardGold?: number
 }
 
@@ -164,6 +164,8 @@ export function normalizeRechargeRewardNotification(
     Math.floor(
       toNumber(
         firstPresent(
+          value.rewardRechargeAmount,
+          value.reward_recharge_amount,
           value.rewardGold,
           value.reward_gold,
           value.rewardTribeGold,

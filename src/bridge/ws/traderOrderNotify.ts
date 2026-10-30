@@ -1,4 +1,4 @@
-import { ServerMessageUserTraderOrderNotify } from '@holdem-pb'
+import { ServerMessageUserTraderOrderNotify } from '@silenthill/agreement-web'
 import { decodeHoldemPacket } from './holdemPacket'
 
 export interface WsUserTraderOrderNotifyPayload {

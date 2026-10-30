@@ -51,7 +51,7 @@ const stubbed = new Set([
   '@/utils/roomListCache',
   '@/utils/roomListSort',
   '@/utils/logger',
-  '@holdem-pb',
+  '@silenthill/agreement-web',
   '@/bridge/ws/mttNotify',
   '@/constants/storageKey',
   '@/utils/localStore',

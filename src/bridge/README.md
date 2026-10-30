@@ -452,7 +452,7 @@ H5MsgMgr.Instance.on('panelEvent', (payload) => {
 - `src/bridge/ws/roomChangeNotify.ts`
 - `src/bridge/ws/mttNotify.ts`
 
-**加载策略**：pb 类由 `@silenthill/agreement-web` 提供。Vite 在页面启动时先加载该包的 `holdem-pb.js` UMD bundle，业务代码通过 `@holdem-pb` 别名访问 proxy 导出，仓库内不再保存 pb 生成文件。
+**加载策略**：pb 类由 `@silenthill/agreement-web` 提供。Vite 在页面启动时先加载该包的 `holdem-pb.js` UMD bundle，业务代码直接从 `@silenthill/agreement-web` 导入协议对象，仓库内不再保存 pb 生成文件。
 
 ### 8.3 为什么不再手写 wire 解析
 
@@ -465,7 +465,7 @@ H5MsgMgr.Instance.on('panelEvent', (payload) => {
 1. 先确认上游 `@silenthill/agreement-web` 已发布相应协议，再执行 `pnpm sync:protocol`。
 2. 提交更新后的 `pnpm-lock.yaml`，并保证 H5 与 Cocos 锁定到同一协议提交。
 3. 在 `messageCenter.ts` 新增对应 code 常量（如需要）。
-4. 新增 `xxxNotify.ts` decoder 文件，从 `@holdem-pb` 引入消息类并将 pb 对象映射为 H5 业务结构。
+4. 新增 `xxxNotify.ts` decoder 文件，从 `@silenthill/agreement-web` 引入消息类并将 pb 对象映射为 H5 业务结构。
 5. 在 store 或业务层通过 `subscribeH5WsCode/subscribeH5WsCodes` 订阅并消费。
 6. 仅在映射层输出 H5 业务需要的数据结构，不在 `wsProxy.ts` 混入业务逻辑。
 7. 更新本 README 8.2 节的协议列表。

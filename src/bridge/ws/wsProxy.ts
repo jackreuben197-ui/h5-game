@@ -26,7 +26,7 @@ import {
   encodeHoldemPacket,
   type HoldemPacketDecodeResult,
 } from './holdemPacket'
-import { Code, ServerMessageError } from '@holdem-pb'
+import { Code, ServerMessageError } from '@silenthill/agreement-web'
 
 const log = createLogger('[ws]')
 const logSend = createLogger('[wsSend]')

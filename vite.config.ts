@@ -242,10 +242,6 @@ export default defineConfig(({ mode, command }) => {
           bridgeTarget === 'h5-cc-game'
             ? '@silenthill/h5-cc-bridge/h5-side'
             : fileURLToPath(new URL('./src/bridge/protocol', import.meta.url)),
-        // 短别名：业务代码 import { Code, ServerMessageXxx } from '@holdem-pb'
-        // 实际指向 @silenthill/agreement-web 的 proxy 层（运行时从 window.HoldemPB 取）。
-        // 真正的 UMD bundle 由 holdemPbInjectPlugin 注入 <script>。
-        '@holdem-pb': '@silenthill/agreement-web',
       },
     },
     server: {

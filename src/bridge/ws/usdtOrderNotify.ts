@@ -1,4 +1,4 @@
-import { ServerMessageUserUsdtOrderNotify } from '@holdem-pb'
+import { ServerMessageUserUsdtOrderNotify } from '@silenthill/agreement-web'
 import { decodeHoldemPacket } from './holdemPacket'
 
 export interface WsUserUsdtOrderNotifyPayload {

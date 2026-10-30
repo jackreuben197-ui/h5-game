@@ -27,7 +27,7 @@ import {
 } from '@/utils/roomListCache'
 import { isRoomParticipated, sortRoomRecordsForDisplay } from '@/utils/roomListSort'
 import { createLogger } from '@/utils/logger'
-import { ServerMessageSeated } from '@holdem-pb'
+import { ServerMessageSeated } from '@silenthill/agreement-web'
 
 const log = createLogger('[roomList]')
 

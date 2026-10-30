@@ -12,14 +12,15 @@ const pbModule = moduleUrl(`
   const pb = createRequire(${JSON.stringify(import.meta.url)})(${JSON.stringify(runtimePath)});
   export const Code = pb.Code;
   export const ServerMessageTribeActivityReward = pb.ServerMessageTribeActivityReward;
+  export const ServerMessageUserOrderAudit = pb.ServerMessageUserOrderAudit;
   export const ServerMessageRoomChangeNotify = pb.ServerMessageRoomChangeNotify;
   export const ServerMessageMttSeriesNotify = pb.ServerMessageMttSeriesNotify;
   export const ServerMessageUserMttChangeNotify = pb.ServerMessageUserMttChangeNotify;
   export const ServerMessageUserSngChangeNotify = pb.ServerMessageUserSngChangeNotify;
 `)
 const aliases = new Map([
-  ['@holdem-pb', pbModule],
-  ['@/utils/logger', moduleUrl('export const createLogger = () => ({ warn() {} });')],
+  ['@silenthill/agreement-web', pbModule],
+  ['@/utils/logger', moduleUrl('export const createLogger = () => ({ warn() {}, info() {} });')],
   [
     '@/utils/lobbyDisplayFields',
     new URL('../src/utils/lobbyDisplayFields.ts', import.meta.url).href,
@@ -35,6 +36,7 @@ const hooks = registerHooks({
 const { decodeRoomChangeNotifyFromRawPacket } = await import('../src/bridge/ws/roomChangeNotify.ts')
 const { decodeUserMttChangeNotifyFromRawPacket } = await import('../src/bridge/ws/mttNotify.ts')
 const { decodeTribeActivityReward } = await import('../src/bridge/ws/tribeActivityRewardNotify.ts')
+const { decodeUserOrderAudit } = await import('../src/bridge/ws/orderAuditNotify.ts')
 hooks.deregister()
 
 function serverPacket(code: number, message: { serializeBinary(): Uint8Array }): ArrayBuffer {
@@ -134,4 +136,56 @@ test('155 handles coin-only awards and rejects missing order identity or malform
   assert.equal(decoded?.rewardGold, 100)
   assert.deepEqual(decoded?.rewards, [])
   assert.equal(decodeTribeActivityReward(new ArrayBuffer(2)), null)
+})
+
+test('133 decodes integer UC and props from the installed protobuf without rescaling UC', () => {
+  const message = new pb.ServerMessageUserOrderAudit()
+  message.setOrderNo('recharge-uc-and-props')
+  message.setStatus(2)
+  message.setOrderType(1)
+  message.setRewardRechargeAmount(151)
+  const prop = new pb.RechargeRewardProp()
+  prop.setPropId(662)
+  prop.setPropName('PROP2023.TICKET')
+  prop.setPropValue(50000)
+  prop.setQuantity(2)
+  message.addRewardProps(prop)
+
+  const decoded = decodeUserOrderAudit(serverPacket(pb.Code.MSG_S_USER_ORDER_AUDIT, message))
+  assert.deepEqual(decoded, {
+    orderNo: 'recharge-uc-and-props',
+    status: 2,
+    orderCategory: 0,
+    orderType: 1,
+    rewardGold: 151,
+    rewards: [{
+      propId: 662,
+      propName: 'PROP2023.TICKET',
+      propValue: 500,
+      quantity: 2,
+      propIcon: '',
+    }],
+  })
+  assert.equal(decodeUserOrderAudit(serverPacket(155, message)), null)
+  assert.equal(decodeUserOrderAudit(new ArrayBuffer(2)), null)
+})
+
+test('133 supports UC-only and legacy props-only packets', () => {
+  const message = new pb.ServerMessageUserOrderAudit()
+  message.setOrderNo('recharge-uc-only')
+  message.setStatus(2)
+  message.setOrderType(1)
+  message.setRewardRechargeAmount(100)
+  const coins = decodeUserOrderAudit(serverPacket(133, message))
+  assert.equal(coins?.rewardGold, 100)
+  assert.deepEqual(coins?.rewards, [])
+
+  message.setRewardRechargeAmount(0)
+  const prop = new pb.RechargeRewardProp()
+  prop.setPropName('PROP2023.TICKET')
+  prop.setQuantity(1)
+  message.addRewardProps(prop)
+  const props = decodeUserOrderAudit(serverPacket(133, message))
+  assert.equal(props?.rewardGold ?? 0, 0)
+  assert.equal(props?.rewards.length, 1)
 })

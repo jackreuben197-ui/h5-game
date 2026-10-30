@@ -1,4 +1,4 @@
-import { ServerMessageSupportMessage } from '@holdem-pb'
+import { ServerMessageSupportMessage } from '@silenthill/agreement-web'
 import { decodeHoldemPacket } from './holdemPacket'
 
 export interface WsSupportMessagePayload {

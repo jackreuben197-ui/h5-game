@@ -77,29 +77,37 @@ test('Banner lobby and Banner list call their separate existing endpoints with t
   assert.equal(state.calls[1][1].display_scene, 1)
 })
 
-test('both registration endpoints submit inviter_random_id and preserve their distinct responses', async () => {
-  state.calls = []
-  const payload = withPlayerInviter(
-    {
-      email: 'player@example.com',
-      password: 'hashed',
-      invite_code: 'club-code',
-    },
-    123456,
-  )
-  state.data = { token: 'registered-token' }
-  const registered = await user.postUserRegisterApi(payload)
-  assert.equal(registered.data?.token, 'registered-token')
-  state.data = 'player@example.com'
-  const invited = await user.postUserInviteRegisterApi(payload)
-  assert.equal(invited.data, 'player@example.com')
-  assert.equal(state.calls[0][0], '/user/register')
-  assert.equal(state.calls[1][0], '/user/invite_register')
-  for (const [, body] of state.calls) {
-    assert.equal(body.inviter_random_id, 123456)
-    assert.equal('random_id' in body, false)
-    assert.equal(body.email, 'player@example.com')
-    assert.equal(body.password, 'hashed')
-  }
-  assert.equal(state.calls[1][1].invite_code, 'club-code')
-})
+for (const { role, inviteCode, traceHash } of [
+  { role: 'administrator', inviteCode: 'club-code', traceHash: '' },
+  { role: 'agent', inviteCode: 'nvEDgGfw', traceHash: 'nvEDgGfw' },
+  { role: 'player', inviteCode: 'club-code', traceHash: '' },
+]) {
+  test(`both registration endpoints retain ${role} invite_code and inviter_random_id`, async () => {
+    state.calls = []
+    const payload = withPlayerInviter(
+      {
+        email: 'player@example.com',
+        password: 'hashed',
+        invite_code: inviteCode,
+        ...(traceHash ? { trace_hash: traceHash } : {}),
+      },
+      123456,
+    )
+    state.data = { token: 'registered-token' }
+    const registered = await user.postUserRegisterApi(payload)
+    assert.equal(registered.data?.token, 'registered-token')
+    state.data = 'player@example.com'
+    const invited = await user.postUserInviteRegisterApi(payload)
+    assert.equal(invited.data, 'player@example.com')
+    assert.equal(state.calls[0][0], '/user/register')
+    assert.equal(state.calls[1][0], '/user/invite_register')
+    for (const [, body] of state.calls) {
+      assert.equal(body.inviter_random_id, 123456)
+      assert.equal('random_id' in body, false)
+      assert.equal(body.email, 'player@example.com')
+      assert.equal(body.password, 'hashed')
+      assert.equal(body.invite_code, inviteCode)
+      assert.equal(body.trace_hash, traceHash || undefined)
+    }
+  })
+}

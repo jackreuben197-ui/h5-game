@@ -399,10 +399,10 @@ H5 不可见时活动通知排队，回到大厅后展示；旧充值通知保�
 ### 3.4 邀请与注册
 
 - 分享链接和二维码统一通过 `channelPackage.ts` / `playerInvitation.ts` 生成；域名、普通邀请、代理邀请码及 `random_id` 的产品规则见 [邀请分享](../channel-c.md#8-邀请分享与注册归因)。
-- `random_id` 是邀请人的玩家随机 ID：普通入口读 `user/info.user.un_id`，代理可读俱乐部用户详情的 `user_info.random_id`。不是内部用户主键或俱乐部随机 ID。
+- 所有邀请角色均携带 `random_id`：管理员和普通玩家读 `user/info.user.un_id`；代理可读俱乐部用户详情 `user_info.random_id`，缺失时回退到当前玩家 `un_id`。不是内部用户主键或俱乐部随机 ID。
 - 同时读取普通查询参数和 hash 查询参数；优先 `random_id`，兼容旧 `inviter_random_id`。按正的安全整数校验。
-- `PLAYER_INVITATION` 与本次邀请码一起缓存，代理码另沿用 `AGENT_INVITE_CODE`；跨页面仍可解析，避免不同俱乐部 / 代理串用。
-- `LoginModal.handleRegister` 通过 `withPlayerInviter()` 组装 `UserRegisterRequest`，将链接中的 `random_id` 映射为 `/user/register` 的数字 `inviter_random_id`；`/user/invite_register` 使用同一请求字段。`random_id` 仅用于链接，不作为注册请求字段；普通邀请与代理邀请码沿用各自既有绑定流程。
+- `PLAYER_INVITATION` 将邀请人 ID 与本次有效邀请码一起缓存，代理码另存 `AGENT_INVITE_CODE`；代理码与邀请人 ID 可以同时存在。新邀请不能串用旧 ID，跨页面仍保留同一次邀请的两个字段。
+- `LoginModal.handleRegister` 通过 `withPlayerInviter()` 组装 `UserRegisterRequest`，所有邀请角色均将链接中的 `random_id` 映射为数字 `inviter_random_id`；`/user/invite_register` 使用同一请求字段。`invite_code` 沿用既有规则：代理取 `i` 中的代理码，其他取俱乐部码。`random_id` 仅用于链接，不作为注册请求字段。
 - `register` 响应可包含 token 等登录字段；`invite_register` 的 data 为手机号 / 邮箱字符串，分别声明响应类型。登录 / 注册成功后清除邀请缓存。
 
 ### 3.5 维护验证入口

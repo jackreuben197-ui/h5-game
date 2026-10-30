@@ -27,6 +27,8 @@ const channel = await import('../src/utils/channelPackage.ts')
 const { localStore } = await import(storageUrl)
 hooks.deregister()
 
+test.beforeEach(() => channel.clearAgentInviteCodeCache())
+
 function withLocation(href: string, run: () => void) {
   const original = Object.getOwnPropertyDescriptor(globalThis, 'window')
   Object.defineProperty(globalThis, 'window', {
@@ -100,7 +102,7 @@ test('player share URLs map random_id to inviter_random_id in the registration b
   })
 })
 
-test('agent QR URLs preserve the agent code and random_id together across navigation', () => {
+test('agent QR URLs retain both the agent code and inviter ID across navigation', () => {
   withLocation('https://official.example/#/club', () => {
     window.location.href = channel.buildChannelAgentInviteUrl(
       'agent-code',
@@ -108,6 +110,10 @@ test('agent QR URLs preserve the agent code and random_id together across naviga
       'https://custom.example',
       654321,
     )
+    const params = new URLSearchParams(window.location.hash.split('?')[1])
+    assert.equal(params.get('i'), 'agent-code')
+    assert.equal(params.get('random_id'), '654321')
+    assert.equal(params.has('inviter_random_id'), false)
     assert.equal(channel.parseInviteParamsFromLocation().inviterRandomId, 654321)
     assert.equal(channel.resolveAgentInviteCode(), 'agent-code')
     channel.cacheAgentInviteCodeIfPresent()
@@ -124,6 +130,77 @@ test('agent QR URLs preserve the agent code and random_id together across naviga
     assert.equal(channel.resolveInviterRandomId('another-agent'), undefined)
     channel.clearAgentInviteCodeCache()
     assert.equal(channel.resolveInviterRandomId(code), undefined)
+  })
+})
+
+for (const idField of ['random_id', 'inviter_random_id']) {
+  test(`the reported agent link submits its original agent code and ${idField} before and after navigation`, () => {
+    withLocation(
+      `https://ksgubmmk.nsh.cjsjd.com/#/home?mode=register&i=nvEDgGfw&${idField}=92625674`,
+      () => {
+        localStore.setItem('player', { id: 123456, inviteCode: 'old-club' })
+        const registerPayload = () => {
+          const code = channel.resolveAgentInviteCode()
+          return withPlayerInviter(
+            { invite_code: code, trace_hash: 'nvEDgGfw', platform: 5 },
+            channel.resolveInviterRandomId(code),
+          )
+        }
+        const expected = {
+          invite_code: 'nvEDgGfw', trace_hash: 'nvEDgGfw', platform: 5,
+          inviter_random_id: 92625674,
+        }
+        assert.deepEqual(registerPayload(), expected)
+        channel.cacheAgentInviteCodeIfPresent()
+        assert.deepEqual(localStore.getItem('player'), {
+          id: 92625674, inviteCode: 'nvEDgGfw',
+        })
+        window.location.hash = '/home'
+        assert.deepEqual(registerPayload(), expected)
+        channel.clearAgentInviteCodeCache()
+      },
+    )
+  })
+}
+
+test('cached inviter IDs remain scoped to the matching agent code', () => {
+  withLocation('https://club.example/#/home', () => {
+    localStore.setItem('agent', 'agent-code')
+    localStore.setItem('player', { id: 654321, inviteCode: 'agent-code' })
+    assert.equal(channel.resolveAgentInviteCode(), 'agent-code')
+    assert.equal(channel.resolveInviterRandomId('agent-code'), 654321)
+    assert.equal(channel.resolveInviterRandomId('another-agent'), undefined)
+    channel.clearAgentInviteCodeCache()
+  })
+})
+
+for (const role of ['administrator', 'player']) {
+  test(`${role} invitation preserves the club code and inviter ID after navigation`, () => {
+    withLocation('https://official.example/#/club', () => {
+      window.location.href = channel.buildChannelPlayerInviteUrl(
+        92625674, 'club-code', 'https://custom.example',
+      )
+      localStore.setItem('agent', 'previous-agent')
+      channel.cacheAgentInviteCodeIfPresent()
+      window.location.hash = '/home'
+      assert.equal(channel.resolveAgentInviteCode(), '')
+      assert.deepEqual(
+        withPlayerInviter(
+          { invite_code: 'club-code' }, channel.resolveInviterRandomId('club-code'),
+        ),
+        { invite_code: 'club-code', inviter_random_id: 92625674 },
+      )
+    })
+  })
+}
+
+test('a new agent invitation replaces the previous inviter even when the agent code is unchanged', () => {
+  withLocation('https://club.example/#/?i=agent-code&random_id=111111', () => {
+    channel.cacheAgentInviteCodeIfPresent()
+    window.location.hash = '/home?i=agent-code&random_id=222222'
+    channel.cacheAgentInviteCodeIfPresent()
+    window.location.hash = '/home'
+    assert.equal(channel.resolveInviterRandomId('agent-code'), 222222)
   })
 })
 

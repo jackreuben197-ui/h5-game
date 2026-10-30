@@ -581,7 +581,7 @@ export function resolveAgentInviteCode(): string {
 }
 
 /**
- * 缓存链接中的代理或普通邀请参数，玩家随机 ID 与本次邀请码一起保存。
+ * 缓存本次邀请码及邀请人 ID；代理邀请码和邀新归因同时保留。
  * 在应用启动时调用，确保进入其他页面后注册仍保留来源。
  */
 export function cacheAgentInviteCodeIfPresent(): void {
@@ -600,6 +600,7 @@ export function cacheAgentInviteCodeIfPresent(): void {
   if (parsed.agentInviteCode) {
     try {
       localStore.setItem(StorageKey.AGENT_INVITE_CODE, parsed.agentInviteCode)
+      // 新邀请没有 ID 时不能沿用上一位邀请人；带 ID 时与代理码一起缓存。
       if (!parsed.inviterRandomId) localStore.removeItem(StorageKey.PLAYER_INVITATION)
     } catch (error) {
       console.warn('[channelPackage] failed to cache agentInviteCode:', error)
@@ -623,8 +624,8 @@ export function clearAgentInviteCodeCache(): void {
 export function resolveInviterRandomId(inviteCode: string): number | undefined {
   if (!inviteCode.trim()) return undefined
   const parsed = parseInviteParamsFromLocation()
-  const sourceClub = parsed.agentInviteCode || resolveInviteCode()
-  if (parsed.inviterRandomId && (!sourceClub || sourceClub === inviteCode)) {
+  const sourceInviteCode = parsed.agentInviteCode || resolveInviteCode()
+  if (parsed.inviterRandomId && (!sourceInviteCode || sourceInviteCode === inviteCode)) {
     return parsed.inviterRandomId
   }
   try {

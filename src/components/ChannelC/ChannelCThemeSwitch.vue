@@ -52,6 +52,7 @@ const label = computed(() =>
   border: 0.5px solid transparent;
   border-radius: px(35.449);
   background: #05c297;
+  background-origin: border-box;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 
@@ -63,20 +64,20 @@ const label = computed(() =>
 .c-theme-track-icon {
   position: absolute;
   top: 50%;
-  left: px(13.47);
+  left: px(5.18);
   width: px(15.92);
   height: px(15.92);
   transform: translateY(-50%);
 }
 .is-dark .c-theme-track-icon {
-  left: px(31);
-  width: px(16.68);
-  height: px(16.68);
+  left: px(31.15);
+  width: px(15.35);
+  height: px(15.35);
 }
 .c-theme-knob {
   position: absolute;
   top: px(0.8);
-  left: px(24.5);
+  left: px(24);
   display: grid;
   place-items: center;
   width: px(27.68);
@@ -86,12 +87,12 @@ const label = computed(() =>
   transition: left 320ms cubic-bezier(0.22, 1, 0.36, 1);
 
   img {
-    width: px(16.68);
-    height: px(16.68);
+    width: px(15.35);
+    height: px(15.35);
   }
 }
 .is-dark .c-theme-knob {
-  left: px(1);
+  left: px(0.5);
 
   img {
     width: px(15.92);

@@ -322,7 +322,6 @@ watch(
   @include theme-light-own {
     --c-page: #f3f4f6;
     --c-text-muted: rgba(34, 34, 34, 0.55);
-    background: radial-gradient(ellipse at 0 0, #bfe3fc 0, transparent 65%), #f3f4f6 !important;
   }
   .main-layout-content {
     padding-top: var(--app-content-safe-area-top, env(safe-area-inset-top));

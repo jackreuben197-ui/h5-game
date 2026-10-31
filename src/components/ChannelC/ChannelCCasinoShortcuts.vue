@@ -102,11 +102,11 @@ function openCategory(category: string) {
   justify-content: center;
   box-sizing: border-box;
   width: px(50);
-  height: px(13.247);
+  height: px(14);
   color: #fff;
-  font-size: px(8.967);
+  font-size: px(11);
   font-weight: 500;
-  line-height: 0.95;
+  line-height: 1.2;
   text-align: center;
 
   @include theme-light-own {
@@ -120,16 +120,19 @@ function openCategory(category: string) {
 }
 .c-casino-shortcut--hot .c-shortcut-label {
   width: auto;
-  max-width: px(50);
+  max-width: px(56);
   padding: 0 px(3.974);
   border: 0.331px solid rgba(255, 255, 255, 0.5);
   border-radius: px(16.558);
   background: #ff5708;
   color: #fff;
 
+  @include theme-light-own {
+    color: #fff;
+  }
   > span {
     width: auto;
-    max-width: px(42);
+    max-width: px(48);
   }
 }
 .c-shortcut-icon {

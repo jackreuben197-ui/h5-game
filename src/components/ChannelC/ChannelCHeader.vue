@@ -14,6 +14,7 @@ import messageLight from '@/assets/channelC/message.svg'
 import messageDark from '@/assets/channelC/message-dark.svg'
 import defaultAvatar from '@/assets/images/default_avatar.png'
 import defaultBanner from '@/assets/images/home_header_1.png'
+import CasinoPromoBanner from '@/components/CasinoPromoBanner.vue'
 import game from '@/assets/channelC/game-reward.svg'
 import notice from '@/assets/channelC/announcement.svg'
 import recharge from '@/assets/channelC/recharge-reward.svg'
@@ -21,14 +22,13 @@ import invite from '@/assets/channelC/invite-reward.svg'
 import support from '@/assets/channelC/support.svg'
 import type { ChannelCAction } from '@/features/channelC/rewards'
 
-const props = defineProps<{ banner: string; clubName: string }>()
+defineProps<{ banners: string[]; clubName: string }>()
 defineEmits<{ action: [action: ChannelCAction] }>()
 const router = useRouter()
 const { isDark } = useTheme()
 const user = useUserInfoStore()
 const gameStore = useGameStore()
 const avatar = computed(() => user.userInfo?.user?.avatar || defaultAvatar)
-const bannerUrl = computed(() => props.banner?.trim() || defaultBanner)
 const actions: Array<{ key: ChannelCAction; label: string; icon: string }> = [
   { key: 'game', label: 'UIChannelC_GameReward', icon: game },
   { key: 'notice', label: 'UIChannelC_Announcements', icon: notice },
@@ -41,10 +41,6 @@ function openAccount(path: string) {
   if (requireRealUser(() => openAccount(path))) void router.push(path)
 }
 
-function fallbackBanner(event: Event) {
-  const image = event.target as HTMLImageElement
-  if (image.getAttribute('src') !== defaultBanner) image.src = defaultBanner
-}
 </script>
 
 <template>
@@ -98,9 +94,7 @@ function fallbackBanner(event: Event) {
     </div>
     <ThemeQuickSwitch class="c-theme-switch" />
   </div>
-  <div class="c-banner">
-    <img :src="bannerUrl" :alt="clubName" @error="fallbackBanner" />
-  </div>
+  <CasinoPromoBanner class="c-banner" :images="banners" :fallback-image="defaultBanner" />
 </template>
 
 <style scoped lang="scss">
@@ -187,19 +181,22 @@ function fallbackBanner(event: Event) {
   padding: 0;
   border: 0;
   background: transparent;
-  color: #000c;
+  color: #fffc;
   font: inherit;
   font-size: 0.256rem;
   line-height: 1.4;
   cursor: pointer;
   min-width: 0;
+  @include theme-light-own {
+    color: #000c;
+  }
 }
 .c-quick-actions button > span:last-child {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   max-width: 100%;
-  height: 0.6rem;
+  height: 0.72rem;
   overflow: hidden;
   overflow-wrap: anywhere;
   text-align: center;
@@ -215,19 +212,7 @@ function fallbackBanner(event: Event) {
   transform-origin: right center;
   margin: 0 0.05rem 0 0.4rem;
 }
-.c-banner {
-  width: 100%;
-  aspect-ratio: 372 / 69;
+.casino-promo-banner-container.c-banner {
   margin: 0.075rem 0 0.128rem;
-  border-radius: 0.282rem;
-  overflow: hidden;
-}
-.c-banner img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border: 1px solid #69beff;
-  border-radius: inherit;
 }
 </style>

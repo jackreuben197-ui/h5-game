@@ -90,7 +90,7 @@ const actionText = computed(() =>
         }}
       </p>
       <button class="c-mtt-action" type="button" @click.stop="$emit('open', match)">
-        {{ actionText }}
+        <span v-fit-text="{ maxLines: 1 }" class="c-mtt-action-label">{{ actionText }}</span>
       </button>
     </div>
   </article>
@@ -196,6 +196,13 @@ const actionText = computed(() =>
   text-overflow: ellipsis;
 }
 
+.c-mtt-action-label {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0 0.06rem;
+  white-space: nowrap;
+}
 .c-mtt-action {
   position: absolute;
   top: 0.18rem;

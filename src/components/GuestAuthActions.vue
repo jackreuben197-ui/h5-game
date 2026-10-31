@@ -68,10 +68,6 @@ function openGuestAuth(mode: 'login' | 'register'): void {
   background: rgba(174, 174, 174, 0.52);
   box-shadow: 0.01rem 0.01rem 0.03rem rgba(0, 0, 0, 0.25);
   backdrop-filter: blur(0.14rem);
-
-  @include theme-light-own {
-    color: #fff;
-  }
 }
 
 .guest-auth-button--login {

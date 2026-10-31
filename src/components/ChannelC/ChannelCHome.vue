@@ -23,6 +23,8 @@ import ChannelCHeader from './ChannelCHeader.vue'
 import ChannelCFilters from './ChannelCFilters.vue'
 import ChannelCOverlays from './ChannelCOverlays.vue'
 import ChannelCWaterfall from './ChannelCWaterfall.vue'
+import LiveWinsTicker from '@/components/LiveWinsTicker.vue'
+import { useLiveWins } from '@/composables/useLiveWins'
 
 const props = withDefaults(
   defineProps<{
@@ -39,6 +41,7 @@ const props = withDefaults(
 const { club, clubId, tribeId, visibleRooms, visibleMatches, tournamentSeries } = useChannelCFeed()
 useChannelCVersionRouting()
 const ready = useChannelCDataReady(toRef(props, 'ready'))
+const { liveWinItems, liveWinInterval } = useLiveWins()
 const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages('c')
 const roomStore = useRoomListStore()
 const root = ref<HTMLElement | null>(null)
@@ -57,7 +60,6 @@ const {
 const now = ref(Date.now())
 let clock: ReturnType<typeof setInterval> | undefined
 
-const banner = computed(() => bannerImages.value[0] || '')
 const tournamentName = computed(() => t(visibleMatches.value[0]?.name || 'MTT'))
 const cards = computed(() =>
   buildChannelCFeed(
@@ -136,12 +138,18 @@ watch(
   >
     <ChannelCHeader
       v-if="section === 'home'"
-      :banner="banner"
+      :banners="bannerImages"
       :club-name="club?.club_name || ''"
       @action="overlays?.open($event)"
     />
+    <LiveWinsTicker
+      v-if="section === 'home' && liveWinItems.length"
+      class="c-live-wins"
+      :items="liveWinItems"
+      :slide-interval="liveWinInterval"
+    />
     <ChannelCFilters
-      v-else
+      v-if="section !== 'home'"
       v-model:poker="pokerFilter"
       v-model:blind="blindFilter"
       v-model:mtt="mttFilter"
@@ -192,6 +200,9 @@ watch(
     // 为右下角管理入口留出空间，末张卡片仍可完整滚出。
     padding-bottom: 1.2rem;
   }
+}
+.channel-c-page .c-live-wins {
+  margin: 0.16rem 0 0.1rem;
 }
 .c-empty {
   display: flex;

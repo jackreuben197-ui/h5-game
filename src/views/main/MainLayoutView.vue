@@ -185,7 +185,8 @@ watch(
       'main-layout--home': isHomeRoute,
       'main-layout--pure-black': isHomeMenu,
       'main-layout--channel-c': isChannelCPage,
-      'main-layout--channel-c-mtt': route.name === 'channel-c-mtt',
+      'main-layout--channel-c-list':
+        route.name === 'channel-c-mtt' || route.name === 'channel-c-poker',
       'main-layout--search': isSearchRoute,
       'main-layout--without-tabs': hideBottomMenu,
       'main-layout--primary': isPrimaryLayout,
@@ -333,7 +334,7 @@ watch(
 }
 
 .main-layout--search,
-.main-layout--channel-c-mtt {
+.main-layout--channel-c-list {
   @include theme-light-own {
     background:
       url('@/assets/channelC/search-bg-left.svg') left -9.44rem top -9.893rem / 17.627rem 19.973rem no-repeat,

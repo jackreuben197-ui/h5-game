@@ -59,6 +59,24 @@ $upstream-light-enabled: false;
   }
 }
 
+@mixin gradient-stroke($width, $paint) {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: $width solid transparent;
+  border-radius: inherit;
+  background: $paint border-box;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) padding-box,
+    linear-gradient(#fff 0 0) border-box;
+  mask:
+    linear-gradient(#fff 0 0) padding-box,
+    linear-gradient(#fff 0 0) border-box;
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
 // light-panel: стеклянная подложка панели/модалки, эталон — .notification-panel.
 // Требования к хосту: свободные ::before / ::after, контент с z-index >= 1.
 // Описание и примеры — README, раздел 8.3 «light-panel».

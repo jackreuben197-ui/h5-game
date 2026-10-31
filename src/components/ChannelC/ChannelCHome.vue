@@ -137,6 +137,7 @@ watch(
     :class="{
       'channel-c-page--club-management': section === 'home' && clubManagement,
       'channel-c-page--mtt': section === 'mtt',
+      'channel-c-page--poker': section === 'poker',
     }"
   >
     <ChannelCHeader
@@ -202,6 +203,9 @@ watch(
   --c-page-gutter: 0.282rem;
   --c-waterfall-column-gap: 0.205rem;
 }
+.channel-c-page--poker .c-filter-row {
+  margin-bottom: 0.115rem;
+}
 @media (max-width: 599px) {
   .channel-c-page--club-management {
     // 为右下角管理入口留出空间，末张卡片仍可完整滚出。
@@ -226,7 +230,7 @@ watch(
   border: 0;
   border-radius: 0.3rem;
   color: #fff;
-  background: #69beff;
+  background: #02cfbb;
   font: inherit;
   cursor: pointer;
 }

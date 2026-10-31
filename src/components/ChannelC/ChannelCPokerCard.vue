@@ -25,7 +25,7 @@ const desktopIcon = computed(
 )
 const kind = computed(() => getPokerKind(props.room))
 const background = computed(() => ({ nlh, plo, short: shortDeck })[kind.value])
-const gameName = computed(() => ({ nlh: 'NLH', plo: 'PLO', short: 'SHORT DECK' })[kind.value])
+const gameName = computed(() => ({ nlh: 'NLH', plo: 'OMAHA', short: 'SHORT DECK' })[kind.value])
 const descriptions = computed(() =>
   [
     { label: 'UITexasRule_RlNZ1ysZ', value: props.room.room_intro },
@@ -80,7 +80,7 @@ function fallbackDesktopIcon(event: Event) {
             <img :src="mode.icon" alt="" />
           </span>
         </div>
-        <strong v-else>{{ gameName }}</strong>
+        <strong v-else :class="`c-table-name--${kind}`">{{ gameName }}</strong>
         <span class="c-table-time">{{ timeText }}</span>
       </div>
       <img
@@ -133,15 +133,16 @@ function fallbackDesktopIcon(event: Event) {
 .c-poker-card {
   overflow: hidden;
   border: 1px solid rgba(15, 118, 110, 0.13);
-  border-radius: 0.23rem;
+  border-radius: 0.2rem;
   background: #ecfcf9;
   cursor: pointer;
 }
 
 .c-table-art {
   position: relative;
-  width: 100%;
-  aspect-ratio: 180 / 92.5;
+  width: calc(100% + 2px);
+  margin: -1px -1px 0;
+  aspect-ratio: 182 / 92.5;
   overflow: hidden;
 }
 
@@ -155,19 +156,23 @@ function fallbackDesktopIcon(event: Event) {
 .c-playing {
   position: absolute;
   z-index: 2;
-  top: 0.07rem;
+  top: 0.048rem;
   left: 0.12rem;
   display: flex;
   align-items: center;
-  gap: 0.06rem;
-  border: 1px solid #ffffff33;
-  padding: 0.025rem 0.08rem;
+  gap: 0.075rem;
+  height: 0.432rem;
+  padding: 0 0.1rem;
   border-radius: 0.15rem;
   background: #000c;
   color: #f3f4f6;
   font-size: 0.225rem;
-  line-height: 1.3;
+  line-height: normal;
   white-space: nowrap;
+}
+
+.c-playing::after {
+  @include gradient-stroke(1px, linear-gradient(90deg, #ffffff0a, #fff3));
 }
 
 .c-playing::before {
@@ -199,6 +204,13 @@ function fallbackDesktopIcon(event: Event) {
 .c-table-label strong {
   font-size: 0.205rem;
   letter-spacing: 0.012rem;
+}
+.c-table-label .c-table-name--plo {
+  color: #c586ff;
+  letter-spacing: 0.0225rem;
+}
+.c-table-label .c-table-name--short {
+  color: #e996ca;
 }
 
 .c-special-modes {
@@ -236,6 +248,16 @@ function fallbackDesktopIcon(event: Event) {
   object-fit: contain;
 }
 
+.c-special-modes > span:only-child {
+  font-size: 0.204rem;
+  letter-spacing: 0.0225rem;
+
+  img {
+    width: 0.308rem;
+    height: 0.462rem;
+  }
+}
+
 .c-seat-avatar {
   position: absolute;
   width: 12.7%;
@@ -247,26 +269,33 @@ function fallbackDesktopIcon(event: Event) {
 }
 
 .c-room-description {
-  padding: 0.08rem 0.18rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.103rem;
+  min-height: 0.756rem;
+  padding: 0.115rem 0.205rem 0.18rem;
   color: #093a36;
 }
 
 .c-room-description p {
   margin: 0;
-  height: 0.487rem;
+  height: 0.333rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 0.276rem;
-  line-height: 0.487rem;
+  font-weight: 500;
+  line-height: 0.333rem;
 }
 
 .c-room-details {
   display: flex;
   align-items: center;
-  gap: 0.09rem;
+  gap: 0.1rem;
   height: 0.875rem;
-  padding: 0.05rem 0.09rem;
+  margin: 0 -1px -1px;
+  padding: 0.05rem 0.148rem 0.05rem 0.1rem;
   background: linear-gradient(90deg, #f3f4f6, #e8f7f5);
   color: #17191e;
 }
@@ -287,10 +316,15 @@ function fallbackDesktopIcon(event: Event) {
 
 .c-room-meta > strong {
   display: block;
+  color: #000000c9;
   font-size: 0.276rem;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+
+  @include theme-dark {
+    color: #fff;
+  }
 }
 
 .c-stakes {
@@ -308,10 +342,10 @@ function fallbackDesktopIcon(event: Event) {
   gap: 0.08rem;
   max-width: 100%;
   min-width: 0;
-  padding: 0.042rem 0.09rem;
-  border-radius: 0.2rem;
+  padding: 0.042rem 0.132rem;
+  border-radius: 0.225rem;
   background: #fff;
-  color: #17191e;
+  color: #000;
   line-height: 1;
 }
 
@@ -343,11 +377,11 @@ function fallbackDesktopIcon(event: Event) {
 
 .c-join {
   flex: none;
-  width: 1.23rem;
+  width: 1.298rem;
   height: 0.55rem;
   border: 0;
   border-radius: 0.175rem;
-  background: #69beff;
+  background: #05c297;
   color: #fff;
   font-size: 0.275rem;
   font-weight: 700;
@@ -368,7 +402,7 @@ function fallbackDesktopIcon(event: Event) {
 .c-poker-card {
   @include theme-dark {
     background: rgba(255, 255, 255, 0.19);
-    border-color: #ffffff20;
+    border-color: #0f766e21;
   }
 }
 .c-room-description {

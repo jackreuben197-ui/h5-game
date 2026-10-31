@@ -104,7 +104,7 @@ function selectAll() {
     white-space: nowrap;
   }
   &.selected {
-    background: #69beff;
+    background: #02cfbb;
     color: #fff;
   }
 }
@@ -159,7 +159,7 @@ function selectAll() {
     flex: none;
   }
   &[aria-pressed='true'] {
-    color: #69beff;
+    color: #02cfbb;
   }
 }
 </style>

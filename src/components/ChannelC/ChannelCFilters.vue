@@ -35,7 +35,7 @@ const mttOptions = [
 </script>
 
 <template>
-  <div class="c-filter-row">
+  <div class="c-filter-row" :class="`c-filter-row--${section}`">
     <template v-if="section === 'poker'">
       <ChannelCMultiSelect
         v-model="poker"
@@ -122,8 +122,11 @@ const mttOptions = [
   white-space: nowrap;
   cursor: pointer;
 }
+.c-filter-row--poker .c-filter {
+  padding-inline: 0.108rem;
+}
 .c-filter.selected {
-  background: #69beff;
+  background: #02cfbb;
   color: #fff;
 }
 </style>

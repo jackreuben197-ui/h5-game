@@ -14,9 +14,13 @@ import {
   resolveTemplateTextByKey,
 } from '@/utils/multiLanguageTemplate'
 
-const props = withDefaults(defineProps<{ match: MttListRecord; now: number; size?: CardSize }>(), {
-  size: 'medium',
-})
+const props = withDefaults(
+  defineProps<{ match: MttListRecord; now: number; size?: CardSize; seriesName?: string }>(),
+  {
+    size: 'medium',
+    seriesName: '',
+  },
+)
 defineEmits<{ open: [match: MttListRecord] }>()
 const matchName = computed(() => {
   void multiLanguageTemplateVersion.value
@@ -52,6 +56,7 @@ const statusText = computed(() =>
     }[stage.value],
   ),
 )
+const formatLabel = computed(() => t(props.seriesName || props.match.tournament_label || ''))
 const actionText = computed(() =>
   t(isMttRegistered(props.match) ? 'MTT_State_Registered' : 'MTT-Apply'),
 )
@@ -62,9 +67,7 @@ const actionText = computed(() =>
     <div class="c-mtt-art" :style="{ aspectRatio: `180 / ${MTT_ARTWORK_HEIGHT[size]}` }">
       <img class="c-mtt-cover" :src="cover" alt="" @error="failedCover = true" />
       <span class="c-mtt-status"><i :class="stage"></i>{{ statusText }}</span>
-      <span v-if="match.tournament_label" class="c-mtt-format">
-        {{ t(match.tournament_label) }}
-      </span>
+      <span v-if="formatLabel" class="c-mtt-format">{{ formatLabel }}</span>
     </div>
     <div class="c-mtt-details">
       <strong class="c-mtt-name" :title="matchName">
@@ -130,6 +133,7 @@ const actionText = computed(() =>
   background: #07102b;
   color: #fff;
   font-size: 0.256rem;
+  font-weight: 500;
   line-height: 1;
 }
 
@@ -142,7 +146,7 @@ const actionText = computed(() =>
   width: 0.205rem;
   height: 0.205rem;
   border-radius: 50%;
-  background: #00d8d0;
+  background: #00e3ca;
 }
 
 .c-mtt-status i.waiting {
@@ -154,7 +158,8 @@ const actionText = computed(() =>
 }
 
 .c-mtt-format {
-  right: 0.15rem;
+  right: 0.154rem;
+  padding: 0 0.205rem;
 }
 
 .c-mtt-details {
@@ -189,7 +194,7 @@ const actionText = computed(() =>
 .c-mtt-time {
   margin: 0.025rem 0 0;
   color: #86878e;
-  font-size: 0.24rem;
+  font-size: 0.2436rem;
   line-height: 0.333rem;
   white-space: nowrap;
   overflow: hidden;
@@ -212,7 +217,7 @@ const actionText = computed(() =>
   padding: 0;
   border: 0;
   border-radius: 0.205rem;
-  background: #69beff;
+  background: #02cfbb;
   color: #fff;
   font-size: 0.282rem;
   font-weight: 700;
@@ -222,7 +227,7 @@ const actionText = computed(() =>
 .c-mtt-card {
   @include theme-dark {
     background: rgba(255, 255, 255, 0.19);
-    color: #f3f4f6;
+    color: #fff;
   }
 }
 .c-prize,
@@ -233,7 +238,7 @@ const actionText = computed(() =>
 }
 .c-prize b {
   @include theme-dark {
-    color: #ffd1aa;
+    color: #fff;
   }
 }
 </style>

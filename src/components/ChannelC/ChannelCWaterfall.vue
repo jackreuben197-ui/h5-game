@@ -32,6 +32,7 @@ const columns = computed(() => buildWaterfallColumns(props.cards))
           v-else
           :match="card.match"
           :size="card.size"
+          :series-name="card.seriesName"
           :now="now"
           @open="$emit('open', $event)"
         />
@@ -45,7 +46,7 @@ const columns = computed(() => buildWaterfallColumns(props.cards))
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
-  gap: 0.18rem;
+  gap: 0.18rem var(--c-waterfall-column-gap, 0.18rem);
 }
 .c-waterfall-column {
   display: flex;

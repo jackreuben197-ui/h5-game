@@ -10,7 +10,7 @@ export type PokerFilter = 'nlh' | 'plo' | 'short'
 export type MttFilter = 'free' | 'paid' | 'hunter' | 'snowball'
 export type LobbyCard =
   | { key: string; kind: 'poker'; room: RoomRecord }
-  | { key: string; kind: 'mtt'; match: MttListRecord; size: CardSize }
+  | { key: string; kind: 'mtt'; match: MttListRecord; size: CardSize; seriesName?: string }
 
 export const MTT_ARTWORK_HEIGHT: Record<CardSize, number> = { large: 225, medium: 152, small: 89 }
 export const isRecommended = (record: { is_top?: unknown }): boolean =>
@@ -81,12 +81,16 @@ export function buildChannelCFeed(
   const mtts: LobbyCard[] = sortChannelCMtt(
     section === 'home' ? matches.filter(isRecommended) : matches,
     now,
-  ).map((match) => ({
-    key: `mtt-${match.match_id}`,
-    kind: 'mtt',
-    match,
-    size: getCardSize(seriesById.get(Number(match.series_id))?.type),
-  }))
+  ).map((match) => {
+    const matchSeries = seriesById.get(Number(match.series_id))
+    return {
+      key: `mtt-${match.match_id}`,
+      kind: 'mtt',
+      match,
+      size: getCardSize(matchSeries?.type),
+      seriesName: matchSeries?.name?.trim(),
+    }
+  })
   if (section === 'poker') return tables
   if (section === 'mtt') return mtts
   return interleaveChannelCCards(tables, mtts)

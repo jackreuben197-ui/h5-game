@@ -185,13 +185,14 @@ watch(
       'main-layout--home': isHomeRoute,
       'main-layout--pure-black': isHomeMenu,
       'main-layout--channel-c': isChannelCPage,
+      'main-layout--channel-c-mtt': route.name === 'channel-c-mtt',
       'main-layout--search': isSearchRoute,
       'main-layout--without-tabs': hideBottomMenu,
       'main-layout--primary': isPrimaryLayout,
       'main-layout--guest': isGuestPreview,
       'main-layout--authenticated': isPrimaryLayout && !isGuestPreview,
       'is-version-b': isVersionB,
-      'main-layout--home-bg': isHomeRoute,
+      'main-layout--home-bg': isHomeRoute || isSearchRoute,
     }"
     :style="backgroundStyle"
   >
@@ -328,6 +329,16 @@ watch(
   .module-slot {
     // 长列表必须撑开内容容器，底部菜单的预留空间才能计入滚动范围。
     flex: 1 0 auto;
+  }
+}
+
+.main-layout--search,
+.main-layout--channel-c-mtt {
+  @include theme-light-own {
+    background:
+      url('@/assets/channelC/search-bg-left.svg') left -9.44rem top -9.893rem / 17.627rem 19.973rem no-repeat,
+      url('@/assets/channelC/search-bg-right.svg') left 3.627rem top -7.227rem / 13.547rem 19.093rem no-repeat,
+      #f3f4f6 !important;
   }
 }
 

@@ -43,7 +43,6 @@ function openGuestAuth(mode: 'login' | 'register'): void {
   justify-content: center;
   height: var(--guest-auth-button-height, 0.87rem);
   padding: var(--guest-auth-button-padding, 0 0.75rem);
-  border: 0;
   border-radius: 0.56rem;
   font-family: 'PingFang SC', sans-serif;
   font-size: 0.34rem;
@@ -64,19 +63,28 @@ function openGuestAuth(mode: 'login' | 'register'): void {
 }
 
 .guest-auth-button--register {
-  color: rgba(0, 0, 0, 0.82);
-  background: rgba(174, 174, 174, 0.52);
-  box-shadow: 0.01rem 0.01rem 0.03rem rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(0.14rem);
+  color: #f9f9f9;
+  background: rgba(128, 128, 128, 0.2);
+  border: 0.02rem solid rgba(249, 249, 249, 0.15);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
+
+  @include theme-light-own {
+    background: linear-gradient(180deg, #808080 0%, #474747 100%);
+    border-color: transparent;
+  }
 }
 
 .guest-auth-button--login {
-  color: #fff;
-  background: linear-gradient(157deg, #05c297 0%, #027a5c 100%);
-  backdrop-filter: blur(0.55rem);
+  color: #f9f9f9;
+  background: rgba(250, 43, 75, 0.8);
+  border: 0.02rem solid rgba(249, 249, 249, 0.25);
+  backdrop-filter: blur(8.5px);
+  -webkit-backdrop-filter: blur(8.5px);
 
   @include theme-light-own {
-    background: var(--c-brand);
+    background: #07c09d;
+    border-color: transparent;
   }
 }
 </style>

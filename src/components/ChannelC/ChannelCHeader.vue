@@ -49,6 +49,7 @@ function openAccount(path: string) {
     <div class="c-header-actions">
       <GuestAuthActions class="c-auth-actions" />
       <button
+        v-if="gameStore.isRealUser"
         type="button"
         class="c-search"
         :aria-label="t('search')"

@@ -1,12 +1,11 @@
 <script setup lang="ts" generic="T extends string | number">
 import { computed, ref } from 'vue'
-import { useTheme } from '@/composables/useTheme'
+import chevronDown from '@/assets/channelC/chevron-down.svg'
 import { toggleFilterValue, type ChannelCFilterOption } from '@/features/channelC/filters'
 
 const props = defineProps<{ allLabel: string; options: ChannelCFilterOption<T>[] }>()
 const selected = defineModel<T[]>({ required: true })
 const expanded = ref(false)
-const { isDark } = useTheme()
 const label = computed(() =>
   selected.value.length
     ? props.options
@@ -27,8 +26,14 @@ function selectAll() {
     v-model:show="expanded"
     placement="bottom-start"
     trigger="click"
-    :theme="isDark ? 'dark' : 'light'"
+    theme="light"
     :show-arrow="false"
+    :offset="[0, 4]"
+    :style="{
+      '--van-popover-radius': '0.44rem',
+      '--van-popover-light-background': '#fff',
+      '--van-popover-light-text-color': '#000',
+    }"
   >
     <template #reference>
       <button
@@ -41,7 +46,7 @@ function selectAll() {
         @keydown.esc="expanded = false"
       >
         <span>{{ label }}</span>
-        <van-icon :name="expanded ? 'arrow-up' : 'arrow-down'" />
+        <img class="c-multiselect-chevron" :class="{ expanded }" :src="chevronDown" alt="" />
       </button>
     </template>
     <div
@@ -75,20 +80,18 @@ function selectAll() {
 </template>
 
 <style scoped lang="scss">
-@use '@/styles/mixins' as *;
-
 .c-multiselect {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 0.06rem;
   min-width: 1.87rem;
   max-width: 2.7rem;
   padding: 0.227rem 0.22rem;
   border: 0;
   border-radius: 0.44rem;
-  background: #ffffff30;
-  color: #fff;
+  background: #fff;
+  color: #000;
   font: inherit;
   font-size: 0.29rem;
   font-weight: 700;
@@ -100,49 +103,62 @@ function selectAll() {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .van-icon {
-    flex: none;
-  }
-  @include theme-light-own {
-    &:not(.selected) {
-      background: #fff;
-      color: #17191e;
-    }
-  }
   &.selected {
     background: #69beff;
     color: #fff;
   }
 }
+.c-multiselect-chevron {
+  flex: none;
+  width: 0.264rem;
+  height: 0.264rem;
+  transition: transform 0.15s ease;
+
+  &.expanded {
+    transform: rotate(180deg);
+  }
+}
 .c-dropdown-options {
-  min-width: 3.5rem;
+  min-width: 1.87rem;
   max-width: min(7rem, calc(100vw - 0.5rem));
   max-height: min(9rem, 55vh);
+  box-sizing: border-box;
   overflow-y: auto;
-  padding: 0.14rem;
+  padding: 0.064rem 0.22rem;
 }
 .c-dropdown-option {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.2rem;
+  gap: 0.15rem;
   width: 100%;
-  padding: 0.25rem;
+  padding: 0.1635rem 0;
   border: 0;
-  border-radius: 0.14rem;
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 0.32rem;
+  font-size: 0.29rem;
+  font-weight: 700;
+  line-height: 1;
   text-align: left;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
   cursor: pointer;
 
+  & + &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.6);
+    transform: scaleY(0.2);
+  }
   .van-icon {
     flex: none;
   }
   &[aria-pressed='true'] {
-    background: #69beff30;
     color: #69beff;
   }
 }

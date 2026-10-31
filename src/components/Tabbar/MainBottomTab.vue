@@ -490,7 +490,6 @@ onBeforeUnmount(() => {
 <template>
   <nav
     class="bottom-tab"
-    :class="{ 'bottom-tab--channel-c': isVersionC }"
     data-app-overlay
     :aria-label="t('UITabbar_Text')"
   >
@@ -646,8 +645,6 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
-@use '@/styles/mixins' as *;
-
 .bottom-tab {
   position: fixed;
   left: 50%;
@@ -762,27 +759,6 @@ onBeforeUnmount(() => {
 .tab-icon-mask--poker-c {
   -webkit-mask: url('@/assets/channelC/poker-tab.svg') center / contain no-repeat;
   mask: url('@/assets/channelC/poker-tab.svg') center / contain no-repeat;
-}
-
-.bottom-tab--channel-c {
-  --bg-new-nav-start: rgba(92, 62, 56, 0.8);
-  --bg-new-nav-end: rgba(23, 110, 132, 0.78);
-
-  .tab-button {
-    color: #a7a7a7;
-  }
-  .tab-button.is-active {
-    color: #69beff;
-  }
-  .tabbar-fill {
-    fill: url(#tabbar-fill-gradient);
-    @include theme-light-own {
-      fill: #202020;
-    }
-  }
-  .tabbar-stroke {
-    stroke: transparent;
-  }
 }
 
 .tab-icon-mask--mini-game {

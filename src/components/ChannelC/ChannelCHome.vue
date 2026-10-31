@@ -134,7 +134,10 @@ watch(
   <div
     ref="root"
     class="channel-c-page"
-    :class="{ 'channel-c-page--club-management': section === 'home' && clubManagement }"
+    :class="{
+      'channel-c-page--club-management': section === 'home' && clubManagement,
+      'channel-c-page--mtt': section === 'mtt',
+    }"
   >
     <ChannelCHeader
       v-if="section === 'home'"
@@ -193,7 +196,11 @@ watch(
   width: 100%;
   max-width: 10rem;
   margin: 0 auto;
-  padding: 0 0.256rem 0.25rem;
+  padding: 0 var(--c-page-gutter, 0.256rem) 0.25rem;
+}
+.channel-c-page--mtt {
+  --c-page-gutter: 0.282rem;
+  --c-waterfall-column-gap: 0.205rem;
 }
 @media (max-width: 599px) {
   .channel-c-page--club-management {

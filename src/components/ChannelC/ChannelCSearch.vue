@@ -5,7 +5,7 @@ import { useChannelCFeed } from '@/composables/useChannelCFeed'
 import { useChannelCDataReady } from '@/composables/useChannelCDataReady'
 import { useChannelCNavigation } from '@/composables/useChannelCNavigation'
 import { buildChannelCSearchFeed } from '@/features/channelC/search'
-import searchIcon from '@/assets/channelC/search.svg'
+import searchIcon from '@/assets/channelC/search-accent.svg'
 import { getLocale, t } from '@/i18n'
 import {
   multiLanguageTemplateVersion,
@@ -109,6 +109,24 @@ onBeforeUnmount(() => clearInterval(clock))
 <style scoped lang="scss">
 @use '@/styles/mixins' as *;
 
+@mixin gradient-stroke($width, $paint) {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: $width solid transparent;
+  border-radius: inherit;
+  background: $paint border-box;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) padding-box,
+    linear-gradient(#fff 0 0) border-box;
+  mask:
+    linear-gradient(#fff 0 0) padding-box,
+    linear-gradient(#fff 0 0) border-box;
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
 .c-search-page {
   position: relative;
   display: flex;
@@ -121,7 +139,7 @@ onBeforeUnmount(() => clearInterval(clock))
   color: #fff;
 
   @include theme-light-own {
-    color: #17191e;
+    color: #000;
   }
 }
 .c-search-toolbar {
@@ -134,6 +152,7 @@ onBeforeUnmount(() => clearInterval(clock))
   padding: 0 0.256rem 0 0.052rem;
 }
 .c-search-field {
+  position: relative;
   display: flex;
   flex: 1;
   align-items: center;
@@ -141,9 +160,17 @@ onBeforeUnmount(() => clearInterval(clock))
   min-width: 0;
   height: 1.205rem;
   padding: 0 0.25rem 0 0.38rem;
-  border: 0.2px solid #c941ff;
   border-radius: 0.394rem;
-  background: #00000029;
+  background: #ffffff1f;
+
+  &::before {
+    @include gradient-stroke(0.2px, linear-gradient(350.8deg, #c941ff -17.4%, #4ba1ff 64.3%));
+    opacity: 0.4;
+
+    @media (min-resolution: 3dppx) {
+      opacity: 0.6;
+    }
+  }
 
   img {
     flex: none;
@@ -153,7 +180,7 @@ onBeforeUnmount(() => clearInterval(clock))
 
   @include theme-light-own {
     background: #fff;
-    box-shadow: 0 0 3.5px #9ff7ff36;
+    box-shadow: 0 0 7px #9ff7ff36;
   }
 }
 .c-search-field input {
@@ -190,7 +217,7 @@ onBeforeUnmount(() => clearInterval(clock))
   padding: 0;
   border: 0;
   background: transparent;
-  color: #69beff;
+  color: #05c297;
   font: inherit;
   font-size: 0.462rem;
   font-weight: 900;
@@ -202,6 +229,73 @@ onBeforeUnmount(() => clearInterval(clock))
   flex: 1;
   flex-direction: column;
   margin-top: 0.256rem;
+
+  :deep(.c-mtt-status),
+  :deep(.c-mtt-format) {
+    font-weight: 500;
+  }
+  :deep(.c-mtt-status i.registering) {
+    background: #00e3ca;
+  }
+  :deep(.c-mtt-format) {
+    padding: 0 0.205rem;
+  }
+  :deep(.c-mtt-action) {
+    background: #02cfbb;
+  }
+  :deep(.c-mtt-card) {
+    @include theme-dark {
+      color: #fff;
+    }
+  }
+  :deep(.c-prize b) {
+    @include theme-dark {
+      color: #e78632;
+    }
+  }
+
+  :deep(.c-poker-card) {
+    border-radius: 0.2rem;
+
+    @include theme-dark {
+      border-color: #0f766e21;
+    }
+  }
+  :deep(.c-playing) {
+    top: 0.048rem;
+    gap: 0.075rem;
+    height: 0.432rem;
+    padding: 0 0.1rem;
+    border: 0;
+    line-height: normal;
+  }
+  :deep(.c-playing)::after {
+    @include gradient-stroke(1px, linear-gradient(90deg, #ffffff0a, #fff3));
+  }
+  :deep(.c-room-description) {
+    padding: 0.13rem 0.205rem;
+    font-weight: 500;
+  }
+  :deep(.c-room-details) {
+    gap: 0.1rem;
+    padding: 0.05rem 0.148rem 0.05rem 0.1rem;
+  }
+  :deep(.c-room-meta > strong) {
+    color: #000000c9;
+
+    @include theme-dark {
+      color: #ffffffc9;
+    }
+  }
+  :deep(.c-stakes-pill) {
+    padding: 0.042rem 0.132rem;
+    border-radius: 0.225rem;
+    color: #000;
+  }
+  :deep(.c-join) {
+    width: 1.298rem;
+    background: #05c297;
+  }
 }
 .c-search-empty,
 .c-search-loading {
@@ -212,6 +306,10 @@ onBeforeUnmount(() => clearInterval(clock))
   justify-content: center;
   gap: 0.15rem;
   text-align: center;
+}
+.c-search-empty {
+  gap: 0.07rem;
+  padding-bottom: 1.4rem;
 }
 .c-search-empty h1 {
   margin: 0;
@@ -226,7 +324,7 @@ onBeforeUnmount(() => clearInterval(clock))
   line-height: 1.5;
 
   @include theme-light-own {
-    color: #17191e99;
+    color: #0009;
   }
 }
 .c-search-loading {

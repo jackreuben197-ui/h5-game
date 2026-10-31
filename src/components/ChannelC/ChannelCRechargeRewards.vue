@@ -28,7 +28,12 @@ function recharge() {
 </script>
 
 <template>
-  <ChannelCRewardFrame v-model:show="show" kind="recharge" :title="t('UIChannelC_RechargeTitle')">
+  <ChannelCRewardFrame
+    v-model:show="show"
+    kind="recharge"
+    :thin-border="mode === 'daily'"
+    :title="t('UIChannelC_RechargeTitle')"
+  >
     <div class="c-reward-tabs" role="tablist" :aria-label="t('UIChannelC_RechargeTitle')">
       <button
         type="button"
@@ -76,7 +81,7 @@ function recharge() {
         <p v-if="!tiers.length" class="c-reward-empty">{{ t('UIChannelC_NoRewards') }}</p>
       </div>
     </ChannelCRewardLoadState>
-    <div class="c-recharge-rules">
+    <div class="c-recharge-rules" :class="{ 'c-recharge-rules--first': mode === 'first' }">
       <p>
         {{
           t(
@@ -98,6 +103,7 @@ function recharge() {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
 @use './reward-common' as *;
 .c-reward-tabs {
   gap: r(3.78);
@@ -105,23 +111,26 @@ function recharge() {
 }
 .c-reward-tabs button {
   min-height: r(35.867);
-  border-radius: r(22.65);
-  background: #00000045;
+  border-color: rgba(64, 118, 101, 0.3);
+  border-radius: r(23.597);
+  background: #0000002e;
   font-size: r(14.158);
 }
 .c-reward-tabs button.active {
-  background: #69beff;
+  border-color: rgba(255, 197, 208, 0.5);
+  background: #05c297;
+  box-shadow: none;
 }
 .c-recharge-promotion {
   display: flex;
   align-items: center;
-  gap: r(1.5);
+  gap: r(5.66);
   min-height: r(39.643);
-  padding: r(6) r(9.5);
+  padding: r(6) r(9.5) r(6) r(11.33);
   border: r(0.944) solid #ffffff2e;
   border-radius: r(10.383);
   background: #ffffff1a;
-  box-shadow: inset 0 0 r(4) #69beff33;
+  box-shadow: inset 0 0 r(7.551) rgba(73, 218, 178, 0.23);
 }
 .c-recharge-promotion::before {
   content: '';
@@ -147,7 +156,7 @@ function recharge() {
 }
 .c-recharge-tier {
   display: grid;
-  grid-template-columns: 40% minmax(0, 1fr);
+  grid-template-columns: r(130.1) minmax(0, 1fr);
   align-items: center;
   min-height: r(63.24);
   padding: r(8.49) r(10) r(8.49) r(14.16);
@@ -159,8 +168,18 @@ function recharge() {
   min-height: r(69.847);
 }
 .c-recharge-amount {
-  margin-right: r(12);
-  border-right: r(0.944) solid #7aa79133;
+  position: relative;
+  margin-right: r(14.15);
+}
+.c-recharge-amount::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: r(0.944);
+  height: r(33.036);
+  background: #7aa79133;
+  transform: translateY(-50%);
 }
 .c-recharge-amount p {
   margin: 0 0 r(5);
@@ -169,21 +188,13 @@ function recharge() {
 .c-recharge-amount strong {
   display: flex;
   align-items: center;
-  gap: r(3);
+  gap: r(5.66);
+  margin-left: r(-2.83);
   font-size: r(16.99);
   overflow-wrap: anywhere;
 }
 .c-recharge-coin {
-  display: block;
-  flex: none;
-  width: r(22);
-  height: r(22);
-}
-.c-recharge-coin img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+  @include reward-coin(r(25.485));
 }
 .c-recharge-rules {
   margin: r(12.27) 0 r(15.1);
@@ -195,20 +206,39 @@ function recharge() {
   line-height: 1.3;
 }
 .c-recharge-rules p + p {
-  margin-top: r(8);
+  margin-top: r(6.65);
   font-size: r(11.327);
+}
+.c-recharge-rules--first p:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: r(10);
+
+  &::before,
+  &::after {
+    content: '';
+    flex: none;
+    width: r(29);
+    height: r(0.944);
+    background: #93b5a366;
+  }
 }
 .c-reward-primary {
   width: calc(100% - #{r(7.55)});
   height: r(52.857);
   margin: 0 auto;
-  border: r(0.944) solid #ffffff66;
+  border: r(0.944) solid rgba(255, 181, 204, 0.4);
   border-radius: r(30.204);
-  background: #69beff;
+  background: #05c297;
   color: #ecfff9;
   font-family: inherit;
   font-size: r(19.821);
   font-weight: 700;
+
+  @include theme-dark {
+    color: #130c16;
+  }
 }
 .c-reward-primary::before {
   display: none;

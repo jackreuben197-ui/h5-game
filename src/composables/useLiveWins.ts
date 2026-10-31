@@ -1,5 +1,9 @@
-import { computed } from 'vue'
-import type { ExtendGameRecord } from '@/api/casino'
+import { computed, ref, watch, type Ref } from 'vue'
+import {
+  CATEGORY_API_TYPES,
+  getGamesByCategoryClub,
+  type ExtendGameRecord,
+} from '@/api/casino'
 import type { LiveWinItem } from '@/components/LiveWinsTicker.vue'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { useCasinoStore } from '@/stores/casino'
@@ -52,6 +56,7 @@ export function buildLiveWinItems(
     .sort((a, b) => Number(a.sorting) - Number(b.sorting) || Number(a.id) - Number(b.id))
     .map((record) => ({
       id: String(record.id),
+      gameId: Number(record.game_id),
       gameTitle: readText(record.game_name),
       gameIcon: gameIcons.get(Number(record.game_id)),
       username: readText(record.user_info),
@@ -60,28 +65,41 @@ export function buildLiveWinItems(
     }))
 }
 
-function collectGameIcons(groups: ExtendGameRecord[][]): Map<number, string> {
-  const icons = new Map<number, string>()
+function collectGames(groups: ExtendGameRecord[][]): Map<number, ExtendGameRecord> {
+  const games = new Map<number, ExtendGameRecord>()
   groups.flat().forEach((game) => {
-    const icon = readText(game.game_icon)
     const id = Number(game.game_id ?? game.id)
-    if (icon && id > 0 && !icons.has(id)) icons.set(id, icon)
+    if (id > 0 && !games.has(id)) games.set(id, game)
+  })
+  return games
+}
+
+function collectGameIcons(games: Map<number, ExtendGameRecord>): Map<number, string> {
+  const icons = new Map<number, string>()
+  games.forEach((game, id) => {
+    const icon = readText(game.game_icon)
+    if (icon) icons.set(id, icon)
   })
   return icons
 }
 
-export function useLiveWins() {
+export function useLiveWins(clubId?: Ref<number>) {
   const appConfigStore = useAppConfigStore()
   const casinoStore = useCasinoStore()
+  const catalogGames = ref<ExtendGameRecord[]>([])
 
+  const games = computed(() =>
+    collectGames([
+      catalogGames.value,
+      casinoStore.gameRecords,
+      casinoStore.popularBannerGames,
+      ...Object.values(casinoStore.popularGamesByType),
+    ]),
+  )
   const liveWinItems = computed(() =>
     buildLiveWinItems(
       appConfigStore.globalConfig?.extend_live_wins_info,
-      collectGameIcons([
-        casinoStore.gameRecords,
-        casinoStore.popularBannerGames,
-        ...Object.values(casinoStore.popularGamesByType),
-      ]),
+      collectGameIcons(games.value),
     ),
   )
   const liveWinInterval = computed(() => {
@@ -89,5 +107,37 @@ export function useLiveWins() {
     return (seconds > 0 ? seconds : DEFAULT_ROTATION_SECONDS) * 1000
   })
 
-  return { liveWinItems, liveWinInterval }
+  const missingGameKey = computed(() => {
+    if (!clubId?.value || !casinoStore.gameRecords.length) return ''
+    const missing = liveWinItems.value
+      .filter((item) => item.gameId && !games.value.has(item.gameId))
+      .map((item) => item.gameId)
+    return missing.length ? `${clubId.value}:${missing.join(',')}` : ''
+  })
+  let loadedGameKey = ''
+  watch(
+    missingGameKey,
+    async (key) => {
+      if (!key || key === loadedGameKey) return
+      loadedGameKey = key
+      try {
+        const res = await getGamesByCategoryClub(
+          { game_api_type: Object.values(CATEGORY_API_TYPES).flat(), limit: 1000 },
+          clubId!.value,
+        )
+        if (res.code === 0 && res.data) {
+          catalogGames.value = res.data.list ?? res.data.records ?? []
+        }
+      } catch (error) {
+        console.warn('[live-wins] load game catalog failed:', error)
+      }
+    },
+    { immediate: true },
+  )
+
+  function findLiveWinGame(item: LiveWinItem): ExtendGameRecord | undefined {
+    return item.gameId ? games.value.get(item.gameId) : undefined
+  }
+
+  return { liveWinItems, liveWinInterval, findLiveWinGame }
 }

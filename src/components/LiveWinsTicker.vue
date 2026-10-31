@@ -8,6 +8,7 @@ import { useTextI18n } from '@/i18n/useTextI18n'
 
 export interface LiveWinItem {
   id: string | number
+  gameId?: number
   gameTitle: string
   gameIcon?: string
   platformTag?: string

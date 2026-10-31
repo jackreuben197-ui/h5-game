@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { ExtendGameRecord } from '@/api/casino'
 import type { MttListRecord, RoomRecord } from '@/api/models/roomcenter'
 import { buildWaterfallColumns, type LobbyCard } from '@/features/channelC/model'
 import ChannelCPokerCard from './ChannelCPokerCard.vue'
 import ChannelCMttCard from './ChannelCMttCard.vue'
+import ChannelCGameCard from './ChannelCGameCard.vue'
 
 const props = defineProps<{
   cards: readonly LobbyCard[]
@@ -12,7 +14,11 @@ const props = defineProps<{
   desktopIconUrl?: string
   joiningId?: string | null
 }>()
-defineEmits<{ join: [room: RoomRecord]; open: [match: MttListRecord] }>()
+defineEmits<{
+  join: [room: RoomRecord]
+  open: [match: MttListRecord]
+  play: [game: ExtendGameRecord]
+}>()
 const columns = computed(() => buildWaterfallColumns(props.cards))
 </script>
 
@@ -29,13 +35,14 @@ const columns = computed(() => buildWaterfallColumns(props.cards))
           @join="$emit('join', $event)"
         />
         <ChannelCMttCard
-          v-else
+          v-else-if="card.kind === 'mtt'"
           :match="card.match"
           :size="card.size"
           :series-name="card.seriesName"
           :now="now"
           @open="$emit('open', $event)"
         />
+        <ChannelCGameCard v-else :game="card.game" @play="$emit('play', $event)" />
       </template>
     </div>
   </div>

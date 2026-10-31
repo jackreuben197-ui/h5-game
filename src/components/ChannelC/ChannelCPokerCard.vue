@@ -122,7 +122,9 @@ function fallbackDesktopIcon(event: Event) {
         </div>
       </div>
       <button type="button" class="c-join" :disabled="joining" @click.stop="$emit('join', room)">
-        {{ t(joining ? 'UIChannelC_Joining' : 'UIClub_RoomJoin') }}
+        <span v-fit-text="{ maxLines: 1, minScale: 0.5 }" class="c-join-label">
+          {{ t(joining ? 'UIChannelC_Joining' : 'UIChannelC_JoinShort') }}
+        </span>
       </button>
     </div>
   </article>
@@ -387,6 +389,14 @@ function fallbackDesktopIcon(event: Event) {
   font-weight: 700;
   cursor: pointer;
   padding: 0;
+}
+
+.c-join-label {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0 0.06rem;
+  white-space: nowrap;
 }
 
 .c-join:disabled {

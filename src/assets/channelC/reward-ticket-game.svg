@@ -1,0 +1,13 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="27.2951" height="20.4713" viewBox="0 0 27.2951 20.4713" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Tournament ticket" clip-path="url(#clip0_0_75)">
+<path id="Ticket" d="M3.033 1.13663H24.2625C25.3094 1.13663 26.158 1.98527 26.158 3.03212V17.4379C26.158 18.4847 25.3094 19.3333 24.2625 19.3333H3.033C1.98615 19.3333 1.13751 18.4847 1.13751 17.4379V3.03212C1.13751 1.98527 1.98615 1.13663 3.033 1.13663Z" fill="#8A39F8" stroke-width="0.758197" stroke="#CDAAFF"/>
+<circle id="Ticket notch" cx="26.9155" cy="10.2364" r="1.89549" fill="#0A3B30"/>
+<circle id="Ticket notch_2" cx="0.378931" cy="10.2356" r="1.89549" fill="#0A3B30"/>
+<path id="Crown emblem" d="M9.09864 6.82376L12.1314 9.09835L14.0269 6.06557L15.9224 9.09835L18.9552 6.82376L17.4388 12.8893H10.615L9.09864 6.82376ZM10.615 13.6475H17.4388V15.1639H10.615V13.6475Z" fill="#FCF3FF"/>
+</g>
+<defs>
+<clipPath id="clip0_0_75">
+<rect width="27.2951" height="20.4713" fill="white"/>
+</clipPath>
+</defs>
+</svg>

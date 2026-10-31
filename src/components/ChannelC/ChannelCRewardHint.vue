@@ -1,7 +1,13 @@
 <script setup lang="ts">
-import { t } from '@/i18n'
+import { computed } from 'vue'
+import { t, ucLabel } from '@/i18n'
 import giftIcon from '@/assets/channelC/reward-gift.svg'
-withDefaults(defineProps<{ kind?: 'game' | 'invite' }>(), { kind: 'game' })
+const props = withDefaults(defineProps<{ kind?: 'game' | 'invite' }>(), { kind: 'game' })
+const coinLocation = computed(() => {
+  const text = t('UIChannelC_CoinRewardLocation')
+  const label = ucLabel()
+  return props.kind === 'invite' && label !== 'UC' ? text.replace(label, `${label}（UC）`) : text
+})
 </script>
 
 <template>
@@ -9,7 +15,7 @@ withDefaults(defineProps<{ kind?: 'game' | 'invite' }>(), { kind: 'game' })
     <img :src="giftIcon" alt="" />
     <div>
       <strong>{{ t('UIChannelC_AutoReward') }}</strong>
-      <p>{{ t('UIChannelC_CoinRewardLocation') }}</p>
+      <p>{{ coinLocation }}</p>
       <p>{{ t('UIChannelC_TicketRewardLocation') }}</p>
     </div>
   </div>
@@ -22,7 +28,7 @@ withDefaults(defineProps<{ kind?: 'game' | 'invite' }>(), { kind: 'game' })
   align-items: center;
   gap: r(15.16);
   min-height: r(64.447);
-  margin-top: r(12.2);
+  margin-top: r(6.8);
   padding: r(6.06) r(12) r(6.06) r(27.3);
   border: r(0.758) solid #ffffff29;
   border-radius: r(9.098);

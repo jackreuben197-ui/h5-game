@@ -10,6 +10,8 @@ import {
   toRef,
   watch,
 } from 'vue'
+import type { ExtendGameRecord } from '@/api/casino'
+import { showGameToast } from '@/components/Toast'
 import { t } from '@/i18n'
 import { useChannelCFeed } from '@/composables/useChannelCFeed'
 import { useChannelCFilters } from '@/composables/useChannelCFilters'
@@ -17,13 +19,15 @@ import { useChannelCDataReady } from '@/composables/useChannelCDataReady'
 import { useChannelCNavigation } from '@/composables/useChannelCNavigation'
 import { useChannelCVersionRouting } from '@/composables/useChannelCVersionRouting'
 import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
+import { useCasinoGameLaunch } from '@/composables/useCasinoGameLaunch'
 import { useRoomListStore } from '@/stores/roomList'
 import { buildChannelCFeed, type ChannelCSection } from '@/features/channelC/model'
 import ChannelCHeader from './ChannelCHeader.vue'
 import ChannelCFilters from './ChannelCFilters.vue'
 import ChannelCOverlays from './ChannelCOverlays.vue'
 import ChannelCWaterfall from './ChannelCWaterfall.vue'
-import LiveWinsTicker from '@/components/LiveWinsTicker.vue'
+import ChannelCCasinoShortcuts from './ChannelCCasinoShortcuts.vue'
+import LiveWinsTicker, { type LiveWinItem } from '@/components/LiveWinsTicker.vue'
 import { useLiveWins } from '@/composables/useLiveWins'
 
 const props = withDefaults(
@@ -38,10 +42,12 @@ const props = withDefaults(
     clubManagement: false,
   },
 )
-const { club, clubId, tribeId, visibleRooms, visibleMatches, tournamentSeries } = useChannelCFeed()
+const { club, clubId, tribeId, visibleRooms, visibleMatches, tournamentSeries, popularGames } =
+  useChannelCFeed()
 useChannelCVersionRouting()
 const ready = useChannelCDataReady(toRef(props, 'ready'))
-const { liveWinItems, liveWinInterval } = useLiveWins()
+const { liveWinItems, liveWinInterval, findLiveWinGame } = useLiveWins(clubId)
+const { play } = useCasinoGameLaunch()
 const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages('c')
 const roomStore = useRoomListStore()
 const root = ref<HTMLElement | null>(null)
@@ -68,6 +74,7 @@ const cards = computed(() =>
     props.section,
     now.value,
     tournamentSeries.value,
+    popularGames.value,
   ),
 )
 const listLabel = computed(() =>
@@ -80,6 +87,16 @@ const listLabel = computed(() =>
   ),
 )
 const { joiningId, joinRoom, openMatch } = useChannelCNavigation(saveScroll)
+
+function playGame(game: ExtendGameRecord) {
+  saveScroll()
+  play(game, clubId.value || undefined)
+}
+function playLiveWin(item: LiveWinItem) {
+  const game = findLiveWinGame(item)
+  if (game) playGame(game)
+  else showGameToast(t('UICasino_ClubNotEnabled'))
+}
 
 function container() {
   return root.value?.closest<HTMLElement>('.main-layout-content')
@@ -151,7 +168,9 @@ watch(
       class="c-live-wins"
       :items="liveWinItems"
       :slide-interval="liveWinInterval"
+      @click-card="playLiveWin"
     />
+    <ChannelCCasinoShortcuts v-if="section === 'home' && popularGames.length" :club-id="clubId" />
     <ChannelCFilters
       v-if="section !== 'home'"
       v-model:poker="pokerFilter"
@@ -172,6 +191,7 @@ watch(
       :joining-id="joiningId"
       @join="joinRoom"
       @open="openMatch"
+      @play="playGame"
     />
     <div v-else class="c-empty">
       <van-icon name="search" size="32" />
@@ -202,6 +222,7 @@ watch(
 .channel-c-page--mtt {
   --c-page-gutter: 0.282rem;
   --c-waterfall-column-gap: 0.205rem;
+  --c-mtt-prize-dark: #fff;
 }
 .channel-c-page--poker .c-filter-row {
   margin-bottom: 0.115rem;
@@ -213,7 +234,7 @@ watch(
   }
 }
 .channel-c-page .c-live-wins {
-  margin: 0.16rem 0 0.1rem;
+  margin: 0 0.0513rem 0.128rem;
 }
 .c-empty {
   display: flex;

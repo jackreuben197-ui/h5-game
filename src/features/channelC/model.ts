@@ -1,3 +1,4 @@
+import type { ExtendGameRecord } from '@/api/casino'
 import type { MttListRecord, MttSeriesInfoRecord, RoomRecord } from '@/api/models/roomcenter'
 import { sortRoomRecordsForDisplay } from '@/utils/roomListSort'
 import { isMttRegistered } from '@/utils/mttRegistration'
@@ -11,6 +12,7 @@ export type MttFilter = 'free' | 'paid' | 'hunter' | 'snowball'
 export type LobbyCard =
   | { key: string; kind: 'poker'; room: RoomRecord }
   | { key: string; kind: 'mtt'; match: MttListRecord; size: CardSize; seriesName?: string }
+  | { key: string; kind: 'game'; game: ExtendGameRecord }
 
 export const MTT_ARTWORK_HEIGHT: Record<CardSize, number> = { large: 225, medium: 152, small: 89 }
 export const isRecommended = (record: { is_top?: unknown }): boolean =>
@@ -71,6 +73,7 @@ export function buildChannelCFeed(
   section: ChannelCSection | 'search',
   now = Date.now(),
   series: readonly MttSeriesInfoRecord[] = [],
+  games: readonly ExtendGameRecord[] = [],
 ): LobbyCard[] {
   const seriesById = new Map(
     series.filter((item) => Number(item.id) > 0).map((item) => [Number(item.id), item]),
@@ -93,21 +96,28 @@ export function buildChannelCFeed(
   })
   if (section === 'poker') return tables
   if (section === 'mtt') return mtts
-  return interleaveChannelCCards(tables, mtts)
+  const casino: LobbyCard[] =
+    section === 'home'
+      ? games.map((game) => ({ key: `game-${game.id}`, kind: 'game', game }))
+      : []
+  return interleaveChannelCCards(tables, mtts, casino)
 }
 
-/** 首页与搜索共用的 3 桌 + 1 MTT 混排，保留所有不足一组的剩余结果。 */
+/** 首页与搜索共用的 3 桌 + 1 MTT + 1 游戏混排，保留所有不足一组的剩余结果。 */
 export function interleaveChannelCCards(
   tables: readonly LobbyCard[],
   mtts: readonly LobbyCard[],
+  games: readonly LobbyCard[] = [],
 ): LobbyCard[] {
   const feed: LobbyCard[] = []
   let tableIndex = 0
   let matchIndex = 0
-  while (tableIndex < tables.length || matchIndex < mtts.length) {
+  let gameIndex = 0
+  while (tableIndex < tables.length || matchIndex < mtts.length || gameIndex < games.length) {
     feed.push(...tables.slice(tableIndex, tableIndex + 3))
     tableIndex += 3
     if (matchIndex < mtts.length) feed.push(mtts[matchIndex++]!)
+    if (gameIndex < games.length) feed.push(games[gameIndex++]!)
   }
   return feed
 }
@@ -126,6 +136,7 @@ export function matchesMttFilter(match: MttListRecord, filter: MttFilter): boole
 }
 
 export function estimateCardHeight(card: LobbyCard): number {
+  if (card.kind === 'game') return 146.25 + 26.7
   return card.kind === 'mtt'
     ? MTT_ARTWORK_HEIGHT[card.size] + 60
     : 92.5 + 34 + roomDescription(card.room).length * 19

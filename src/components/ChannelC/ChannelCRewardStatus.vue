@@ -11,7 +11,7 @@ withDefaults(defineProps<{ credited: boolean; completed?: boolean; kind?: 'game'
     <span v-if="credited" class="c-reward-status-icon" aria-hidden="true">
       <img class="c-reward-status-check" :src="checkIcon" alt="" />
     </span>
-    <span class="c-reward-status-copy">
+    <span v-fit-text="{ maxLines: 1 }" class="c-reward-status-copy">
       {{
         t(
           credited
@@ -32,7 +32,7 @@ withDefaults(defineProps<{ credited: boolean; completed?: boolean; kind?: 'game'
   align-items: center;
   justify-content: center;
   gap: r(3);
-  min-width: r(72);
+  min-width: r(56.107);
   min-height: r(20.471);
   padding: r(2) r(4);
   border: r(0.758) solid rgba(197, 148, 53, 0.43);
@@ -51,8 +51,13 @@ withDefaults(defineProps<{ credited: boolean; completed?: boolean; kind?: 'game'
   background: #006d4473;
 }
 .c-reward-status-copy {
+  display: block;
+  flex: 1;
   min-width: 0;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+}
+.credited .c-reward-status-copy {
+  text-align: left;
 }
 .c-reward-status-icon {
   position: relative;
@@ -70,9 +75,12 @@ withDefaults(defineProps<{ credited: boolean; completed?: boolean; kind?: 'game'
   height: auto;
 }
 .c-reward-status--invite {
-  min-width: r(78);
+  min-width: r(59.677);
   min-height: r(23.018);
   font-size: r(11.083);
+  &.credited {
+    min-width: r(69.908);
+  }
   .c-reward-status-icon {
     width: r(14.493);
     height: r(14.493);

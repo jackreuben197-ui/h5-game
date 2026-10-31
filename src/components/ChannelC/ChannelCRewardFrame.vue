@@ -4,7 +4,10 @@ import { t } from '@/i18n'
 import type { RewardKind } from '@/features/channelC/rewards'
 import closeIcon from '@/assets/channelC/reward-close.svg'
 
-withDefaults(defineProps<{ title: string; kind?: RewardKind }>(), { kind: 'game' })
+withDefaults(defineProps<{ title: string; kind?: RewardKind; thinBorder?: boolean }>(), {
+  kind: 'game',
+  thinBorder: false,
+})
 const show = defineModel<boolean>('show', { required: true })
 </script>
 
@@ -12,7 +15,7 @@ const show = defineModel<boolean>('show', { required: true })
   <GameDialog
     v-model:show="show"
     class="c-reward-dialog"
-    :class="`c-reward-dialog--${kind}`"
+    :class="[`c-reward-dialog--${kind}`, { 'c-reward-dialog--thin': thinBorder }]"
     dialog-width="min(9.4872rem, calc(100vw - 0.5128rem))"
     body-max-height="calc(100dvh - 3rem)"
     :show-footer="false"
@@ -66,21 +69,24 @@ const show = defineModel<boolean>('show', { required: true })
 
 // GameDialog 会 teleport；活动弹窗专用类隔离全局主题覆盖。
 .c-reward-dialog {
-  --reward-card-border: #{r(0.2)} solid rgba(242, 242, 242, 0.6);
+  --reward-hairline: 0.4;
+  --reward-card-shadow: inset #{r(-2.275)} #{r(-2.275)} #{r(10.615)} rgba(255, 255, 255, 0.4),
+    inset #{r(1.516)} #{r(2.275)} #{r(23.86)} rgba(255, 255, 255, 0.64),
+    0 #{r(5.307)} #{r(13.648)} rgba(0, 0, 0, 0.19);
+  --reward-card-border: #{r(0.2)} solid rgba(242, 242, 242, calc(0.6 * var(--reward-hairline)));
   --reward-card-radius: #{r(21.988)};
   --reward-heading-size: #{r(21.988)};
+  --reward-spark-size: 0.931em;
   --reward-close-size: #{r(28.811)};
   --reward-close-top: #{r(-7.58)};
   --reward-close-right: #{r(-2.28)};
   .game-dialog__card {
     gap: r(4.58);
-    padding: r(20.47) r(14.96) r(19.47);
-    border: r(0.2) solid rgba(242, 242, 242, 0.6);
+    padding: r(20.47) r(14.96) r(27.47);
+    border: var(--reward-card-border) !important;
     border-radius: var(--reward-card-radius);
     background: rgba(0, 0, 0, 0.1);
-    box-shadow: inset r(-2.275) r(-2.275) r(10.615) rgba(255, 255, 255, 0.4),
-      inset r(1.516) r(2.275) r(23.86) rgba(255, 255, 255, 0.64),
-      0 r(5.307) r(13.648) rgba(0, 0, 0, 0.19);
+    box-shadow: var(--reward-card-shadow);
   }
   .game-dialog__title,
   .game-dialog__body {
@@ -108,7 +114,7 @@ const show = defineModel<boolean>('show', { required: true })
   .c-reward-heading h2 span {
     color: #fff39b;
     font-weight: 400;
-    font-size: 0.94em;
+    font-size: var(--reward-spark-size);
   }
   .c-reward-close {
     position: absolute;
@@ -133,27 +139,47 @@ const show = defineModel<boolean>('show', { required: true })
     outline-offset: 2px;
   }
 }
+html[data-theme='light'] .c-reward-dialog.van-dialog .game-dialog__card {
+  border: var(--reward-card-border) !important;
+  background: rgba(0, 0, 0, 0.1) !important;
+  box-shadow: var(--reward-card-shadow) !important;
+
+  &::before,
+  &::after {
+    display: none !important;
+  }
+}
+@media (min-resolution: 3dppx) {
+  .c-reward-dialog {
+    --reward-hairline: 0.6;
+  }
+}
 .c-reward-dialog--recharge {
   --reward-card-border: #{r(1.227)} solid rgba(242, 242, 242, 0.6);
   --reward-card-radius: #{r(27.372)};
   --reward-heading-size: #{r(26.429)};
+  --reward-spark-size: 0.964em;
   --reward-close-size: #{r(35.867)};
   --reward-close-top: #{r(-12.3)};
   --reward-close-right: #{r(-6.4)};
   .game-dialog__card {
     gap: r(13.22);
     padding: r(25.5) r(19.54) r(26.8);
-    border-width: r(1.227);
   }
+}
+.c-reward-dialog--invite,
+.c-reward-dialog--thin {
+  --reward-card-border: #{r(0.2)} solid rgba(255, 255, 255, var(--reward-hairline));
 }
 .c-reward-dialog--invite {
   --reward-card-radius: #{r(24.724)};
-  --reward-heading-size: #{r(26.429)};
+  --reward-heading-size: #{r(28.986)};
+  --reward-spark-size: 0.794em;
   --reward-close-size: #{r(32.396)};
   --reward-close-top: #{r(-9.38)};
   --reward-close-right: #{r(-3.5)};
   .game-dialog__card {
-    gap: r(11.68);
+    gap: r(8.35);
     padding: r(23.67) r(17.7) r(15.15);
   }
 }

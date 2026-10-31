@@ -21,6 +21,7 @@ export function buildChannelCSearchFeed(
   const word = normalize(query)
   if (!word) return []
   const cards = buildChannelCFeed(rooms, matches, 'search', now, series).filter((card) => {
+    if (card.kind === 'game') return false
     const id = String(card.kind === 'poker' ? card.room.rid : (card.match.match_id ?? ''))
     const name =
       card.kind === 'poker'

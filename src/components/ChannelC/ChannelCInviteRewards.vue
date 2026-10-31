@@ -100,6 +100,7 @@ const show = defineModel<boolean>('show', { required: true })
 .c-invite-total p {
   margin: 0;
   font-size: r(13.641);
+  font-weight: 500;
 }
 .c-invite-total > div {
   display: flex;
@@ -116,7 +117,7 @@ const show = defineModel<boolean>('show', { required: true })
 }
 .c-invite-tier {
   display: grid;
-  grid-template-columns: 30% minmax(0, 1fr);
+  grid-template-columns: minmax(29.3%, min-content) minmax(0, 1fr);
   gap: r(14.49);
   margin-top: r(5.97);
   padding: r(10.23) r(14.49);
@@ -125,7 +126,7 @@ const show = defineModel<boolean>('show', { required: true })
   background: #00000045;
 }
 .c-invite-target {
-  padding-top: r(3.4);
+  padding: r(3.4) r(4) 0 0;
   border-right: r(0.853) solid #71a18a3b;
 }
 .c-invite-target strong {
@@ -153,6 +154,10 @@ const show = defineModel<boolean>('show', { required: true })
 .c-reward-meter {
   height: r(9.378);
   margin: 0;
+  box-shadow: inset 0 0 0 r(0.853) rgba(101, 154, 136, 0.36);
+}
+.c-reward-meter i {
+  box-shadow: 0 0 r(5.968) rgba(0, 232, 191, 0.36);
 }
 .c-invite-remaining {
   margin: r(7) 0 0;
@@ -177,7 +182,7 @@ const show = defineModel<boolean>('show', { required: true })
   width: r(19.608);
   height: r(19.608);
   border-radius: 50%;
-  background: #69beff;
+  background: #00bda5;
   color: #ecfff9;
   font-size: r(13.641);
   font-weight: 700;

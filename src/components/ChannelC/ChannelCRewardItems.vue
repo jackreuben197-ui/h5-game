@@ -1,16 +1,40 @@
 <script setup lang="ts">
-import { t } from '@/i18n'
+import { computed } from 'vue'
+import { t, ucLabel } from '@/i18n'
 import type { RewardBundle } from '@/features/channelC/rewards'
 import { rewardItemName } from '@/features/rechargeReward/display'
 import coin from '@/assets/icons/wallet/ic_coins.png'
 import ticket from '@/assets/channelC/reward-ticket.svg'
-withDefaults(
+import gameTicket from '@/assets/channelC/reward-ticket-game.svg'
+const props = withDefaults(
   defineProps<{
     reward: RewardBundle
     tournamentName?: string
     kind?: 'game' | 'recharge' | 'invite'
   }>(),
   { tournamentName: 'MTT', kind: 'game' },
+)
+const tickets = computed(() =>
+  props.reward.rewards.map((item) => {
+    const name = rewardItemName(item.name, item.multi_language, props.tournamentName)
+    const quantity = `×${item.quantity}`
+    const text =
+      props.kind === 'game'
+        ? `${name} ${quantity}`
+        : t(
+            props.kind === 'recharge' ? 'UIChannelC_TicketGift' : 'UIChannelC_GameTicketReward',
+            name,
+            item.quantity,
+          )
+    const index = text.lastIndexOf(quantity)
+    return {
+      item,
+      icon: props.kind === 'invite' ? '' : item.icon || (props.kind === 'game' ? gameTicket : ticket),
+      before: index < 0 ? text : text.slice(0, index),
+      quantity: index < 0 ? '' : quantity,
+      after: index < 0 ? '' : text.slice(index + quantity.length),
+    }
+  }),
 )
 </script>
 
@@ -19,23 +43,18 @@ withDefaults(
     <span v-if="reward.reward_gold > 0" class="c-reward-coins">
       <span class="c-reward-coin"><img :src="coin" alt="" /></span>
       <b>{{ reward.reward_gold }}</b>
-      <span class="c-reward-coin-label">{{ t('UIChannelC_AllianceCoin') }}</span>
+      <span class="c-reward-coin-label">{{ ucLabel() }}</span>
     </span>
-    <span v-for="item in reward.rewards" :key="item.prop_id" class="c-reward-ticket">
-      <img
-        v-if="kind === 'recharge'"
-        class="c-reward-ticket-icon"
-        :src="item.icon || ticket"
-        alt=""
-      />
+    <span
+      v-for="{ item, icon, before, quantity, after } in tickets"
+      :key="item.prop_id"
+      class="c-reward-ticket"
+    >
+      <span v-if="icon" class="c-reward-ticket-slot">
+        <img class="c-reward-ticket-icon" :src="icon" alt="" />
+      </span>
       <span>
-        {{
-          t(
-            kind === 'recharge' ? 'UIChannelC_TicketGift' : 'UIChannelC_GameTicketReward',
-            rewardItemName(item.name, item.multi_language, tournamentName),
-            item.quantity,
-          )
-        }}
+        {{ before }}<b class="c-reward-quantity">{{ quantity }}</b>{{ after }}
         <small v-if="item.value && item.value > 0">
           ({{ t('UIRechargeReward_Value', item.value) }} ×{{ item.quantity }})
         </small>
@@ -50,7 +69,6 @@ withDefaults(
 .c-reward-items {
   display: flex;
   flex-direction: column;
-  gap: r(2);
   min-width: 0;
   color: #fff39b;
   font-size: r(10.615);
@@ -59,19 +77,11 @@ withDefaults(
 .c-reward-coins {
   display: flex;
   align-items: center;
-  gap: r(3);
+  gap: r(3.8);
+  font-weight: 700;
 }
 .c-reward-coin {
-  display: inline-block;
-  flex: none;
-  width: r(22);
-  height: r(22);
-}
-.c-reward-coin img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+  @include reward-coin(r(22.746));
 }
 .c-reward-ticket {
   display: flex;
@@ -80,11 +90,17 @@ withDefaults(
   font-weight: 700;
   overflow-wrap: anywhere;
 }
-.c-reward-ticket-icon {
+.c-reward-ticket-slot {
   flex: none;
+  margin-right: r(6.6);
+}
+.c-reward-ticket-icon {
+  display: block;
   width: r(33.98);
   height: auto;
-  margin-right: r(6.6);
+}
+.c-reward-quantity {
+  color: #fff39b;
 }
 .c-reward-ticket small {
   font-size: r(9);
@@ -92,15 +108,33 @@ withDefaults(
   opacity: 0.8;
 }
 .c-reward-items--game .c-reward-ticket {
-  font-size: r(10);
+  gap: r(3.8);
+  font-size: r(9.857);
+}
+.c-reward-items--game .c-reward-ticket-slot {
+  display: grid;
+  place-items: center;
+  width: r(22.746);
+  margin-right: 0;
+}
+.c-reward-items--game .c-reward-ticket-icon {
+  width: r(27.295);
+  max-width: none;
+  transform: rotate(-16deg);
 }
 .c-reward-items--recharge {
   color: #ecfff9;
   font-size: r(11.327);
   .c-reward-coins {
     order: 1;
+    gap: r(5.66);
     color: #fff39b;
     font-size: r(12.27);
+    font-weight: 400;
+  }
+  .c-reward-coin {
+    width: r(22.653);
+    height: r(22.653);
   }
   .c-reward-coins b {
     font-weight: 400;
@@ -109,9 +143,19 @@ withDefaults(
     content: '+ ';
   }
 }
+:root[data-locale='cn'],
+:root[data-locale='zh'] {
+  .c-reward-items--recharge .c-reward-coin-label {
+    margin-left: r(-5.66);
+  }
+}
 .c-reward-items--invite {
   .c-reward-coins {
-    gap: r(4);
+    gap: r(5.1);
+  }
+  .c-reward-coin {
+    width: r(27.281);
+    height: r(27.281);
   }
   .c-reward-coins b {
     font-size: r(17.051);
@@ -119,6 +163,7 @@ withDefaults(
   .c-reward-coin-label {
     color: #bcdbd1;
     font-size: r(10.23);
+    font-weight: 400;
   }
 }
 </style>

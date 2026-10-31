@@ -73,7 +73,7 @@ const actionText = computed(() =>
       <strong class="c-mtt-name" :title="matchName">
         {{ matchName }}
       </strong>
-      <p class="c-prize">
+      <p v-fit-text="{ maxLines: 1, minScale: 0.7 }" class="c-prize">
         {{ t('UIMTT_zongjiangjin') }}
         <b>
           {{
@@ -180,7 +180,9 @@ const actionText = computed(() =>
 }
 
 .c-prize {
+  max-width: calc(100% - 1.45rem);
   margin: 0.025rem 0 0;
+  white-space: nowrap;
   color: #86878e;
   font-size: 0.282rem;
   line-height: 0.46rem;
@@ -238,7 +240,7 @@ const actionText = computed(() =>
 }
 .c-prize b {
   @include theme-dark {
-    color: #fff;
+    color: var(--c-mtt-prize-dark, #e78632);
   }
 }
 </style>

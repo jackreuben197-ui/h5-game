@@ -3,6 +3,20 @@
   @return math.div($px, 39) * 1rem;
 }
 
+@mixin reward-coin($size) {
+  display: block;
+  flex: none;
+  width: $size;
+  height: $size;
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
 .c-reward-intro {
   margin: 0 0 r(9.7);
   color: #bcdbd1;
@@ -30,22 +44,23 @@
   cursor: pointer;
 }
 .c-reward-tabs button.active {
-  border-color: #ffffff66;
-  background: #69beff;
+  border-color: rgba(255, 180, 206, 0.6);
+  background: #05c297;
+  box-shadow: 0 0 r(6.824) rgba(255, 69, 150, 0.3);
 }
 .c-reward-meter {
   height: r(8.34);
   margin-top: r(3);
-  border: r(0.758) solid rgba(101, 154, 136, 0.36);
   border-radius: r(8);
-  background: #002039;
-  overflow: hidden;
+  background: #002b25;
+  box-shadow: inset 0 0 0 r(0.758) rgba(101, 154, 136, 0.36);
 }
 .c-reward-meter i {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: #69beff;
+  background: linear-gradient(180deg, #85ffe0, #00f6d1 45%, #00baa9);
+  box-shadow: 0 0 r(5.307) rgba(0, 232, 191, 0.36);
 }
 .c-reward-empty {
   padding: r(24) r(10);

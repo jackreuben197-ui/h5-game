@@ -1,5 +1,6 @@
 import { computed } from 'vue'
 import { useRoomListStore } from '@/stores/roomList'
+import { useCasinoStore } from '@/stores/casino'
 import { useMttListStore } from '@/stores/mttList'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useAppConfigStore } from '@/stores/appConfig'
@@ -12,6 +13,7 @@ export function useChannelCFeed() {
   const mtts = useMttListStore()
   const user = useUserInfoStore()
   const app = useAppConfigStore()
+  const casino = useCasinoStore()
   const diamond = usePlatformDiamondVisibility()
   const club = computed(() => user.channelDefaultClub)
   const clubId = computed(() => Number(club.value?.club_id) || 0)
@@ -38,5 +40,15 @@ export function useChannelCFeed() {
     )
   })
   const tournamentSeries = computed(() => mtts.seriesList)
-  return { club, clubId, tribeId, visibleRooms, visibleMatches, tournamentSeries }
+  const popularGames = computed(() =>
+    casino.gameRecords
+      .filter(
+        (game) =>
+          (game.game_icon || game.game_url_p) &&
+          game.game_api_type !== 'cow_boy' &&
+          game.game_type !== 'cow_boy',
+      )
+      .sort((a, b) => Number(b.order_sort || 0) - Number(a.order_sort || 0)),
+  )
+  return { club, clubId, tribeId, visibleRooms, visibleMatches, tournamentSeries, popularGames }
 }

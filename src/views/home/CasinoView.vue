@@ -17,18 +17,10 @@ import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
-import { useGameLaunchStore } from '@/stores/gameLaunch'
+import { useCasinoGameLaunch, type CasinoLaunchTarget } from '@/composables/useCasinoGameLaunch'
 import { requireRealUser } from '@/session/realUserGate'
+import type { ReservedGameWindow } from '@/utils/externalGameWindow'
 import {
-  reserveGameWindow,
-  launchGameUrl,
-  releaseGameWindow,
-  beginGameLaunch,
-  usesTelegramGameLauncher,
-  type ReservedGameWindow,
-} from '@/utils/externalGameWindow'
-import {
-  getDeviceType,
   getPopularGamesHome,
   getPopularGamesClub,
   getPopularBannerGamesHome,
@@ -36,7 +28,6 @@ import {
   getGamesByCategoryHome,
   getGamesByCategoryClub,
   getGameClubList,
-  joinCasinoGame,
   CATEGORY_API_TYPES,
   type ExtendGameRecord,
   type ExtendGameClubListRecord,
@@ -108,7 +99,7 @@ const casinoStore = useCasinoStore()
 const gameStore = useGameStore()
 const userInfoStore = useUserInfoStore()
 const loginModalStore = useLoginModalStore()
-const gameLaunchStore = useGameLaunchStore()
+const { reserveWindow: reserveGameWindow, launch: launchCasinoGame } = useCasinoGameLaunch()
 const { isChannelPackage, channelClub, isVersionB } = useChannelBottomMenu()
 
 const isGuest = computed(() => !gameStore.isRealUser)
@@ -865,6 +856,16 @@ const categoryTabs = computed(() => [
   { key: 'lottery'  as HotCategoryKey, label: t('UICasino_TabLottery'),   icon: '🎱' },
 ])
 
+watch(
+  () => route.query.category,
+  (category) => {
+    if (typeof category === 'string' && categoryTabs.value.some((tab) => tab.key === category)) {
+      selectedCategory.value = category as HotCategoryKey
+    }
+  },
+  { immediate: true },
+)
+
 // ─── Game click handler (Section 5) ───────────────────────────────────────────
 async function handleGameClick(item: GameItem): Promise<void> {
   const { gameApiType, gameType } = item
@@ -899,19 +900,13 @@ async function handleWalletConfirm(clubId?: number): Promise<void> {
   pendingGame.value = null
 }
 
-function isDbRealNameGame(item: GameItem): boolean {
-  return item.gameApiType === 'real_name' ||
-    item.originalGame?.game_name === 'DB真人' ||
-    !!(item.originalGame?.game_name?.includes('DB视讯'))
-}
-
-function reserveWindowForGame(item: GameItem): ReservedGameWindow {
-  if (isDbRealNameGame(item) && getDeviceType() === 1) {
-    return reserveGameWindow(
-      `width=${screen.width},height=${screen.height},scrollbars=yes,resizable=yes,location=yes`,
-    )
+function toLaunchTarget(item: GameItem): CasinoLaunchTarget {
+  return {
+    gameApiType: item.gameApiType,
+    gameType: item.gameType,
+    gameRoomId: item.gameRoomId,
+    gameName: item.originalGame?.game_name,
   }
-  return reserveGameWindow()
 }
 
 async function doJoinGame(
@@ -919,48 +914,11 @@ async function doJoinGame(
   clubId?: number,
   reserved: ReservedGameWindow = null,
 ): Promise<void> {
-  const finishLaunch = beginGameLaunch()
-  try {
-    const isDbRealName = isDbRealNameGame(item)
+  await launchCasinoGame(toLaunchTarget(item), clubId, reserved)
+}
 
-    const deviceType = getDeviceType()
-
-    const res = await joinCasinoGame(
-      {
-        game_api_type: item.gameApiType,
-        game_room_id: item.gameRoomId || 0,
-        game_type: isDbRealName ? '0' : String(item.gameType),
-        amount: 0,
-        device_type: isDbRealName ? 2 : deviceType,
-        currency_type: 1,
-      },
-      clubId,
-    )
-    finishLaunch()
-    if (res.code === 0 && res.data) {
-      const gameUrl = res.data.url || res.data.game_url
-      if (gameUrl) {
-        if (!launchGameUrl(reserved, gameUrl, isDbRealName && deviceType === 1)) {
-          releaseGameWindow(reserved)
-          if (usesTelegramGameLauncher()) {
-            showGameToast(t('UICasino_LaunchFail'))
-          } else {
-            gameLaunchStore.openFallback(gameUrl)
-          }
-        }
-      } else {
-        releaseGameWindow(reserved)
-        showGameToast(t('UICasino_LaunchFail'))
-      }
-    } else {
-      releaseGameWindow(reserved)
-      showGameToast((res.msg as string) || t('UICasino_LaunchFail'))
-    }
-  } catch (error: any) {
-    finishLaunch()
-    releaseGameWindow(reserved)
-    showGameToast(error?.response?.data?.msg || t('UICasino_LaunchFail'))
-  }
+function reserveWindowForGame(item: GameItem): ReservedGameWindow {
+  return reserveGameWindow(toLaunchTarget(item))
 }
 
 function handleCardImgError(event: Event, item: GameItem): void {

@@ -33,7 +33,7 @@ const tiers = computed(() => props.groups[level.value] ?? [])
         :class="{ active: level === index }"
         @click="level = index"
       >
-        {{ t(key) }}
+        <span v-fit-text="{ maxLines: 1 }" class="c-reward-tab-label">{{ t(key) }}</span>
       </button>
     </div>
     <ChannelCRewardLoadState :loading="loading" :failed="failed" @retry="$emit('retry')">
@@ -105,21 +105,33 @@ const tiers = computed(() => props.groups[level.value] ?? [])
   table-layout: fixed;
   text-align: left;
 }
+.c-reward-tab-label {
+  display: block;
+  white-space: nowrap;
+}
 .c-game-blind-col {
-  width: 18.1%;
+  width: 20.76%;
 }
 .c-game-progress-col {
-  width: 28.9%;
+  width: 32.24%;
 }
 .c-game-reward-col {
-  width: 29%;
+  width: 28.7%;
 }
 .c-game-status-col {
-  width: 24%;
+  width: 18.3%;
+}
+:root:not([data-locale='cn'], [data-locale='zh']) {
+  .c-game-reward-col {
+    width: 24.7%;
+  }
+  .c-game-status-col {
+    width: 22.3%;
+  }
 }
 .c-game-rewards th,
 .c-game-rewards td {
-  padding: r(5) r(4);
+  padding: r(1) 0;
   border-top: r(0.758) solid #5b9c8145;
   border-bottom: r(0.758) solid #5b9c8145;
   background: #14141461;
@@ -130,9 +142,15 @@ const tiers = computed(() => props.groups[level.value] ?? [])
   border-left: r(0.758) solid #5b9c8145;
   border-radius: r(9.098) 0 0 r(9.098);
 }
+.c-game-rewards th:nth-child(3) {
+  padding-left: r(9.55);
+}
+.c-game-rewards td:nth-child(3) {
+  padding-left: r(5);
+}
 .c-game-rewards th:last-child,
 .c-game-rewards td:last-child {
-  padding-right: r(5);
+  padding-right: r(6.07);
   border-right: r(0.758) solid #5b9c8145;
   border-radius: 0 r(9.098) r(9.098) 0;
 }
@@ -143,7 +161,7 @@ const tiers = computed(() => props.groups[level.value] ?? [])
   font-weight: 700;
 }
 .c-game-rewards th:last-child {
-  text-align: center;
+  padding-left: r(12.89);
 }
 .c-game-rewards th small {
   display: block;
@@ -178,10 +196,10 @@ const tiers = computed(() => props.groups[level.value] ?? [])
   color: #fff39b;
 }
 .c-reward-meter {
-  width: 90%;
+  width: r(96.29);
 }
 .c-game-rewards :deep(.c-reward-status) {
-  min-width: 100%;
+  width: 100%;
   padding-inline: r(2);
 }
 </style>

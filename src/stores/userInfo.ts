@@ -256,9 +256,7 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
 
       channelDefaultClubInFlight = (async () => {
         try {
-          if (!(await useAppConfigStore().ensurePlatformDomainsReady())) {
-            return this.channelDefaultClub
-          }
+          await useAppConfigStore().ensurePlatformDomainsReady()
 
           const localInviteCode =
             import.meta.env?.DEV && (hostname === 'localhost' || hostname.startsWith('127.'))

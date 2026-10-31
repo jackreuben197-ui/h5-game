@@ -228,7 +228,9 @@ function onPointerCancel(e: PointerEvent) {
 
 function useFallbackImage(event: Event) {
   const image = event.target as HTMLImageElement
-  if (image.getAttribute('src') !== props.fallbackImage) image.src = props.fallbackImage
+  if (image.getAttribute('src') === props.fallbackImage) return
+  image.src = props.fallbackImage
+  image.classList.add('banner-img--fallback')
 }
 
 watch(banners, () => {
@@ -269,7 +271,14 @@ onBeforeUnmount(() => {
           class="banner-slide"
           :class="{ 'is-active': index === position }"
         >
-          <img :src="slide.img" alt="" class="banner-img" draggable="false" @error="useFallbackImage" />
+          <img
+            :src="slide.img"
+            alt=""
+            class="banner-img"
+            :class="{ 'banner-img--fallback': slide.img === fallbackImage }"
+            draggable="false"
+            @error="useFallbackImage"
+          />
         </div>
       </div>
 
@@ -338,6 +347,10 @@ onBeforeUnmount(() => {
     display: block;
     pointer-events: none;
     -webkit-user-drag: none;
+  }
+
+  .banner-img--fallback {
+    object-position: center;
   }
 }
 

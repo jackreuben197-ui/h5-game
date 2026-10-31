@@ -49,7 +49,7 @@ import GameClubSelector from '@/components/GameClubSelector.vue'
 import LiveWinsTicker from '@/components/LiveWinsTicker.vue'
 import { useLiveWins } from '@/composables/useLiveWins'
 import CasinoPromoBanner from '@/components/CasinoPromoBanner.vue'
-import promoFallbackBanner from '@/assets/images/home_header_1.png'
+import promoFallbackBanner from '@/assets/images/home_header_large.png'
 import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
 import CasinoGameDetailSheet, { type GameDetailInfo } from '@/components/CasinoGameDetailSheet.vue'
 

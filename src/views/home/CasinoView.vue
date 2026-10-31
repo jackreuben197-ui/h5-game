@@ -46,12 +46,6 @@ import serviceIcon from '@/assets/icons/icon_server.png'
 import walletIcon from '@/assets/icons/icon_wallet.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import GameClubSelector from '@/components/GameClubSelector.vue'
-import LiveWinsTicker from '@/components/LiveWinsTicker.vue'
-import { useLiveWins } from '@/composables/useLiveWins'
-import CasinoPromoBanner from '@/components/CasinoPromoBanner.vue'
-import promoFallbackBanner from '@/assets/images/home_header_large.png'
-import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
-import CasinoGameDetailSheet, { type GameDetailInfo } from '@/components/CasinoGameDetailSheet.vue'
 
 // Assets Imports
 import img1 from '@/assets/images/img1.png'
@@ -115,7 +109,7 @@ const gameStore = useGameStore()
 const userInfoStore = useUserInfoStore()
 const loginModalStore = useLoginModalStore()
 const gameLaunchStore = useGameLaunchStore()
-const { isChannelPackage, channelClub, isVersionB, isVersionC } = useChannelBottomMenu()
+const { isChannelPackage, channelClub, isVersionB } = useChannelBottomMenu()
 
 const isGuest = computed(() => !gameStore.isRealUser)
 
@@ -871,102 +865,12 @@ const categoryTabs = computed(() => [
   { key: 'lottery'  as HotCategoryKey, label: t('UICasino_TabLottery'),   icon: '🎱' },
 ])
 
-// ─── Game Detail Bottom Sheet State ─────────────────────────────────────────
-const { liveWinItems, liveWinInterval } = useLiveWins()
-const { bannerImages: promoBannerImages, fetchLobbyBannerImages } = useLobbyBannerImages('c')
-watch(
-  isVersionC,
-  (versionC) => {
-    if (versionC) void fetchLobbyBannerImages()
-  },
-  { immediate: true },
-)
-const showGameDetailSheet = ref(false)
-const activeGameForDetail = ref<GameDetailInfo | null>(null)
-const selectedGameItemForLaunch = ref<GameItem | null>(null)
-
-function openGameDetail(item: GameItem) {
-  selectedGameItemForLaunch.value = item
-  activeGameForDetail.value = {
-    title: item.title,
-    img: item.img,
-    platformTag: item.gameApiType ? item.gameApiType.toUpperCase() : 'PG',
-    rtp: '96.85%',
-    maxMultiplier: 'x15,000',
-    volatility: '中高波动',
-    paylines: '1024 路线',
-    description: `官方正版授权【${item.title}】，全盘翻倍倍率无上限！进入免费旋转回合额外获得最高20次再旋转机会，实时超级爆奖池随时掉落！`,
-    recentWins: [
-      { username: 's***88', amount: '¥ 57,600.00', tag: 'x576 爆', time: '1分钟前' },
-      { username: 'a***11', amount: '¥ 27,300.00', tag: 'x26.3 爆', time: '3分钟前' },
-      { username: 'K***18', amount: '¥ 13,832.51', tag: '', time: '5分钟前' },
-    ],
-  }
-  showGameDetailSheet.value = true
-}
-
-function handleLiveWinCardClick(card: any) {
-  activeGameForDetail.value = {
-    title: card.gameTitle,
-    img: card.gameIcon,
-    platformTag: card.platformTag || 'PG',
-    rtp: '97.20%',
-    maxMultiplier: card.tag ? `${card.tag} 爆` : 'x5,000',
-    volatility: '极高波动',
-    paylines: '全线掉落',
-    description: `【${card.gameTitle}】当前大热连环爆奖中！玩家 ${card.username} 刚刚命中爆奖金额 ¥ ${card.finalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}！`,
-    recentWins: [
-      {
-        username: card.username,
-        amount: `¥ ${card.finalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-        tag: card.tag ? `${card.tag} 爆` : '',
-        time: '刚刚',
-      },
-      { username: 'v***88', amount: '¥ 48,000.00', tag: 'x240 爆', time: '2分钟前' },
-      { username: '186****4022', amount: '¥ 53,760.00', tag: '', time: '6分钟前' },
-    ],
-  }
-  showGameDetailSheet.value = true
-}
-
-async function handleStartGameFromSheet() {
-  showGameDetailSheet.value = false
-  if (selectedGameItemForLaunch.value) {
-    await executeRealGameJoin(selectedGameItemForLaunch.value)
-  } else {
-    showGameToast(t('UICasino_DownloadAppTip') || '正在进入游戏...')
-  }
-}
-
-function handleDemoGameFromSheet() {
-  showGameToast('已开启免费试玩模式 (Free Demo Mode)')
-}
-
-function handleSelectGameFromSheet(gameTitle: string) {
-  showGameToast('已选择【' + gameTitle + '】')
-  if (activeGameForDetail.value) {
-    activeGameForDetail.value = {
-      ...activeGameForDetail.value,
-      title: gameTitle,
-      gameTitle: gameTitle,
-    }
-  }
-}
-
 // ─── Game click handler (Section 5) ───────────────────────────────────────────
 async function handleGameClick(item: GameItem): Promise<void> {
-  if (!isVersionC.value) {
-    await executeRealGameJoin(item)
-    return
-  }
-  openGameDetail(item)
-}
-
-async function executeRealGameJoin(item: GameItem): Promise<void> {
   const { gameApiType, gameType } = item
 
   // 游客仅能预览目录，进入具体游戏前先引导登录。
-  if (!requireRealUser(() => executeRealGameJoin(item))) {
+  if (!requireRealUser(() => handleGameClick(item))) {
     return
   }
 
@@ -1225,21 +1129,6 @@ onActivated(async () => {
       </div>
     </section>
 
-    <!-- ── Casino Promotional Banner with Progress Bar Animation ──── -->
-    <CasinoPromoBanner
-      v-if="isVersionC"
-      :images="promoBannerImages"
-      :fallback-image="promoFallbackBanner"
-    />
-
-    <!-- ── Live Wins Ticker Demo ────────────────────────────────────── -->
-    <LiveWinsTicker
-      v-if="isVersionC && liveWinItems.length"
-      :items="liveWinItems"
-      :slide-interval="liveWinInterval"
-      @click-card="handleLiveWinCardClick"
-    />
-
     <!-- ── Category Icon Row ──────────────────────────────────────── -->
     <section
       v-show="hasGames || isInitLoading"
@@ -1446,18 +1335,6 @@ onActivated(async () => {
       @confirm="handleWalletConfirm"
       @cancel="pendingGame = null"
     />
-    <!-- ── Game Detail Bottom Sheet Popup (Slides up from below) ───── -->
-    <CasinoGameDetailSheet
-      v-if="isVersionC"
-      v-model:show="showGameDetailSheet"
-      :detail="activeGameForDetail"
-      :game="activeGameForDetail"
-      @play="handleStartGameFromSheet"
-      @demo="handleDemoGameFromSheet"
-      @follow-game="handleStartGameFromSheet"
-      @select-game="handleSelectGameFromSheet"
-    />
-
     <MainBottomTab v-if="!hideHeader && isVersionB" />
   </div>
 </template>

@@ -271,6 +271,9 @@ export interface MiscArtiClePushListContentData {
 
 // /api/misc/banner_lobby (MiscBannerLobby)
 export interface MiscBannerLobbyRequest {
+    display_scene?: 1 | 2; // 1-H5,2-Telegram
+    club_id?: number;
+    all_clubs?: boolean;
 
     lang?: string; // 语言(zh_CN:简体中文,zh_HK:繁体中文,en_US:英文
 
@@ -284,11 +287,17 @@ export interface MiscBannerLobbyResponseData extends MiscBannerLobbyData {
 export interface MiscBannerLobbyData {
 
     lobby?: MiscBannerLobbyBannerInfo; // 顶部
+    lobby_list?: MiscBannerLobbyBannerInfo[];
+    mtt?: MiscBannerLobbyBannerInfo;
+    other?: MiscBannerLobbyBannerInfo;
+    match_news?: MiscBannerLobbyBannerInfo;
 
   [key: string]: unknown
 }
 
 export interface MiscBannerLobbyBannerInfo {
+    image_url_c?: string; // 版本 C 大厅 Banner
+    display_scene?: 1 | 2;
 
     resource_type?: number; // 资源类型：1 图片，2 视频
     image_url?: string; // Banner 图片链接
@@ -303,7 +312,8 @@ export interface MiscBannerListRequest {
 
     lang?: string; //语言(zh_CN:简体中文,zh_HK:繁体中文,en_US:英文
     type?: number; //1-大厅Banner,2-发现页(公会)Banner
-    display_scene?: number; //展示场景:1-h5,2-telegram
+    all_clubs?: boolean;
+    display_scene?: 1 | 2; //展示场景:1-H5,2-Telegram
     club_id?: number; //俱乐部id,配置了俱乐部banner时返回俱乐部的,否则返回平台的
     limit?: number; //条目
     offset?: number; //开始下标。例子（offset=0，limit=10，0-9。）
@@ -324,9 +334,10 @@ export interface MiscBannerListBannerInfo {
     id: number; //banner id
     lang: string; //语言
     banner_type: number; //1-大厅Banner,2-发现页(公会)Banner
-    display_scene?: number; //展示场景:1-h5,2-telegram
+    display_scene?: 1 | 2; //展示场景:1-H5,2-Telegram
     club_id?: number; //归属俱乐部id,0为平台(默认俱乐部)配置
     image_url: string; //Banner图片连接
+    image_url_c?: string; //版本 C 大厅 Banner 图片链接
     redirect_url: string; //跳转连接
     description: string; //描述
     resource_type?: number; // 1图片，2视频

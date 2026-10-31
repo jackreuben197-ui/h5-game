@@ -98,24 +98,33 @@ interface PlatformDomainRecord {
   status?: unknown
 }
 
-/** 解析全局配置中的平台域名 JSON，只保留指定类型且已生效的域名。 */
-export function parseActivePlatformDomains(raw: unknown, expectedType: 1 | 2): string[] {
+function parsePlatformDomainRecords(raw: unknown): unknown[] | null {
   let value = raw
   for (let depth = 0; depth < 2 && typeof value === 'string'; depth += 1) {
     const text = value.trim()
-    if (!text) return []
+    if (!text) return null
     try {
       value = JSON.parse(text)
     } catch {
-      return []
+      return null
     }
   }
 
-  const records = Array.isArray(value)
+  return Array.isArray(value)
     ? value
     : value && typeof value === 'object' && Array.isArray((value as { data?: unknown }).data)
       ? ((value as { data: unknown[] }).data)
-      : []
+      : null
+}
+
+/** 区分已返回的空列表与缺失、解析失败的域名配置。 */
+export function isPlatformDomainListAvailable(raw: unknown): boolean {
+  return parsePlatformDomainRecords(raw) !== null
+}
+
+/** 解析全局配置中的平台域名 JSON，只保留指定类型且已生效的域名。 */
+export function parseActivePlatformDomains(raw: unknown, expectedType: 1 | 2): string[] {
+  const records = parsePlatformDomainRecords(raw) ?? []
 
   return Array.from(
     new Set(
@@ -123,6 +132,7 @@ export function parseActivePlatformDomains(raw: unknown, expectedType: 1 | 2): s
         .map((item) => item as PlatformDomainRecord)
         .filter(
           (item) =>
+            item &&
             Number(item.domain_type) === expectedType &&
             String(item.status || '').trim().toLowerCase() === 'active',
         )

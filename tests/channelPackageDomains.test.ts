@@ -27,6 +27,11 @@ const stubs: Record<string, string> = {
 }
 const hooks = registerHooks({
   resolve(specifier, context, nextResolve) {
+    if (specifier === '@/utils/playerInvitation')
+      return {
+        url: new URL('../src/utils/playerInvitation.ts', import.meta.url).href,
+        shortCircuit: true,
+      }
     return stubs[specifier]
       ? { url: stubs[specifier], shortCircuit: true }
       : nextResolve(specifier, context)
@@ -64,7 +69,8 @@ test('private UC API amounts are scaled and blind-level settings keep type_ext d
       {
         fee_type: 3,
         config_kind: 1,
-        str_value: '{"status":1,"floor_price":30000,"ratio":0.1,"decimal_type":3,"discount":1,"start_time":0,"end_time":0}',
+        str_value:
+          '{"status":1,"floor_price":30000,"ratio":0.1,"decimal_type":3,"discount":1,"start_time":0,"end_time":0}',
       },
       {
         fee_type: 4,
@@ -116,7 +122,8 @@ test('private UC API amounts are scaled and blind-level settings keep type_ext d
         config_type: 9,
         type_ext: 210,
         status: 1,
-        setting: '[{"sb":10,"blind_type":1,"record_floor":1200,"record_ratio":0.5,"discount":1,"decimal_type":2}]',
+        setting:
+          '[{"sb":10,"blind_type":1,"record_floor":1200,"record_ratio":0.5,"discount":1,"decimal_type":2}]',
         start_date: '',
         end_date: '',
         start_time: 0,
@@ -185,7 +192,10 @@ test('runtime platform domains drive package classification and invite URLs', ()
   assert.equal(channelPackage.isChannelPackageHost('fanuf.maintest71.com'), false)
   assert.equal(channelPackage.isChannelPackageHost('test2-game.awanptest.com'), false)
   assert.equal(channelPackage.isChannelPackageHost('fbdgqp.tet982m32.com'), false)
-  assert.equal(channelPackage.extractInviteCodeFromSubdomain('club123.fbdgqp.tet982m32.com'), 'club123')
+  assert.equal(
+    channelPackage.extractInviteCodeFromSubdomain('club123.fbdgqp.tet982m32.com'),
+    'club123',
+  )
   assert.equal(
     channelPackage.buildChannelClubInviteUrl('club123'),
     'https://club123.fbdgqp.tet982m32.com/#/home',

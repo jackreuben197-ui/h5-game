@@ -8,6 +8,7 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { isPrivateDomainMode } from '@/utils/channelPackage'
 import { filterVisibleMttRecords } from '@/utils/mttVisibility'
 import { checkIsShowForClubAndTribe } from '@/utils/roomVisibility'
+import { resolveChannelMenu } from '@/features/channelC/menu'
 
 function toSafeInt(value: unknown): number {
   const num = Number(value)
@@ -44,7 +45,7 @@ export function useChannelBottomMenu() {
   const selectedTribeId = computed(() => toSafeInt(channelClub.value?.tribe_id))
   // h5_menu 是渠道包配置，只认 /org/club/default 返回的渠道俱乐部；
   // 登录后的当前俱乐部仅用于牌桌和比赛的可见性过滤，不能决定渠道菜单版本。
-  const h5Menu = computed(() => userInfoStore.channelDefaultClub?.h5_menu)
+  const h5Menu = computed(() => resolveChannelMenu(userInfoStore.channelDefaultClub))
 
   // 俱乐部数据尚未到达时先保持默认版本 A，避免首屏导航闪变。
   const isVersionB = computed(
@@ -54,6 +55,8 @@ export function useChannelBottomMenu() {
       h5Menu.value !== undefined &&
       Number(h5Menu.value) === 1,
   )
+  // 服务端菜单枚举：1=B、2=A、3=C。
+  const isVersionC = computed(() => isChannelPackage.value && h5Menu.value === 3)
 
   const hasPoker = computed(() =>
     roomListStore.records.some(
@@ -88,6 +91,7 @@ export function useChannelBottomMenu() {
     isChannelPackage,
     channelClub,
     isVersionB,
+    isVersionC,
     hasPoker,
     hasMtt,
     hasMiniGame,

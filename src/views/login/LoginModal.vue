@@ -50,12 +50,14 @@ import { Loading } from 'vant'
 import { DEBUG_ACCOUNTS, type DebugAccount } from '@/constants/debugAccounts'
 import {
   resolveInviteCode,
+  resolveInviterRandomId,
   resolveTraceHash,
   shouldOpenRegisterMode,
   resolveAgentInviteCode,
   clearAgentInviteCodeCache,
   isChannelPackageHost,
 } from '@/utils/channelPackage'
+import { withPlayerInviter } from '@/utils/playerInvitation'
 import ProtocolView from './components/ProtocolView.vue'
 
 type PageMode = 'login' | 'register' | 'forgot'
@@ -481,7 +483,7 @@ async function runLoginTransaction(target: string, replacingExperienceAccount: b
   // 弹窗以完整身份切换为成功边界，避免先关闭后再由页面补齐用户态。
   const syncResult = await syncPostAuthData()
   if (
-    !syncResult.websocketSynced ||
+    (syncResult.websocketRequired && !syncResult.websocketSynced) ||
     !syncResult.userInfoSynced ||
     !syncResult.userClubSynced ||
     gameStore.sessionToken.trim() !== token ||
@@ -523,19 +525,26 @@ async function handleRegister(target: string) {
   const effectiveInviteCode = linkInviteCode || String(channelClub?.invitation_code || '').trim()
   const effectiveTraceHash = traceHashFromChannel.value || resolveTraceHash() || agentCode
   const password = md5(form.password.trim())
-  const baseExtra: Record<string, string | number> = {}
+  const baseExtra: { invite_code?: string; trace_hash?: string } = {}
   if (effectiveInviteCode) baseExtra.invite_code = effectiveInviteCode
   if (effectiveTraceHash) baseExtra.trace_hash = effectiveTraceHash
+  const inviterRandomId = resolveInviterRandomId(effectiveInviteCode)
 
   let res
   if (contactType.value === 'account') {
     res = await postUserQuickRegisterApi(
-      { qk_account: target, password, code: '1111', system_language: 'en-US', device_id: 'ios', platform: 5, ...baseExtra },
+      withPlayerInviter(
+        { qk_account: target, password, code: '1111', system_language: 'en-US', device_id: 'ios', platform: 5, ...baseExtra },
+        inviterRandomId,
+      ),
       { suppressBusinessToast: true },
     )
   } else {
     res = await postUserRegisterApi(
-      { email: target, password, code: form.code.trim(), platform: 5, ...baseExtra },
+      withPlayerInviter(
+        { email: target, password, code: form.code.trim(), platform: 5, ...baseExtra },
+        inviterRandomId,
+      ),
       { suppressBusinessToast: true },
     )
   }

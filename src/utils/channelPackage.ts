@@ -1,3 +1,8 @@
+import {
+  appendInvitationRandomId,
+  buildPlayerInvitationUrl,
+  normalizeInviterRandomId,
+} from '@/utils/playerInvitation'
 import StorageKey from '@/constants/storageKey'
 import type { PrivateUcChargeConfigItem, PrivateUcFeeType } from '@bridge-protocol'
 import type {
@@ -14,6 +19,7 @@ import {
   isChannelPackageHostname,
   isChannelSubdomainHostname,
   isConfiguredDomainHostname,
+  isPlatformDomainListAvailable,
   parseActivePlatformDomains,
 } from '@/utils/channelHost'
 import {
@@ -72,6 +78,7 @@ interface ParsedQueryParams {
   inviteCode: string
   traceHash: string
   agentInviteCode: string
+  inviterRandomId?: number
   mode: string
 }
 
@@ -94,7 +101,7 @@ function normalizeDomainOrigin(value: unknown, fallbackProtocol: string): string
 
 export function configurePlatformDomains(
   config: PlatformDomainGlobalConfig | null | undefined,
-): void {
+): boolean {
   const typeOneDomains = parseActivePlatformDomains(config?.plat_domain_qrcode_info, 1)
   const typeTwoDomains = parseActivePlatformDomains(config?.plat_domain_main_info, 2)
 
@@ -105,6 +112,14 @@ export function configurePlatformDomains(
   platformOfficialMainDomains = typeTwoDomains
   // domain_type=1 专门用于生成俱乐部邀请二维码链接。
   platformQrCodeDomains = typeOneDomains
+
+  // 内置官方域名不能证明服务端域名列表已就绪；两份列表均需成功解析，
+  // 且至少有一个生效域名，才能安全地区分邀请码子域名和独立 CNAME。
+  return (
+    isPlatformDomainListAvailable(config?.plat_domain_qrcode_info) &&
+    isPlatformDomainListAvailable(config?.plat_domain_main_info) &&
+    typeOneDomains.length + typeTwoDomains.length > 0
+  )
 }
 
 function findPlatformBaseDomain(hostname: string): string {
@@ -194,6 +209,11 @@ function isReservedOrNumericHost(hostname: string): boolean {
 }
 
 export function isChannelPackageHost(hostname: string = window.location.hostname): boolean {
+  // 本地带邀请码联调时仍走真实渠道接口，不注入演示俱乐部或牌桌。
+  const localHost = hostname === 'localhost' || /^127(?:\.\d{1,3}){3}$/.test(hostname)
+  if (import.meta.env?.DEV && localHost && parseInviteParamsFromLocation().inviteCode) return true
+  // 渠道包联调：取消下面两行注释可强制按渠道域名处理。
+  // void hostname
   if (TEST_CHANNEL_INVITE_CODE) return true
   const normalizedHost = readString(hostname).toLowerCase()
   if (isReservedOrNumericHost(normalizedHost)) {
@@ -719,6 +739,10 @@ export function parseInviteParamsFromLocation(
     inviteCode: readParam(searchParams, hashParams, 'invite_code'),
     traceHash: readParam(searchParams, hashParams, 'trace_hash') || agentInviteCode,
     agentInviteCode,
+    inviterRandomId: normalizeInviterRandomId(
+      readParam(searchParams, hashParams, 'random_id') ||
+        readParam(searchParams, hashParams, 'inviter_random_id'),
+    ),
     mode: readParam(searchParams, hashParams, 'mode'),
   }
 }
@@ -770,14 +794,27 @@ export function resolveAgentInviteCode(): string {
 }
 
 /**
- * 将 URL 中的参数 i（代理邀请码）缓存到本地存储。
- * 在应用启动时调用，确保首次打开分享链接时参数不丢失。
+ * 缓存本次邀请码及邀请人 ID；代理邀请码和邀新归因同时保留。
+ * 在应用启动时调用，确保进入其他页面后注册仍保留来源。
  */
 export function cacheAgentInviteCodeIfPresent(): void {
   const parsed = parseInviteParamsFromLocation()
+  if (parsed.inviterRandomId) {
+    try {
+      localStore.setItem(StorageKey.PLAYER_INVITATION, {
+        id: parsed.inviterRandomId,
+        inviteCode: parsed.agentInviteCode || resolveInviteCode(),
+      })
+      if (!parsed.agentInviteCode) localStore.removeItem(StorageKey.AGENT_INVITE_CODE)
+    } catch {
+      // 存储不可用时仍可从当前邀请链接读取。
+    }
+  }
   if (parsed.agentInviteCode) {
     try {
       localStore.setItem(StorageKey.AGENT_INVITE_CODE, parsed.agentInviteCode)
+      // 新邀请没有 ID 时不能沿用上一位邀请人；带 ID 时与代理码一起缓存。
+      if (!parsed.inviterRandomId) localStore.removeItem(StorageKey.PLAYER_INVITATION)
     } catch (error) {
       console.warn('[channelPackage] failed to cache agentInviteCode:', error)
     }
@@ -785,18 +822,49 @@ export function cacheAgentInviteCodeIfPresent(): void {
 }
 
 /**
- * 清除本地缓存的代理邀请码。
+ * 清除本地缓存的代理和普通邀请参数。
  * 在登录/注册成功后调用。
  */
 export function clearAgentInviteCodeCache(): void {
   try {
     localStore.removeItem(StorageKey.AGENT_INVITE_CODE)
+    localStore.removeItem(StorageKey.PLAYER_INVITATION)
   } catch {
     // localStorage 不可用时忽略
   }
 }
 
 const INVITE_LANDING_HASH = '/#/home'
+
+export function resolveInviterRandomId(inviteCode: string): number | undefined {
+  if (!inviteCode.trim()) return undefined
+  const parsed = parseInviteParamsFromLocation()
+  const sourceInviteCode = parsed.agentInviteCode || resolveInviteCode()
+  if (parsed.inviterRandomId && (!sourceInviteCode || sourceInviteCode === inviteCode)) {
+    return parsed.inviterRandomId
+  }
+  try {
+    const cached = localStore.getItem<{ id?: number; inviteCode?: string } | null>(
+      StorageKey.PLAYER_INVITATION,
+      null,
+    )
+    return cached?.inviteCode === inviteCode ? normalizeInviterRandomId(cached.id) : undefined
+  } catch {
+    return undefined
+  }
+}
+
+export function buildChannelPlayerInviteUrl(
+  inviter: unknown,
+  clubInviteCode?: string,
+  safariBaseUrl?: string,
+): string {
+  return buildPlayerInvitationUrl(
+    buildChannelClubInviteUrl(clubInviteCode, safariBaseUrl),
+    readString(clubInviteCode),
+    inviter,
+  )
+}
 
 export function shouldOpenRegisterMode(): boolean {
   return parseInviteParamsFromLocation().mode === 'register'
@@ -858,6 +926,7 @@ export function buildChannelAgentInviteUrl(
   agentInviteCode: string,
   clubInviteCode?: string,
   safariBaseUrl?: string,
+  inviter?: unknown,
 ): string {
   const normalizedCode = readString(agentInviteCode)
   if (!normalizedCode) {
@@ -868,7 +937,10 @@ export function buildChannelAgentInviteUrl(
     mode: 'register',
     i: normalizedCode,
   })
-  return appendHashQuery(buildChannelClubOrigin(clubInviteCode, safariBaseUrl), params)
+  return appendInvitationRandomId(
+    appendHashQuery(buildChannelClubOrigin(clubInviteCode, safariBaseUrl), params),
+    inviter,
+  )
 }
 
 export function buildChannelRegisterUrl(options?: {

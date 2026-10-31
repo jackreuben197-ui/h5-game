@@ -21,6 +21,7 @@ import {
 } from '@/utils/multiLanguageTemplate'
 import { formatDateTime, formatTodayAwareTimeLabel, toTimestampMs } from '@/utils/time'
 import { isMttRegistered } from '@/utils/mttRegistration'
+import { resolveSeriesLayoutByType } from '@/utils/mttCardLayout'
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
 
@@ -443,14 +444,6 @@ function normalizeRelateTribeClubList(value: unknown): Array<Record<string, unkn
   return value.filter((item) => Boolean(item) && typeof item === 'object') as Array<
     Record<string, unknown>
   >
-}
-
-function resolveSeriesLayoutByType(seriesType: number, total: number): MttLayout {
-  if (total <= 1) return 'lg'
-  if (seriesType === 1) return 'lg'
-  if (seriesType === 2) return 'md'
-  if (seriesType === 3) return total === 2 ? 'md' : 'sm'
-  return total <= 4 ? 'md' : 'sm'
 }
 
 function toSafeInt(value: unknown): number {

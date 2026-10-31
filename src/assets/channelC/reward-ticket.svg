@@ -1,0 +1,17 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="33.9796" height="25.4847" viewBox="0 0 33.9796 25.4847" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Tournament ticket" clip-path="url(#clip0_0_66)">
+<path id="Ticket" d="M3.7754 1.41669H30.204C31.5072 1.41669 32.5637 2.47316 32.5637 3.77639V21.7101C32.5637 23.0133 31.5072 24.0698 30.204 24.0698H3.7754C2.47218 24.0698 1.41571 23.0133 1.41571 21.7101V3.77639C1.41571 2.47316 2.47218 1.41669 3.7754 1.41669Z" fill="url(#paint0_linear_0_66)" stroke-width="0.943878" stroke="#FFD27B"/>
+<circle id="Ticket notch" cx="33.5075" cy="12.7432" r="2.35969" fill="#0A3B30"/>
+<circle id="Ticket notch_2" cx="0.471829" cy="12.7432" r="2.35969" fill="#0A3B30"/>
+<path id="Crown emblem" d="M11.3264 8.49578L15.1019 11.3274L17.4616 7.5519L19.8213 11.3274L23.5968 8.49578L21.7091 16.0468H13.2142L11.3264 8.49578ZM13.2142 16.9907H21.7091V18.8784H13.2142V16.9907Z" fill="#9A4D09"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_66" x1="0.943768" y1="0.944754" x2="33.0356" y2="0.944754" gradientUnits="userSpaceOnUse">
+<stop stop-color="#FFE391"/>
+<stop offset="1" stop-color="#F59F28"/>
+</linearGradient>
+<clipPath id="clip0_0_66">
+<rect width="33.9796" height="25.4847" fill="white"/>
+</clipPath>
+</defs>
+</svg>

@@ -1,3 +1,4 @@
+import { roomDisplayPatch } from '@/utils/lobbyDisplayFields'
 import { defineStore } from 'pinia'
 import { toRaw } from 'vue'
 import type { RoomRecord, RoomcenterUserContrastRoomInfo } from '@/api/models/roomcenter'
@@ -28,7 +29,7 @@ import {
 } from '@/utils/roomListCache'
 import { isRoomParticipated, sortRoomRecordsForDisplay } from '@/utils/roomListSort'
 import { createLogger } from '@/utils/logger'
-import { ServerMessageSeated } from '@holdem-pb'
+import { ServerMessageSeated } from '@silenthill/agreement-web'
 
 const log = createLogger('[roomList]')
 
@@ -481,6 +482,7 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
         isRoomParticipated(current) || this.includesCurrentUser(users) ? 1 : 0
       list[index] = {
         ...current,
+        ...roomDisplayPatch(payload),
         status,
         empty_seat: Number(payload.empty_seat ?? current.empty_seat ?? 0),
         hand_num: Number(payload.hand_num ?? current.hand_num ?? 0),
@@ -594,6 +596,7 @@ export const useRoomListStore = defineStore('h5-room-list-store', {
 
       currentList[index] = {
         ...currentRoom,
+        ...roomDisplayPatch(roomChange),
         status,
         empty_seat: Number(roomChange.empty_seat || 0),
         hand_num: Number(roomChange.hand_num || 0),

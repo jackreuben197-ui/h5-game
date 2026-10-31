@@ -1178,6 +1178,7 @@ export interface OrgClubSearchInfoData {
   club_name?: string // 俱乐部名称
   invitation_code?: string // 俱乐部邀请码，供自定义域名注册使用
   logo?: string // 俱乐部头像
+  tribe_random_id?: number // 所属联盟随机ID
   safari_icon_url?: string // Safari 添加到主屏幕使用的图标
   safari_label?: string // Safari 添加到主屏幕使用的名称
   safari_base_url?: string // 自定义域名（仅 domain，不含协议）
@@ -1188,7 +1189,7 @@ export interface OrgClubSearchInfoData {
   pretty_id?: number // 靓号 >0则是靓号 =0不是靓号
   club_subscription_id?: number // 会员id
   diamond_room_switch?: number // 渠道平台钻石桌及比赛：1 开，2 关，缺失默认关
-  h5_menu?: number // 渠道包 H5 底部导航：2-版本 A，其他值-版本 B
+  h5_menu?: number // 渠道包 H5 底部导航：1=B，2=A，3=C
 
   [key: string]: unknown
 }
@@ -2818,6 +2819,9 @@ export interface OrgClubApplyTribeListDataElement {
 
 export interface OrgTribeSearchByIdData {
   random_id?: number // 联盟随机id
+  safari_icon_url?: string // 联盟桌面图标
+  safari_label?: string // 联盟桌面名称
+  room_logo?: string // 联盟牌桌图标
   bring_in_auto_switch?: number // 自动带入开关
   room_permissions?: unknown // 房间权限
 

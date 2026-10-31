@@ -7,7 +7,8 @@ import {
   type UserMttRecordChange as PbUserMttRecordChange,
   type UserSNGRecord as PbUserSNGRecord,
   type UserSNGRecordChange as PbUserSNGRecordChange,
-} from '@holdem-pb'
+} from '@silenthill/agreement-web'
+import { readMttDisplayFields, type MttDisplayFields } from '@/utils/lobbyDisplayFields'
 import { decodeHoldemPacket } from './holdemPacket'
 
 // 对齐 Unity GameMatchMttMessageController.RegisterMsgHandler 的 3 个通知协议号。
@@ -38,6 +39,7 @@ export interface WsRoomTribeClubRelate {
 }
 
 export interface WsUserMttRecord {
+  is_top: number
   gold_type: number
   match_id: number
   start_time: number
@@ -57,6 +59,7 @@ export interface WsUserMttRecord {
   prize_type: number
   anti_cheat_type: number
   mtt_banner_url: string
+  mtt_banner_url_c?: string
   game_icon: string
   origin_type: number
   series_id: number
@@ -67,7 +70,7 @@ export interface WsUserMttRecord {
   relate_tribe_club_list: WsRoomTribeClubRelate[]
 }
 
-export interface WsUserMttRecordChange {
+export interface WsUserMttRecordChange extends MttDisplayFields {
   match_id: number
   status: number
   participants: number
@@ -132,6 +135,8 @@ function mapTribeClubRelate(item: PbRoomTribeClubRelate): WsRoomTribeClubRelate 
 
 function mapUserMttRecord(record: PbUserMttRecord): WsUserMttRecord {
   return {
+    ...readMttDisplayFields(record as PbUserMttRecord & Parameters<typeof readMttDisplayFields>[0]),
+    is_top: toSafeInt(record.getIsTop()),
     gold_type: toSafeInt(record.getGoldType()),
     match_id: toSafeInt(record.getMatchId()),
     start_time: toSafeInt(record.getStartTime()),
@@ -167,6 +172,7 @@ function mapUserMttRecord(record: PbUserMttRecord): WsUserMttRecord {
 
 function mapUserMttRecordChange(record: PbUserMttRecordChange): WsUserMttRecordChange {
   return {
+    ...readMttDisplayFields(record as PbUserMttRecordChange & Parameters<typeof readMttDisplayFields>[0]),
     match_id: toSafeInt(record.getMatchId()),
     status: toSafeInt(record.getStatus()),
     participants: toSafeInt(record.getParticipants()),

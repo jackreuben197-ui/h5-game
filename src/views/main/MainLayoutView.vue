@@ -29,7 +29,7 @@ const tabsStore = useMainTabsStore()
 const appConfigStore = useAppConfigStore()
 const userInfoStore = useUserInfoStore()
 const { setLocale } = useTextI18n()
-const { isVersionB } = useChannelBottomMenu()
+const { isVersionB, isVersionC } = useChannelBottomMenu()
 
 // 主容器背景图：全页面共用一张底图，首页使用 main_bg2.png。
 const LIGHT_THEME_TABS: ReadonlyArray<MainTabKey> = [
@@ -58,6 +58,15 @@ const isMine = computed(() => route.meta.tabKey === 'mine')
 const isFriendsTable = computed(() => route.meta.tabKey === 'friendsTable')
 const isHomeRoute = computed(() => route.name === 'lobby')
 const isHomeMenu = computed(() => route.name === 'lobby')
+const isSearchRoute = computed(() => route.name === 'channel-c-search')
+const hideBottomMenu = computed(
+  () => isSearchRoute.value || (isVersionC.value && route.name === 'message'),
+)
+const isChannelCPage = computed(
+  () =>
+    isSearchRoute.value ||
+    (isVersionC.value && (isHomeRoute.value || String(route.name).startsWith('channel-c-'))),
+)
 const isPrimaryLayout = computed(() => route.meta.desktopLayout === 'primary')
 const isGuestPreview = computed(() => !gameStore.isRealUser)
 
@@ -175,6 +184,9 @@ watch(
       'is-friends-table': isFriendsTable,
       'main-layout--home': isHomeRoute,
       'main-layout--pure-black': isHomeMenu,
+      'main-layout--channel-c': isChannelCPage,
+      'main-layout--search': isSearchRoute,
+      'main-layout--without-tabs': hideBottomMenu,
       'main-layout--primary': isPrimaryLayout,
       'main-layout--guest': isGuestPreview,
       'main-layout--authenticated': isPrimaryLayout && !isGuestPreview,
@@ -195,11 +207,13 @@ watch(
       </section>
     </div>
     <!-- 公共底部导航：跨模块复用。 -->
-    <MainBottomTab />
+    <MainBottomTab v-if="!hideBottomMenu" />
   </div>
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .main-layout {
   position: relative;
   // 固定高度（border-box）：Telegram guard padding-top 吃进自身高度，
@@ -300,5 +314,28 @@ watch(
   // 子页面容器只负责承载内容，不再单独接管滚动。
   flex: 1;
   min-height: 0;
+}
+
+.main-layout--channel-c {
+  @include theme-light-own {
+    --c-page: #f3f4f6;
+    --c-text-muted: rgba(34, 34, 34, 0.55);
+    background: radial-gradient(ellipse at 0 0, #bfe3fc 0, transparent 65%), #f3f4f6;
+  }
+  .main-layout-content {
+    padding-top: var(--app-content-safe-area-top, env(safe-area-inset-top));
+  }
+  .module-slot {
+    // 长列表必须撑开内容容器，底部菜单的预留空间才能计入滚动范围。
+    flex: 1 0 auto;
+  }
+}
+
+.main-layout--search .main-layout-content {
+  padding-top: var(--app-content-safe-area-top, env(safe-area-inset-top));
+}
+
+.main-layout--without-tabs .main-layout-content {
+  padding-bottom: env(safe-area-inset-bottom);
 }
 </style>

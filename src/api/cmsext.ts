@@ -1,3 +1,4 @@
+import { promoteRoomDisplayFields } from '@/utils/lobbyDisplayFields'
 import http from '@/api/http'
 import type { ApiResponse } from '@/api/models/common'
 import type {
@@ -386,7 +387,10 @@ export async function postOrgRoomClubCreateApi(
   payload: OrgRoomClubCreateRequest = {} as OrgRoomClubCreateRequest
 ): Promise<ApiResponse<OrgRoomClubCreateResponseData>> {
   const endpoint = '/cmsext/room/club/config/create'
-  const response = await http.post<ApiResponse<OrgRoomClubCreateResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<OrgRoomClubCreateResponseData>>(
+    endpoint,
+    promoteRoomDisplayFields(payload),
+  )
   return response.data
 }
 
@@ -395,7 +399,10 @@ export async function postOrgRoomConfigCreateApi(
   payload: OrgRoomConfigCreateRequest = {} as OrgRoomConfigCreateRequest
 ): Promise<ApiResponse<OrgRoomConfigCreateResponseData>> {
   const endpoint = '/cmsext/room/config/create'
-  const response = await http.post<ApiResponse<OrgRoomConfigCreateResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<OrgRoomConfigCreateResponseData>>(
+    endpoint,
+    promoteRoomDisplayFields(payload),
+  )
   return response.data
 }
 
@@ -441,7 +448,10 @@ export async function postOrgCreateTemplateApi(
   payload: OrgCreateTemplateRequest = {} as OrgCreateTemplateRequest
 ): Promise<ApiResponse<OrgCreateTemplateResponseData>> {
   const endpoint = '/cmsext/room/template/create'
-  const response = await http.post<ApiResponse<OrgCreateTemplateResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<OrgCreateTemplateResponseData>>(
+    endpoint,
+    promoteRoomDisplayFields(payload),
+  )
   return response.data
 }
 
@@ -477,7 +487,10 @@ export async function postOrgUpdateTemplateApi(
   payload: OrgUpdateTemplateRequest = {} as OrgUpdateTemplateRequest
 ): Promise<ApiResponse<OrgUpdateTemplateResponseData>> {
   const endpoint = '/cmsext/room/template/update'
-  const response = await http.post<ApiResponse<OrgUpdateTemplateResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<OrgUpdateTemplateResponseData>>(
+    endpoint,
+    promoteRoomDisplayFields(payload),
+  )
   return response.data
 }
 
@@ -486,7 +499,10 @@ export async function postCmsExtRoomTribeConfigCreateApi(
   payload: CmsExtRoomTribeConfigCreateRequest = {} as CmsExtRoomTribeConfigCreateRequest
 ): Promise<ApiResponse<CmsExtRoomTribeConfigCreateResponseData>> {
   const endpoint = '/cmsext/room/tribe/config/create'
-  const response = await http.post<ApiResponse<CmsExtRoomTribeConfigCreateResponseData>>(endpoint, payload)
+  const response = await http.post<ApiResponse<CmsExtRoomTribeConfigCreateResponseData>>(
+    endpoint,
+    promoteRoomDisplayFields(payload),
+  )
   return response.data
 }
 

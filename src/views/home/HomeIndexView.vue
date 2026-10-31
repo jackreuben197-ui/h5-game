@@ -50,6 +50,8 @@ import LoginSession from '@/session/loginSession'
 import { isBridgeHandshakeDone, onBridgeHandshakeDone } from '@/bridge/core/cocosBridgeChannel'
 import { ensureWsProxyConnected } from '@/bridge/ws'
 import { waitForH5FirstPaint } from '@/utils/firstPaint'
+import { isH5OnlyDevMode } from '@/utils/h5OnlyDev'
+import ChannelCHome from '@/components/ChannelC/ChannelCHome.vue'
 
 import imgPa from '@/assets/images/minigame-newui/pa.svg'
 import imgMahjong from '@/assets/images/minigame-newui/ma.svg'
@@ -110,7 +112,7 @@ const appConfigStore = useAppConfigStore()
 const gameStore = useGameStore()
 const gameLaunchStore = useGameLaunchStore()
 const displayPlatformDiamond = usePlatformDiamondVisibility()
-const { isChannelPackage, isVersionB } = useChannelBottomMenu()
+const { isChannelPackage, isVersionB, isVersionC } = useChannelBottomMenu()
 
 const noticeScrollRef = ref<HTMLElement | null>(null)
 const noticeItemRef = ref<HTMLElement | null>(null)
@@ -142,6 +144,11 @@ async function ensureHomeWebSocket(forceExistingConnection = false): Promise<voi
 function startHomeWebSocketAfterCocosReady(): void {
   stopHomeWsBridgeReadyListener?.()
   stopHomeWsBridgeReadyListener = null
+
+  if (isH5OnlyDevMode()) {
+    void ensureHomeWebSocket()
+    return
+  }
 
   if (isBridgeHandshakeDone()) {
     void ensureHomeWebSocket()
@@ -467,6 +474,11 @@ const requestedHomeSection = computed<'mtt' | 'poker' | null>(() => {
     : route.query.section
   return rawSection === 'mtt' || rawSection === 'poker' ? rawSection : null
 })
+watch([isVersionC, requestedHomeSection], ([versionC, section]) => {
+  if (versionC && section) {
+    void router.replace({ name: section === 'poker' ? 'channel-c-poker' : 'channel-c-mtt' })
+  }
+}, { immediate: true })
 
 // 私域版：只开一块内容时不给入口，直接铺列表；开两块及以上（以及一块都没有）时展示专区入口。
 // 官方包继续沿用原有的「仅有赛事时直接展示 MTT」行为。
@@ -881,7 +893,13 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+  <ChannelCHome
+    v-if="isVersionC"
+    :ready="homeContentReady"
+    :club-management="canManageChannelClub"
+  />
   <div
+    v-else
     class="home-page"
     :class="{
       'home-page--fit': homeContentMode === 'zones',

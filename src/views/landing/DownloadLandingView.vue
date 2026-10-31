@@ -16,6 +16,9 @@ import {
   isIosThirdPartyBrowser,
 } from '@/utils/iosWebClip'
 import { createLogger } from '@/utils/logger'
+import { useUserInfoStore } from '@/stores/userInfo'
+import { isChannelPackageHost } from '@/utils/channelPackage'
+import { resolveSafariWebAppConfig } from '@/utils/safariWebApp'
 import { t } from '@/i18n'
 
 const log = createLogger('[download-landing]')
@@ -83,10 +86,18 @@ async function onAddToHomeScreen(): Promise<void> {
       showToast({ message: t('UILanding_Text18') + "…", duration: 1500 })
       // 部署可能位于站点子路径，用 BASE_URL 解析成绝对地址，避免固定 '/' 打到站点根导致 404。
       const appBaseUrl = new URL(import.meta.env.BASE_URL, window.location.href).toString()
+      const club = isChannelPackageHost()
+        ? await useUserInfoStore().ensureChannelDefaultClub()
+        : null
+      const appConfig = resolveSafariWebAppConfig(
+        club,
+        new URL('icon-192.png', appBaseUrl).toString(),
+        appName.value,
+      )
       await installIosWebClip({
-        label: appName.value,
+        label: appConfig.label,
         url: appBaseUrl,
-        iconUrl: new URL('icon-192.png', appBaseUrl).toString(),
+        iconUrl: appConfig.iconUrl,
       })
       setTimeout(() => {
         showToast({

@@ -6,6 +6,7 @@ import {
   computed,
   useAttrs,
   useSlots,
+  type CSSProperties,
   type StyleValue,
   type VNode,
 } from 'vue'
@@ -52,6 +53,7 @@ const props = withDefaults(
     darkBackdrop?: boolean
     /** 是否显示右上角关闭按钮 */
     showCloseButton?: boolean
+    overlayStyle?: CSSProperties
     /** 关闭前回调，return false 阻止关闭 */
     beforeClose?: (action: string) => boolean | Promise<boolean>
   }>(),
@@ -73,6 +75,7 @@ const props = withDefaults(
     bgImage: undefined,
     darkBackdrop: false,
     showCloseButton: false,
+    overlayStyle: () => ({ backgroundColor: 'rgba(12, 12, 12, 0.6)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }),
     beforeClose: undefined,
   },
 )
@@ -161,7 +164,7 @@ const bodyStyles = computed<StyleValue>(() => [
     :show-confirm-button="false"
     :show-cancel-button="false"
     :before-close="beforeClose"
-    :overlay-style="{ backgroundColor: 'rgba(12, 12, 12, 0.6)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }"
+    :overlay-style="overlayStyle"
     class="game-dialog"
     :style="dialogStyle"
     v-bind="attrs"

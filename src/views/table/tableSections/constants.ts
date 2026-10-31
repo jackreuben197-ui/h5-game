@@ -1,5 +1,6 @@
 // Shared option lists derived from CreateRoomConstant.cs
 import { t } from '@/i18n'
+import { POKER_SMALL_BLINDS_BY_LEVEL } from '@/constants/pokerBlinds'
 import type { FieldOption } from '../template'
 
 // ── 前注表（按 SB 面值索引）────────────────────────────────────
@@ -55,12 +56,7 @@ export function getAnteOptions(sb: number): FieldOption[] {
 
 // ── 盲注 ──────────────────────────────────────────────────────
 
-const TINY_BLINDS = [0.1, 0.2, 0.3, 0.4, 0.5]
-const SMALL_BLINDS = [1, 2, 3, 4, 5]
-const MIDDLE_BLINDS = [10, 15, 20, 25, 30, 50]
-const BIG_BLINDS = [100, 200, 300, 500, 1000]
-
-export const ALL_SB = [...TINY_BLINDS, ...SMALL_BLINDS, ...MIDDLE_BLINDS, ...BIG_BLINDS]
+export const ALL_SB: number[] = Object.values(POKER_SMALL_BLINDS_BY_LEVEL).flat()
 
 export const BLIND_OPTIONS = ALL_SB.map((sb) => ({
   text: `${sb}`,

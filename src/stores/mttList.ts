@@ -1,3 +1,5 @@
+import { mergeMttListPage, reconcileMttListResponse } from '@/utils/mttListMerge'
+import { mttDisplayPatch } from '@/utils/lobbyDisplayFields'
 import { defineStore } from 'pinia'
 import {
   getAllMttSngIdsApi,
@@ -143,6 +145,8 @@ function mapRelateTribeClubList(relateList: WsRoomTribeClubRelate[]): Array<Reco
 
 function toMttListRecordFromWsRecord(record: WsUserMttRecord): MttListRecord {
   return {
+    ...(record.mtt_banner_url_c !== undefined ? { mtt_banner_url_c: record.mtt_banner_url_c } : {}),
+    is_top: toSafeInt(record.is_top),
     match_id: toSafeInt(record.match_id),
     name: record.name || '',
     game_type: toSafeInt(record.game_type),
@@ -401,6 +405,7 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
       const sngChunks = chunkIds(sngIds, 100)
       const requestCount = Math.max(mttChunks.length, sngChunks.length)
       const nextRecords: MttListRecord[] = []
+      const requestedRecords = this.records.slice()
 
       if (!requestCount) {
         this.records = []
@@ -431,13 +436,18 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
           }
 
           const records = Array.isArray(response.data?.mtt_list) ? response.data.mtt_list : []
-          if (records.length) {
-            nextRecords.push(...records)
-          }
+          const changes = Array.isArray(response.data?.mtt_change_list)
+            ? response.data.mtt_change_list
+            : []
+          log.debug('MTT list participant response', {
+            full: records.map(({ match_id, participants, mtt_buy }) => ({ match_id, participants, mtt_buy })),
+            changes: changes.map(({ match_id, participants, mtt_buy }) => ({ match_id, participants, mtt_buy })),
+          })
+          nextRecords.push(...mergeMttListPage(records, changes, this.records))
         }
 
         if (resolveMttSessionKey() !== sessionKey) return false
-        this.records = nextRecords
+        this.records = reconcileMttListResponse(nextRecords, requestedRecords, this.records)
         this.persistMttListCache()
         return true
       } catch (error) {
@@ -445,6 +455,48 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
         if (!options.silent) {
           log.warn('fetch list failed:', error)
         }
+        return false
+      }
+    },
+
+    // 报名/退赛后单独拉该场列表数据，不依赖 151 是否广播，也不受会话只拉一次的限制。
+    async refreshMttRecord(matchId: number): Promise<boolean> {
+      const targetId = toSafeInt(matchId)
+      const sessionKey = resolveMttSessionKey()
+      if (!targetId || !sessionKey) return false
+      const requested = this.records.find((item) => toSafeInt(item.match_id) === targetId)
+      try {
+        const response = await postRoomCenterUserMatchListApi({
+          mtt_ids: [targetId],
+          sng_ids: [],
+          room_type: 0,
+        })
+        if (resolveMttSessionKey() !== sessionKey || Number(response.code) !== 0) return false
+        const full = Array.isArray(response.data?.mtt_list) ? response.data.mtt_list : []
+        const changes = Array.isArray(response.data?.mtt_change_list) ? response.data.mtt_change_list : []
+        const next = mergeMttListPage(full, changes, this.records)
+          .find((item) => toSafeInt(item.match_id) === targetId)
+        const index = this.records.findIndex((item) => toSafeInt(item.match_id) === targetId)
+        log.debug('MTT registration participant response', {
+          matchId: targetId,
+          fullParticipants: full.find((item) => toSafeInt(item.match_id) === targetId)?.participants,
+          changeParticipants: changes.find((item) => toSafeInt(item.match_id) === targetId)?.participants,
+          currentParticipants: this.records[index]?.participants,
+        })
+        if (!next) return false
+        // 请求期间若有推送或报名变化，保留比 HTTP 快照更新的那份数据。
+        if (this.records[index] !== requested) return true
+        const nextRecords = this.records.slice()
+        if (index < 0) nextRecords.push(next)
+        else nextRecords[index] = { ...requested, ...next }
+        this.records = nextRecords
+        this.persistMttListCache()
+        return true
+      } catch (error) {
+        log.warn('refresh MTT registration failed', {
+          matchId: targetId,
+          error: error instanceof Error ? error.message : String(error),
+        })
         return false
       }
     },
@@ -623,8 +675,17 @@ export const useMttListStore = defineStore('h5-mtt-list-store', {
         return
       }
 
+      log.debug('MTT 151 participant update', {
+        matchId,
+        sendTimestamp,
+        previousParticipants: currentItem.participants,
+        participants: mttChange.participants,
+        mttBuy: currentItem.mtt_buy,
+      })
+
       currentList[index] = {
         ...currentItem,
+        ...mttDisplayPatch(mttChange),
         status,
         participants: toSafeInt(mttChange.participants),
         series_id: toSafeInt(mttChange.series_id),

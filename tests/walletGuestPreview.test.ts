@@ -75,12 +75,16 @@ test('wallet store falls back to the public channel club for preview pricing', a
     '@/api/order': mockUrl,
     '@/stores/userInfo': mockUrl,
     '@/utils/channelPackage': mockUrl,
-    '@/features/rechargeReward/model':
-      new URL('../src/features/rechargeReward/model.ts', import.meta.url).href,
+    '@/features/rechargeReward/model': new URL(
+      '../src/features/rechargeReward/model.ts',
+      import.meta.url,
+    ).href,
   }
   const hooks = registerHooks({
     resolve(specifier, context, nextResolve) {
-      return stubs[specifier] ? { url: stubs[specifier], shortCircuit: true } : nextResolve(specifier, context)
+      return stubs[specifier]
+        ? { url: stubs[specifier], shortCircuit: true }
+        : nextResolve(specifier, context)
     },
   })
 
@@ -98,8 +102,8 @@ test('wallet store falls back to the public channel club for preview pricing', a
     assert.equal(walletStore.hasRechargeRewardActivity.value, true)
     assert.deepEqual(walletStore.firstRechargeRewardTiers.value, [
       {
-        startAmount: 1,
-        endAmount: 10_000,
+        startAmount: 100,
+        endAmount: 1_000_000,
         rewards: [
           {
             propId: 654,
@@ -134,7 +138,10 @@ test('wallet store falls back to the public channel club for preview pricing', a
     })
     assert.deepEqual(walletStore.calculateCustomerServicePrice(10_000, 2, 0.05, 1, 0.1), 45)
     assert.deepEqual(walletStore.calculateCustomerServicePrice(10_000, 2, 0.05, 2, 0.1), 47.5)
-    assert.equal(walletStore.calculateRechargeUsdtPrice(7, 30, 0.0213, 2, 0.0137).totalUiPrice, 0.0023)
+    assert.equal(
+      walletStore.calculateRechargeUsdtPrice(7, 30, 0.0213, 2, 0.0137).totalUiPrice,
+      0.0023,
+    )
   } finally {
     hooks.deregister()
   }

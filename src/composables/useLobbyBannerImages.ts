@@ -13,7 +13,7 @@ const NO_AUTH_API_BANNER_LIST = 8
 // banner_type=1 大厅 Banner；status=1 启用。
 const LOBBY_BANNER_TYPE = 1
 const BANNER_STATUS_ENABLED = 1
-// /misc/banner/list display_scene：1 = h5，2 = telegram。
+// 展示场景只区分 H5 和 Telegram，A/B/C 通过图片字段区分。
 const DISPLAY_SCENE_H5 = 1
 const DISPLAY_SCENE_TELEGRAM = 2
 // Banner 按服务端语言码独立读取，简体中文与繁体中文分别使用 zh_CN / zh_TW。
@@ -31,24 +31,33 @@ type CmsBannerScope =
   | { type: 'channel-club'; clubId: number }
 
 // 只缓存当前 SPA 已由服务端确认过的 Banner。浏览器刷新后 Map 会清空，
-// 首屏保持占位，禁止读取持久化旧图或回退默认图。
+// 不读取持久化旧图；无图时的默认图由各版本视图处理。
 const runtimeBannerImages = new Map<string, string[]>()
+type LobbyBannerVariant = 'ab' | 'c'
+
+function getDisplayScene(): 1 | 2 {
+  return isTelegramMiniAppEnv() ? DISPLAY_SCENE_TELEGRAM : DISPLAY_SCENE_H5
+}
+
+function bannerImageUrl(item: MiscBannerListBannerInfo, variant: LobbyBannerVariant): string {
+  const value = variant === 'c' ? item.image_url_c : item.image_url
+  return typeof value === 'string' ? value.trim() : ''
+}
 
 function createRuntimeBannerKey(
   lang: string,
-  displayScene: number,
+  displayScene: 1 | 2,
   isChannelPackage: boolean,
   channelClubId: number,
+  variant: LobbyBannerVariant,
 ): string {
   const hostname = typeof window === 'undefined' ? '' : window.location.hostname.toLowerCase()
   const scope = isChannelPackage ? `channel_${channelClubId || 'pending'}` : 'platform'
-  return `${hostname}_${lang}_scene_${displayScene}_${scope}`
+  return `${hostname}_${lang}_scene_${displayScene}_${scope}_${variant}`
 }
 
 function normalizeBannerUrls(urls: string[]): string[] {
-  return urls
-    .map((url) => (typeof url === 'string' ? url.trim() : ''))
-    .filter((url) => !!url)
+  return urls.map((url) => (typeof url === 'string' ? url.trim() : '')).filter((url) => !!url)
 }
 
 // 兼容 banner_list_resp 挂在 data 顶层或 data.data 内层两种返回结构。
@@ -70,13 +79,15 @@ function extractBannerRecords(
 function filterLobbyBannerUrls(
   records: MiscBannerListBannerInfo[],
   lang: string,
-  displayScene: number,
+  displayScene: 1 | 2,
   scope: CmsBannerScope,
+  variant: LobbyBannerVariant,
 ): string[] {
   const isEnabledLobbyBanner = (item: MiscBannerListBannerInfo) =>
     item?.lang === lang &&
     Number(item?.status) === BANNER_STATUS_ENABLED &&
-    Number(item?.banner_type) === LOBBY_BANNER_TYPE
+    Number(item?.banner_type) === LOBBY_BANNER_TYPE &&
+    Boolean(bannerImageUrl(item, variant))
 
   const matchesScene = (item: MiscBannerListBannerInfo, scene: number) =>
     item?.display_scene == null ||
@@ -93,7 +104,7 @@ function filterLobbyBannerUrls(
     )
     if (channelClubScene.length) {
       return channelClubScene
-        .map((item) => (typeof item.image_url === 'string' ? item.image_url.trim() : ''))
+        .map((item) => bannerImageUrl(item, variant))
         .filter((url) => !!url)
     }
 
@@ -107,7 +118,7 @@ function filterLobbyBannerUrls(
       )
       if (channelClubH5.length) {
         return channelClubH5
-          .map((item) => (typeof item.image_url === 'string' ? item.image_url.trim() : ''))
+          .map((item) => bannerImageUrl(item, variant))
           .filter((url) => !!url)
       }
     }
@@ -131,9 +142,7 @@ function filterLobbyBannerUrls(
     // 渠道俱乐部未配置 banner 时回退平台配置，不能误用其他俱乐部的配置。
     selected = channelOwned.length ? channelOwned : platformOwned
   }
-  return selected
-    .map((item) => (typeof item.image_url === 'string' ? item.image_url.trim() : ''))
-    .filter((url) => !!url)
+  return selected.map((item) => bannerImageUrl(item, variant)).filter((url) => !!url)
 }
 
 // 登录后走 /misc/banner/list（带 display_scene 区分 h5 / telegram + club_id），
@@ -141,8 +150,9 @@ function filterLobbyBannerUrls(
 // 统一由调用方回落到 before-login CMS 的 club_id=0 配置。
 async function fetchSceneBannerUrls(
   lang: string,
-  displayScene: number,
+  displayScene: 1 | 2,
   clubId: number,
+  variant: LobbyBannerVariant,
 ): Promise<string[]> {
   try {
     const response = await postMiscBannerListApi({
@@ -163,9 +173,12 @@ async function fetchSceneBannerUrls(
         .filter(
           (item) =>
             (item?.status === undefined || Number(item.status) === BANNER_STATUS_ENABLED) &&
+            (item?.display_scene == null ||
+              Number(item.display_scene) <= 0 ||
+              Number(item.display_scene) === displayScene) &&
             Number(item?.club_id) === clubId,
         )
-        .map((item) => (typeof item?.image_url === 'string' ? item.image_url.trim() : ''))
+        .map((item) => bannerImageUrl(item, variant))
         .filter((url) => !!url)
 
       if (urls.length) return urls
@@ -173,7 +186,7 @@ async function fetchSceneBannerUrls(
 
     // Fallback to H5 display scene if Telegram scene returned no banners for the club
     if (displayScene !== DISPLAY_SCENE_H5) {
-      return fetchSceneBannerUrls(lang, DISPLAY_SCENE_H5, clubId)
+      return fetchSceneBannerUrls(lang, DISPLAY_SCENE_H5, clubId, variant)
     }
 
     return []
@@ -185,8 +198,9 @@ async function fetchSceneBannerUrls(
 // 公开聚合 banner 在官方包、渠道未登录或渠道登录兜底时请求。
 async function fetchCmsBannerUrls(
   lang: string,
-  displayScene: number,
+  displayScene: 1 | 2,
   scope: CmsBannerScope,
+  variant: LobbyBannerVariant,
 ): Promise<string[] | null> {
   try {
     const response = await postBeforeLoginConfigApi({
@@ -200,12 +214,12 @@ async function fetchCmsBannerUrls(
       return null
     }
     const records = extractBannerRecords(response.data)
-    const urls = filterLobbyBannerUrls(records, lang, displayScene, scope)
+    const urls = filterLobbyBannerUrls(records, lang, displayScene, scope, variant)
     if (urls.length || lang === FALLBACK_SERVER_LANG) {
       return urls
     }
     // CMS 还没有该语言的轮播图时用英文兜底，避免整条轮播为空。
-    return filterLobbyBannerUrls(records, FALLBACK_SERVER_LANG, displayScene, scope)
+    return filterLobbyBannerUrls(records, FALLBACK_SERVER_LANG, displayScene, scope, variant)
   } catch {
     return null
   }
@@ -217,15 +231,13 @@ async function fetchCmsBannerUrls(
  * 渠道链接登录后优先请求 /misc/banner/list（按 h5/telegram 场景 + 渠道俱乐部配置），
  * 平台链接始终读取平台 banner；渠道俱乐部没有数据时也回落到平台 banner。
  */
-export function useLobbyBannerImages(): {
+export function useLobbyBannerImages(variant: LobbyBannerVariant = 'ab'): {
   bannerImages: Ref<string[]>
   isBannerLoaded: Ref<boolean>
   fetchLobbyBannerImages: () => Promise<void>
 } {
   const initialLang = getLobbyBannerLang()
-  const initialDisplayScene = isTelegramMiniAppEnv()
-    ? DISPLAY_SCENE_TELEGRAM
-    : DISPLAY_SCENE_H5
+  const initialDisplayScene = getDisplayScene()
   const initialUserInfoStore = useUserInfoStore()
   const initialIsChannelPackage = isPrivateDomainMode()
   const initialChannelClubId = initialIsChannelPackage
@@ -241,6 +253,7 @@ export function useLobbyBannerImages(): {
     initialDisplayScene,
     initialIsChannelPackage,
     initialChannelClubId,
+    variant,
   )
   const isBannerLoaded = ref<boolean>(runtimeBannerImages.has(initialRuntimeKey))
   const bannerImages = ref<string[]>([...(runtimeBannerImages.get(initialRuntimeKey) || [])])
@@ -255,7 +268,7 @@ export function useLobbyBannerImages(): {
   async function fetchLobbyBannerImages(): Promise<void> {
     const lang = getLobbyBannerLang()
     const hasRealUser = useGameStore().isRealUser
-    const displayScene = isTelegramMiniAppEnv() ? DISPLAY_SCENE_TELEGRAM : DISPLAY_SCENE_H5
+    const displayScene = getDisplayScene()
 
     const userInfoStore = useUserInfoStore()
     const isChannelPackage = isPrivateDomainMode()
@@ -270,6 +283,7 @@ export function useLobbyBannerImages(): {
       displayScene,
       isChannelPackage,
       channelClubId,
+      variant,
     )
 
     // 页面间切换只复用本次 SPA 已确认的结果，不再发请求造成旧图切新图。
@@ -290,7 +304,7 @@ export function useLobbyBannerImages(): {
       // 只有渠道链接才请求俱乐部 banner。平台链接即使账号是俱乐部创始人，也只展示平台 banner。
       const shouldFetchClubBanner = hasRealUser && hasChannelClub
       if (shouldFetchClubBanner) {
-        const sceneUrls = await fetchSceneBannerUrls(lang, displayScene, channelClubId)
+        const sceneUrls = await fetchSceneBannerUrls(lang, displayScene, channelClubId, variant)
 
         if (sceneUrls.length) {
           commitBannerImages(runtimeKey, sceneUrls)
@@ -300,7 +314,7 @@ export function useLobbyBannerImages(): {
 
       // 渠道未登录或登录接口无俱乐部 banner 时，传渠道 club_id 请求公开聚合接口；
       // 返回后精确匹配该俱乐部，没有才回退平台 banner。
-      const cmsUrls = await fetchCmsBannerUrls(lang, displayScene, cmsScope)
+      const cmsUrls = await fetchCmsBannerUrls(lang, displayScene, cmsScope, variant)
       if (!cmsUrls) {
         commitBannerImages(runtimeKey, [])
         return

@@ -1,4 +1,4 @@
-import { ServerMessageTodoList } from '@holdem-pb'
+import { ServerMessageTodoList } from '@silenthill/agreement-web'
 import { decodeHoldemPacket } from './holdemPacket'
 
 export interface WsTodoListPayload {

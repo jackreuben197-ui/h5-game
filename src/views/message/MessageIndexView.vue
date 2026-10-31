@@ -9,6 +9,8 @@ import iconAddLight from '@/assets/icons/icon_add_light.svg'
 import { theme } from '@/utils/theme'
 import iconMessagesDark from '@/assets/icons/icon_messages.png'
 import iconMessagesLight from '@/assets/icons/icon_messages_light.png'
+import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
+import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 import { t } from '@/i18n'
 import iconBoxSystem from '@/assets/icons/icon_box_system.png'
 import iconBoxWallet from '@/assets/icons/icon_box_wallet.png'
@@ -29,6 +31,7 @@ interface BoxItem {
 
 const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
+const { isVersionC } = useChannelBottomMenu()
 const hideDiamondElements = isChannelDiamondFreeMode()
 
 const isLightTheme = computed(() => theme.value === 'light')
@@ -57,6 +60,14 @@ const displayUser = computed(() => {
 })
 
 const router = useRouter()
+
+function goBack(): void {
+  if (router.options.history.state.back) {
+    router.back()
+    return
+  }
+  void router.replace('/home')
+}
 
 async function fetchUnreadCounts(): Promise<void> {
   const response = await postMsgMessageTodoApi({})
@@ -148,7 +159,13 @@ watch(
 <template>
   <div class="message-page">
     <div class="title-bar main-primary-header">
-      <div class="title">{{ t('UIMine_MsgSystemContent') }}</div>
+      <HeaderBack
+        v-if="isVersionC"
+        class="message-back-header"
+        :title="t('UIMine_MsgSystemContent')"
+        @back="goBack"
+      />
+      <div v-else class="title">{{ t('UIMine_MsgSystemContent') }}</div>
       <div v-if="!hideDiamondElements" class="currency-info main-primary-currency" @click="goToMineShop">
         <div class="icon-diamond">
           <img :src="iconDiamond" :alt="t('UIMine_VIP_diamond')" />
@@ -299,6 +316,18 @@ watch(
 @use '@/styles/messages_mine.scss' as *;
 
 .message-page {
+  .message-back-header {
+    width: auto;
+    min-height: 0;
+    padding: 0;
+
+    :deep(.back-trigger) {
+      padding: 0;
+      gap: 0.25rem;
+      cursor: pointer;
+    }
+  }
+
   .card-bg-highlight {
     .card-bg-outter {
       .card-bg-innner {

@@ -22,6 +22,7 @@ type TabIconKey =
   | 'friendsTable'
   | 'message'
   | 'mine'
+  | 'pokerC'
 
 interface TabItem {
   key: MainTabKey
@@ -35,7 +36,8 @@ function toSafeInt(value: unknown): number {
   return Number.isFinite(num) ? Math.floor(num) : 0
 }
 
-const { isChannelPackage, channelClub, isVersionB, hasPoker, hasMtt } = useChannelBottomMenu()
+const { isChannelPackage, channelClub, isVersionB, isVersionC, hasPoker, hasMtt } =
+  useChannelBottomMenu()
 
 // 版本 A：首页、充值、消息、我的。
 // 版本 B：比赛、牌桌按可见数据动态展示；两者都没有时保留比赛作为默认入口。
@@ -67,6 +69,35 @@ const candidateTabs = computed<TabItem[]>(() => {
     icon: 'club',
   }
 
+  if (isVersionC.value) {
+    return [
+      { ...homeTab, label: t('UIChannelC_Home') },
+      {
+        key: 'poker',
+        label: t('UITexasReport_Label_AllBarPZ'),
+        path: '/channel/tables',
+        icon: 'pokerC',
+      },
+      {
+        key: 'mtt',
+        label: t('UITabbarMatch'),
+        path: '/channel/matches',
+        icon: 'mtt',
+      },
+      {
+        key: 'wallet',
+        label: t('UIGuildFund_RechargeText'),
+        path: '/wallet',
+        icon: 'wallet',
+      },
+      {
+        key: 'mine',
+        label: t('UIMine_title'),
+        path: '/mine',
+        icon: 'mine',
+      },
+    ]
+  }
   if (isChannelPackage.value && isVersionB.value) {
     return [
       ...(hasMtt.value || !hasPoker.value
@@ -156,6 +187,9 @@ const hasCasinoData = computed(() => channelClubId.value > 0 && casinoStore.game
 
 // 当前激活项索引：用于驱动顶部凸起在当前 tab 数量间平滑移动。
 const activeTabKey = computed<MainTabKey>(() => {
+  if (isVersionC.value && route.name === 'lobby') {
+    return 'home'
+  }
   if (isVersionB.value && route.name === 'lobby') {
     const requestedSection = Array.isArray(route.query.section)
       ? route.query.section[0]
@@ -216,6 +250,7 @@ const stableDynamicItems: Record<'mtt' | 'poker', TabItem> = {
 }
 
 function resolveCommittedTabs(): TabItem[] {
+  if (isVersionC.value) return candidateTabs.value.map(tab => ({ ...tab }))
   if (!isChannelPackage.value) {
     return candidateTabs.value.map((tab) => ({ ...tab }))
   }
@@ -453,7 +488,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <nav class="bottom-tab" data-app-overlay :aria-label="t('UITabbar_Text')">
+  <nav
+    class="bottom-tab"
+    :class="{ 'bottom-tab--channel-c': isVersionC }"
+    data-app-overlay
+    :aria-label="t('UITabbar_Text')"
+  >
     <svg
       ref="svgRef"
       class="tabbar-svg"
@@ -478,6 +518,7 @@ onBeforeUnmount(() => {
         type="button"
         class="tab-button"
         :class="{ 'is-active': activeTabKey === tab.key }"
+        :aria-current="activeTabKey === tab.key ? 'page' : undefined"
         @click="onTabClick(tab)"
       >
         <span class="tab-icon" aria-hidden="true">
@@ -493,6 +534,10 @@ onBeforeUnmount(() => {
               fill="currentColor"
             />
           </svg>
+          <span
+            v-else-if="tab.icon === 'pokerC'"
+            class="tab-icon-svg tab-icon-mask tab-icon-mask--poker-c"
+          ></span>
           <span
             v-else-if="tab.icon === 'mtt'"
             class="tab-icon-svg tab-icon-mask tab-icon-mask--mtt"
@@ -601,6 +646,8 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .bottom-tab {
   position: fixed;
   left: 50%;
@@ -710,6 +757,32 @@ onBeforeUnmount(() => {
 .tab-icon-mask--mtt {
   -webkit-mask: url('@/assets/icons/game_zone_mtt_mini.svg') center / contain no-repeat;
   mask: url('@/assets/icons/game_zone_mtt_mini.svg') center / contain no-repeat;
+}
+
+.tab-icon-mask--poker-c {
+  -webkit-mask: url('@/assets/channelC/poker-tab.svg') center / contain no-repeat;
+  mask: url('@/assets/channelC/poker-tab.svg') center / contain no-repeat;
+}
+
+.bottom-tab--channel-c {
+  --bg-new-nav-start: rgba(92, 62, 56, 0.8);
+  --bg-new-nav-end: rgba(23, 110, 132, 0.78);
+
+  .tab-button {
+    color: #a7a7a7;
+  }
+  .tab-button.is-active {
+    color: #69beff;
+  }
+  .tabbar-fill {
+    fill: url(#tabbar-fill-gradient);
+    @include theme-light-own {
+      fill: #202020;
+    }
+  }
+  .tabbar-stroke {
+    stroke: transparent;
+  }
 }
 
 .tab-icon-mask--mini-game {

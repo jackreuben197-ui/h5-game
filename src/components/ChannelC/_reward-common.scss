@@ -1,0 +1,54 @@
+@use 'sass:math';
+@function r($px) {
+  @return math.div($px, 39) * 1rem;
+}
+
+.c-reward-intro {
+  margin: 0 0 r(9.7);
+  color: #bcdbd1;
+  text-align: center;
+  font-size: r(10.615);
+  line-height: 1.3;
+}
+.c-reward-tabs {
+  display: flex;
+  gap: r(2.275);
+}
+.c-reward-tabs button {
+  flex: 1;
+  min-width: 0;
+  min-height: r(26.537);
+  padding: r(3) r(4);
+  border: r(0.758) solid rgba(118, 181, 160, 0.3);
+  border-radius: r(8.34);
+  background: rgba(255, 255, 255, 0.09);
+  color: #ecfff9;
+  font: inherit;
+  font-size: r(13.648);
+  font-weight: 700;
+  line-height: 1.3;
+  cursor: pointer;
+}
+.c-reward-tabs button.active {
+  border-color: #ffffff66;
+  background: #69beff;
+}
+.c-reward-meter {
+  height: r(8.34);
+  margin-top: r(3);
+  border: r(0.758) solid rgba(101, 154, 136, 0.36);
+  border-radius: r(8);
+  background: #002039;
+  overflow: hidden;
+}
+.c-reward-meter i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #69beff;
+}
+.c-reward-empty {
+  padding: r(24) r(10);
+  color: #bcdbd1;
+  text-align: center;
+}

@@ -4,6 +4,7 @@ export interface RechargeRewardItem {
   propValue: number
   quantity: number
   propIcon: string
+  multiLanguage?: unknown
 }
 
 export interface RechargeRewardNotification {
@@ -12,12 +13,15 @@ export interface RechargeRewardNotification {
   orderCategory: number
   orderType: number
   rewards: RechargeRewardItem[]
+  /** 133 的 reward_recharge_amount 已由服务端换算并四舍五入为整数 UC，直接展示。 */
+  rewardGold?: number
 }
 
 export interface RechargeRewardTier {
   startAmount: number
   endAmount: number
   rewards: RechargeRewardItem[]
+  rewardGold?: number
 }
 
 const PASSED_ORDER_STATUS = 2
@@ -90,13 +94,15 @@ export function normalizeRechargeRewardItem(value: unknown): RechargeRewardItem 
     firstPresent(value.propIcon, value.prop_icon, value.icon, value.iconUrl, value.icon_url),
   )
 
-  if (!propName || quantity <= 0) return null
+  const multiLanguage = firstPresent(value.multiLanguage, value.multi_language)
+  if ((!propName && !multiLanguage) || quantity <= 0) return null
   return {
     propId,
     propName,
     propValue,
     quantity,
     propIcon,
+    ...(multiLanguage != null ? { multiLanguage } : {}),
   }
 }
 
@@ -111,15 +117,22 @@ export function normalizeRechargeRewardTiers(value: unknown): RechargeRewardTier
         .map(normalizeRechargeRewardItem)
         .filter((reward): reward is RechargeRewardItem => reward !== null)
 
-      if (rewards.length === 0) return null
+      const rewardGold = Math.max(
+        0,
+        Math.floor(
+          toNumber(firstPresent(item.rewardGold, item.reward_gold, item.reward_tribe_gold)),
+        ),
+      )
+      if (rewards.length === 0 && rewardGold === 0) return null
       return {
-        startAmount: centsToAmount(
+        startAmount: toNumber(
           firstPresent(item.startAmount, item.start_amount, item.minAmount, item.min_amount),
         ),
-        endAmount: centsToAmount(
+        endAmount: toNumber(
           firstPresent(item.endAmount, item.end_amount, item.maxAmount, item.max_amount),
         ),
         rewards,
+        ...(rewardGold > 0 ? { rewardGold } : {}),
       }
     })
     .filter((tier): tier is RechargeRewardTier => tier !== null)
@@ -146,6 +159,21 @@ export function normalizeRechargeRewardNotification(
   const rewards = parseRewardSource(rewardSource)
     .map(normalizeRechargeRewardItem)
     .filter((item): item is RechargeRewardItem => item !== null)
+  const rewardGold = Math.max(
+    0,
+    Math.floor(
+      toNumber(
+        firstPresent(
+          value.rewardRechargeAmount,
+          value.reward_recharge_amount,
+          value.rewardGold,
+          value.reward_gold,
+          value.rewardTribeGold,
+          value.reward_tribe_gold,
+        ),
+      ),
+    ),
+  )
 
   return {
     orderNo: toString(firstPresent(value.orderNo, value.order_no)),
@@ -153,13 +181,17 @@ export function normalizeRechargeRewardNotification(
     orderCategory: toNumber(firstPresent(value.orderCategory, value.order_category)),
     orderType: toNumber(firstPresent(value.orderType, value.order_type)),
     rewards,
+    ...(rewardGold > 0 ? { rewardGold } : {}),
   }
 }
 
 export function shouldShowRechargeReward(
   notification: RechargeRewardNotification | null,
 ): notification is RechargeRewardNotification {
-  return isSuccessfulRechargeOrder(notification) && notification.rewards.length > 0
+  return (
+    isSuccessfulRechargeOrder(notification) &&
+    (notification.rewards.length > 0 || (notification.rewardGold ?? 0) > 0)
+  )
 }
 
 export function isSuccessfulRechargeOrder(

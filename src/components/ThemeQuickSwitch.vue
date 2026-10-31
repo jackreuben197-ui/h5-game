@@ -5,7 +5,9 @@ import { t, tJoin } from '@/i18n'
 
 const { isDark, setModeAnimated } = useTheme()
 
-const targetThemeLabel = computed(() => (isDark.value ? t('UIComponent_Text9') : t('UIComponent_Text10')))
+const targetThemeLabel = computed(() =>
+  isDark.value ? t('UIComponent_Text9') : t('UIComponent_Text10'),
+)
 
 function toggleTheme(): void {
   setModeAnimated(isDark.value ? 'light' : 'dark')

@@ -1,33 +1,40 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, watch } from 'vue'
 import { Code, subscribeH5WsCode } from '@/bridge/ws/messageCenter'
+import { decodeTribeActivityReward } from '@/bridge/ws/tribeActivityRewardNotify'
+import { useTribeRewardStore } from '@/stores/tribeReward'
+import {
+  enqueueReward,
+  hideRewardQueue,
+  rewardReceiptSourceKey,
+  showNextReward,
+  type RewardReceiptQueue,
+} from '@/features/tribeReward/notification'
 import { decodeUserOrderAudit } from '@/bridge/ws/orderAuditNotify'
 import { dispatchRechargeOrderSucceeded } from '@/features/rechargeReward/channel'
-import { createMockRechargeRewardNotification } from '@/features/rechargeReward/mock'
 import {
   isSuccessfulRechargeOrder,
   shouldShowRechargeReward,
   type RechargeRewardItem,
   type RechargeRewardNotification,
 } from '@/features/rechargeReward/model'
-import { getLocale } from '@/i18n'
 import { useTextI18n } from '@/i18n/useTextI18n'
 import PopupCloseButton from '@/views/wallet/components/PopupCloseButton.vue'
+import { rewardItemName } from '@/features/rechargeReward/display'
+import rewardCoin from '@/assets/icons/wallet/ic_coins.png'
 import { useGameStore } from '@/stores/game'
-import {
-  multiLanguageTemplateVersion,
-  resolveTemplateTextByKey,
-} from '@/utils/multiLanguageTemplate'
 
 const SEEN_ORDER_STORAGE_PREFIX = 'h5_recharge_reward_seen_v1'
 const MAX_SEEN_ORDERS = 100
 
 const { t } = useTextI18n()
 const gameStore = useGameStore()
-const current = ref<RechargeRewardNotification | null>(null)
-const queue: RechargeRewardNotification[] = []
+const rewards = useTribeRewardStore()
+const receipts = reactive<RewardReceiptQueue>({ current: null, pending: [] })
+const current = computed(() => receipts.current)
 const memorySeenOrders = new Set<string>()
 let stopOrderAuditListener: (() => void) | null = null
+let stopActivityRewardListener: (() => void) | null = null
 
 function storageKey(): string {
   return `${SEEN_ORDER_STORAGE_PREFIX}:${gameStore.loginUserId || 'unknown'}`
@@ -75,47 +82,60 @@ function isH5Visible(): boolean {
 }
 
 function showNext(): void {
-  if (current.value || !isH5Visible()) return
-  current.value = queue.shift() || null
+  showNextReward(receipts, isH5Visible())
 }
 
 function dismiss(): void {
-  current.value = null
+  receipts.current = null
   showNext()
 }
 
 function discardPending(): void {
-  current.value = null
-  queue.splice(0, queue.length)
+  receipts.current = null
+  receipts.pending = []
 }
 
 function onH5VisibilityChange(event: Event): void {
   const visible = Boolean((event as CustomEvent<{ visible?: boolean }>).detail?.visible)
-  if (!visible) discardPending()
+  if (visible) void nextTick(showNext)
+  else hideRewardQueue(receipts)
 }
+
+watch(
+  () => [gameStore.loginUserId, gameStore.isRealUser] as const,
+  ([userId, real], [previousUserId]) => {
+    if (!real || (previousUserId && previousUserId !== userId)) discardPending()
+  },
+)
 
 function displayRewardName(reward: RechargeRewardItem): string {
   // propName may be a template key such as PROP2023.... The template map is restored from
   // public_cache/multi_language_template; reading its version keeps an already-open popup in sync
   // when the asynchronous IndexedDB restore completes.
-  void multiLanguageTemplateVersion.value
-  const templateName = resolveTemplateTextByKey(reward.propName, getLocale())
-  if (templateName) return templateName
-
-  const translated = t(reward.propName)
-  return translated === reward.propName ? reward.propName : translated
+  return rewardItemName(reward.propName, reward.multiLanguage)
 }
 
 function enqueueNotification(notification: RechargeRewardNotification | null): void {
   if (!shouldShowRechargeReward(notification)) return
+  enqueueReward(
+    receipts,
+    {
+      ...notification,
+      rewardGold: notification.rewardGold ?? 0,
+      source: 'recharge',
+    },
+    rememberOrder,
+    isH5Visible(),
+  )
+}
 
-  // Mark the order consumed before checking visibility. Messages received at the table are intentionally
-  // discarded and must not become a deferred popup after returning to H5.
-  if (!rememberOrder(notification.orderNo)) return
-  if (!isH5Visible()) return
-
-  queue.push(notification)
-  showNext()
+function onActivityReward(rawBuffer: ArrayBufferLike): void {
+  if (!gameStore.isRealUser) return
+  const notification = decodeTribeActivityReward(rawBuffer)
+  if (!notification) return
+  if (enqueueReward(receipts, notification, rememberOrder, isH5Visible())) {
+    rewards.invalidate(notification.tribeId, notification.clubId)
+  }
 }
 
 function handleOrderAudit(notification: RechargeRewardNotification | null): void {
@@ -135,16 +155,17 @@ onMounted(() => {
   stopOrderAuditListener = subscribeH5WsCode(Code.MSG_S_USER_ORDER_AUDIT, (message) => {
     onOrderAudit(message.rawBuffer)
   })
+  stopActivityRewardListener = subscribeH5WsCode(Code.MSG_S_TRIBE_ACTIVITY_REWARD, (message) => {
+    onActivityReward(message.rawBuffer)
+  })
   window.addEventListener('h5:visibility-change', onH5VisibilityChange)
-
-  // if (import.meta.env.DEV) {
-  //   handleOrderAudit(createMockRechargeRewardNotification())
-  // }
 })
 
 onBeforeUnmount(() => {
   stopOrderAuditListener?.()
   stopOrderAuditListener = null
+  stopActivityRewardListener?.()
+  stopActivityRewardListener = null
   window.removeEventListener('h5:visibility-change', onH5VisibilityChange)
   discardPending()
 })
@@ -171,10 +192,28 @@ onBeforeUnmount(() => {
 
         <h2 class="reward-card__title">{{ t('UIRechargeReward_ReceivedTitle') }}</h2>
         <p class="reward-card__description">
-          {{ t('UIRechargeReward_ReceivedDescription') }}
+          {{
+            t(
+              current.rewardGold
+                ? current.rewards.length
+                  ? 'UIRechargeReward_CombinedDescription'
+                  : 'UIRechargeReward_CoinsDescription'
+                : 'UIRechargeReward_ReceivedDescription',
+              t(rewardReceiptSourceKey(current)),
+            )
+          }}
         </p>
 
         <div class="reward-card__list">
+          <div v-if="current.rewardGold" class="reward-card__item">
+            <img class="reward-card__coin-image" :src="rewardCoin" alt="" />
+            <div class="reward-card__item-copy">
+              <p>
+                <span>{{ t('UIChannelC_AllianceCoin') }}</span>
+                <strong>+{{ current.rewardGold }}</strong>
+              </p>
+            </div>
+          </div>
           <div
             v-for="reward in current.rewards"
             :key="`${reward.propId}-${reward.propName}`"
@@ -408,6 +447,13 @@ onBeforeUnmount(() => {
   object-fit: contain;
 }
 
+.reward-card__coin-image {
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
 .reward-card__ticket {
   fill: none;
   stroke: #ffdc69;
@@ -426,6 +472,7 @@ onBeforeUnmount(() => {
   flex: 1;
   align-items: baseline;
   gap: 5px;
+  flex-wrap: wrap;
 }
 
 .reward-card__item-copy p {
@@ -433,6 +480,7 @@ onBeforeUnmount(() => {
   min-width: 0;
   align-items: baseline;
   gap: 6px;
+  flex-wrap: wrap;
   margin: 0;
   color: var(--c-text, #fff);
   font-family: var(--wallet-font-cn, 'HONOR Sans CN');

@@ -1,4 +1,4 @@
-import { ServerMessageTribeBlackUser } from '@holdem-pb'
+import { ServerMessageTribeBlackUser } from '@silenthill/agreement-web'
 import { decodeHoldemPacket } from './holdemPacket'
 
 export interface WsTribeBlackUserNotifyPayload {

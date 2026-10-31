@@ -65,7 +65,7 @@ test('supports snake_case and JSON reward data compatibility', () => {
   assert.equal(shouldShowRechargeReward(notification), true)
 })
 
-test('normalizes price-list reward tiers and divides all monetary values by 100', () => {
+test('keeps recharge ranges in UC and converts only ticket values from cents', () => {
   const tiers = normalizeRechargeRewardTiers([
     {
       start_amount: 100,
@@ -83,8 +83,8 @@ test('normalizes price-list reward tiers and divides all monetary values by 100'
 
   assert.deepEqual(tiers, [
     {
-      startAmount: 1,
-      endAmount: 10_000,
+      startAmount: 100,
+      endAmount: 1_000_000,
       rewards: [
         {
           propId: 654,
@@ -148,4 +148,80 @@ test('local UI mock combines first-recharge and daily-recharge rewards at the te
     notification.rewards.map((reward) => reward.propValue),
     [500, 633, 100],
   )
+})
+
+test('UC-only and combined rewards are eligible without converting UC to cents', () => {
+  const base = { order_no: 'uc-order', status: 2, order_type: 1, reward_gold: 100, rewards: [] }
+  const notification = normalizeRechargeRewardNotification(base)
+  assert.equal(notification?.rewardGold, 100)
+  assert.equal(shouldShowRechargeReward(notification), true)
+  assert.equal(
+    shouldShowRechargeReward(normalizeRechargeRewardNotification({ ...base, status: 3 })),
+    false,
+  )
+  assert.equal(
+    shouldShowRechargeReward(normalizeRechargeRewardNotification({ ...base, order_type: 2 })),
+    false,
+  )
+  assert.equal(
+    shouldShowRechargeReward(normalizeRechargeRewardNotification({ ...base, reward_gold: -1 })),
+    false,
+  )
+  const combined = normalizeRechargeRewardNotification({
+    ...base,
+    rewards: [
+      {
+        prop_id: 662,
+        quantity: 2,
+        prop_value: 50000,
+        multi_language: { cn_name: '门票', us_name: 'Ticket' },
+      },
+    ],
+  })
+  assert.equal(combined?.rewardGold, 100)
+  assert.equal(combined?.rewards[0]?.propValue, 500)
+  assert.deepEqual(combined?.rewards[0]?.multiLanguage, { cn_name: '门票', us_name: 'Ticket' })
+  assert.equal(shouldShowRechargeReward(combined), true)
+})
+
+test('existing recharge config keeps reward_tribe_gold and multilingual props, including UC-only tiers', () => {
+  const tiers = normalizeRechargeRewardTiers([
+    { start_amount: 100, end_amount: 150, reward_tribe_gold: 100, rewards: [] },
+    {
+      start_amount: 150,
+      end_amount: 200,
+      reward_tribe_gold: 200,
+      rewards: [
+        {
+          prop_id: 662,
+          prop_value: 50000,
+          quantity: 3,
+          multi_language: { cn_name: '门票', us_name: 'Ticket' },
+        },
+      ],
+    },
+  ])
+  assert.equal(tiers.length, 2)
+  assert.deepEqual(tiers[0], { startAmount: 100, endAmount: 150, rewardGold: 100, rewards: [] })
+  assert.equal(tiers[1]?.rewardGold, 200)
+  assert.equal(tiers[1]?.rewards[0]?.propValue, 500)
+  assert.deepEqual(tiers[1]?.rewards[0]?.multiLanguage, { cn_name: '门票', us_name: 'Ticket' })
+  assert.equal(
+    normalizeRechargeRewardNotification({
+      orderNo: 'uc',
+      status: 2,
+      orderType: 1,
+      reward_tribe_gold: 100,
+    })?.rewardGold,
+    100,
+  )
+})
+
+test('recharge config accepts the final reward_gold field without scaling the reward coins', () => {
+  const tiers = normalizeRechargeRewardTiers([
+    { start_amount: 100, end_amount: 150, reward_gold: 100, rewards: [] },
+  ])
+  assert.equal(tiers[0]?.startAmount, 100)
+  assert.equal(tiers[0]?.endAmount, 150)
+  assert.equal(tiers[0]?.rewardGold, 100)
 })

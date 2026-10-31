@@ -134,7 +134,7 @@ export async function postMiscArtiClePushListApi(
 export async function postMiscBannerLobbyApi(
   payload: MiscBannerLobbyRequest = {} as MiscBannerLobbyRequest,
 ): Promise<ApiResponse<MiscBannerLobbyResponseData>> {
-  const endpoint = '/misc/banner/list'
+  const endpoint = '/misc/banner_lobby'
   const response = await http.post<ApiResponse<MiscBannerLobbyResponseData>>(endpoint, payload)
   return response.data
 }

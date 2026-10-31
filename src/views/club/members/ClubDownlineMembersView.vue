@@ -17,6 +17,7 @@ import imgBalance from '@/assets/icons/icon_credit_chip.png'
 import imgSearch from '@/assets/icons/club_search.svg'
 import imgInfo from '@/assets/icons/tips.svg'
 import { extractInvitationLink } from '@/utils/clubInvitation'
+import { appendInvitationRandomId } from '@/utils/playerInvitation'
 import { saveQrCodeImage } from '@/utils/qrcode'
 import { formatUC } from '@/utils/roomVisibility'
 import { showFailToast, showSuccessToast } from 'vant'
@@ -192,7 +193,7 @@ async function loadInvitationLink() {
 
   const cached = userInfoStore.getClubAgentInvitation(currentClub.random_id)
   if (cached) {
-    invitationLink.value = cached
+    invitationLink.value = appendInvitationRandomId(cached, userInfoStore.userInfo?.user?.un_id)
     return
   }
 
@@ -211,7 +212,7 @@ async function loadInvitationLink() {
     }
 
     const link = extractInvitationLink(response.data, currentClub.invitation_code)
-    let finalLink = link
+    const finalLink = appendInvitationRandomId(link, userInfoStore.userInfo?.user?.un_id)
 
     invitationLink.value = finalLink
     if (finalLink) {

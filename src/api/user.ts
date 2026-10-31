@@ -32,6 +32,8 @@ import type {
   UserRefreshData,
   UserRefreshRequest,
   UserRegisterData,
+  UserInviteRegisterData,
+  UserInviteRegisterRequest,
   UserRegisterRequest,
   UserRoomData,
   UserRoomRequest,
@@ -419,6 +421,16 @@ export async function postUserCheckNicknameApi(
 }
 
 // 对齐 cocos WebUserRegister.API。
+export async function postUserInviteRegisterApi(
+  payload: UserInviteRegisterRequest,
+): Promise<ApiResponse<UserInviteRegisterData>> {
+  const response = await http.post<ApiResponse<UserInviteRegisterData>>(
+    '/user/invite_register',
+    payload,
+  )
+  return response.data
+}
+
 export async function postUserRegisterApi(
   payload: UserRegisterRequest,
   config?: Partial<HttpRequestConfigExt>,

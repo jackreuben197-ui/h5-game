@@ -15,12 +15,11 @@ function normalizedText(value: unknown): string {
 
 function normalizedHttpUrl(value: unknown): string {
   const raw = normalizedText(value)
-  if (!raw || typeof window === 'undefined') {
-    return ''
-  }
+  if (!raw) return ''
 
   try {
-    const url = new URL(raw, window.location.href)
+    const base = typeof window === 'undefined' ? 'https://platform.invalid/' : window.location.href
+    const url = new URL(raw, base)
     return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : ''
   } catch {
     return ''
@@ -28,15 +27,9 @@ function normalizedHttpUrl(value: unknown): string {
 }
 
 function ensureMeta(name: string): HTMLMetaElement | null {
-  if (typeof document === 'undefined') {
-    return null
-  }
-
+  if (typeof document === 'undefined') return null
   const existing = document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`)
-  if (existing) {
-    return existing
-  }
-
+  if (existing) return existing
   const meta = document.createElement('meta')
   meta.name = name
   document.head.appendChild(meta)
@@ -44,19 +37,32 @@ function ensureMeta(name: string): HTMLMetaElement | null {
 }
 
 function ensureLink(rel: string): HTMLLinkElement | null {
-  if (typeof document === 'undefined') {
-    return null
-  }
-
+  if (typeof document === 'undefined') return null
   const existing = document.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`)
-  if (existing) {
-    return existing
-  }
-
+  if (existing) return existing
   const link = document.createElement('link')
   link.rel = rel
   document.head.appendChild(link)
   return link
+}
+
+export interface SafariAppConfigSource {
+  safari_icon_url?: string
+  safari_label?: string
+}
+
+export function resolveSafariWebAppConfig(
+  club: SafariAppConfigSource | null | undefined,
+  platformIconUrl: string = DEFAULT_CLUB_ICON,
+  platformLabel: string = DEFAULT_CLUB_NAME,
+): { label: string; iconUrl: string; hasCustomIcon: boolean } {
+  const label = normalizedText(club?.safari_label) || normalizedText(platformLabel) || DEFAULT_CLUB_NAME
+  const customIconUrl = normalizedHttpUrl(club?.safari_icon_url)
+  return {
+    label,
+    iconUrl: customIconUrl || normalizedHttpUrl(platformIconUrl) || platformIconUrl,
+    hasCustomIcon: Boolean(customIconUrl),
+  }
 }
 
 export function applySafariWebAppConfig(club?: OrgClubSearchInfoData | null): void {

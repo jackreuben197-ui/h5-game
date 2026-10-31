@@ -1,3 +1,5 @@
+import type { RoomDisplayFields, MttDisplayFields } from '@/utils/lobbyDisplayFields'
+
 // /roomcenter/groups 请求参数。
 export interface RoomcenterGroupsRequest {
   [key: string]: unknown
@@ -97,7 +99,7 @@ export interface RoomcenterRoomsRequest {
 }
 
 // /roomcenter/rooms 单项。
-export interface RoomcenterRoomsRecord {
+export interface RoomcenterRoomsRecord extends RoomDisplayFields {
   // 房间 id。
   rid?: number
   // 房间名称。
@@ -268,7 +270,7 @@ export interface RoomcenterFriendRoomsRequest {
 }
 
 // /roomcenter/friend/rooms 单项（cocos 未声明完整字段）。
-export interface RoomcenterFriendRoomRecord {
+export interface RoomcenterFriendRoomRecord extends RoomDisplayFields {
   rid?: number
   name?: string
   room_type?: number
@@ -323,7 +325,7 @@ export interface RoomcenterInvitationRoomRequest {
 }
 
 // /roomcenter/invitation/room 普通房间数据（对应 Unity HttpRoomInvitationProtocol.Data）。
-export interface RoomcenterInvitationRoomRecord {
+export interface RoomcenterInvitationRoomRecord extends RoomDisplayFields {
   rid?: number
   room_type?: number
   play_duration?: number
@@ -345,7 +347,7 @@ export interface RoomcenterInvitationRoomData {
   // SNG 邀请数据（结构暂未在 H5 使用）。
   sng_data?: Record<string, unknown> | null
   // MTT 邀请数据（结构暂未在 H5 使用）。
-  mtt_data?: Record<string, unknown> | null
+  mtt_data?: RoomcenterMttDetails | null
   [key: string]: unknown
 }
 
@@ -356,7 +358,7 @@ export interface RoomcenterRoomInfoRequest {
 }
 
 // /roomcenter/room/info 房间信息（cocos 未声明完整字段）。
-export interface RoomcenterRoomInfoRoom {
+export interface RoomcenterRoomInfoRoom extends RoomDisplayFields {
   [key: string]: unknown
 }
 
@@ -367,6 +369,7 @@ export interface RoomcenterRoomInfoUser {
 
 // /roomcenter/room/info 响应 data。
 export interface RoomcenterRoomInfoData {
+  data?: RoomRecord // /room/info 实际响应为 data.data
   room?: RoomcenterRoomInfoRoom
   users?: RoomcenterRoomInfoUser[]
   [key: string]: unknown
@@ -411,7 +414,8 @@ export interface RoomcenterMttListRequest {
 }
 
 // /roomcenter/mtt/list 单项（来源注释字段，按可选兼容）。
-export interface RoomcenterMttListRecord {
+export interface RoomcenterMttListRecord extends MttDisplayFields {
+  mtt_banner_url?: string
   match_id?: number
   name?: string
   type?: number
@@ -517,7 +521,7 @@ export interface RoomcenterRandomEnterRequest {
 }
 
 // /roomcenter/random_enter records 单项。
-export interface RoomcenterRandomEnterRecord {
+export interface RoomcenterRandomEnterRecord extends RoomDisplayFields {
   room_id?: number
   room_type?: number
   anti_cheat_type?: number
@@ -603,7 +607,8 @@ export interface RoomcenterMttBlindLevelDelay {
 }
 
 // /roomcenter/mtt/{id}/detail mtt 字段（对应 cocos RoomCenterMttDetailS.MttDetails，并补充 RoomCenterMttIdDetail.Mtt 字段）。
-export interface RoomcenterMttDetails {
+export interface RoomcenterMttDetails extends MttDisplayFields {
+  mtt_banner_url?: string
   match_id?: number
   name?: string
   type?: number
@@ -900,6 +905,10 @@ export interface RoomUser {
 
 // 牌桌详情结构（字段来自旧版 roomList 页面）。
 export interface RoomRecord {
+  /** 服务端热门推荐标记：数字 1 推荐；缺省不进入热门推荐。 */
+  is_top?: number
+  room_intro?: string
+  room_features?: string
   rid: number | string
   name?: string
   game_type: number
@@ -982,6 +991,9 @@ export interface RoomcenterGuestContrastRoomsRequest {
 
 // /roomcenter/user/contrast/rooms 单条变化字段（精简结构）。
 export interface RoomcenterUserContrastRoomInfo {
+  is_top?: number
+  room_intro?: string
+  room_features?: string
   rid: number | string
   status?: number
   hand_num?: number
@@ -1014,6 +1026,12 @@ export interface MttListRequest {
 
 // MTT 列表项（字段保持宽松，便于首页统计与列表页共用）。
 export interface MttListRecord {
+  /** 服务端热门推荐标记：数字 1 推荐；缺省不进入热门推荐。 */
+  is_top?: number
+  tournament_label?: string
+  hunter_on?: number
+  hunter_bonus?: number
+  snowball_on?: number
   match_id?: number
   name?: string
   game_type?: number
@@ -1040,6 +1058,7 @@ export interface MttListRecord {
   addon_end_bl?: number
   anti_cheat_type?: number
   mtt_banner_url?: string
+  mtt_banner_url_c?: string
   game_icon?: string
   limit_participants?: number
   origin_type?: number
@@ -1455,6 +1474,7 @@ export interface RoomCenterUserMatchListMttInfo {
   bought?: number // 0: 无法报名 , 1: 报名中 , 2: 参与中
   mtt_buy?: number // 是否已报名
   mtt_banner_url?: string // MTT比赛banner
+  mtt_banner_url_c?: string // MTT比赛版本C banner
   force_close_time?: number // 限时赛时间
   game_icon?: string // 游戏图标
   initial_score?: number // 初始分数
@@ -1479,6 +1499,8 @@ export interface RoomCenterUserMatchListMttInfo {
 }
 
 export interface RoomCenterUserMatchListContrastMttInfo {
+  is_top?: number // 热门推荐，0 取消推荐
+  mtt_banner_url_c?: string // 空字符串清空 C 图片
   match_id?: number // 比赛id
   bought?: number // 0: 无法报名 , 1: 报名中 , 2: 参与中
   mtt_buy?: number // 是否已报名

@@ -42,11 +42,12 @@ import { useUserInfoStore } from '@/stores/userInfo'
 import { generateQrCodeUrl } from '@/utils/qrcode'
 import {
   buildChannelAgentInviteUrl,
-  buildChannelClubInviteUrl,
+  buildChannelPlayerInviteUrl,
   buildChannelRegisterUrl,
   isPrivateDomainMode,
   resolveChannelClubInviteFields,
 } from '@/utils/channelPackage'
+import { appendInvitationRandomId } from '@/utils/playerInvitation'
 import { formatUC } from '@/utils/roomVisibility'
 import { showFailToast, showSuccessToast } from 'vant'
 import mainBgUrl from '@/assets/images/main_bg.webp'
@@ -1087,11 +1088,20 @@ async function generateInviteQrCode(): Promise<void> {
   const safariBaseUrl =
     inviteFields.safariBaseUrl ||
     String(userInfoStore.currentClub?.safari_base_url || '').trim()
+  const inviterRandomId = userInfoStore.userInfo?.user?.un_id
   const finalLink = isAgent.value && agentInviteCode.value
-    ? buildChannelAgentInviteUrl(agentInviteCode.value, clubInviteCode, safariBaseUrl)
+    ? buildChannelAgentInviteUrl(
+        agentInviteCode.value,
+        clubInviteCode,
+        safariBaseUrl,
+        agentShareRandomId.value || inviterRandomId,
+      )
     : isChannelPackage
-      ? buildChannelClubInviteUrl(clubInviteCode, safariBaseUrl)
-      : buildChannelRegisterUrl({ inviteCode: clubInviteCode, safariBaseUrl })
+      ? buildChannelPlayerInviteUrl(inviterRandomId, clubInviteCode, safariBaseUrl)
+      : appendInvitationRandomId(
+          buildChannelRegisterUrl({ inviteCode: clubInviteCode, safariBaseUrl }),
+          inviterRandomId,
+        )
 
   if (!finalLink || (!clubInviteCode && !safariBaseUrl)) {
     imgInviteQr.value = ''

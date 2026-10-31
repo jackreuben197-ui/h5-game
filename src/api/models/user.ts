@@ -122,15 +122,25 @@ export interface UserRegisterRequest {
   email?: string
   // 平台（1-IOS 2-Android 3-Windows 4-OSX 5-Web 6-MiniWeb 7-Linux）。
   platform?: number
-  // 邀请码。
+  // 普通玩家邀请传目标俱乐部码；代理邀请沿用 i 参数中的代理码。
   invite_code?: string
+  // 邀请人的玩家随机 ID，管理员、代理和普通玩家邀请均提交；不改变 invite_code 规则。
+  inviter_random_id?: number
+  // random_id 只用于分享链接，不是注册接口字段。
+  random_id?: never
   // 绑定邀请码唯一id（代理）
   trace_hash?: string
   [key: string]: unknown
 }
 
+// /user/invite_register 只返回手机号/邮箱，不返回登录 token。
+export type UserInviteRegisterRequest = UserRegisterRequest
+export type UserInviteRegisterData = string
+
 // /user/register 响应 data。
 export interface UserRegisterData {
+  token?: string
+  expire_at?: number
   // 用户 id。
   userId?: number
   [key: string]: unknown

@@ -47,6 +47,7 @@ import { useGameStore } from '@/stores/game'
 import { useMttListStore } from '@/stores/mttList'
 import LoginSession from '@/session/loginSession'
 import { requireRealUser } from '@/session/realUserGate'
+import { createLogger } from '@/utils/logger'
 
 type DetailTabName = 'status' | 'players' | 'rewards' | 'tables' | 'blinds'
 
@@ -54,6 +55,7 @@ const route = useRoute()
 const router = useRouter()
 const gameStore = useGameStore()
 const mttListStore = useMttListStore()
+const log = createLogger('[mttDetail]')
 const activeTab = ref<DetailTabName>('status')
 const detailData = ref<RoomcenterMttDetailData | null>(null)
 const btnLoading = ref(false)
@@ -153,9 +155,17 @@ async function loadDetail(force = false): Promise<void> {
     if (!force) return
   }
   const request = (async () => {
+    const id = matchId.value
     try {
-      const res = await getRoomcenterMttDetailApi(matchId.value)
-      if (res.code === 0 && res.data) detailData.value = res.data
+      const res = await getRoomcenterMttDetailApi(id)
+      if (res.code === 0 && res.data) {
+        detailData.value = res.data
+        log.debug('MTT detail participant response', {
+          matchId: id,
+          participants: res.data.mtt?.participants,
+          stateCode: res.data.state_code,
+        })
+      }
     } catch (error) {
       console.error("[MttDetailView] " + t('UIPayWithdrawBtn01') + " MTT " + t('UIClub_DetailFail'), error)
     }
@@ -475,7 +485,7 @@ async function handleBtnClick(): Promise<void> {
       const res = await mttQuitApi(matchId.value)
       if (res && res.code === 0) {
         mttListStore.setMttRegistered(matchId.value, false)
-        await loadDetail()
+        await Promise.all([loadDetail(true), mttListStore.refreshMttRecord(matchId.value)])
       }
     } finally {
       btnLoading.value = false
@@ -510,7 +520,7 @@ async function handleBuyinConfirm(payload: {
     const res = isRebuy ? await mttRebuyApi(id, apiPayload) : await mttBuyInApi(id, apiPayload)
     if (res && res.code === 0) {
       if (!isRebuy) mttListStore.setMttRegistered(id, true)
-      await loadDetail()
+      await Promise.all([loadDetail(true), mttListStore.refreshMttRecord(id)])
     }
   } finally {
     btnLoading.value = false

@@ -4,6 +4,7 @@ import type { OrgClubSearchInfoData, OrgClubData } from '@/api/models/org'
 import { postOrgClubDefaultApi } from '@/api/org'
 import StorageKey from '@/constants/storageKey'
 import { dzpkPersistStorage } from '@/utils/localStore'
+import { useAppConfigStore } from '@/stores/appConfig'
 import {
   copyStorageToMainDomain,
   extractInviteCodeFromSubdomain,
@@ -81,6 +82,7 @@ function normalizeDefaultClub(club: OrgClubSearchInfoData | undefined): ClubInfo
     safari_label: String(safariLabel),
     safari_base_url: String(club.safari_base_url || ''),
     room_logo: String(club.room_logo || ''),
+    tribe_random_id: toSafeInt(club.tribe_random_id),
     banner: String(club.banner || ''),
     random_id: toSafeInt(club.random_id),
     support_im_rid: String(club.support_im_rid || ''),
@@ -252,24 +254,37 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
         return channelDefaultClubInFlight
       }
 
-      // Channel subdomain / Telegram club_<code> links resolve to an invite_code; Telegram
-      // game links (login_/home_<roomId>_<clubRandomId>) resolve to a club random id. Both
-      // select the same private-domain club via /org/club/default.
-      const inviteCode = channelInviteCode || (baseUrl ? '' : resolveInviteCode(hostname))
-      const urlClubId = resolveUrlClubId()
-      const clubRandomId = resolveUrlClubRandomId() || Number(resolveTelegramClubRandomId()) || 0
-      const payload = baseUrl
-        ? { base_url: baseUrl }
-        : inviteCode
-          ? { invite_code: inviteCode }
-          : urlClubId
-            ? ({ club_id: urlClubId } as Record<string, unknown>)
-            : clubRandomId
-              ? { random_id: clubRandomId }
-              : {}
-
       channelDefaultClubInFlight = (async () => {
         try {
+          if (!(await useAppConfigStore().ensurePlatformDomainsReady())) {
+            return this.channelDefaultClub
+          }
+
+          const localInviteCode =
+            import.meta.env?.DEV && (hostname === 'localhost' || hostname.startsWith('127.'))
+              ? resolveInviteCode(hostname)
+              : ''
+          const resolvedChannelInviteCode =
+            localInviteCode || extractInviteCodeFromSubdomain(hostname)
+          const resolvedBaseUrl = resolvedChannelInviteCode ? '' : resolveSafariBaseUrl(hostname)
+          // Channel subdomain / Telegram club_<code> links resolve to an invite_code; Telegram
+          // game links (login_/home_<roomId>_<clubRandomId>) resolve to a club random id. Both
+          // select the same private-domain club via /org/club/default.
+          const inviteCode =
+            resolvedChannelInviteCode || (resolvedBaseUrl ? '' : resolveInviteCode(hostname))
+          const urlClubId = resolveUrlClubId()
+          const clubRandomId =
+            resolveUrlClubRandomId() || Number(resolveTelegramClubRandomId()) || 0
+          const payload = resolvedBaseUrl
+            ? { base_url: resolvedBaseUrl }
+            : inviteCode
+              ? { invite_code: inviteCode }
+              : urlClubId
+                ? ({ club_id: urlClubId } as Record<string, unknown>)
+                : clubRandomId
+                  ? { random_id: clubRandomId }
+                  : {}
+
           const response = await postOrgClubDefaultApi(payload)
           if (Number(response.code) !== 0) {
             throw new Error(String(response.msg || '渠道俱乐部加载失败'))

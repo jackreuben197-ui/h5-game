@@ -6,7 +6,6 @@
     "paths": {
       "@/*": ["./src/*"],
       "@bridge-protocol": ["./src/bridge/protocol"],
-      "@holdem-pb": ["./node_modules/@silenthill/agreement-web/dist/index"],
       "@silenthill/h5-cc-i18n": ["./src/shims/h5-cc-i18n"]
     },
 

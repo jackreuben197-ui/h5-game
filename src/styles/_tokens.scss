@@ -92,6 +92,8 @@ $color-bg-shadow: rgba(0, 0, 0, 0.2);
   --c-overlay: rgba(12, 12, 12, 0.6);
   --c-border: rgba(255, 255, 255, 0.2);
   --c-divider: rgba(255, 255, 255, 0.1);
+  --font-family-sf: 'SF Pro', 'PingFang SC', 'Noto Sans SC', 'Hiragino Sans GB',
+    'Helvetica Neue', Arial, sans-serif;
 }
 
 html[data-theme='light'] .only-dark {

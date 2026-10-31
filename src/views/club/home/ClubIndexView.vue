@@ -60,7 +60,7 @@ import peopleBgUrl from '@/assets/icons/icon_people.png'
 import SafetyGuardDialog from '@/components/Dialog/SafetyGuardDialog.vue'
 import CasinoView from '@/views/home/CasinoView.vue'
 import { useCasinoStore } from '@/stores/casino'
-import { GameDialog } from '@/components/Dialog'
+import ClubNoticeDialog from '@/components/Club/ClubNoticeDialog.vue'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
 import {
   multiLanguageTemplateVersion,
@@ -68,6 +68,7 @@ import {
 } from '@/utils/multiLanguageTemplate'
 import { formatDateTime, formatTodayAwareTimeLabel, toTimestampMs } from '@/utils/time'
 import { isMttRegistered } from '@/utils/mttRegistration'
+import { resolveSeriesLayoutByType } from '@/utils/mttCardLayout'
 import { requireRealUser } from '@/session/realUserGate'
 import { ensureExperienceSessionReady } from '@/session/experienceSession'
 
@@ -1079,14 +1080,6 @@ function normalizeRelateTribeClubList(value: unknown): Array<Record<string, unkn
   >
 }
 
-function resolveSeriesLayoutByType(seriesType: number, total: number): MttLayout {
-  if (total <= 1) return 'lg'
-  if (seriesType === 1) return 'lg'
-  if (seriesType === 2) return 'md'
-  if (seriesType === 3) return total === 2 ? 'md' : 'sm'
-  return total <= 4 ? 'md' : 'sm'
-}
-
 function resolveStage(record: RawMttRecord, nowTimestamp: number): MttStage {
   const status = toSafeInt(record.status)
   if (status === MttMatchStatus.CREATED) {
@@ -1464,28 +1457,14 @@ const handleBack = () => {
         </button>
       </div>
 
-      <GameDialog
+      <ClubNoticeDialog
         v-model:show="showClubNoticePopup"
         class="club-notice-dialog"
-        dialog-width="8.45rem"
-        :show-footer="false"
-        :close-on-click-overlay="true"
-      >
-        <div class="club-notice-body">
-          <div class="club-notice-club-pill">{{ clubDisplayName }}</div>
-          <p class="club-notice-title">{{ activeClubNotice?.title }}</p>
-          <p class="club-notice-date">{{ activeClubNotice?.dateText }}</p>
-          <p class="club-notice-content">{{ activeClubNotice?.content }}</p>
-          <button
-            class="club-notice-ignore-btn"
-            type="button"
-            :disabled="ignoringClubNotice"
-            @click="handleIgnoreNoticeToday"
-          >
-            {{ t('UIClub_Again4') }}
-          </button>
-        </div>
-      </GameDialog>
+        :club-name="clubDisplayName"
+        :notice="activeClubNotice"
+        :ignoring="ignoringClubNotice"
+        @ignore="handleIgnoreNoticeToday"
+      />
 
       <SafetyGuardDialog v-model:show="showSafetyGuardPopup" :tribe-id="selectedTribeId" />
     </div>
@@ -1846,65 +1825,7 @@ const handleBack = () => {
   transform: rotate(90deg);
 }
 
-.club-notice-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.16rem;
-}
 
-.club-notice-club-pill {
-  padding: 0.187rem 0.293rem;
-  border-radius: 0.67rem;
-  background: rgba(44, 45, 45, 0.31);
-  color: #f9f9f9;
-  font-size: 0.427rem;
-  line-height: 1.2;
-}
-
-.club-notice-title {
-  margin: 0.1rem 0 0;
-  color: #fff;
-  font-size: 0.427rem;
-  line-height: 1.4;
-  text-align: center;
-  letter-spacing: 0.009rem;
-}
-
-.club-notice-date {
-  margin: 0;
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 0.427rem;
-  line-height: 1.4;
-}
-
-.club-notice-content {
-  margin: 0.06rem 0 0;
-  width: 100%;
-  min-height: 2.1rem;
-  color: rgba(255, 255, 255, 0.95);
-  font-size: 0.4rem;
-  line-height: 1.4;
-  word-break: break-word;
-  white-space: pre-wrap;
-}
-
-.club-notice-ignore-btn {
-  margin-top: 0.3rem;
-  width: 100%;
-  height: 1.4358rem;
-  border: 0.0133rem solid rgba(242, 242, 242, 0.1);
-  border-radius: 1.0557rem;
-  background: rgba(44, 45, 45, 0.31);
-  color: #f9f9f9;
-  font-size: 0.4rem;
-  font-weight: 500;
-  line-height: 1.2;
-
-  &:disabled {
-    opacity: 0.5;
-  }
-}
 
 .club-quick-actions {
   margin-top: 0.4177rem;

@@ -59,7 +59,7 @@ const mttOptions = [
     <template v-else>
       <ChannelCMultiSelect
         v-model="tournament"
-        :all-label="t('UIChannelC_AllMatches')"
+        :all-label="t('UIChannelC_AllMatchesShort')"
         :options="tournamentOptions"
       />
       <div class="c-filter-options" role="group" :aria-label="t('UIChannelC_AllMatches')">

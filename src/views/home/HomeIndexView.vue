@@ -1120,18 +1120,17 @@ onBeforeUnmount(() => {
       @confirm="handleWalletConfirm"
       @cancel="showGameClubSelector = false"
     />
-
-    <div v-if="showChannelFloatingActions" class="floating-action-area">
-      <button
-        v-if="canManageChannelClub"
-        class="floating-menu-btn"
-        type="button"
-        :aria-label="t('UIClub_ClubManager')"
-        @click="goToClubDetail"
-      >
-        <img :src="clubDetailButtonIcon" alt="" />
-      </button>
-    </div>
+  </div>
+  <div v-if="showChannelFloatingActions" class="floating-action-area">
+    <button
+      v-if="canManageChannelClub"
+      class="floating-menu-btn"
+      type="button"
+      :aria-label="t('UIClub_ClubManager')"
+      @click="goToClubDetail"
+    >
+      <img :src="clubDetailButtonIcon" alt="" />
+    </button>
   </div>
 </template>
 

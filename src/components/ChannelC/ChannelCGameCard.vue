@@ -1,24 +1,25 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { ExtendGameRecord } from '@/api/casino'
-import type { CardSize } from '@/features/channelC/model'
+import { getGameImage, type CardSize } from '@/features/channelC/model'
 import { t } from '@/i18n'
 
 const props = defineProps<{ game: ExtendGameRecord; size?: CardSize }>()
 defineEmits<{ play: [game: ExtendGameRecord] }>()
 const name = computed(() => props.game.game_name || '')
-const cover = computed(() => props.game.game_icon || props.game.game_url_p || '')
+const cover = computed(() => getGameImage(props.game, props.size))
 const failedCover = ref(false)
+const showCover = computed(() => Boolean(cover.value) && !failedCover.value)
 </script>
 
 <template>
   <article
     class="c-game-card"
-    :class="size && `c-game-card--${size}`"
+    :class="[size && `c-game-card--${size}`, { 'c-game-card--empty': !showCover }]"
     @click="$emit('play', game)"
   >
     <img
-      v-if="cover && !failedCover"
+      v-if="showCover"
       class="c-game-cover"
       :src="cover"
       :alt="name"
@@ -54,8 +55,15 @@ const failedCover = ref(false)
   aspect-ratio: 183 / 146.25;
   object-fit: cover;
 }
+.c-game-card--empty {
+  @include theme-light-own {
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.08),
+      0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+}
 .c-game-cover--empty {
-  background: rgba(0, 0, 0, 0.06);
+  background: linear-gradient(150deg, rgba(60, 80, 100, 0.2), rgba(60, 80, 100, 0.1));
 
   @include theme-dark {
     background: rgba(255, 255, 255, 0.08);

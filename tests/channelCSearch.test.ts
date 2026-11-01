@@ -100,7 +100,7 @@ test('search includes real non-recommended records and retains ranking plus 3-ta
   assert.equal(new Set(cards.map((card) => card.key)).size, 6)
   const columns = buildWaterfallColumns(cards)
   assert.equal(columns[0][0], cards[0])
-  assert.equal(columns[1][0], cards[1])
+  assert.equal(columns[1][0], cards[3])
   assert.equal(columns.flat().length, cards.length)
 })
 

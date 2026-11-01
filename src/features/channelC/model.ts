@@ -21,6 +21,24 @@ export const GAME_ARTWORK_HEIGHT: Record<CardSize, number> = {
   small: 121.3,
 }
 const CASINO_SIZE_CYCLE: readonly CardSize[] = ['large', 'medium', 'medium', 'small']
+const GAME_IMAGE_FIELDS = {
+  large: 'game_url_ca',
+  medium: 'game_url_cb',
+  small: 'game_url_cc',
+} as const satisfies Record<CardSize, keyof ExtendGameRecord>
+const GAME_IMAGE_SIZES: readonly CardSize[] = ['large', 'medium', 'small']
+const WATERFALL_LOOKAHEAD = 6
+const WATERFALL_MIN_STAGGER = 12
+
+export function getGameImage(game: ExtendGameRecord, size?: CardSize): string {
+  return size ? game[GAME_IMAGE_FIELDS[size]]?.trim() || '' : ''
+}
+
+function resolveGameSize(game: ExtendGameRecord, preferred?: CardSize): CardSize | undefined {
+  if (getGameImage(game, preferred)) return preferred
+  return GAME_IMAGE_SIZES.find((size) => getGameImage(game, size)) ?? preferred
+}
+
 export const isRecommended = (record: { is_top?: unknown }): boolean =>
   record.is_top === 1
 
@@ -104,7 +122,12 @@ export function buildChannelCFeed(
   if (section === 'mtt') return mtts
   const casino: LobbyCard[] =
     section === 'home'
-      ? games.map((game) => ({ key: `game-${game.id}`, kind: 'game', game }))
+      ? games.map((game) => ({
+          key: `game-${game.id}`,
+          kind: 'game',
+          game,
+          size: resolveGameSize(game),
+        }))
       : []
   return interleaveChannelCCards(tables, mtts, casino)
 }
@@ -115,7 +138,7 @@ export function buildCasinoCards(games: readonly ExtendGameRecord[]): LobbyCard[
     key: `casino-${game.id}-${index}`,
     kind: 'game',
     game,
-    size: CASINO_SIZE_CYCLE[index % CASINO_SIZE_CYCLE.length]!,
+    size: resolveGameSize(game, CASINO_SIZE_CYCLE[index % CASINO_SIZE_CYCLE.length]),
   }))
 }
 
@@ -160,14 +183,31 @@ export function estimateCardHeight(card: LobbyCard): number {
     : 92.5 + 34 + roomDescription(card.room).length * 19
 }
 
-/** 首排左右顶部对齐，之后按已排高度放入较短列；列内始终保持输入顺序。 */
+function findStaggeredCard(queue: readonly LobbyCard[], neighborHeight: number): number {
+  const index = queue
+    .slice(0, WATERFALL_LOOKAHEAD)
+    .findIndex((card) => Math.abs(estimateCardHeight(card) - neighborHeight) >= WATERFALL_MIN_STAGGER)
+  return Math.max(index, 0)
+}
+
+/** 首排左右顶部对齐，之后按已排高度放入较短列；与相邻列同一水平线且等高时，就近换一张不同高度的卡片形成错落。 */
 export function buildWaterfallColumns(cards: readonly LobbyCard[]): [LobbyCard[], LobbyCard[]] {
   const columns: [LobbyCard[], LobbyCard[]] = [[], []]
   const heights = [0, 0]
-  cards.forEach((card) => {
+  const lastTop = [-1, -1]
+  const lastHeight = [0, 0]
+  const queue = [...cards]
+  while (queue.length) {
     const column = heights[0]! <= heights[1]! ? 0 : 1
+    const neighbor = column === 0 ? 1 : 0
+    const aligned = Math.abs(lastTop[neighbor]! - heights[column]!) < 1
+    const index = aligned ? findStaggeredCard(queue, lastHeight[neighbor]!) : 0
+    const card = queue.splice(index, 1)[0]!
+    const height = estimateCardHeight(card)
     columns[column].push(card)
-    heights[column]! += estimateCardHeight(card) + 7
-  })
+    lastTop[column] = heights[column]!
+    lastHeight[column] = height
+    heights[column]! += height + 7
+  }
   return columns
 }

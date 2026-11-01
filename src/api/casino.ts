@@ -27,6 +27,9 @@ export interface ExtendGameRecord {
   game_type?: number | string
   game_icon?: string
   game_url_p?: string
+  game_url_ca?: string
+  game_url_cb?: string
+  game_url_cc?: string
   is_popular?: number
   is_popular_p?: number
   order_sort?: number

@@ -15,10 +15,12 @@ const hooks = registerHooks({
   },
 })
 const {
+  buildCasinoCards,
   buildChannelCFeed,
   buildWaterfallColumns,
   getMttStage,
   getCardSize,
+  getGameImage,
   isRecommended,
   estimateCardHeight,
   matchesMttFilter,
@@ -222,16 +224,16 @@ test('MTTs sort registered, registration open, waiting, then by ascending start 
   assert.equal(getMttStage(running, now + 80000), 'running')
 })
 
-test('waterfall starts both columns at the top and appends subsequent cards to the shorter column', () => {
+test('waterfall starts with cards of different heights and appends the rest to the shorter column', () => {
   const cards = buildChannelCFeed([room(1), room(2), room(3), room(4)], [match(1)], 'home', now)
   const columns = buildWaterfallColumns(cards)
   assert.equal(columns[0][0], cards[0])
-  assert.equal(columns[1][0], cards[1])
+  assert.equal(columns[1][0], cards[3])
   assert.deepEqual(
     columns.map((column) => column.map((card) => card.key)),
     [
-      ['poker-4', 'poker-2', 'poker-1'],
-      ['poker-3', 'mtt-1'],
+      ['poker-4', 'poker-3', 'poker-1'],
+      ['mtt-1', 'poker-2'],
     ],
   )
   assert.equal(columns.flat().length, cards.length)
@@ -340,4 +342,39 @@ test('buy-in uses the real minimum BB multiplier and small blind without changin
   assert.equal(getRoomBuyIn(room(2, { sb: 10, min_rate: 50 })), 1000)
   assert.equal(getRoomBuyIn(room(3)), 0)
   assert.equal(table.min_rate, 444)
+})
+
+test('casino cards use the C image of their size and adopt the only uploaded size', () => {
+  const cards = buildCasinoCards([
+    { id: 1, game_url_ca: 'a', game_url_cb: 'b', game_url_cc: 'c' },
+    { id: 2, game_url_ca: 'a', game_url_cb: 'b', game_url_cc: 'c' },
+    { id: 3, game_url_cc: ' c ' },
+    { id: 4, game_url_ca: '', game_icon: 'icon' },
+  ])
+  const sizes = cards.map((card) => (card.kind === 'game' ? card.size : undefined))
+  assert.deepEqual(sizes, ['large', 'medium', 'small', 'small'])
+  const third = cards[2]
+  assert.equal(third?.kind === 'game' ? getGameImage(third.game, third.size) : '', 'c')
+  const fourth = cards[3]
+  assert.equal(fourth?.kind === 'game' ? getGameImage(fourth.game, fourth.size) : '', '')
+  assert.equal(getGameImage({ game_url_ca: 'a' }), '')
+})
+
+test('waterfall avoids level rows by pulling the nearest card of another height', () => {
+  const games = buildCasinoCards([
+    { id: 1, game_url_ca: 'a' },
+    { id: 2, game_url_ca: 'a' },
+    { id: 3, game_url_cb: 'b' },
+    { id: 4, game_url_cc: 'c' },
+  ])
+  const ids = (cards: typeof games) =>
+    cards.map((card) => (card.kind === 'game' ? card.game.id : 0))
+  const [left, right] = buildWaterfallColumns(games)
+  assert.equal(ids(left)[0], 1)
+  assert.equal(ids(right)[0], 3)
+  assert.deepEqual([...ids(left), ...ids(right)].sort(), [1, 2, 3, 4])
+
+  const same = buildCasinoCards([{ id: 1, game_url_ca: 'a' }, { id: 2, game_url_ca: 'a' }])
+  const [one, two] = buildWaterfallColumns(same)
+  assert.deepEqual([ids(one), ids(two)], [[1], [2]])
 })

@@ -881,7 +881,6 @@ const waterfallCards = computed(() =>
       return {
         ...game,
         game_name: item.title || game.game_name,
-        game_icon: game.game_icon || game.game_url_p || item.img,
       }
     }),
   ),

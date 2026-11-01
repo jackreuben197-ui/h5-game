@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { t } from '@/i18n'
-import flameOne from '@/assets/channelC/casino/hot-flame-1.svg'
-import flameTwo from '@/assets/channelC/casino/hot-flame-2.svg'
-import flameThree from '@/assets/channelC/casino/hot-flame-3.svg'
-import liveRing from '@/assets/channelC/casino/live-ring.svg'
+import flameOne from '@/assets/channelC/casino/hot-flame-1.webp'
+import flameTwo from '@/assets/channelC/casino/hot-flame-2.webp'
+import flameThree from '@/assets/channelC/casino/hot-flame-3.webp'
+import liveRing from '@/assets/channelC/casino/live-ring.webp'
 import livePortrait from '@/assets/channelC/casino/live-portrait.png'
-import sports from '@/assets/channelC/casino/sports.svg'
-import fishing from '@/assets/channelC/casino/fishing.svg'
-import board from '@/assets/channelC/casino/board.svg'
-import minigame from '@/assets/channelC/casino/minigame.svg'
+import sports from '@/assets/channelC/casino/sports.webp'
+import fishing from '@/assets/channelC/casino/fishing.webp'
+import board from '@/assets/channelC/casino/board.webp'
+import minigame from '@/assets/channelC/casino/minigame.webp'
 
 const props = defineProps<{ clubId: number }>()
 const router = useRouter()

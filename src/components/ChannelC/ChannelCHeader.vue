@@ -16,11 +16,11 @@ import messageDark from '@/assets/channelC/message-dark.svg'
 import defaultAvatar from '@/assets/images/default_avatar.png'
 import defaultBanner from '@/assets/images/home_header_large.png'
 import CasinoPromoBanner from '@/components/CasinoPromoBanner.vue'
-import game from '@/assets/channelC/game-reward.svg'
-import notice from '@/assets/channelC/announcement.svg'
-import recharge from '@/assets/channelC/recharge-reward.svg'
-import invite from '@/assets/channelC/invite-reward.svg'
-import support from '@/assets/channelC/support.svg'
+import game from '@/assets/channelC/game-reward.webp'
+import notice from '@/assets/channelC/announcement.webp'
+import recharge from '@/assets/channelC/recharge-reward.webp'
+import invite from '@/assets/channelC/invite-reward.webp'
+import support from '@/assets/channelC/support.webp'
 import type { ChannelCAction } from '@/features/channelC/rewards'
 
 defineProps<{ banners: string[]; clubName: string }>()
@@ -186,7 +186,14 @@ function openAccount(path: string) {
   }
 }
 .c-message {
+  width: 0.82rem;
+  height: 0.82rem;
   background: transparent;
+
+  img {
+    width: 100%;
+    height: 100%;
+  }
 }
 .c-header-actions .c-user {
   width: 0.923rem;

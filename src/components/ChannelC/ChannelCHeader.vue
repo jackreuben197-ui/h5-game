@@ -16,11 +16,16 @@ import messageDark from '@/assets/channelC/message-dark.svg'
 import defaultAvatar from '@/assets/images/default_avatar.png'
 import defaultBanner from '@/assets/images/home_header_large.png'
 import CasinoPromoBanner from '@/components/CasinoPromoBanner.vue'
-import game from '@/assets/channelC/game-reward.webp'
-import notice from '@/assets/channelC/announcement.webp'
-import recharge from '@/assets/channelC/recharge-reward.webp'
-import invite from '@/assets/channelC/invite-reward.webp'
-import support from '@/assets/channelC/support.webp'
+import gameDark from '@/assets/channelC/game-reward-dark.webp'
+import gameLight from '@/assets/channelC/game-reward-light.webp'
+import noticeDark from '@/assets/channelC/announcement-dark.webp'
+import noticeLight from '@/assets/channelC/announcement-light.webp'
+import rechargeDark from '@/assets/channelC/recharge-reward-dark.webp'
+import rechargeLight from '@/assets/channelC/recharge-reward-light.webp'
+import inviteDark from '@/assets/channelC/invite-reward-dark.webp'
+import inviteLight from '@/assets/channelC/invite-reward-light.webp'
+import supportDark from '@/assets/channelC/support-dark.webp'
+import supportLight from '@/assets/channelC/support-light.webp'
 import type { ChannelCAction } from '@/features/channelC/rewards'
 
 defineProps<{ banners: string[]; clubName: string }>()
@@ -30,12 +35,12 @@ const { isDark } = useTheme()
 const user = useUserInfoStore()
 const gameStore = useGameStore()
 const avatar = computed(() => user.userInfo?.user?.avatar || defaultAvatar)
-const actions: Array<{ key: ChannelCAction; label: string; icon: string }> = [
-  { key: 'game', label: 'UIChannelC_GameRewardShort', icon: game },
-  { key: 'notice', label: 'UIChannelC_Announcements', icon: notice },
-  { key: 'recharge', label: 'UIChannelC_RechargeGift', icon: recharge },
-  { key: 'invite', label: 'UIChannelC_InviteGift', icon: invite },
-  { key: 'support', label: 'UIChannelC_Support', icon: support },
+const actions: Array<{ key: ChannelCAction; label: string; dark: string; light: string }> = [
+  { key: 'game', label: 'UIChannelC_GameRewardShort', dark: gameDark, light: gameLight },
+  { key: 'notice', label: 'UIChannelC_Announcements', dark: noticeDark, light: noticeLight },
+  { key: 'recharge', label: 'UIChannelC_RechargeGift', dark: rechargeDark, light: rechargeLight },
+  { key: 'invite', label: 'UIChannelC_InviteGift', dark: inviteDark, light: inviteLight },
+  { key: 'support', label: 'UIChannelC_Support', dark: supportDark, light: supportLight },
 ]
 
 function openAccount(path: string) {
@@ -96,7 +101,7 @@ function openAccount(path: string) {
         type="button"
         @click="$emit('action', action.key)"
       >
-        <span class="c-quick-icon"><img :src="action.icon" alt="" /></span>
+        <span class="c-quick-icon"><img :src="isDark ? action.dark : action.light" alt="" /></span>
         <span>{{ t(action.label) }}</span>
       </button>
     </div>

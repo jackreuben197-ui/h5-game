@@ -14,7 +14,7 @@ import search from '@/assets/channelC/search.svg'
 import messageLight from '@/assets/channelC/message.svg'
 import messageDark from '@/assets/channelC/message-dark.svg'
 import defaultAvatar from '@/assets/images/default_avatar.png'
-import defaultBanner from '@/assets/images/home_header_large.png'
+import defaultBanner from '@/assets/channelC/banner-default.png'
 import CasinoPromoBanner from '@/components/CasinoPromoBanner.vue'
 import gameDark from '@/assets/channelC/game-reward-dark.webp'
 import gameLight from '@/assets/channelC/game-reward-light.webp'
@@ -28,7 +28,7 @@ import supportDark from '@/assets/channelC/support-dark.webp'
 import supportLight from '@/assets/channelC/support-light.webp'
 import type { ChannelCAction } from '@/features/channelC/rewards'
 
-defineProps<{ banners: string[]; clubName: string }>()
+defineProps<{ banners: string[]; bannerLoaded: boolean; clubName: string }>()
 defineEmits<{ action: [action: ChannelCAction] }>()
 const router = useRouter()
 const { isDark } = useTheme()
@@ -107,7 +107,12 @@ function openAccount(path: string) {
     </div>
     <ChannelCThemeSwitch />
   </div>
-  <CasinoPromoBanner class="c-banner" :images="banners" :fallback-image="defaultBanner" />
+  <CasinoPromoBanner
+    class="c-banner"
+    :images="banners"
+    :fallback-image="defaultBanner"
+    :loaded="bannerLoaded"
+  />
 </template>
 
 <style scoped lang="scss">
@@ -272,6 +277,6 @@ function openAccount(path: string) {
   }
 }
 .casino-promo-banner-container.c-banner {
-  margin: 0.051rem 0 0.128rem;
+  margin: 0.051rem -0.025rem 0.128rem;
 }
 </style>

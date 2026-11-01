@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { useCachedImages } from '@/utils/imageCache'
 
 const props = withDefaults(
   defineProps<{
     images: string[]
     fallbackImage: string
+    loaded: boolean
     autoplayDuration?: number
     transitionDuration?: number
   }>(),
@@ -14,9 +16,14 @@ const props = withDefaults(
   },
 )
 
+const imageUrls = computed(() => [
+  ...new Set(props.images.map((url) => url.trim()).filter(Boolean)),
+])
+const cachedImageUrls = useCachedImages(() => imageUrls.value)
+
 const banners = computed(() => {
-  const urls = [...new Set(props.images.map((url) => url.trim()).filter(Boolean))]
-  return (urls.length ? urls : [props.fallbackImage]).map((img, index) => ({
+  const fallback = props.loaded ? [props.fallbackImage] : []
+  return (imageUrls.value.length ? imageUrls.value : fallback).map((img, index) => ({
     id: `${index}-${img}`,
     img,
   }))
@@ -40,6 +47,7 @@ const transitionMs = ref(0)
 const dragOffset = ref(0)
 const isDragging = ref(false)
 const isAnimating = ref(false)
+const isImageReady = ref(props.loaded)
 const progressKey = ref(0)
 const viewportRef = ref<HTMLElement | null>(null)
 const trackRef = ref<HTMLElement | null>(null)
@@ -74,7 +82,7 @@ function clearTimers() {
 
 function scheduleNext() {
   if (autoplayTimer) clearTimeout(autoplayTimer)
-  if (!loop.value) return
+  if (!loop.value || !isImageReady.value) return
   autoplayTimer = setTimeout(() => goTo(position.value + 1), props.autoplayDuration)
 }
 
@@ -226,11 +234,22 @@ function onPointerCancel(e: PointerEvent) {
   }
 }
 
+function imageSource(url: string) {
+  const index = imageUrls.value.indexOf(url)
+  return index < 0 ? url : cachedImageUrls.value[index] || url
+}
+
+function onImageLoad(index: number) {
+  if (isImageReady.value || index !== position.value) return
+  isImageReady.value = true
+  progressKey.value++
+  scheduleNext()
+}
+
 function useFallbackImage(event: Event) {
   const image = event.target as HTMLImageElement
   if (image.getAttribute('src') === props.fallbackImage) return
   image.src = props.fallbackImage
-  image.classList.add('banner-img--fallback')
 }
 
 watch(banners, () => {
@@ -264,7 +283,7 @@ onBeforeUnmount(() => {
       @pointercancel="onPointerCancel"
       @lostpointercapture="onPointerCancel"
     >
-      <div ref="trackRef" class="banner-track" :style="trackStyle">
+      <div ref="trackRef" class="banner-track" :class="{ 'is-ready': isImageReady }" :style="trackStyle">
         <div
           v-for="(slide, index) in slides"
           :key="slide.key"
@@ -272,17 +291,17 @@ onBeforeUnmount(() => {
           :class="{ 'is-active': index === position }"
         >
           <img
-            :src="slide.img"
+            :src="imageSource(slide.img)"
             alt=""
             class="banner-img"
-            :class="{ 'banner-img--fallback': slide.img === fallbackImage }"
             draggable="false"
+            @load="onImageLoad(index)"
             @error="useFallbackImage"
           />
         </div>
       </div>
 
-      <div v-if="loop" class="banner-progress-track">
+      <div v-if="loop && isImageReady" class="banner-progress-track">
         <div
           :key="progressKey"
           class="banner-progress-bar"
@@ -311,7 +330,6 @@ onBeforeUnmount(() => {
   border: 0.5px solid #00ffbc;
   box-sizing: border-box;
   overflow: hidden;
-  background: #181b24;
   touch-action: pan-y;
   cursor: grab;
 
@@ -338,6 +356,9 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   position: relative;
+  background: #181b24;
+  opacity: 0;
+  transition: opacity 0.35s ease-in-out;
 
   .banner-img {
     width: 100%;
@@ -348,14 +369,14 @@ onBeforeUnmount(() => {
     pointer-events: none;
     -webkit-user-drag: none;
   }
-
-  .banner-img--fallback {
-    object-position: center;
-  }
 }
 
 :root[data-theme='light'] .banner-viewport {
   border-width: 1px;
+}
+
+.banner-track.is-ready .banner-slide {
+  opacity: 1;
 }
 
 // ── Glowing Bottom Progress Bar ──

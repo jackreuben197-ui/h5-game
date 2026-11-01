@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
 import { t } from '@/i18n'
 import flameOne from '@/assets/channelC/casino/hot-flame-1.webp'
 import flameTwo from '@/assets/channelC/casino/hot-flame-2.webp'
@@ -11,8 +10,8 @@ import fishing from '@/assets/channelC/casino/fishing.webp'
 import board from '@/assets/channelC/casino/board.webp'
 import minigame from '@/assets/channelC/casino/minigame.webp'
 
-const props = defineProps<{ clubId: number }>()
-const router = useRouter()
+defineProps<{ active: string }>()
+defineEmits<{ select: [category: string] }>()
 const shortcuts = [
   { key: 'hot', label: 'UICasino_TabHot' },
   { key: 'zhenren', label: 'UICasino_TabLive' },
@@ -22,13 +21,6 @@ const shortcuts = [
   { key: 'board', label: 'UICasino_TabCards', icon: board },
   { key: 'minigame', label: 'UICasino_TabMinigames', icon: minigame },
 ]
-
-function openCategory(category: string) {
-  void router.push({
-    path: '/casino',
-    query: { ...(props.clubId > 0 ? { clubId: String(props.clubId) } : {}), category },
-  })
-}
 </script>
 
 <template>
@@ -38,8 +30,9 @@ function openCategory(category: string) {
       :key="item.key"
       type="button"
       class="c-casino-shortcut"
-      :class="`c-casino-shortcut--${item.key}`"
-      @click="openCategory(item.key)"
+      :class="[`c-casino-shortcut--${item.key}`, { 'is-active': item.key === active }]"
+      :aria-pressed="item.key === active"
+      @click="$emit('select', item.key)"
     >
       <span v-if="item.key === 'hot'" class="c-hot-icon" aria-hidden="true">
         <span class="c-flame c-flame--1"><span><img :src="flameOne" alt="" /></span></span>
@@ -118,7 +111,7 @@ function openCategory(category: string) {
     white-space: nowrap;
   }
 }
-.c-casino-shortcut--hot .c-shortcut-label {
+.c-casino-shortcut.is-active .c-shortcut-label {
   width: auto;
   max-width: px(56);
   padding: 0 px(3.974);

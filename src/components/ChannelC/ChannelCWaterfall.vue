@@ -42,7 +42,12 @@ const columns = computed(() => buildWaterfallColumns(props.cards))
           :now="now"
           @open="$emit('open', $event)"
         />
-        <ChannelCGameCard v-else :game="card.game" @play="$emit('play', $event)" />
+        <ChannelCGameCard
+          v-else
+          :game="card.game"
+          :size="card.size"
+          @play="$emit('play', $event)"
+        />
       </template>
     </div>
   </div>

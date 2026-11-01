@@ -37,6 +37,8 @@ import serviceIcon from '@/assets/icons/icon_server.png'
 import walletIcon from '@/assets/icons/icon_wallet.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import GameClubSelector from '@/components/GameClubSelector.vue'
+import ChannelCWaterfall from '@/components/ChannelC/ChannelCWaterfall.vue'
+import { buildCasinoCards } from '@/features/channelC/model'
 
 // Assets Imports
 import img1 from '@/assets/images/img1.png'
@@ -85,7 +87,7 @@ interface GameBlock {
 // ─── Router / Route ───────────────────────────────────────────────────────────
 const router = useRouter()
 const route = useRoute()
-const props = defineProps<{ hideHeader?: boolean; clubId?: number }>()
+const props = defineProps<{ hideHeader?: boolean; clubId?: number; category?: string }>()
 
 function handleBack() {
   if (window.history.state?.back) {
@@ -627,7 +629,9 @@ async function fetchPopularBannerGames(): Promise<void> {
 }
 
 // ─── API: fetchGamesByCategory ────────────────────────────────────────────────
+let categoryRequestId = 0
 async function fetchGamesByCategory(cat: CategoryKey): Promise<void> {
+  const requestId = ++categoryRequestId
   loadingGames.value = true
   categoryGames.value = []
   try {
@@ -644,13 +648,13 @@ async function fetchGamesByCategory(cat: CategoryKey): Promise<void> {
       ? await getGamesByCategoryHome(payload)
       : await getGamesByCategoryClub(payload, routeClubId.value!)
 
-    if (res.code === 0 && res.data) {
+    if (requestId === categoryRequestId && res.code === 0 && res.data) {
       categoryGames.value = (res.data.list ?? res.data.records ?? []) as ExtendGameRecord[]
     }
   } catch {
     // keep empty
   } finally {
-    loadingGames.value = false
+    if (requestId === categoryRequestId) loadingGames.value = false
   }
 }
 
@@ -857,7 +861,7 @@ const categoryTabs = computed(() => [
 ])
 
 watch(
-  () => route.query.category,
+  () => props.category ?? route.query.category,
   (category) => {
     if (typeof category === 'string' && categoryTabs.value.some((tab) => tab.key === category)) {
       selectedCategory.value = category as HotCategoryKey
@@ -865,6 +869,28 @@ watch(
   },
   { immediate: true },
 )
+
+// ─── Waterfall (version C home) ───────────────────────────────────────────────
+const waterfallItems = computed(() =>
+  displayBlocks.value.flatMap((block) => block.items).filter((item) => item.originalGame),
+)
+const waterfallCards = computed(() =>
+  buildCasinoCards(
+    waterfallItems.value.map((item) => {
+      const game = item.originalGame as ExtendGameRecord
+      return {
+        ...game,
+        game_name: item.title || game.game_name,
+        game_icon: game.game_icon || game.game_url_p || item.img,
+      }
+    }),
+  ),
+)
+
+function playWaterfallGame(game: ExtendGameRecord): void {
+  const item = waterfallItems.value.find((entry) => entry.originalGame?.id === game.id)
+  if (item) void handleGameClick(item)
+}
 
 // ─── Game click handler (Section 5) ───────────────────────────────────────────
 async function handleGameClick(item: GameItem): Promise<void> {
@@ -1089,7 +1115,7 @@ onActivated(async () => {
 
     <!-- ── Category Icon Row ──────────────────────────────────────── -->
     <section
-      v-show="hasGames || isInitLoading"
+      v-show="!category && (hasGames || isInitLoading)"
       ref="iconRowRef"
       class="icon-row"
     >
@@ -1182,9 +1208,17 @@ onActivated(async () => {
       -->
     </section>
 
+    <ChannelCWaterfall
+      v-if="category && waterfallCards.length"
+      :cards="waterfallCards"
+      :label="t('UICasino_Title')"
+      :now="0"
+      @play="playWaterfallGame"
+    />
+
     <!-- ── Category List ── -->
     <div
-      v-if="hasGames"
+      v-else-if="hasGames && !category"
       class="category-list"
     >
       <section
@@ -1269,7 +1303,7 @@ onActivated(async () => {
     </div>
 
     <!-- Loading spinner / skeleton -->
-    <div v-else-if="isInitLoading" class="loading-grid-wrapper">
+    <div v-else-if="isInitLoading || (category && loadingGames)" class="loading-grid-wrapper">
       <div class="loading-grid">
         <div v-for="n in 9" :key="n" class="game-skeleton" aria-hidden="true"></div>
       </div>

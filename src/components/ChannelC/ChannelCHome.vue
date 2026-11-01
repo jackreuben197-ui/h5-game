@@ -28,6 +28,7 @@ import ChannelCOverlays from './ChannelCOverlays.vue'
 import ChannelCWaterfall from './ChannelCWaterfall.vue'
 import ChannelCCasinoShortcuts from './ChannelCCasinoShortcuts.vue'
 import LiveWinsTicker, { type LiveWinItem } from '@/components/LiveWinsTicker.vue'
+import CasinoView from '@/views/home/CasinoView.vue'
 import { useLiveWins } from '@/composables/useLiveWins'
 
 const props = withDefaults(
@@ -63,6 +64,8 @@ const {
   filteredMatches,
   resetFilters,
 } = useChannelCFilters(visibleRooms, visibleMatches, tournamentSeries)
+const casinoCategory = ref('hot')
+const showCasino = computed(() => props.section === 'home' && casinoCategory.value !== 'hot')
 const now = ref(Date.now())
 let clock: ReturnType<typeof setInterval> | undefined
 
@@ -170,7 +173,11 @@ watch(
       :slide-interval="liveWinInterval"
       @click-card="playLiveWin"
     />
-    <ChannelCCasinoShortcuts v-if="section === 'home' && popularGames.length" :club-id="clubId" />
+    <ChannelCCasinoShortcuts
+      v-if="section === 'home' && popularGames.length"
+      :active="casinoCategory"
+      @select="casinoCategory = $event"
+    />
     <ChannelCFilters
       v-if="section !== 'home'"
       v-model:poker="pokerFilter"
@@ -181,7 +188,10 @@ watch(
       :blinds="blinds"
       :tournament-types="tournamentTypes"
     />
-    <div v-if="!ready" class="c-empty"><van-loading size="24" />{{ t('UIChannelC_Loading') }}</div>
+    <CasinoView v-if="showCasino" :hide-header="true" :club-id="clubId" :category="casinoCategory" />
+    <div v-else-if="!ready" class="c-empty">
+      <van-loading size="24" />{{ t('UIChannelC_Loading') }}
+    </div>
     <ChannelCWaterfall
       v-else-if="cards.length"
       :cards="cards"

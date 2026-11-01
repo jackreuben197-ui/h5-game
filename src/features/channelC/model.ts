@@ -12,9 +12,15 @@ export type MttFilter = 'free' | 'paid' | 'hunter' | 'snowball'
 export type LobbyCard =
   | { key: string; kind: 'poker'; room: RoomRecord }
   | { key: string; kind: 'mtt'; match: MttListRecord; size: CardSize; seriesName?: string }
-  | { key: string; kind: 'game'; game: ExtendGameRecord }
+  | { key: string; kind: 'game'; game: ExtendGameRecord; size?: CardSize }
 
 export const MTT_ARTWORK_HEIGHT: Record<CardSize, number> = { large: 225, medium: 152, small: 89 }
+export const GAME_ARTWORK_HEIGHT: Record<CardSize, number> = {
+  large: 198.7,
+  medium: 152.7,
+  small: 121.3,
+}
+const CASINO_SIZE_CYCLE: readonly CardSize[] = ['large', 'medium', 'medium', 'small']
 export const isRecommended = (record: { is_top?: unknown }): boolean =>
   record.is_top === 1
 
@@ -103,6 +109,16 @@ export function buildChannelCFeed(
   return interleaveChannelCCards(tables, mtts, casino)
 }
 
+/** 首页娱乐场分类的瀑布流：接口图片尺寸一致，卡片高度按固定节奏循环。 */
+export function buildCasinoCards(games: readonly ExtendGameRecord[]): LobbyCard[] {
+  return games.map((game, index) => ({
+    key: `casino-${game.id}-${index}`,
+    kind: 'game',
+    game,
+    size: CASINO_SIZE_CYCLE[index % CASINO_SIZE_CYCLE.length]!,
+  }))
+}
+
 /** 首页与搜索共用的 3 桌 + 1 MTT 混排；首页每个 MTT 后跟 1 个游戏，保留不足一组的剩余牌桌和比赛。 */
 export function interleaveChannelCCards(
   tables: readonly LobbyCard[],
@@ -138,7 +154,7 @@ export function matchesMttFilter(match: MttListRecord, filter: MttFilter): boole
 }
 
 export function estimateCardHeight(card: LobbyCard): number {
-  if (card.kind === 'game') return 146.25 + 26.7
+  if (card.kind === 'game') return (card.size ? GAME_ARTWORK_HEIGHT[card.size] : 146.25) + 26.7
   return card.kind === 'mtt'
     ? MTT_ARTWORK_HEIGHT[card.size] + 60
     : 92.5 + 34 + roomDescription(card.room).length * 19

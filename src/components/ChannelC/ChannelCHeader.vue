@@ -184,6 +184,11 @@ function openAccount(path: string) {
   @include theme-light-own {
     background: #fff;
   }
+
+  img {
+    width: 0.4615rem;
+    height: 0.4615rem;
+  }
 }
 .c-message {
   width: 0.82rem;

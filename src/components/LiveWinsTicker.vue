@@ -43,6 +43,7 @@ interface ActiveCardState {
   displayedAmount: string
   isCounting: boolean
   countPhase: number
+  countProgress: number
   showTag: boolean
   showTagBounce: boolean
   currentAmountNum: number
@@ -87,6 +88,7 @@ function initQueue() {
     displayedAmount: formatCurrency(item.finalAmount),
     isCounting: false,
     countPhase: 0,
+    countProgress: 0,
     showTag: !!item.tag && item.tag.trim() !== '',
     showTagBounce: false,
     currentAmountNum: item.finalAmount,
@@ -128,6 +130,7 @@ function animateCardEntry(card: ActiveCardState) {
 
   card.isCounting = true
   card.countPhase = 1
+  card.countProgress = 0
   card.currentAmountNum = startAmount
   card.displayedAmount = formatCurrency(startAmount)
 
@@ -161,6 +164,7 @@ function animateCardEntry(card: ActiveCardState) {
     card.currentAmountNum = currentVal
     card.displayedAmount = formatCurrency(currentVal)
     card.countPhase = progress < 1 / 3 ? 1 : progress < 2 / 3 ? 2 : 3
+    card.countProgress = progress
 
     if (progress < 1) {
       card.rafId = requestAnimationFrame(step)
@@ -575,6 +579,13 @@ onBeforeUnmount(() => {
             >
               {{ tagLabel(card.raw.tag) }}
             </div>
+
+            <div v-if="card.isCounting" class="live-win-card__progress">
+              <div
+                class="live-win-card__progress-bar"
+                :style="{ width: `${card.countProgress * 100}%` }"
+              ></div>
+            </div>
           </div>
         </div>
       </div>
@@ -805,11 +816,31 @@ onBeforeUnmount(() => {
       animation: liveWinTagPop 0.5s ease-in-out forwards;
     }
   }
+
+  &__progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2.5px;
+    background: rgba(255, 255, 255, 0.15);
+    overflow: hidden;
+  }
+
+  &__progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #60a5fa, #c084fc, #f472b6);
+    box-shadow: 0 0 6px rgba(192, 132, 252, 0.85);
+  }
 }
 
 :root[data-theme='light'] .live-win-card {
   border-color: #ebebeb;
   background: #fff;
+
+  .live-win-card__progress {
+    background: rgba(0, 0, 0, 0.06);
+  }
 
   .live-win-card__amount {
     color: #000;

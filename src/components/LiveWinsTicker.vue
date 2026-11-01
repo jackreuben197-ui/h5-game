@@ -180,7 +180,7 @@ const TAG_POP_DELAY = 2800
 const PULSE_LEAD = 120
 const PULSE_KEYFRAMES: Keyframe[] = [
   { transform: 'scale(1)' },
-  { transform: 'scale(1.35)', offset: 0.45 },
+  { transform: 'scale(1.3)', offset: 0.45 },
   { transform: 'scale(1)' },
 ]
 
@@ -754,7 +754,7 @@ onBeforeUnmount(() => {
     color: #fff;
     white-space: nowrap;
     overflow: hidden;
-    transform-origin: left center;
+    transform-origin: right center;
     will-change: transform;
 
     &.is-counting {

@@ -167,3 +167,24 @@ test('MTT names fall back to the ordinary dictionary or server name when no temp
     ['mtt-2'],
   )
 })
+
+test('casino games match by name after tables and tournaments, without duplicates or ID matches', () => {
+  const games = [
+    { id: 7, game_name: 'Mahjong Ways' },
+    { id: 7, game_name: 'Mahjong Ways' },
+    { id: 8, game_name: 'Fishing King' },
+  ]
+  const search = (query: string) =>
+    buildChannelCSearchFeed(
+      [room(1, { name: 'Mahjong table' })],
+      [],
+      query,
+      [],
+      now,
+      undefined,
+      games,
+    ).map((card) => card.key)
+  assert.deepEqual(search(' mahjong '), ['poker-1', 'casino-7-0'])
+  assert.deepEqual(search('fish'), ['casino-8-0'])
+  assert.deepEqual(search('8'), [])
+})

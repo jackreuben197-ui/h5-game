@@ -1,5 +1,7 @@
+import type { ExtendGameRecord } from '@/api/casino'
 import type { MttListRecord, MttSeriesInfoRecord, RoomRecord } from '@/api/models/roomcenter'
 import {
+  buildCasinoCards,
   buildChannelCFeed,
   interleaveChannelCCards,
   type LobbyCard,
@@ -9,7 +11,7 @@ function normalize(value: string): string {
   return value.trim().normalize('NFKC').toLowerCase()
 }
 
-/** 搜索完整可见列表；热门标记不限制结果，尺寸仍使用原赛事系列的配置。 */
+/** 搜索完整可见列表；热门标记不限制结果，尺寸仍使用原赛事系列的配置；小游戏按名称匹配，排在牌桌和比赛之后。 */
 export function buildChannelCSearchFeed(
   rooms: RoomRecord[],
   matches: MttListRecord[],
@@ -17,6 +19,7 @@ export function buildChannelCSearchFeed(
   series: readonly MttSeriesInfoRecord[] = [],
   now = Date.now(),
   resolveName: (name: string, kind: LobbyCard['kind']) => string = (name) => name,
+  games: readonly ExtendGameRecord[] = [],
 ): LobbyCard[] {
   const word = normalize(query)
   if (!word) return []
@@ -32,8 +35,17 @@ export function buildChannelCSearchFeed(
     const values = card.kind === 'mtt' ? [id, localizedName] : [id, name, localizedName]
     return values.some((value) => normalize(value).includes(word))
   })
-  return interleaveChannelCCards(
-    cards.filter((card) => card.kind === 'poker'),
-    cards.filter((card) => card.kind === 'mtt'),
+  const matchedGames = [...new Map(games.map((game) => [game.game_id ?? game.id, game])).values()].filter(
+    (game) => {
+      const name = game.game_name || ''
+      return [name, resolveName(name, 'game')].some((value) => normalize(value).includes(word))
+    },
   )
+  return [
+    ...interleaveChannelCCards(
+      cards.filter((card) => card.kind === 'poker'),
+      cards.filter((card) => card.kind === 'mtt'),
+    ),
+    ...buildCasinoCards(matchedGames),
+  ]
 }

@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import type { ExtendGameRecord } from '@/api/casino'
+import { useCasinoCatalog } from '@/composables/useCasinoCatalog'
+import { useCasinoGameLaunch } from '@/composables/useCasinoGameLaunch'
 import { useChannelCFeed } from '@/composables/useChannelCFeed'
 import { useChannelCDataReady } from '@/composables/useChannelCDataReady'
 import { useChannelCNavigation } from '@/composables/useChannelCNavigation'
@@ -18,7 +21,9 @@ const route = useRoute()
 const query = ref(typeof route.query.q === 'string' ? route.query.q : '')
 const searchInput = ref<HTMLInputElement | null>(null)
 const ready = useChannelCDataReady()
-const { club, visibleRooms, visibleMatches, tournamentSeries } = useChannelCFeed()
+const { club, clubId, visibleRooms, visibleMatches, tournamentSeries } = useChannelCFeed()
+const { games, loading: loadingGames } = useCasinoCatalog(clubId)
+const { play } = useCasinoGameLaunch()
 const { joiningId, joinRoom, openMatch } = useChannelCNavigation(finishEditing)
 const now = ref(Date.now())
 let clock: ReturnType<typeof setInterval> | undefined
@@ -35,11 +40,17 @@ const cards = computed(() => {
     now.value,
     (name, kind) =>
       (kind === 'mtt' && resolveTemplateTextByKey(name, locale)) || t(name),
+    games.value,
   )
 })
+const searching = computed(() => !ready.value || (!cards.value.length && loadingGames.value))
 
 function finishEditing() {
   searchInput.value?.blur()
+}
+function playGame(game: ExtendGameRecord) {
+  finishEditing()
+  play(game, clubId.value || undefined)
 }
 function back() {
   finishEditing()
@@ -81,9 +92,9 @@ onBeforeUnmount(() => clearInterval(clock))
         {{ t('adaptation10013') }}
       </button>
     </form>
-    <div class="c-search-body" :aria-busy="hasQuery && !ready">
+    <div class="c-search-body" :aria-busy="hasQuery && searching">
       <template v-if="hasQuery">
-        <div v-if="!ready" class="c-search-loading" role="status">
+        <div v-if="searching" class="c-search-loading" role="status">
           <van-loading size="24" />
           <span>{{ t('UIChannelC_Loading') }}</span>
         </div>
@@ -96,6 +107,7 @@ onBeforeUnmount(() => clearInterval(clock))
           :joining-id="joiningId"
           @join="joinRoom"
           @open="openMatch"
+          @play="playGame"
         />
         <div v-else class="c-search-empty" role="status">
           <h1>{{ t('UIChannelC_SearchNoResults') }}</h1>

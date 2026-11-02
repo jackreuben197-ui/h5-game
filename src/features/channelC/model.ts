@@ -34,9 +34,8 @@ export function getGameImage(game: ExtendGameRecord, size?: CardSize): string {
   return size ? game[GAME_IMAGE_FIELDS[size]]?.trim() || '' : ''
 }
 
-function resolveGameSize(game: ExtendGameRecord, preferred?: CardSize): CardSize | undefined {
-  if (getGameImage(game, preferred)) return preferred
-  return GAME_IMAGE_SIZES.find((size) => getGameImage(game, size)) ?? preferred
+function resolveGameSize(game: ExtendGameRecord, fallback?: CardSize): CardSize | undefined {
+  return GAME_IMAGE_SIZES.find((size) => getGameImage(game, size)) ?? fallback
 }
 
 export const isRecommended = (record: { is_top?: unknown }): boolean =>

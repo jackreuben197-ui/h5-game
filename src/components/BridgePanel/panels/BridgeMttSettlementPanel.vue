@@ -30,6 +30,9 @@ const isRebuy = computed(() => Boolean(props.panelProps?.isRebuy))
 const currentBlindLevel = computed(() => Number(props.panelProps?.currentBlindLevel ?? 0))
 const maxRebuyBlindLevel = computed(() => Number(props.panelProps?.maxRebuyBlindLevel ?? 0))
 const remainRebuyTimes = computed(() => Number(props.panelProps?.remainRebuyTimes ?? 0))
+const inTable = computed(() => props.panelProps?.inTable === true)
+const canContinueWatching = computed(() => props.panelProps?.canContinueWatching === true)
+const watchingPending = computed(() => props.panelProps?.watchingPending === true)
 
 // ── 决定展示哪个 case ──
 // settlement: 展示排名奖励（isRebuy=false，或 isRebuy=true 但盲注已超重购上限）
@@ -79,6 +82,7 @@ const awardData = ref<RoomcenterMttMyawardData | null>(null)
 
 let pollTimer: ReturnType<typeof setTimeout> | null = null
 let pollCount = 0
+let disposed = false
 const MAX_POLL = 5
 const POLL_INTERVAL_MS = 3000
 
@@ -135,7 +139,9 @@ async function fetchAward(): Promise<boolean> {
 async function startPolling() {
   pollCount = 0
   const attempt = async () => {
+    if (disposed) return
     const ok = await fetchAward()
+    if (disposed) return
     if (ok) {
       loading.value = false
       return
@@ -152,7 +158,7 @@ async function startPolling() {
 }
 
 onMounted(async () => {
-  if (panelCase.value === 'settlement') {
+  if (!inTable.value && panelCase.value === 'settlement') {
     await router.replace({ name: 'mtt-list' })
     mttListStore.bootstrapMttList()
     await Promise.all([
@@ -174,6 +180,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  disposed = true
   if (pollTimer != null) {
     clearTimeout(pollTimer)
     pollTimer = null
@@ -228,6 +235,11 @@ function handleDone(): void {
 }
 
 async function handleRebuy(): Promise<void> {
+  if (inTable.value) {
+    // 牌桌退出与详情页跳转由 Cocos 统一完成，避免 H5 路由先于退桌清理。
+    props.closePanel('rebuy')
+    return
+  }
   // 淘汰后的重购仍在赛事详情页完成；确保底层路由指向当前赛事。
   try {
     if (matchId.value) {
@@ -240,6 +252,15 @@ async function handleRebuy(): Promise<void> {
 
 function handleConfirm(): void {
   props.closePanel('confirm')
+}
+
+function handleContinueWatching(): void {
+  if (!canContinueWatching.value || watchingPending.value) return
+  props.closePanel('continueWatching')
+}
+
+function handleReturnLobby(): void {
+  props.closePanel('returnLobby')
 }
 
 function formatRewardAmount(value: number, goldTypeValue: number): string {
@@ -289,6 +310,7 @@ function formatRewardAmount(value: number, goldTypeValue: number): string {
         {{ cmsContent }}
       </div>
       <PrimaryButton
+        v-if="!inTable"
         class="mtt-settlement-panel__btn"
         :text="t('UI_Recharge_confirm')"
         @click="handleConfirm"
@@ -358,12 +380,29 @@ function formatRewardAmount(value: number, goldTypeValue: number): string {
 
         <!-- Done 按钮 -->
         <PrimaryButton
+          v-if="!inTable"
           class="mtt-settlement-panel__btn"
           :text="t('UI_Recharge_confirm')"
           @click="handleDone"
         />
       </template>
     </template>
+    <div v-if="inTable" class="mtt-settlement-panel__actions">
+      <PrimaryButton
+        class="mtt-settlement-panel__watch-btn"
+        :text="t('UIMTT_ContinueWatching')"
+        :disabled="!canContinueWatching || watchingPending"
+        :loading="watchingPending"
+        @click="handleContinueWatching"
+      />
+      <button
+        class="mtt-settlement-panel__lobby-btn"
+        type="button"
+        @click="handleReturnLobby"
+      >
+        {{ t('UIMTT_ReturnLobby') }}
+      </button>
+    </div>
   </section>
 </template>
 
@@ -376,6 +415,33 @@ function formatRewardAmount(value: number, goldTypeValue: number): string {
   gap: 0.21rem;
   width: 100%;
   box-sizing: border-box;
+}
+
+.mtt-settlement-panel__actions {
+  display: flex;
+  gap: 0.2rem;
+  width: 100%;
+  margin-top: 0.2rem;
+}
+
+.mtt-settlement-panel__watch-btn,
+.mtt-settlement-panel__lobby-btn {
+  flex: 1;
+  min-width: 0;
+  min-height: 1.2rem;
+  height: auto;
+  padding: 0.2rem;
+  font-size: 0.36rem;
+  line-height: 1.4;
+}
+
+.mtt-settlement-panel__lobby-btn {
+  border: none;
+  border-radius: 1.08rem;
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
+  font-family: inherit;
+  cursor: pointer;
 }
 
 /* ── 赛事名称 ── */

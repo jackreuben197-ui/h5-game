@@ -42,6 +42,7 @@ import {
   BRIDGE_MSG_TYPE,
   type BridgeMessage,
   type EnterMttPayload,
+  type H5NavigatePayload,
 } from '@bridge-protocol'
 import { useGameStore } from '@/stores/game'
 import { useMttListStore } from '@/stores/mttList'
@@ -409,7 +410,13 @@ onMounted(() => {
   // Cocos 返回 H5 时页面不会重新挂载，同时刷新淘汰状态和最终排名。
   stopCocosMessageListener = subscribeCocosMessages(
     (message: BridgeMessage) => {
-      if (message.action === BRIDGE_ACTION.H5_SHOW) {
+      const navigation = message.action === BRIDGE_ACTION.H5_NAVIGATE
+        ? message.payload as H5NavigatePayload | undefined
+        : undefined
+      // 桌内重购/坐下可能跳回仍挂载的同一详情页，重复导航也要刷新报名状态。
+      const returningToCurrentMatch = navigation?.name === 'mtt-detail' &&
+        String(navigation.query?.id) === String(matchId.value)
+      if (message.action === BRIDGE_ACTION.H5_SHOW || returningToCurrentMatch) {
         refreshStatusAndRankData()
       }
     },

@@ -10,6 +10,7 @@ import { ensureExperienceSession } from '@/session/experienceSession'
 import { useMttListStore } from '@/stores/mttList'
 import { useRoomListStore } from '@/stores/roomList'
 import { useGameStore } from '@/stores/game'
+import { useAppConfigStore } from '@/stores/appConfig'
 import { waitForH5FirstPaint } from '@/utils/firstPaint'
 
 type TabIconKey =
@@ -38,9 +39,11 @@ function toSafeInt(value: unknown): number {
 
 const { isChannelPackage, channelClub, isVersionB, isVersionC, hasPoker, hasMtt } =
   useChannelBottomMenu()
+const appConfigStore = useAppConfigStore()
 
-// 版本 A：首页、充值、消息、我的。
-// 版本 B：比赛、牌桌按可见数据动态展示；两者都没有时保留比赛作为默认入口。
+// 官方 H5 A 版本：首页、俱乐部、朋友桌、消息、我的。
+// 官方 H5 B 版本：俱乐部、朋友桌、主页、消息、我的。
+// 渠道包继续沿用版本 A/B 的动态玩法菜单，不读取官方 h5_home_version。
 const candidateTabs = computed<TabItem[]>(() => {
   const middleTab: TabItem = isChannelPackage.value
     ? {
@@ -98,6 +101,7 @@ const candidateTabs = computed<TabItem[]>(() => {
       },
     ]
   }
+  const isOfficialNewHome = !isChannelPackage.value && appConfigStore.h5HomeVersion === 1
   if (isChannelPackage.value && isVersionB.value) {
     return [
       ...(hasMtt.value || !hasPoker.value
@@ -141,10 +145,12 @@ const candidateTabs = computed<TabItem[]>(() => {
     ]
   }
 
+  const officialTabs = isOfficialNewHome
+    ? [clubTab, middleTab, homeTab]
+    : [homeTab, clubTab, middleTab]
+
   return [
-    homeTab,
-    ...(!isChannelPackage.value ? [clubTab] : []),
-    middleTab,
+    ...(!isChannelPackage.value ? officialTabs : [homeTab, middleTab]),
     {
       key: 'message',
       label: t('UIMine_MsgSystemContent'),

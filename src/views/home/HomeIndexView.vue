@@ -38,6 +38,7 @@ import GameClubSelector from '@/components/GameClubSelector.vue'
 import HomeBannerSwiper from '@/components/HomeBannerSwiper.vue'
 import ChannelClubInfoPanel from '@/components/Club/ChannelClubInfoPanel.vue'
 import HomeTopBar from '@/components/HomeTopBar.vue'
+import HomeNewView from '@/views/home/HomeNewView.vue'
 import { useGameStore } from '@/stores/game'
 import PokerGameList from '@/views/home/gameList.vue'
 import CasinoView from '@/views/home/CasinoView.vue'
@@ -113,6 +114,7 @@ const gameStore = useGameStore()
 const gameLaunchStore = useGameLaunchStore()
 const displayPlatformDiamond = usePlatformDiamondVisibility()
 const { isChannelPackage, isVersionB, isVersionC } = useChannelBottomMenu()
+const isOfficialNewHome = computed(() => !isChannelPackage.value && appConfigStore.h5HomeVersion === 1)
 
 const noticeScrollRef = ref<HTMLElement | null>(null)
 const noticeItemRef = ref<HTMLElement | null>(null)
@@ -898,6 +900,7 @@ onBeforeUnmount(() => {
     :ready="homeContentReady"
     :club-management="canManageChannelClub"
   />
+  <HomeNewView v-else-if="isOfficialNewHome" />
   <div
     v-else
     class="home-page"

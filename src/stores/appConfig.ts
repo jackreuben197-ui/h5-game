@@ -27,6 +27,7 @@ import {
   type NormalizedPrivateUcConfig,
   type PrivateUcChargeConfigItemExt,
 } from '@/utils/channelPackage'
+import runtimeAppConfig from '@/utils/appConfig'
 
 interface AppConfigState {
   globalConfig: GlobalConfigData | null
@@ -111,6 +112,14 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
     // 对齐 Unity GameCache._clubDisplayPlatformMtt：赛事列表是否展示平台创建的 MTT/SNG。
     clubDisplayPlatformMtt(state): boolean {
       return Number(state.globalConfig?.club_display_platform_mtt) === 1
+    },
+    // 官方 H5 首页 A/B 开关；后台暂未提供字段时默认新主页，渠道包不读取此字段。
+    h5HomeVersion(state): 0 | 1 {
+      const backendValue = state.globalConfig?.h5_home_version
+      if (backendValue !== undefined && backendValue !== null && String(backendValue).trim() !== '') {
+        return Number(backendValue) === 1 ? 1 : 0
+      }
+      return Number(runtimeAppConfig.h5_home_version) === 1 ? 1 : 0
     },
     getMttRecordFeeConfig(state): (goldType: number) => MttRecordFeeConfig | null {
       return (goldType: number) => {

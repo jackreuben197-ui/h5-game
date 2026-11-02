@@ -663,14 +663,20 @@ watch(
 
           <button class="action-btn" @click="handleJoinTable">
             <van-loading v-if="joinLoading" />
-            <span v-else v-fit-text="{ maxLines: 1 }">{{ t('UIFriendsTable_Join') }}</span>
+            <span v-else v-fit-text="{ maxLines: 1 }" class="action-label">
+              {{ t('UIFriendsTable_Join') }}
+            </span>
           </button>
         </div>
 
         <!-- 快速组局 -->
         <div class="section create-section">
           <div v-fit-text="{ maxLines: 2 }" class="section-title">{{ t('UIFriendsTable_Round') }}</div>
-          <button v-fit-text="{ maxLines: 1 }" class="action-btn" @click="onCreateRoom">{{ t('UIFriendsTable_Text') }}</button>
+          <button class="action-btn" @click="onCreateRoom">
+            <span v-fit-text="{ maxLines: 1 }" class="action-label">
+              {{ t('UIFriendsTable_Text') }}
+            </span>
+          </button>
         </div>
       </div>
 
@@ -994,6 +1000,18 @@ watch(
     background: var(--c-brand);
     box-shadow: none;
   }
+}
+
+.action-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  font: inherit;
+  line-height: 1;
+  text-align: center;
 }
 
 /* ===== σèáσàÑτëîσ▒Ç ===== */
@@ -1509,9 +1527,8 @@ watch(
 
     .join-section {
       .section-title,
-      .section-subtitle,
-      .action-btn {
-        transform: translateY(1.35rem);
+      .section-subtitle {
+        transform: translateY(calc(1.35rem - var(--friend-safe-top)));
       }
 
       .action-btn {
@@ -1527,7 +1544,7 @@ watch(
 
       .invite-input-wrap {
         // 背景圆点已由整图提供，数字基线再下移到圆点中心。
-        transform: translateY(0.4rem);
+        transform: translateY(calc(0.6rem - var(--friend-safe-top)));
       }
     }
 

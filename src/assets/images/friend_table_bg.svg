@@ -1,7 +1,7 @@
 <svg width="375" height="698" viewBox="0 0 375 698" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g filter="url(#filter0_d_96_50882)">
 <foreignObject x="-24.8041" y="20.212" width="427.668" height="601.97"><div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(7.55px);clip-path:url(#bgblur_0_96_50882_clip_path);height:100%;width:100%"></div></foreignObject><g data-figma-bg-blur-radius="15.0966">
-<path d="M30.6422 168.209C44.5873 91.2594 111.589 35.3086 189.792 35.3086C268.433 35.3086 335.678 91.8738 349.145 169.354L384.78 374.381C405.899 495.891 312.364 607.085 189.032 607.085C65.1195 607.085 -28.5624 494.9 -6.46632 372.974L30.6422 168.209Z" fill="url(#paint0_linear_96_50882)" fill-opacity="0.2" style="mix-blend-mode:plus-darker"/>
+<path d="M30.6422 168.209C44.5873 91.2594 111.589 35.3086 189.792 35.3086C268.433 35.3086 335.678 91.8738 349.145 169.354L384.78 374.381C405.899 495.891 312.364 607.085 189.032 607.085C65.1195 607.085 -28.5624 494.9 -6.46632 372.974L30.6422 168.209Z" fill="url(#paint0_linear_96_50882)" fill-opacity="0.32" style="mix-blend-mode:plus-darker"/>
 </g>
 <mask id="mask0_96_50882" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="-1" y="40" width="382" height="560">
 <path d="M38.5491 168.57C51.3627 94.5358 115.596 40.4648 190.731 40.4648C266.267 40.4648 330.72 95.1013 343.09 169.618L377.741 378.372C396.991 494.34 307.547 599.856 189.992 599.856C71.9056 599.856 -17.6778 493.436 2.46078 377.08L38.5491 168.57Z" fill="white" fill-opacity="0.01"/>
@@ -19,7 +19,7 @@
 <rect x="-35.9297" y="-3.09668" width="436.156" height="644.822" rx="173.256" fill="white" fill-opacity="0.01"/>
 </g>
 </g>
-<g opacity="0.8" filter="url(#filter4_f_96_50882)">
+<g opacity="1" filter="url(#filter4_f_96_50882)">
 <path d="M30.6422 168.209C44.5873 91.2595 111.589 35.3086 189.792 35.3086C268.433 35.3086 335.678 91.8738 349.145 169.354L384.78 374.381C405.899 495.891 312.364 607.085 189.032 607.085C65.1195 607.085 -28.5624 494.9 -6.46632 372.974L30.6422 168.209Z" stroke="url(#paint1_linear_96_50882)" stroke-width="1.45382"/>
 </g>
 </g>
@@ -30,7 +30,7 @@
 <feOffset dx="27.6656" dy="27.6656"/>
 <feGaussianBlur stdDeviation="31.1238"/>
 <feComposite in2="hardAlpha" operator="out"/>
-<feColorMatrix type="matrix" values="0 0 0 0 0.0231746 0 0 0 0 0.0231746 0 0 0 0 0.0231746 0 0 0 0.15 0"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.0231746 0 0 0 0 0.0231746 0 0 0 0 0.0231746 0 0 0 0.3 0"/>
 <feBlend mode="plus-darker" in2="BackgroundImageFix" result="effect1_dropShadow_96_50882"/>
 <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_96_50882" result="shape"/>
 </filter>

@@ -262,89 +262,91 @@ const displayUser = computed(() => {
   }
 
   /* Unity 版我的卡片使用整张 me_banner.png，H5 只叠加动态用户信息。 */
-  :deep(.mine-profile-card) {
-    position: relative;
-    aspect-ratio: 1121 / 683;
-    padding: 0;
-    border-radius: 1.4rem;
-    background: transparent;
-    overflow: hidden;
-  }
+  @include theme-dark {
+    :deep(.mine-profile-card) {
+      position: relative;
+      aspect-ratio: 1121 / 683;
+      padding: 0;
+      border-radius: 1.4rem;
+      background: transparent;
+      overflow: hidden;
+    }
 
-  :deep(.mine-profile-card .profile-card__outer) {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    padding: 0;
-    border-radius: 1.42rem;
-    background-size: 100% 100%;
-    background-position: center;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
+    :deep(.mine-profile-card .profile-card__outer) {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      border-radius: 1.42rem;
+      background-size: 100% 100%;
+      background-position: center;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
 
-  :deep(.mine-profile-card .profile-card__outer::before) {
-    display: none;
-  }
+    :deep(.mine-profile-card .profile-card__outer::before) {
+      display: none;
+    }
 
-  :deep(.mine-profile-card .profile-card__inner) {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    width: 100%;
-    height: 100%;
-    padding: 0;
-    display: block;
-  }
+    :deep(.mine-profile-card .profile-card__inner) {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      display: block;
+    }
 
-  :deep(.mine-profile-card .card-line1) {
-    position: absolute;
-    top: 16%;
-    left: 4%;
-    right: 4%;
-    padding: 0;
-    gap: 0.5rem;
-  }
+    :deep(.mine-profile-card .card-line1) {
+      position: absolute;
+      top: 16%;
+      left: 4%;
+      right: 4%;
+      padding: 0;
+      gap: 0.5rem;
+    }
 
-  :deep(.mine-profile-card .card-line2) {
-    position: absolute;
-    left: 4%;
-    right: 6%;
-    bottom: 12%;
-    min-height: 16%;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
+    :deep(.mine-profile-card .card-line2) {
+      position: absolute;
+      left: 4%;
+      right: 6%;
+      bottom: 12%;
+      min-height: 16%;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
 
-  :deep(.mine-profile-card .card-line2 .button) {
-    min-width: 30%;
-    min-height: 100%;
-    padding: 0 4%;
-    background: transparent !important;
-    background-color: transparent !important;
-    background-image: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    border: 0;
-    box-shadow: none;
-    overflow: visible;
-  }
+    :deep(.mine-profile-card .card-line2 .button) {
+      min-width: 30%;
+      min-height: 100%;
+      padding: 0 4%;
+      background: transparent !important;
+      background-color: transparent !important;
+      background-image: none !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      border: 0;
+      box-shadow: none;
+      overflow: visible;
+    }
 
-  :deep(.mine-profile-card .card-line2 .button::before) {
-    display: none;
-  }
+    :deep(.mine-profile-card .card-line2 .button::before) {
+      display: none;
+    }
 
-  :deep(.mine-profile-card .card-line2 .button .round-icon) {
-    background: transparent;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    border: 0;
-  }
+    :deep(.mine-profile-card .card-line2 .button .round-icon) {
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border: 0;
+    }
 
-  :deep(.mine-profile-card .card-line2 .button .round-icon img) {
-    display: none;
+    :deep(.mine-profile-card .card-line2 .button .round-icon img) {
+      display: none;
+    }
   }
 }
 

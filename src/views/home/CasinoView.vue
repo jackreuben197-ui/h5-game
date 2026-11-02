@@ -38,7 +38,7 @@ import walletIcon from '@/assets/icons/icon_wallet.png'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import GameClubSelector from '@/components/GameClubSelector.vue'
 import ChannelCWaterfall from '@/components/ChannelC/ChannelCWaterfall.vue'
-import { buildCasinoCards } from '@/features/channelC/model'
+import { buildCasinoCards, mergeRelatedGameImages } from '@/features/channelC/model'
 
 // Assets Imports
 import img1 from '@/assets/images/img1.png'
@@ -876,13 +876,16 @@ const waterfallItems = computed(() =>
 )
 const waterfallCards = computed(() =>
   buildCasinoCards(
-    waterfallItems.value.map((item) => {
-      const game = item.originalGame as ExtendGameRecord
-      return {
-        ...game,
-        game_name: item.title || game.game_name,
-      }
-    }),
+    mergeRelatedGameImages(
+      waterfallItems.value.map((item) => {
+        const game = item.originalGame as ExtendGameRecord
+        return {
+          ...game,
+          game_name: item.title || game.game_name,
+        }
+      }),
+      [...gameRecords.value, ...categoryGames.value],
+    ),
   ),
 )
 

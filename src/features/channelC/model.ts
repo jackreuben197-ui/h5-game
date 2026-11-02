@@ -20,7 +20,6 @@ export const GAME_ARTWORK_HEIGHT: Record<CardSize, number> = {
   medium: 152.7,
   small: 121.3,
 }
-const CASINO_SIZE_CYCLE: readonly CardSize[] = ['large', 'medium', 'medium', 'small']
 const GAME_IMAGE_FIELDS = {
   large: 'game_url_ca',
   medium: 'game_url_cb',
@@ -34,8 +33,46 @@ export function getGameImage(game: ExtendGameRecord, size?: CardSize): string {
   return size ? game[GAME_IMAGE_FIELDS[size]]?.trim() || '' : ''
 }
 
-function resolveGameSize(game: ExtendGameRecord, fallback?: CardSize): CardSize | undefined {
-  return GAME_IMAGE_SIZES.find((size) => getGameImage(game, size)) ?? fallback
+function resolveGameSize(game: ExtendGameRecord): CardSize {
+  return GAME_IMAGE_SIZES.find((size) => getGameImage(game, size)) ?? 'large'
+}
+
+function hasGameImage(game: ExtendGameRecord): boolean {
+  return GAME_IMAGE_SIZES.some((size) => getGameImage(game, size))
+}
+
+export function mergeRelatedGameImages(
+  games: readonly ExtendGameRecord[],
+  related: readonly ExtendGameRecord[],
+): ExtendGameRecord[] {
+  const byId = new Map<number, ExtendGameRecord>()
+  const children = new Map<number, Map<number, ExtendGameRecord>>()
+  for (const record of [...related, ...games]) {
+    const id = Number(record.id)
+    const parentId = Number(record.parent_id)
+    if (id > 0) byId.set(id, record)
+    if (id > 0 && parentId > 0) {
+      if (!children.has(parentId)) children.set(parentId, new Map())
+      children.get(parentId)!.set(id, record)
+    }
+  }
+  const onlyChild = (parentId: number) => {
+    const siblings = children.get(parentId)
+    return siblings?.size === 1 ? [...siblings.values()][0] : undefined
+  }
+  return games.map((game) => {
+    if (hasGameImage(game)) return game
+    const parentId = Number(game.parent_id)
+    const source =
+      onlyChild(Number(game.id)) ?? (onlyChild(parentId) ? byId.get(parentId) : undefined)
+    if (!source || !hasGameImage(source)) return game
+    return {
+      ...game,
+      game_url_ca: source.game_url_ca,
+      game_url_cb: source.game_url_cb,
+      game_url_cc: source.game_url_cc,
+    }
+  })
 }
 
 export const isRecommended = (record: { is_top?: unknown }): boolean =>
@@ -131,13 +168,12 @@ export function buildChannelCFeed(
   return interleaveChannelCCards(tables, mtts, casino)
 }
 
-/** 首页娱乐场分类的瀑布流：接口图片尺寸一致，卡片高度按固定节奏循环。 */
 export function buildCasinoCards(games: readonly ExtendGameRecord[]): LobbyCard[] {
   return games.map((game, index) => ({
     key: `casino-${game.id}-${index}`,
     kind: 'game',
     game,
-    size: resolveGameSize(game, CASINO_SIZE_CYCLE[index % CASINO_SIZE_CYCLE.length]),
+    size: resolveGameSize(game),
   }))
 }
 

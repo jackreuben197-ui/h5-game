@@ -17,6 +17,7 @@ const hooks = registerHooks({
 const {
   buildCasinoCards,
   buildChannelCFeed,
+  mergeRelatedGameImages,
   buildWaterfallColumns,
   getMttStage,
   getCardSize,
@@ -352,7 +353,7 @@ test('casino cards take their size from the uploaded C image field', () => {
     { id: 4, game_url_ca: '', game_icon: 'icon' },
   ])
   const sizes = cards.map((card) => (card.kind === 'game' ? card.size : undefined))
-  assert.deepEqual(sizes, ['large', 'large', 'small', 'small'])
+  assert.deepEqual(sizes, ['large', 'large', 'small', 'large'])
   const third = cards[2]
   assert.equal(third?.kind === 'game' ? getGameImage(third.game, third.size) : '', 'c')
   const fourth = cards[3]
@@ -377,4 +378,27 @@ test('waterfall avoids level rows by pulling the nearest card of another height'
   const same = buildCasinoCards([{ id: 1, game_url_ca: 'a' }, { id: 2, game_url_ca: 'a' }])
   const [one, two] = buildWaterfallColumns(same)
   assert.deepEqual([ids(one), ids(two)], [[1], [2]])
+})
+
+test('a provider card shows the image uploaded on its only child and the reverse', () => {
+  const parent = { id: 1765, parent_id: 0, game_url_ca: '', game_url_cb: '', game_url_cc: '' }
+  const child = { id: 1766, parent_id: 1765, game_url_cc: 'small.jpg' }
+  const [merged] = mergeRelatedGameImages([parent], [child])
+  assert.equal(merged?.game_url_cc, 'small.jpg')
+  assert.equal(merged?.id, 1765)
+  const [reverse] = mergeRelatedGameImages(
+    [{ id: 2, parent_id: 1 }],
+    [{ id: 1, parent_id: 0, game_url_ca: 'large.jpg' }],
+  )
+  assert.equal(reverse?.game_url_ca, 'large.jpg')
+})
+
+test('a provider with several games never borrows an image from one of them', () => {
+  const provider = { id: 1, parent_id: 0 }
+  const games = [
+    { id: 2, parent_id: 1, game_url_ca: 'a.jpg' },
+    { id: 3, parent_id: 1, game_url_cb: 'b.jpg' },
+  ]
+  const [merged] = mergeRelatedGameImages([provider], games)
+  assert.equal(merged, provider)
 })

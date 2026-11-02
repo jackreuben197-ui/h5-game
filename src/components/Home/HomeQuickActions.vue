@@ -4,30 +4,37 @@ import { useRouter } from 'vue-router'
 import { t } from '@/i18n'
 import { requireRealUser } from '@/session/realUserGate'
 import { openGlobalCustomerServiceChat } from '@/components/GlobalCustomerServiceChat/channel'
+import { theme } from '@/utils/theme'
 import platformInfoIcon from '@/assets/images/match_banner_platform_info.png'
 import onlineShopIcon from '@/assets/images/match_banner_online_shop.png'
 import onlineServiceIcon from '@/assets/images/match_banner_online_service.png'
+import onlineShopIconLight from '@/assets/images/match_banner_online_shop_light.png'
+import onlineServiceIconLight from '@/assets/images/match_banner_online_service_light.png'
 import { getPlatformInfoLabel } from '@/views/platform/platformLabels'
 
 const router = useRouter()
 
 const platformInfoLabel = computed(() => getPlatformInfoLabel())
+const isLightTheme = computed(() => theme.value === 'light')
 
 const actions = computed(() => [
   {
     key: 'platform-info',
     label: platformInfoLabel.value,
     icon: platformInfoIcon,
+    lightIcon: platformInfoIcon,
   },
   {
     key: 'shop',
     label: t('UIHappyShop_ActivityShop'),
     icon: onlineShopIcon,
+    lightIcon: onlineShopIconLight,
   },
   {
     key: 'official-service',
     label: t('UIMineMain01'),
     icon: onlineServiceIcon,
+    lightIcon: onlineServiceIconLight,
   },
 ])
 
@@ -57,7 +64,12 @@ function handleAction(key: string): void {
       @click="handleAction(action.key)"
     >
       <span class="home-quick-action__icon-wrap">
-        <img class="home-quick-action__icon" :src="action.icon" alt="" aria-hidden="true" />
+        <img
+          class="home-quick-action__icon"
+          :src="isLightTheme ? action.lightIcon : action.icon"
+          alt=""
+          aria-hidden="true"
+        />
       </span>
       <span class="home-quick-action__label">{{ action.label }}</span>
     </button>

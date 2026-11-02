@@ -45,6 +45,8 @@ export interface GlobalConfigData {
   create_club_price?: string
   // 首页公告 JSON：{"h5":"H5公告","tg":"Telegram公告"}
   home_announcement_config?: string | HomeAnnouncementConfig
+  // 官方 H5 首页 A/B 版本：0=旧主页，1=新主页；渠道包继续使用 h5_menu。
+  h5_home_version?: number | string
   // 赛事列表是否展示平台创建的 MTT/SNG（1 展示，对齐 Unity club_display_platform_mtt）
   club_display_platform_mtt?: number | string
   // 平台数据统计使用的时区，对齐 Unity GameCache._platformTimeZone。

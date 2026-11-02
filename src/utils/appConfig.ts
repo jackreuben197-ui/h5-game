@@ -49,6 +49,8 @@ export interface AppConfig {
   downloadInfo: AppConfigDownloadInfo
   /** 是否测试环境 */
   isTest: boolean
+  /** 官方 H5 首页 A/B 默认配置；后端 global config 明确返回时优先使用后端值。 */
+  h5_home_version?: number | string
 }
 
 // 运行时配置对象：init 后由 config.json 合并覆盖，全局可读。
@@ -75,6 +77,7 @@ export const appConfig: AppConfig = {
     },
   },
   isTest: false,
+  h5_home_version: 1,
 }
 
 // 拼接 config.json 地址：支持 ?env=staging 加载 config.staging.json；

@@ -55,6 +55,30 @@ export const mainRoute: RouteRecordRaw = {
         desktopLayout: 'primary',
       },
     },
+    {
+      path: 'platform/articles',
+      name: 'platform-articles',
+      component: () => import('@/views/platform/PlatformArticleListView.vue'),
+      meta: {
+        requiresAuth: true,
+        guestPreview: true,
+        tabKey: 'home',
+        moduleTitle: '平台资讯',
+        desktopLayout: 'content',
+      },
+    },
+    {
+      path: 'platform/articles/:id',
+      name: 'platform-article-detail',
+      component: () => import('@/views/platform/PlatformArticleDetailView.vue'),
+      meta: {
+        requiresAuth: true,
+        guestPreview: true,
+        tabKey: 'home',
+        moduleTitle: '平台资讯',
+        desktopLayout: 'content',
+      },
+    },
     clubTabRoute,
     {
       path: 'friendsTable',

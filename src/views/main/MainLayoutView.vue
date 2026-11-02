@@ -47,7 +47,9 @@ const backgroundStyle = computed(() => {
   }
 
   return {
-    backgroundImage: route.meta.tabKey === 'home' ? `url(${mainBg2Url})` : `url(${mainBgUrl})`,
+    // 只有真正的首页使用首页专用背景；平台资讯虽然复用 home tab 高亮，
+    // 但整页背景应继续使用通用深色背景。
+    backgroundImage: route.name === 'lobby' ? `url(${mainBg2Url})` : `url(${mainBgUrl})`,
   }
 })
 

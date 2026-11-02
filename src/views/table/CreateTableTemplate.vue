@@ -775,15 +775,15 @@ function handleBack(): void {
   height: 1.23rem;
   margin: 0.35rem 0.35rem 0;
   padding: 0 0.51rem;
-  background: rgba(0, 0, 0, 0.2);
-  border: 0.016rem solid rgba(242, 242, 242, 0.14);
+  background: rgba(255, 255, 255, 0.14);
+  border: 0.016rem solid rgba(255, 255, 255, 0.14);
   border-radius: 0.43rem;
   backdrop-filter: blur(0.16px);
 }
 .detail-form__section {
   margin: 0.38rem 0.35rem 0;
-  background: rgba(0, 0, 0, 0.2);
-  border: 0.016rem solid rgba(242, 242, 242, 0.14);
+  background: rgba(255, 255, 255, 0.12);
+  border: 0.016rem solid rgba(255, 255, 255, 0.14);
   border-radius: 0.43rem;
   backdrop-filter: blur(0.16px);
   padding: 0.13rem 0.5rem;
@@ -958,17 +958,17 @@ function handleBack(): void {
   justify-content: center;
 
   &--save {
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.12);
     color: #fff;
     backdrop-filter: blur(0.17px);
+    -webkit-backdrop-filter: blur(0.17px);
   }
 
   &--create {
-    background: linear-gradient(157deg, #55f329 0%, #3ead06 100%);
+    background: rgba(255, 255, 255, 0.18);
     color: #fff;
-    box-shadow:
-      inset 1px 1px 0px 0px rgba(242, 242, 242, 0.8),
-      inset -1px -1px 0px 0px rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(0.17px);
+    -webkit-backdrop-filter: blur(0.17px);
   }
 }
 

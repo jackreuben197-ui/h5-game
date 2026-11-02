@@ -1,6 +1,8 @@
 :root[data-theme='light'] .club-index {
   .search-shell {
     background: rgba(255, 255, 255, 1);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
 
     &::before {
       background: none;
@@ -21,6 +23,8 @@
     background: rgba(7, 192, 157, 0.05);
     border: 1px solid #07c09d;
     box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
 
     &::before {
       background: none;

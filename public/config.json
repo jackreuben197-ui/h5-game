@@ -6,6 +6,7 @@
     "https://preview.trackyourchoice.com"
   ],
   "baseApiNew": "/api",
+  "h5_home_version": 1,
   "channelMainDomain": "ccsgame.recognitionway.com",
   "imageApi": "http://152.70.234.14:5039/",
   "isTest": false,

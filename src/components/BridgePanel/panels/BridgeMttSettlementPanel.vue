@@ -13,6 +13,7 @@ import { t, getLocale } from '@/i18n'
 import { useMttListStore } from '@/stores/mttList'
 import { resolveTemplateTextByKey } from '@/utils/multiLanguageTemplate'
 import { formatDateTime, toTimestampMs } from '@/utils/time'
+import { createLogger } from '@/utils/logger'
 
 const props = defineProps<{
   panelProps?: Record<string, unknown>
@@ -22,6 +23,7 @@ const props = defineProps<{
 
 const router = useRouter()
 const mttListStore = useMttListStore()
+const log = createLogger('[mttSettlement]')
 
 // ── 从 Cocos 传入的上下文参数 ──
 const matchId = computed(() => props.panelProps?.matchId)
@@ -91,8 +93,8 @@ async function fetchMttDetail() {
   try {
     const res = await getRoomcenterMttDetailApi(matchId.value as number | string)
     if (res.code === 0) mttDetail.value = res.data ?? null
-  } catch {
-    console.log('fetchMttDetail error')
+  } catch (error) {
+    log.warn('Failed to load MTT settlement details', error)
   }
 }
 
@@ -103,35 +105,9 @@ async function fetchAward(): Promise<boolean> {
     if (res.code === 0 && res.data) {
       awardData.value = res.data
       return true
-    } else {
-      const res = {
-        code: 0,
-        data: {
-          uid: 96355770,
-          rank: 1558,
-          award_gold: 6660,
-          award_goods: [],
-          hunter_award: 100,
-          hunter_rank: 100,
-          hunter_kill: 1,
-          is_final: true,
-          awarded: true,
-          award_replace_prop_id: 0,
-          award_replace_remain: 0,
-          award_extra_prop_id: 0,
-          award_extra_gold_value: 0,
-          username: 'kong',
-          avatar:
-            'https://static.awanptest.com/awanptesting-intl-test/image-avatar/96355770-mwOEM.png',
-          final_match_id: 0,
-          final_start_time: '0001-01-01T00:00:00Z',
-        },
-      }
-      console.log(res)
-      //   awardData.value = res.data
     }
-  } catch {
-    console.log('fetchAward error')
+  } catch (error) {
+    log.warn('Failed to load MTT settlement awards', error)
   }
   return false
 }
@@ -395,11 +371,7 @@ function formatRewardAmount(value: number, goldTypeValue: number): string {
         :loading="watchingPending"
         @click="handleContinueWatching"
       />
-      <button
-        class="mtt-settlement-panel__lobby-btn"
-        type="button"
-        @click="handleReturnLobby"
-      >
+      <button class="mtt-settlement-panel__lobby-btn" type="button" @click="handleReturnLobby">
         {{ t('UIMTT_ReturnLobby') }}
       </button>
     </div>
@@ -407,6 +379,8 @@ function formatRewardAmount(value: number, goldTypeValue: number): string {
 </template>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as *;
+
 .mtt-settlement-panel {
   display: flex;
   flex-direction: column;
@@ -442,6 +416,11 @@ function formatRewardAmount(value: number, goldTypeValue: number): string {
   color: #fff;
   font-family: inherit;
   cursor: pointer;
+
+  @include theme-light {
+    background: var(--c-surface);
+    color: var(--c-text);
+  }
 }
 
 /* ── 赛事名称 ── */

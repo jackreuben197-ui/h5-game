@@ -757,22 +757,16 @@ onBeforeUnmount(() => {
     transform-origin: right center;
     will-change: transform;
 
-    &.is-counting {
-      background-clip: text;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
     &.phase-1 {
-      background-image: linear-gradient(180deg, #a0d911 30.34%, #eaff8f 69.37%);
+      color: #a0d911;
     }
 
     &.phase-2 {
-      background-image: linear-gradient(180deg, #fadb14 28.04%, #fffb8f 69.37%);
+      color: #fadb14;
     }
 
     &.phase-3 {
-      background-image: linear-gradient(180deg, #fa8c16 30.34%, #ffd591 69.37%);
+      color: #fa8c16;
     }
   }
 
@@ -813,6 +807,18 @@ onBeforeUnmount(() => {
 
   .live-win-card__amount {
     color: #000;
+
+    &.phase-1 {
+      color: #5b8c00;
+    }
+
+    &.phase-2 {
+      color: #d48806;
+    }
+
+    &.phase-3 {
+      color: #d46b08;
+    }
   }
 
   .live-win-card__title,

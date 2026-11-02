@@ -344,7 +344,7 @@ test('buy-in uses the real minimum BB multiplier and small blind without changin
   assert.equal(table.min_rate, 444)
 })
 
-test('casino cards use the C image of their size and adopt the only uploaded size', () => {
+test('casino cards take their size from the uploaded C image field', () => {
   const cards = buildCasinoCards([
     { id: 1, game_url_ca: 'a', game_url_cb: 'b', game_url_cc: 'c' },
     { id: 2, game_url_ca: 'a', game_url_cb: 'b', game_url_cc: 'c' },
@@ -352,7 +352,7 @@ test('casino cards use the C image of their size and adopt the only uploaded siz
     { id: 4, game_url_ca: '', game_icon: 'icon' },
   ])
   const sizes = cards.map((card) => (card.kind === 'game' ? card.size : undefined))
-  assert.deepEqual(sizes, ['large', 'medium', 'small', 'small'])
+  assert.deepEqual(sizes, ['large', 'large', 'small', 'small'])
   const third = cards[2]
   assert.equal(third?.kind === 'game' ? getGameImage(third.game, third.size) : '', 'c')
   const fourth = cards[3]

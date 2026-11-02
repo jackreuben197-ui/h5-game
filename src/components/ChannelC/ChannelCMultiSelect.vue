@@ -119,12 +119,12 @@ function selectAll() {
   }
 }
 .c-dropdown-options {
-  min-width: 1.87rem;
+  min-width: 3rem;
   max-width: min(7rem, calc(100vw - 0.5rem));
-  max-height: min(9rem, 55vh);
+  max-height: min(9.2rem, 55vh);
   box-sizing: border-box;
   overflow-y: auto;
-  padding: 0.064rem 0.22rem;
+  padding: 0.064rem 0.28rem;
 }
 .c-dropdown-option {
   position: relative;
@@ -133,12 +133,12 @@ function selectAll() {
   justify-content: space-between;
   gap: 0.15rem;
   width: 100%;
-  padding: 0.1635rem 0;
+  padding: 0.4rem 0;
   border: 0;
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 0.29rem;
+  font-size: 0.333rem;
   font-weight: 700;
   line-height: 1;
   text-align: left;

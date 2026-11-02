@@ -17,6 +17,7 @@ import iconBoxWallet from '@/assets/icons/icon_box_wallet.png'
 import iconBoxBag from '@/assets/icons/icon_box_bag.png'
 import iconBoxClub from '@/assets/icons/icon_club_shield.png'
 import iconBoxTribe from '@/assets/icons/icon_box_tribe.png'
+import messagesBanner from '@/assets/images/messages_banner.png'
 import { useGameStore } from '@/stores/game'
 import { requireRealUser } from '@/session/realUserGate'
 import { isChannelDiamondFreeMode } from '@/utils/channelPackage'
@@ -178,6 +179,7 @@ watch(
     </div>
     <div class="card-bg-highlight">
       <div class="card-bg-outter">
+        <img class="message-banner-image" :src="messagesBanner" alt="" aria-hidden="true" />
         <div class="card-bg-innner">
           <div class="card-line1">
             <div class="left-text">{{ t('UIMine_MsgSystemContent').toUpperCase() }}</div>
@@ -508,6 +510,130 @@ watch(
           text-align: center;
           border-radius: 0.25rem;
           transform: translate(50%, -50%);
+        }
+      }
+    }
+  }
+
+  /* Unity 版消息卡片是整张 PNG，H5 只保留动态点击层和未读数字。 */
+  .card-bg-highlight {
+    position: relative;
+    aspect-ratio: 1121 / 683;
+    padding: 0;
+    border-radius: 1.4rem;
+    background: transparent;
+    overflow: hidden;
+
+    .card-bg-outter {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      aspect-ratio: 1121 / 683;
+      padding: 0;
+      border-radius: 1.42rem;
+      background: transparent !important;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+
+      &::before {
+        display: none;
+      }
+
+      .message-banner-image {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: fill;
+        pointer-events: none;
+      }
+
+      .card-bg-innner {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        display: block;
+
+        .card-line1 {
+          display: none;
+        }
+
+        .card-line2 {
+          position: absolute;
+          left: 7.1%;
+          right: 7.1%;
+          bottom: 11.8%;
+          height: 16%;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0;
+          padding: 0;
+
+          .button {
+            flex: 0 0 30%;
+            width: 30%;
+            height: 100%;
+            min-width: 0;
+            padding: 0 4%;
+            border: 0;
+            border-radius: 0.6rem;
+            background: transparent !important;
+            background-color: transparent !important;
+            background-image: none !important;
+            background-blend-mode: normal;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            box-shadow: none;
+            justify-content: space-between;
+
+            &::before {
+              display: none;
+            }
+
+            .text {
+              position: relative;
+              z-index: 2;
+              color: #fff;
+              font-size: 0.321rem;
+              white-space: nowrap;
+            }
+
+            .round-icon {
+              position: relative;
+              z-index: 2;
+              width: 22%;
+              height: 100%;
+              flex: 0 0 22%;
+              margin-left: 0;
+              background: transparent !important;
+              background-color: transparent !important;
+              backdrop-filter: none !important;
+              -webkit-backdrop-filter: none !important;
+              border: 0;
+
+              svg {
+                display: none;
+              }
+            }
+          }
+
+          .btn-credit:last-child .round-icon .uc-num {
+            color: #f9f9f9;
+            font-size: 0.345rem;
+            font-weight: 700;
+            transform: translateX(0.12rem);
+          }
+
+          .btn-credit:last-child {
+            flex-basis: 32%;
+            width: 32%;
+          }
         }
       }
     }

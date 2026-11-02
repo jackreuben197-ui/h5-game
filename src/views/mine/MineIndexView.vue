@@ -18,6 +18,7 @@ import iconBoxComment from '@/assets/icons/icon_box_comment.png'
 import iconBoxSetting from '@/assets/icons/icon_box_setting.png'
 import iconShop from '@/assets/icons/icon_shop.png'
 import defaultAvatar from '@/assets/images/default_avatar.png'
+import meBanner from '@/assets/images/me_banner.png'
 import ProfileCard from '@/components/ProfileCard/ProfileCard.vue'
 import { isChannelDiamondFreeMode, isPrivateDomainMode } from '@/utils/channelPackage'
 import { formatUC } from '@/utils/roomVisibility'
@@ -141,9 +142,11 @@ const displayUser = computed(() => {
       </div>
     </div>
     <ProfileCard
+      class="mine-profile-card"
       :avatar="String(displayUser.avatar)"
       :nickname="displayUser.nickname"
       :user-id="String(displayUser.userID)"
+      :bg-image="meBanner"
       @avatar-click="goToProfileEdit"
     >
       <template #bottom>
@@ -256,6 +259,92 @@ const displayUser = computed(() => {
         width: 0.474rem;
       }
     }
+  }
+
+  /* Unity 版我的卡片使用整张 me_banner.png，H5 只叠加动态用户信息。 */
+  :deep(.mine-profile-card) {
+    position: relative;
+    aspect-ratio: 1121 / 683;
+    padding: 0;
+    border-radius: 1.4rem;
+    background: transparent;
+    overflow: hidden;
+  }
+
+  :deep(.mine-profile-card .profile-card__outer) {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border-radius: 1.42rem;
+    background-size: 100% 100%;
+    background-position: center;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  :deep(.mine-profile-card .profile-card__outer::before) {
+    display: none;
+  }
+
+  :deep(.mine-profile-card .profile-card__inner) {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    display: block;
+  }
+
+  :deep(.mine-profile-card .card-line1) {
+    position: absolute;
+    top: 16%;
+    left: 4%;
+    right: 4%;
+    padding: 0;
+    gap: 0.5rem;
+  }
+
+  :deep(.mine-profile-card .card-line2) {
+    position: absolute;
+    left: 4%;
+    right: 6%;
+    bottom: 12%;
+    min-height: 16%;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  :deep(.mine-profile-card .card-line2 .button) {
+    min-width: 30%;
+    min-height: 100%;
+    padding: 0 4%;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: 0;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  :deep(.mine-profile-card .card-line2 .button::before) {
+    display: none;
+  }
+
+  :deep(.mine-profile-card .card-line2 .button .round-icon) {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: 0;
+  }
+
+  :deep(.mine-profile-card .card-line2 .button .round-icon img) {
+    display: none;
   }
 }
 

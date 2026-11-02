@@ -12,7 +12,7 @@ const props = withDefaults(
   }>(),
   {
     autoplayDuration: 3500,
-    transitionDuration: 500,
+    transitionDuration: 600,
   },
 )
 
@@ -348,7 +348,7 @@ onBeforeUnmount(() => {
   height: 100%;
   will-change: transform;
   transition-property: transform;
-  transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
+  transition-timing-function: ease;
 }
 
 .banner-slide {

@@ -797,25 +797,32 @@ watch(
   justify-content: space-between;
   border-radius: 1.055rem;
   padding: 0.127rem 0.203rem 0.127rem 0.447rem;
-  background: transparent;
+  background: rgba(54, 58, 68, 0.56);
+  box-shadow:
+    inset 0 0.012rem 0.07rem rgba(255, 255, 255, 0.18),
+    0 0.06rem 0.18rem rgba(0, 0, 0, 0.18);
+  -webkit-backdrop-filter: blur(0.22rem);
+  backdrop-filter: blur(0.22rem);
+  isolation: isolate;
+  overflow: hidden;
 
   &::before {
     content: '';
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    padding: 0.013rem;
+    padding: 0.008rem;
     background: linear-gradient(
       126.09deg,
-      rgba(255, 255, 255, 0.89) 21.1%,
-      rgba(230, 230, 230, 0.89) 71.4%
+      rgba(255, 255, 255, 0.46) 21.1%,
+      rgba(230, 230, 230, 0.34) 71.4%
     );
     -webkit-mask:
       linear-gradient(#fff 0 0) content-box,
       linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
-    mix-blend-mode: overlay;
+    mix-blend-mode: normal;
     pointer-events: none;
   }
 }
@@ -880,9 +887,14 @@ watch(
   align-items: center;
   gap: 0.166rem;
   color: #fff;
-  background: transparent;
+  background: rgba(164, 165, 173, 0.42);
+  border: 0.008rem solid rgba(255, 255, 255, 0.18);
+  -webkit-backdrop-filter: blur(0.19rem);
+  backdrop-filter: blur(0.19rem);
 
-  box-shadow: 0.024rem 0.03rem 0.047rem 0 rgba(0, 0, 0, 0.25);
+  box-shadow:
+    inset 0 0.018rem 0.06rem rgba(255, 255, 255, 0.38),
+    0.024rem 0.03rem 0.047rem 0 rgba(0, 0, 0, 0.25);
   overflow: hidden;
 
   &::before {
@@ -890,12 +902,12 @@ watch(
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    padding: 0.012rem; // 0.445px border width
+    padding: 0.008rem; // 约 0.6px 描边
     background: linear-gradient(
       to bottom,
-      rgba(242, 242, 242, 0.4),
+      rgba(242, 242, 242, 0.24),
       rgba(255, 255, 255, 0),
-      rgba(255, 255, 255, 0.5)
+      rgba(255, 255, 255, 0.28)
     );
     -webkit-mask:
       linear-gradient(#fff 0 0) content-box,
@@ -1072,6 +1084,41 @@ watch(
     );
   }
 
+  // Unity 风格外环：只填充内外描边之间的宽度，不覆盖卡片内容
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -0.213rem;
+    border-radius: 1.015rem;
+    padding: 0.14rem;
+    background: linear-gradient(
+      to bottom right,
+      rgba(255, 255, 255, 0.58) 0%,
+      rgba(248, 246, 242, 0.36) 22%,
+      rgba(255, 255, 255, 0.12) 58%,
+      rgba(220, 220, 224, 0.1) 82%,
+      rgba(255, 255, 255, 0.2) 100%
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 6;
+
+    clip-path: polygon(
+      0% 0%,
+      100% 0%,
+      100% 100%,
+      calc(50% + 2.845rem) 100%,
+      calc(50% + 2.845rem) calc(100% - 0.3rem),
+      calc(50% - 2.845rem) calc(100% - 0.3rem),
+      calc(50% - 2.845rem) 100%,
+      0% 100%
+    );
+  }
+
   @include theme-light-own {
     border-radius: 0.95rem;
     background: #ffffff;
@@ -1091,6 +1138,11 @@ watch(
       clip-path: none !important;
       display: block !important;
     }
+
+    &::after {
+      display: none;
+    }
+
   }
 }
 
@@ -1124,6 +1176,7 @@ watch(
     mask-composite: exclude;
     pointer-events: none;
     z-index: 5;
+    display: none;
 
     clip-path: polygon(
       0% 0%,
@@ -1397,6 +1450,7 @@ watch(
     border: 0.01rem solid rgba(0, 0, 0, 0.04);
     background: linear-gradient(180deg, rgba(246, 250, 254, 0.98), rgba(238, 246, 252, 0.98)), #f3f8fd;
     box-shadow: 0 0.06rem 0.12rem rgba(34, 34, 34, 0.08);
+    backdrop-filter: none;
 
     &::before,
     &::after {

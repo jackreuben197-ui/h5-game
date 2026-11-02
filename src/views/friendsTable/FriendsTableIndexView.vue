@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { postRoomcenterFriendRoomsApi, postRoomcenterInvitationRoomApi } from '@/api/roomcenter'
@@ -63,6 +63,10 @@ const inviteCode = ref<string[]>(Array(INVITE_CODE_LENGTH).fill(''))
 const keypadOpen = ref(false)
 const inviteCodeValue = computed(() => inviteCode.value.join(''))
 const scrollContentRef = ref<HTMLElement | null>(null)
+const tableListRef = ref<HTMLElement | null>(null)
+const isTableListScrollable = ref(false)
+let tableListResizeObserver: ResizeObserver | null = null
+let tableListMeasureFrame: number | null = null
 
 const activeFilter = ref('all')
 
@@ -284,6 +288,28 @@ const filteredRooms = computed(() => {
     return key === activeFilter.value
   })
 })
+
+function updateTableListScrollState(): void {
+  const tableList = tableListRef.value
+  if (!tableList) {
+    isTableListScrollable.value = false
+    return
+  }
+
+  isTableListScrollable.value = tableList.scrollHeight > tableList.clientHeight + 1
+}
+
+function scheduleTableListScrollState(): void {
+  void nextTick(() => {
+    if (tableListMeasureFrame !== null) {
+      cancelAnimationFrame(tableListMeasureFrame)
+    }
+    tableListMeasureFrame = requestAnimationFrame(() => {
+      tableListMeasureFrame = null
+      updateTableListScrollState()
+    })
+  })
+}
 
 function syncInviteCode(raw: string): void {
   const digits = raw.replace(/\D/g, '').slice(0, INVITE_CODE_LENGTH)
@@ -544,6 +570,17 @@ function goToMineShop(): void {
 }
 
 onMounted(() => {
+  void nextTick(() => {
+    const tableList = tableListRef.value
+    if (tableList && typeof ResizeObserver !== 'undefined') {
+      tableListResizeObserver = new ResizeObserver(() => {
+        scheduleTableListScrollState()
+      })
+      tableListResizeObserver.observe(tableList)
+    }
+    scheduleTableListScrollState()
+  })
+
   if (gameStore.isRealUser) {
     roomListStore.bootstrapRoomList()
     void fetchFriendRooms()
@@ -561,6 +598,22 @@ watch(
     void fetchFriendRooms()
   },
 )
+
+watch(
+  [() => filteredRooms.value.length, activeFilter, isLightTheme],
+  () => {
+    scheduleTableListScrollState()
+  },
+)
+
+onBeforeUnmount(() => {
+  tableListResizeObserver?.disconnect()
+  tableListResizeObserver = null
+  if (tableListMeasureFrame !== null) {
+    cancelAnimationFrame(tableListMeasureFrame)
+    tableListMeasureFrame = null
+  }
+})
 
 watch(
   () => keypadOpen.value,
@@ -646,7 +699,11 @@ watch(
         </div>
 
         <!-- 牌桌列表 -->
-        <div class="table-list">
+        <div
+          ref="tableListRef"
+          class="table-list"
+          :class="{ 'table-list--scrollable': isTableListScrollable && !isLightTheme }"
+        >
           <div
             v-for="room in filteredRooms"
             :key="String(room.rid ?? '')"
@@ -1382,6 +1439,204 @@ watch(
 :root[data-locale='en'] {
   .action-btn {
     font-size: 0.58rem;
+  }
+}
+
+// 移动端朋友桌使用 Unity 的整页背景：外层由主布局滚动，牌桌列表单独滚动。
+// 背景原图为 1242x4420，按页面宽度等比缩放，避免列表增多时出现深色背景接缝。
+@media (max-width: 599px) {
+  .friends-table-page {
+    --friend-art-height: 355.878vw;
+    --friend-safe-top: calc(var(--app-content-safe-area-top, env(safe-area-inset-top)) + 0.2rem);
+
+    position: relative;
+    isolation: isolate;
+    height: var(--friend-art-height);
+    min-height: var(--friend-art-height);
+    justify-content: flex-start;
+    align-items: stretch;
+    background: transparent;
+
+    // 主布局的内容容器会为安全区预留顶部 padding，页面本身因此从安全区下方开始。
+    // 用独立背景层向上延伸，确保 Unity 整页背景从屏幕顶端连续覆盖到朋友桌页面底部。
+    &::before {
+      content: '';
+      position: absolute;
+      z-index: 0;
+      pointer-events: none;
+      left: 0;
+      right: 0;
+      top: calc(-1 * var(--friend-safe-top));
+      height: calc(var(--friend-art-height) + var(--friend-safe-top));
+      background: #0f141e url('@/assets/images/lobbybg_friend.webp') center top / 100% auto no-repeat;
+    }
+
+    > .title-bar,
+    > .scroll-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .scroll-content {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: visible;
+      padding-bottom: 0;
+      touch-action: auto;
+    }
+
+    // Unity 背景已经包含玻璃牌桌、邀请位和按钮底图，隐藏旧的 SVG 底图，
+    // 只保留当前组件的文字、输入和点击逻辑。
+    .main-content::before,
+    .main-content::after {
+      display: none;
+    }
+
+    .main-content {
+      flex: 0 0 16.8rem;
+    }
+
+    .action-btn {
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+      // 整图中的按钮胶囊位置固定，文字需要下移到胶囊内部；
+      // 旧的中文 0.62rem 规则会让按钮文案明显偏大。
+      font-size: 0.54rem;
+    }
+
+    .join-section {
+      .section-title,
+      .section-subtitle,
+      .action-btn {
+        transform: translateY(1.35rem);
+      }
+
+      .action-btn {
+        transform: translateY(calc(1.6rem - var(--friend-safe-top)));
+      }
+
+      // 只下移邀请码的透明点击容器，保持输入数字仍落在背景圆点中央。
+      .invite-inputs {
+        position: relative;
+        z-index: 3;
+        transform: translateY(calc(1.2rem - var(--friend-safe-top)));
+      }
+
+      .invite-input-wrap {
+        // 背景圆点已由整图提供，数字基线再下移到圆点中心。
+        transform: translateY(0.4rem);
+      }
+    }
+
+    .create-section {
+      transform: translateY(calc(1.75rem - var(--friend-safe-top)));
+    }
+
+    .join-section .invite-input-wrap {
+      background: transparent;
+      border-color: transparent;
+    }
+
+    .table-section {
+      flex: 1 1 auto;
+      min-height: 0;
+      margin-bottom: 0;
+    }
+
+    .table-list {
+      flex: 1 1 auto;
+      min-height: 0;
+      // 牌桌未溢出时不建立内层滚动容器，手势交给外层整页背景。
+      overflow-y: visible;
+      overscroll-behavior: auto;
+      touch-action: auto;
+      -webkit-overflow-scrolling: auto;
+      scrollbar-width: none;
+
+      &.table-list--scrollable {
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        touch-action: pan-y;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
+    }
+
+    @include theme-light-own {
+      // 浅色主题继续使用原有 H5 牌桌背景和滚动行为。
+      height: auto;
+      min-height: var(--app-full-height, var(--app-viewport-height, 100dvh));
+      background: transparent;
+
+      &::before {
+        display: none;
+      }
+
+      > .title-bar,
+      > .scroll-content {
+        z-index: auto;
+      }
+
+      .scroll-content {
+        min-height: 0;
+        overflow-y: auto;
+        padding-bottom: 1.5rem;
+        touch-action: pan-y;
+      }
+
+      .main-content {
+        flex: none;
+      }
+
+      .main-content::before,
+      .main-content::after {
+        display: block;
+      }
+
+      .table-section {
+        flex: none;
+        min-height: auto;
+        margin-bottom: 1.6rem;
+      }
+
+      .table-list {
+        flex: none;
+        min-height: auto;
+        height: auto;
+        overflow: visible;
+        overscroll-behavior: auto;
+        touch-action: auto;
+      }
+
+      .action-btn {
+        background: var(--c-brand);
+        box-shadow: none;
+      }
+
+      // 浅色主题不使用整页背景延伸，保留原有控件位置。
+      .join-section .invite-inputs {
+        transform: translateY(1.2rem);
+      }
+
+      .join-section .action-btn {
+        transform: translateY(1.6rem);
+      }
+
+      .create-section {
+        transform: translateY(1.75rem);
+      }
+
+      .join-section .invite-input-wrap {
+        background: rgba(0, 0, 0, 0.13);
+        border-color: rgba(255, 40, 40, 0.08);
+      }
+    }
   }
 }
 </style>

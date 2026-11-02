@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import HomeQuickActions from '@/components/Home/HomeQuickActions.vue'
+import HomeTopBar from '@/components/HomeTopBar.vue'
 import MttContent from '@/components/Mtt/MttContent.vue'
 import ThemeQuickSwitch from '@/components/ThemeQuickSwitch.vue'
 import { t } from '@/i18n'
@@ -25,6 +26,8 @@ const dividerIcons = computed(() =>
 
 <template>
   <div class="home-new-page">
+    <HomeTopBar />
+
     <header class="home-new-header title-bar main-primary-header">
       <h1 class="home-new-title title">{{ t('UITabbarMatch') }}</h1>
       <ThemeQuickSwitch class="home-new-theme-switch" />

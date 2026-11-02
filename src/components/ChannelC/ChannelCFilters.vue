@@ -82,7 +82,7 @@ const mttOptions = [
 <style scoped lang="scss">
 .c-filter-row {
   position: sticky;
-  top: var(--app-content-safe-area-top, env(safe-area-inset-top, 0px));
+  top: 0;
   z-index: 3;
   display: flex;
   align-items: center;

@@ -3,8 +3,12 @@ import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { isPrivateDomainMode } from '@/utils/channelPackage'
 import {
+  type CategoryKey,
   type ExtendGameRecord,
+  CATEGORY_API_TYPES,
   getDeviceType,
+  getGamesByCategoryHome,
+  getGamesByCategoryClub,
   getPopularGamesHome,
   getPopularGamesClub,
   getPopularBannerGamesHome,
@@ -65,7 +69,14 @@ interface CasinoState {
   gameRecords: ExtendGameRecord[]
   popularGamesByType: Record<string, ExtendGameRecord[]>
   hasFetchedInitialData: boolean
+  categoryGamesCache: Record<string, ExtendGameRecord[]>
 }
+
+function categoryCacheKey(cat: CategoryKey, clubId: number | undefined, isGlobalMode: boolean): string {
+  return `${isGlobalMode ? 'global' : clubId ?? ''}|${cat}`
+}
+
+const categoryRequests = new Map<string, Promise<ExtendGameRecord[] | null>>()
 
 export const useCasinoStore = defineStore('casino', {
   state: (): CasinoState => ({
@@ -74,6 +85,7 @@ export const useCasinoStore = defineStore('casino', {
     gameRecords: [],
     popularGamesByType: {},
     hasFetchedInitialData: false,
+    categoryGamesCache: {},
   }),
 
   actions: {
@@ -250,6 +262,49 @@ export const useCasinoStore = defineStore('casino', {
         }
       } catch (error) {
         console.error('Failed to fetch popular banner games:', error)
+      }
+    },
+
+    getCachedCategoryGames(cat: CategoryKey, clubId: number | undefined, isGlobalMode: boolean) {
+      return this.categoryGamesCache[categoryCacheKey(cat, clubId, isGlobalMode)]
+    },
+
+    fetchCategoryGames(cat: CategoryKey, clubId: number | undefined, isGlobalMode: boolean) {
+      const key = categoryCacheKey(cat, clubId, isGlobalMode)
+      const pending = categoryRequests.get(key)
+      if (pending) return pending
+      const payload = {
+        game_api_type: CATEGORY_API_TYPES[cat],
+        device_type: 4,
+        search: '',
+        limit: 300,
+        offset: 0,
+        id: 10,
+      }
+      const request = (async () => {
+        try {
+          const res = isGlobalMode
+            ? await getGamesByCategoryHome(payload)
+            : await getGamesByCategoryClub(payload, clubId!)
+          if (res.code !== 0 || !res.data) return null
+          const list = (res.data.list ?? res.data.records ?? []) as ExtendGameRecord[]
+          this.categoryGamesCache[key] = list
+          return list
+        } catch {
+          return null
+        } finally {
+          categoryRequests.delete(key)
+        }
+      })()
+      categoryRequests.set(key, request)
+      return request
+    },
+
+    prefetchCategoryGames(clubId: number | undefined, isGlobalMode: boolean) {
+      for (const cat of Object.keys(CATEGORY_API_TYPES) as CategoryKey[]) {
+        if (!this.getCachedCategoryGames(cat, clubId, isGlobalMode)) {
+          void this.fetchCategoryGames(cat, clubId, isGlobalMode)
+        }
       }
     },
 

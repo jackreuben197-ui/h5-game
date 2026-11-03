@@ -21,6 +21,7 @@ import { useChannelCVersionRouting } from '@/composables/useChannelCVersionRouti
 import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
 import { useCasinoGameLaunch } from '@/composables/useCasinoGameLaunch'
 import { useRoomListStore } from '@/stores/roomList'
+import { useCasinoStore } from '@/stores/casino'
 import { buildChannelCFeed, type ChannelCSection } from '@/features/channelC/model'
 import ChannelCHeader from './ChannelCHeader.vue'
 import ChannelCFilters from './ChannelCFilters.vue'
@@ -51,6 +52,7 @@ const { liveWinItems, liveWinInterval, findLiveWinGame } = useLiveWins(clubId)
 const { play } = useCasinoGameLaunch()
 const { bannerImages, isBannerLoaded, fetchLobbyBannerImages } = useLobbyBannerImages('c')
 const roomStore = useRoomListStore()
+const casinoStore = useCasinoStore()
 const root = ref<HTMLElement | null>(null)
 const overlays = ref<InstanceType<typeof ChannelCOverlays> | null>(null)
 const {
@@ -139,6 +141,13 @@ onBeforeUnmount(deactivate)
 watch(ready, (value) => {
   if (value) void restoreScroll()
 })
+watch(
+  [clubId, () => props.section],
+  ([id, section]) => {
+    if (id > 0 && section === 'home') casinoStore.prefetchCategoryGames(id, false)
+  },
+  { immediate: true },
+)
 watch(
   () => props.section,
   (_next, previous) => {

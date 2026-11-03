@@ -25,10 +25,7 @@ import {
   getPopularGamesClub,
   getPopularBannerGamesHome,
   getPopularBannerGamesClub,
-  getGamesByCategoryHome,
-  getGamesByCategoryClub,
   getGameClubList,
-  CATEGORY_API_TYPES,
   type ExtendGameRecord,
   type ExtendGameClubListRecord,
   type CategoryKey,
@@ -632,30 +629,13 @@ async function fetchPopularBannerGames(): Promise<void> {
 let categoryRequestId = 0
 async function fetchGamesByCategory(cat: CategoryKey): Promise<void> {
   const requestId = ++categoryRequestId
-  loadingGames.value = true
-  categoryGames.value = []
-  try {
-    const types = CATEGORY_API_TYPES[cat]
-    const payload = {
-      game_api_type: types,
-      device_type: 4,
-      search: '',
-      limit: 300,
-      offset: 0,
-      id: 10,
-    }
-    const res = isGlobalMode.value
-      ? await getGamesByCategoryHome(payload)
-      : await getGamesByCategoryClub(payload, routeClubId.value!)
-
-    if (requestId === categoryRequestId && res.code === 0 && res.data) {
-      categoryGames.value = (res.data.list ?? res.data.records ?? []) as ExtendGameRecord[]
-    }
-  } catch {
-    // keep empty
-  } finally {
-    if (requestId === categoryRequestId) loadingGames.value = false
-  }
+  const cached = casinoStore.getCachedCategoryGames(cat, routeClubId.value, isGlobalMode.value)
+  categoryGames.value = cached ?? []
+  loadingGames.value = !cached
+  const list = await casinoStore.fetchCategoryGames(cat, routeClubId.value, isGlobalMode.value)
+  if (requestId !== categoryRequestId) return
+  if (list) categoryGames.value = list
+  loadingGames.value = false
 }
 
 // ─── Category watcher ─────────────────────────────────────────────────────────
@@ -1036,6 +1016,7 @@ onMounted(async () => {
     isInitLoading.value = false
   }
   void nextTick(centerSelectedCategory)
+  casinoStore.prefetchCategoryGames(routeClubId.value, isGlobalMode.value)
 })
 
 onActivated(async () => {

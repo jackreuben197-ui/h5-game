@@ -80,8 +80,6 @@ const mttOptions = [
 </template>
 
 <style scoped lang="scss">
-@use '@/styles/mixins' as *;
-
 .c-filter-row {
   position: sticky;
   top: var(--app-content-safe-area-top, env(safe-area-inset-top, 0px));
@@ -92,7 +90,9 @@ const mttOptions = [
   min-width: 0;
   margin: 0 -0.256rem;
   padding: 0.25rem 0.256rem;
-  background: var(--c-page);
+  background: transparent;
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
 }
 .c-filter-options {
   display: flex;
@@ -114,24 +114,16 @@ const mttOptions = [
   padding: 0.227rem 0.15rem;
   border: 0;
   border-radius: 0.44rem;
-  background: #ffffff30;
-  color: #fff;
+  background: #fff;
+  color: #17191e;
   font: inherit;
   font-size: 0.29rem;
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
   cursor: pointer;
-
-  @include theme-light {
-    &:not(.selected) {
-      background: #fff;
-      color: #17191e;
-    }
-  }
 }
 .c-filter.selected {
-  background: #69beff;
-  color: #fff;
+  box-shadow: inset 0 0 0 2px #69beff;
 }
 </style>

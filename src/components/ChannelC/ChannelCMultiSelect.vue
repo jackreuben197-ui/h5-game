@@ -1,12 +1,10 @@
 <script setup lang="ts" generic="T extends string | number">
 import { computed, ref } from 'vue'
-import { useTheme } from '@/composables/useTheme'
 import { toggleFilterValue, type ChannelCFilterOption } from '@/features/channelC/filters'
 
 const props = defineProps<{ allLabel: string; options: ChannelCFilterOption<T>[] }>()
 const selected = defineModel<T[]>({ required: true })
 const expanded = ref(false)
-const { isDark } = useTheme()
 const label = computed(() =>
   selected.value.length
     ? props.options
@@ -27,7 +25,7 @@ function selectAll() {
     v-model:show="expanded"
     placement="bottom-start"
     trigger="click"
-    :theme="isDark ? 'dark' : 'light'"
+    theme="light"
     :show-arrow="false"
   >
     <template #reference>
@@ -75,8 +73,6 @@ function selectAll() {
 </template>
 
 <style scoped lang="scss">
-@use '@/styles/mixins' as *;
-
 .c-multiselect {
   display: flex;
   align-items: center;
@@ -87,8 +83,8 @@ function selectAll() {
   padding: 0.227rem 0.22rem;
   border: 0;
   border-radius: 0.44rem;
-  background: #ffffff30;
-  color: #fff;
+  background: #fff;
+  color: #17191e;
   font: inherit;
   font-size: 0.29rem;
   font-weight: 700;
@@ -103,15 +99,8 @@ function selectAll() {
   .van-icon {
     flex: none;
   }
-  @include theme-light {
-    &:not(.selected) {
-      background: #fff;
-      color: #17191e;
-    }
-  }
   &.selected {
-    background: #69beff;
-    color: #fff;
+    box-shadow: inset 0 0 0 2px #69beff;
   }
 }
 .c-dropdown-options {
@@ -120,6 +109,8 @@ function selectAll() {
   max-height: min(9rem, 55vh);
   overflow-y: auto;
   padding: 0.14rem;
+  background: #fff;
+  color: #17191e;
 }
 .c-dropdown-option {
   display: flex;
@@ -142,8 +133,11 @@ function selectAll() {
     flex: none;
   }
   &[aria-pressed='true'] {
-    background: #69beff30;
-    color: #69beff;
+    box-shadow: inset 0 0 0 2px #69beff;
+
+    .van-icon {
+      color: #69beff;
+    }
   }
 }
 </style>

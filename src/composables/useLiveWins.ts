@@ -60,7 +60,7 @@ export function buildLiveWinItems(
       gameTitle: readText(record.game_name),
       gameIcon: gameIcons.get(Number(record.game_id)),
       username: readText(record.user_info),
-      finalAmount: Number(record.reward_amount),
+      finalAmount: Number(record.reward_amount) / 100,
       tag: readText(record.lab_text),
     }))
 }

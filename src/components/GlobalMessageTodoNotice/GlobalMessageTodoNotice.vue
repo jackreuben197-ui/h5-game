@@ -256,7 +256,7 @@ async function auditBringIn(item: UserRoomSitApplyRecordsRecord, pass: boolean):
     const response = await postRoomcenterFriendRoomApplyAuditApi({
       room_id: item.room_id,
       apply_id: item.id,
-      action: pass ? 2 : 3,
+      audit_op: pass ? 2 : 3,
     })
     if (response.code === 0) {
       void invalidateCreditCache(gameStore.loginUserId)

@@ -35,6 +35,42 @@ type FundAssetTab = 'coin' | 'quota' | 'diamond'
 type QuotaEditField = 'disposable' | 'review'
 type QuotaAdjustMode = 'increase' | 'decrease'
 
+const FUND_INPUT_MAX_LENGTH = 9
+const FUND_INPUT_MAX_DECIMAL_PLACES = 2
+
+function appendFundInputValue(current: string, key: string): string {
+  if (key === '.') {
+    if (current.includes('.') || current.length >= FUND_INPUT_MAX_LENGTH) {
+      return current
+    }
+    return current ? `${current}.` : '0.'
+  }
+
+  if (!/^\d$/.test(key) || current.length >= FUND_INPUT_MAX_LENGTH) {
+    return current
+  }
+
+  const fraction = current.split('.')[1] ?? ''
+  if (current.includes('.') && fraction.length >= FUND_INPUT_MAX_DECIMAL_PLACES) {
+    return current
+  }
+
+  if (current === '0') {
+    return key === '0' ? current : key
+  }
+
+  return `${current}${key}`
+}
+
+function parseFundInputValue(value: string): number | null {
+  if (!value || value.endsWith('.')) {
+    return null
+  }
+
+  const amount = Number(value)
+  return Number.isFinite(amount) && amount > 0 ? amount : null
+}
+
 interface DownlineMemberItem {
   id: number
   name: string
@@ -252,6 +288,10 @@ function switchFundAsset(tab: FundAssetTab): void {
 
   fundAssetTab.value = tab
 
+  if (tab === 'diamond' && fundAmountInput.value.includes('.')) {
+    fundAmountInput.value = fundAmountInput.value.split('.')[0] || ''
+  }
+
   if (tab !== 'quota') {
     quotaEditField.value = null
     quotaInput.value = ''
@@ -266,24 +306,19 @@ function editQuota(field: QuotaEditField): void {
 }
 
 function onKeypadPress(key: string): void {
-  const isQuotaEditing = fundAssetTab.value === 'quota' && quotaEditField.value
-  const target = isQuotaEditing ? quotaInput : fundAmountInput
-
-  if (key === 'C') {
-    target.value = ''
+  if (key === '.' && fundAssetTab.value === 'diamond') {
     return
   }
+
+  const isQuotaEditing = fundAssetTab.value === 'quota' && quotaEditField.value
+  const target = isQuotaEditing ? quotaInput : fundAmountInput
 
   if (key === 'DEL') {
     target.value = target.value.slice(0, -1)
     return
   }
 
-  if (target.value.length >= 9) {
-    return
-  }
-
-  target.value += key
+  target.value = appendFundInputValue(target.value, key)
 }
 
 async function submitQuotaUpdate(options: {
@@ -302,7 +337,7 @@ async function submitQuotaUpdate(options: {
   const payload = {
     user_id: member.id,
     gold_type: 3,
-    amount: signedAmount * 100,
+    amount: Math.round(signedAmount * 100),
     is_reset: false,
   }
 
@@ -333,14 +368,14 @@ async function onFundConfirm(): Promise<void> {
       return
     }
 
-    const amount = Number.parseInt(quotaInput.value, 10)
-    if (Number.isNaN(amount) || amount <= 0) {
+    const amount = parseFundInputValue(quotaInput.value)
+    if (amount === null) {
       showFailToast(t('UIClub_PleaseOf'))
       return
     }
 
     if (quotaAdjustMode.value === 'increase') {
-      const required = amount * 100
+      const required = Math.round(amount * 100)
       const available = agentDisposableQuotaBalance.value
       if (required > available) {
         showFailToast(t('UIClub_Text5'))
@@ -356,7 +391,10 @@ async function onFundConfirm(): Promise<void> {
         adjustMode: quotaAdjustMode.value,
       })
 
-      const delta = quotaAdjustMode.value === 'increase' ? amount * 100 : -amount * 100
+      const delta =
+        quotaAdjustMode.value === 'increase'
+          ? Math.round(amount * 100)
+          : -Math.round(amount * 100)
       if (quotaEditField.value === 'disposable') {
         disposableQuota.value = Math.max(0, disposableQuota.value + delta)
         member.disposableCredit = disposableQuota.value
@@ -383,13 +421,15 @@ async function onFundConfirm(): Promise<void> {
     return
   }
 
-  const amount = Number.parseInt(fundAmountInput.value, 10)
-  if (Number.isNaN(amount) || amount <= 0) {
+  const amount = parseFundInputValue(fundAmountInput.value)
+  if (amount === null) {
     showFailToast(t('UIClub_PleaseOf2'))
     return
   }
 
-  if (fundAssetTab.value === 'coin' && amount * 100 > agentCoinBalance.value) {
+  const goldAmount = Math.round(amount * 100)
+
+  if (fundAssetTab.value === 'coin' && goldAmount > agentCoinBalance.value) {
     showFailToast(t('UIClub_UnionCoin'))
     return
   }
@@ -415,7 +455,7 @@ async function onFundConfirm(): Promise<void> {
       response = await postUserAgencyGoldGrantApi(
         {
           user_id: member.id,
-          amount: amount * 100,
+          amount: goldAmount,
           op_type: 1,
         },
         userInfoStore.currentClub?.club_id,
@@ -431,8 +471,8 @@ async function onFundConfirm(): Promise<void> {
       const nextDiamond = Math.max(0, agentDiamondBalance.value - amount)
       userInfoStore.syncCurrentClubFields({ diamonds: nextDiamond })
     } else {
-      member.uc += amount * 100
-      const nextCoin = Math.max(0, agentCoinBalance.value - amount * 100)
+      member.uc += goldAmount
+      const nextCoin = Math.max(0, agentCoinBalance.value - goldAmount)
       userInfoStore.syncCurrentClubFields({ user_gold: nextCoin })
     }
 
@@ -708,7 +748,7 @@ onMounted(async () => {
           </div>
         </div>
 
-        <FundKeypad @press="onKeypadPress" />
+        <FundKeypad :allow-decimal="fundAssetTab !== 'diamond'" @press="onKeypadPress" />
 
         <div class="sheet-footer-actions">
           <button type="button" class="sheet-footer-btn" @click="closeFundSheet">

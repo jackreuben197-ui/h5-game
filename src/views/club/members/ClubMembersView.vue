@@ -51,6 +51,41 @@ type FundActionTab = 'grant' | 'recycle'
 type QuotaEditField = 'disposable' | 'review'
 type QuotaAdjustMode = 'increase' | 'decrease'
 
+const FUND_INPUT_MAX_LENGTH = 9
+const FUND_INPUT_MAX_DECIMAL_PLACES = 2
+
+function appendFundInputValue(current: string, key: string): string {
+  if (key === '.') {
+    if (current.includes('.') || current.length >= FUND_INPUT_MAX_LENGTH) {
+      return current
+    }
+    return current ? `${current}.` : '0.'
+  }
+
+  if (!/^\d$/.test(key) || current.length >= FUND_INPUT_MAX_LENGTH) {
+    return current
+  }
+
+  if (current.includes('.') && current.split('.')[1].length >= FUND_INPUT_MAX_DECIMAL_PLACES) {
+    return current
+  }
+
+  if (current === '0') {
+    return key === '0' ? current : key
+  }
+
+  return `${current}${key}`
+}
+
+function parseFundInputValue(value: string): number | null {
+  if (!value || value.endsWith('.')) {
+    return null
+  }
+
+  const amount = Number(value)
+  return Number.isFinite(amount) && amount > 0 ? amount : null
+}
+
 interface SummaryItem {
   label: string
   value: number
@@ -1184,6 +1219,10 @@ function switchFundAsset(tab: FundAssetTab): void {
 
   fundAssetTab.value = tab
 
+  if (tab === 'diamond' && fundAmountInput.value.includes('.')) {
+    fundAmountInput.value = fundAmountInput.value.split('.')[0] || ''
+  }
+
   if (tab !== 'coin') {
     fundActionTab.value = 'grant'
   }
@@ -1222,7 +1261,7 @@ async function submitQuotaUpdate(options: {
   const payload = {
     user_id: member.id,
     gold_type: 3,
-    amount: options.isReset ? 0 : signedAmount * 100,
+    amount: options.isReset ? 0 : Math.round(signedAmount * 100),
     is_reset: options.isReset,
   }
 
@@ -1279,24 +1318,19 @@ async function resetQuota(field: QuotaEditField): Promise<void> {
 }
 
 function onKeypadPress(key: string): void {
-  const isQuotaEditing = fundAssetTab.value === 'quota' && quotaEditField.value
-  const target = isQuotaEditing ? quotaInput : fundAmountInput
-
-  if (key === 'C') {
-    target.value = ''
+  if (key === '.' && fundAssetTab.value === 'diamond') {
     return
   }
+
+  const isQuotaEditing = fundAssetTab.value === 'quota' && quotaEditField.value
+  const target = isQuotaEditing ? quotaInput : fundAmountInput
 
   if (key === 'DEL') {
     target.value = target.value.slice(0, -1)
     return
   }
 
-  if (target.value.length >= 9) {
-    return
-  }
-
-  target.value += key
+  target.value = appendFundInputValue(target.value, key)
 }
 
 async function onFundConfirm(): Promise<void> {
@@ -1305,8 +1339,8 @@ async function onFundConfirm(): Promise<void> {
       return
     }
 
-    const amount = Number.parseInt(quotaInput.value, 10)
-    if (Number.isNaN(amount) || amount <= 0) {
+    const amount = parseFundInputValue(quotaInput.value)
+    if (amount === null) {
       showFailToast(t('UIClub_PleaseOf'))
       return
     }
@@ -1326,8 +1360,9 @@ async function onFundConfirm(): Promise<void> {
 
       showSuccessToast(t('UIClub_Success3'))
       const factor = quotaAdjustMode.value === 'increase' ? 1 : -1
+      const delta = Math.round(amount * factor * 100)
       if (quotaEditField.value === 'disposable') {
-        disposableQuota.value = Math.max(0, disposableQuota.value + amount * factor * 100)
+        disposableQuota.value = Math.max(0, disposableQuota.value + delta)
         if (activeMember.value) {
           activeMember.value = {
             ...activeMember.value,
@@ -1335,7 +1370,7 @@ async function onFundConfirm(): Promise<void> {
           }
         }
       } else {
-        reviewQuota.value = Math.max(0, reviewQuota.value + amount * factor * 100)
+        reviewQuota.value = Math.max(0, reviewQuota.value + delta)
         if (activeMember.value) {
           activeMember.value = {
             ...activeMember.value,
@@ -1361,11 +1396,13 @@ async function onFundConfirm(): Promise<void> {
   }
 
   const member = activeMember.value
-  const amount = Number.parseInt(fundAmountInput.value, 10)
-  if (!member?.id || Number.isNaN(amount) || amount <= 0) {
+  const amount = parseFundInputValue(fundAmountInput.value)
+  if (!member?.id || amount === null) {
     showFailToast(t('UIClub_PleaseOf2'))
     return
   }
+
+  const goldAmount = Math.round(amount * 100)
 
   submittingFund.value = true
   try {
@@ -1387,7 +1424,7 @@ async function onFundConfirm(): Promise<void> {
     } else {
       response = await postGuildGiveRecycleApi({
         user_ids: [member.id],
-        gold_num: amount * 100,
+        gold_num: goldAmount,
         gold_type: 1,
         op_type: fundActionTab.value === 'grant' ? 1 : 2,
       })
@@ -1406,7 +1443,7 @@ async function onFundConfirm(): Promise<void> {
           diamond: Math.max(0, activeMember.value.diamond + amount),
         }
       } else {
-        const delta = fundActionTab.value === 'grant' ? amount * 100 : -amount * 100
+        const delta = fundActionTab.value === 'grant' ? goldAmount : -goldAmount
         activeMember.value = {
           ...activeMember.value,
           uc: Math.max(0, activeMember.value.uc + delta),
@@ -1952,7 +1989,14 @@ onMounted(() => {
 
         <div class="fund-keypad">
           <button v-for="n in ['1','2','3','4','5','6','7','8','9']" :key="n" class="keypad-btn" @click="onKeypadPress(n)">{{ n }}</button>
-          <button class="keypad-btn keypad-btn--accent" @click="onKeypadPress('C')">C</button>
+          <button
+            class="keypad-btn keypad-btn--accent"
+            :class="{ 'keypad-btn--disabled': fundAssetTab === 'diamond' }"
+            :disabled="fundAssetTab === 'diamond'"
+            @click="onKeypadPress('.')"
+          >
+            .
+          </button>
           <button class="keypad-btn" @click="onKeypadPress('0')">0</button>
           <button class="keypad-btn keypad-btn--accent" @click="onKeypadPress('DEL')">
             <img class="keypad-del-icon" :src="backspaceIcon" alt="" aria-hidden="true" />
@@ -2989,6 +3033,11 @@ onMounted(() => {
   border-radius: 60.241px;
   background: rgba(245, 45, 45, 0.2);
   mix-blend-mode: plus-lighter;
+}
+
+.keypad-btn--disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .keypad-del-icon {

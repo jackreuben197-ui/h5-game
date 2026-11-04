@@ -264,4 +264,16 @@ onBeforeUnmount(() => clearInterval(clock))
   color: var(--c-text-muted);
   font-size: 0.35rem;
 }
+@media (min-width: 600px) {
+  .c-search-page {
+    max-width: calc(var(--main-content-max, 1360px) + var(--main-page-gutter, 0.8rem) * 2);
+    padding: var(--main-page-top, 24px) var(--main-page-gutter, 0.8rem) 0.35rem;
+  }
+  .c-search-toolbar {
+    padding: 0;
+  }
+  .c-search-field {
+    flex: 0 1 16rem;
+  }
+}
 </style>

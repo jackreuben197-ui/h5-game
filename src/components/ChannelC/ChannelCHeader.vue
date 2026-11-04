@@ -8,6 +8,8 @@ import { useGameStore } from '@/stores/game'
 import { requireRealUser } from '@/session/realUserGate'
 import GuestAuthActions from '@/components/GuestAuthActions.vue'
 import ThemeQuickSwitch from '@/components/ThemeQuickSwitch.vue'
+import HomeBannerSwiper from '@/components/HomeBannerSwiper.vue'
+import type { LobbyBanner } from '@/utils/lobbyBannerAssociation'
 import logo from '@/assets/channelC/logo.png'
 import search from '@/assets/channelC/search.svg'
 import messageLight from '@/assets/channelC/message.svg'
@@ -21,14 +23,17 @@ import invite from '@/assets/channelC/invite-reward.svg'
 import support from '@/assets/channelC/support.svg'
 import type { ChannelCAction } from '@/features/channelC/rewards'
 
-const props = defineProps<{ banner: string; clubName: string }>()
+defineProps<{
+  banners: LobbyBanner[]
+  clubName: string
+  refreshBanner: (banner: LobbyBanner) => Promise<LobbyBanner | undefined>
+}>()
 defineEmits<{ action: [action: ChannelCAction] }>()
 const router = useRouter()
 const { isDark } = useTheme()
 const user = useUserInfoStore()
 const gameStore = useGameStore()
 const avatar = computed(() => user.userInfo?.user?.avatar || defaultAvatar)
-const bannerUrl = computed(() => props.banner?.trim() || defaultBanner)
 const actions: Array<{ key: ChannelCAction; label: string; icon: string }> = [
   { key: 'game', label: 'UIChannelC_GameReward', icon: game },
   { key: 'notice', label: 'UIChannelC_Announcements', icon: notice },
@@ -41,10 +46,6 @@ function openAccount(path: string) {
   if (requireRealUser(() => openAccount(path))) void router.push(path)
 }
 
-function fallbackBanner(event: Event) {
-  const image = event.target as HTMLImageElement
-  if (image.getAttribute('src') !== defaultBanner) image.src = defaultBanner
-}
 </script>
 
 <template>
@@ -98,9 +99,13 @@ function fallbackBanner(event: Event) {
     </div>
     <ThemeQuickSwitch class="c-theme-switch" />
   </div>
-  <div class="c-banner">
-    <img :src="bannerUrl" :alt="clubName" @error="fallbackBanner" />
-  </div>
+  <HomeBannerSwiper
+    variant="c"
+    :banners="banners"
+    :alt="clubName || 'Banner'"
+    :fallback="defaultBanner"
+    :refresh="refreshBanner"
+  />
 </template>
 
 <style scoped lang="scss">
@@ -214,20 +219,5 @@ function fallbackBanner(event: Event) {
   transform: scale(1.85);
   transform-origin: right center;
   margin: 0 0.05rem 0 0.4rem;
-}
-.c-banner {
-  width: 100%;
-  aspect-ratio: 372 / 69;
-  margin: 0.075rem 0 0.128rem;
-  border-radius: 0.282rem;
-  overflow: hidden;
-}
-.c-banner img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border: 1px solid #69beff;
-  border-radius: inherit;
 }
 </style>

@@ -2,22 +2,42 @@
 import { computed } from 'vue'
 import { useCachedImages } from '@/utils/imageCache'
 import ThemeQuickSwitch from '@/components/ThemeQuickSwitch.vue'
+import LobbyBannerImage from '@/components/LobbyBannerImage.vue'
+import type { LobbyBanner } from '@/utils/lobbyBannerAssociation'
 
-const props = defineProps<{
-  images: string[]
-}>()
+const props = withDefaults(
+  defineProps<{
+    banners: LobbyBanner[]
+    refresh: (banner: LobbyBanner) => Promise<LobbyBanner | undefined>
+    variant?: 'ab' | 'c'
+    alt?: string
+    fallback?: string
+  }>(),
+  { variant: 'ab', alt: 'Banner' },
+)
 
-// 首次服务端结果返回前保持空白占位，不展示默认图或持久化旧图。
-const displayImages = computed(() => props.images.filter((url) => Boolean(url?.trim())))
-const cachedImages = useCachedImages(() => displayImages.value)
+const compact = computed(() => props.variant === 'c')
+const imageClass = computed(() => (compact.value ? 'home-banner__img--compact' : 'home-banner__img'))
+const cachedImages = useCachedImages(() => props.banners.map((banner) => banner.imageUrl))
 const isSwipeEnabled = computed(() => cachedImages.value.length > 1)
+const singleImage = computed(() => cachedImages.value[0] || props.fallback)
 </script>
 
 <template>
-  <div class="home-banner">
+  <div :class="compact ? 'home-banner--compact' : 'home-banner'">
     <van-swipe v-if="isSwipeEnabled" class="home-banner__swipe" loop :autoplay="3000">
-      <van-swipe-item v-for="(url, index) in cachedImages" :key="index">
-        <img class="home-banner__img" :src="url" alt="banner" />
+      <van-swipe-item
+        v-for="(banner, index) in banners"
+        :key="banner.id > 0 ? `banner-${banner.id}` : index"
+      >
+        <LobbyBannerImage
+          :class="imageClass"
+          :src="cachedImages[index]!"
+          :banner="banner"
+          :refresh="refresh"
+          :alt="alt"
+          :fallback="fallback"
+        />
       </van-swipe-item>
       <template #indicator="{ active, total }">
         <div class="home-banner__dots">
@@ -30,24 +50,37 @@ const isSwipeEnabled = computed(() => cachedImages.value.length > 1)
         </div>
       </template>
     </van-swipe>
-    <img
-      v-else-if="cachedImages.length === 1"
-      class="home-banner__img"
-      :src="cachedImages[0]"
-      alt="banner"
+    <LobbyBannerImage
+      v-else-if="singleImage"
+      :class="imageClass"
+      :src="singleImage"
+      :banner="banners[0]"
+      :refresh="refresh"
+      :alt="alt"
+      :fallback="fallback"
     />
-    <ThemeQuickSwitch class="home-banner__theme-switch" />
+    <ThemeQuickSwitch v-if="!compact" class="home-banner__theme-switch" />
   </div>
 </template>
 
 <style scoped lang="scss">
-.home-banner {
+.home-banner,
+.home-banner--compact {
   position: relative;
   width: 100%;
-  height: 3.68rem;
   overflow: hidden;
+}
+
+.home-banner {
+  height: 3.68rem;
   border-radius: 0.8rem;
   background: #f5f5f5;
+}
+
+.home-banner--compact {
+  aspect-ratio: 372 / 69;
+  margin: 0.075rem 0 0.128rem;
+  border-radius: 0.282rem;
 }
 
 .home-banner__swipe {
@@ -55,13 +88,22 @@ const isSwipeEnabled = computed(() => cachedImages.value.length > 1)
   height: 100%;
 }
 
-.home-banner__img {
+.home-banner__img,
+.home-banner__img--compact {
   width: 100%;
   height: 100%;
-  display: block;
-  object-fit: cover;
-  // 图片自身圆角（和外层 .home-header 一致），滑动过程中露出的边缘也是圆角。
+}
+
+.home-banner__img {
   border-radius: 0.8rem;
+}
+
+.home-banner__img--compact {
+  border-radius: 0.282rem;
+
+  :deep(.lobby-banner-image__art) {
+    border: 1px solid #69beff;
+  }
 }
 
 .home-banner__theme-switch {

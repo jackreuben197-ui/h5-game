@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { usePlatformDiamondVisibility } from '@/composables/usePlatformDiamondVisibility'
+import { useLobbyFeed } from '@/composables/useLobbyFeed'
 import {
   computed,
   nextTick,
@@ -23,7 +23,7 @@ import { useGameStore } from '@/stores/game'
 import { useRoomListStore } from '@/stores/roomList'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { localStore } from '@/utils/localStore'
-import { checkIsShowForClubAndTribe, getRoomPlayerCount } from '@/utils/roomVisibility'
+import { getRoomPlayerCount } from '@/utils/roomVisibility'
 import serviceIcon from '@/assets/icons/icon_server.png'
 import walletIcon from '@/assets/icons/icon_wallet.png'
 import gameType6Plus from '@/assets/icons/game_type_6+.png'
@@ -87,12 +87,12 @@ const ROOM_GROUP_EXPANDED_CACHE_VERSION = 1
 const router = useRouter()
 useChannelCVersionRouting()
 const gameStore = useGameStore()
-const displayPlatformDiamond = usePlatformDiamondVisibility()
+const { visibleRooms, resolveRoomClub } = useLobbyFeed()
 const roomListStore = useRoomListStore()
 const userInfoStore = useUserInfoStore()
 const isChannelPackage = isChannelPackageHost()
 const { isVersionB: isChannelMenuVersionB } = useChannelBottomMenu()
-const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages()
+const { banners, fetchLobbyBannerImages, refreshLobbyBanner } = useLobbyBannerImages()
 
 // 顶部右侧切换风格开关：和旧版保持一致。
 const savedActiveTab = roomListStore.getActiveListTab(props.scrollKey)
@@ -114,23 +114,14 @@ const selectedClub = computed(
       : (userInfoStore.currentClub ?? userInfoStore.channelDefaultClub),
 )
 const selectedClubId = computed(() => toSafeInt(selectedClub.value?.club_id))
-const selectedClubRandomId = computed(() => toSafeInt(selectedClub.value?.random_id))
 const selectedTribeId = computed(() =>
   toSafeInt((selectedClub.value as Record<string, unknown> | null)?.tribe_id),
 )
 
 const filteredRecords = computed(() => {
-  const baseList = roomListStore.records.filter((room) => Number(room.game_type) < 5)
-  const scopedList = baseList.filter((room) =>
-    checkIsShowForClubAndTribe(
-      room,
-      selectedClubId.value,
-      selectedTribeId.value,
-      true,
-      displayPlatformDiamond.value,
-    ),
+  return visibleRooms.value.filter(
+    (room) => Number(room.game_type) < 5 && matchTabRoom(room, activeTab.value),
   )
-  return scopedList.filter((room) => matchTabRoom(room, activeTab.value))
 })
 
 // 按 game_type + poker_type + 小盲分组，生成分组卡片展示模型。
@@ -333,14 +324,15 @@ async function handleTableClick(room: RoomRecord): Promise<void> {
   }
 
   // 进入牌桌参数固定：名称 + 用户ID + token；附带房间信息用于切桌定位。
+  const entryClub = resolveRoomClub(room)
   const payload: EnterTablePayload = {
     userName: gameStore.loginNickname || gameStore.loginAccount || 'guest',
     userId: gameStore.loginUserId || gameStore.loginAccount || '',
     token: gameStore.sessionToken,
     websocketPort: wsPort,
     from: 'h5-club-table',
-    clubId: selectedClubId.value,
-    clubRandomId: selectedClubRandomId.value,
+    clubId: toSafeInt(entryClub?.club_id),
+    clubRandomId: toSafeInt(entryClub?.random_id),
     roomId: String(room.rid ?? ''),
     roomName: String(room.name ?? ''),
     roomInfo: room,
@@ -477,7 +469,7 @@ function handleOpenCustomerService(): void {
       </HeaderBack>
       <template v-if="isChannelPackage && isChannelMenuVersionB && !props.embedded">
         <div class="channel-club-banner">
-          <HomeBannerSwiper :images="bannerImages" />
+          <HomeBannerSwiper :banners="banners" :refresh="refreshLobbyBanner" />
         </div>
         <ClubIntroductionBar standalone />
         <ChannelClubInfoPanel class="channel-club-info" />

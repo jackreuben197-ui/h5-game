@@ -39,7 +39,7 @@ const props = withDefaults(
 const { club, clubId, tribeId, visibleRooms, visibleMatches, tournamentSeries } = useChannelCFeed()
 useChannelCVersionRouting()
 const ready = useChannelCDataReady(toRef(props, 'ready'))
-const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages('c')
+const { banners, fetchLobbyBannerImages, refreshLobbyBanner } = useLobbyBannerImages('c')
 const roomStore = useRoomListStore()
 const root = ref<HTMLElement | null>(null)
 const overlays = ref<InstanceType<typeof ChannelCOverlays> | null>(null)
@@ -57,7 +57,6 @@ const {
 const now = ref(Date.now())
 let clock: ReturnType<typeof setInterval> | undefined
 
-const banner = computed(() => bannerImages.value[0] || '')
 const tournamentName = computed(() => t(visibleMatches.value[0]?.name || 'MTT'))
 const cards = computed(() =>
   buildChannelCFeed(
@@ -136,7 +135,8 @@ watch(
   >
     <ChannelCHeader
       v-if="section === 'home'"
-      :banner="banner"
+      :banners="banners"
+      :refresh-banner="refreshLobbyBanner"
       :club-name="club?.club_name || ''"
       @action="overlays?.open($event)"
     />

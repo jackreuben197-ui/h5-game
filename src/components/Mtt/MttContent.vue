@@ -1,17 +1,14 @@
 <script setup lang="ts">
-import { usePlatformDiamondVisibility } from '@/composables/usePlatformDiamondVisibility'
+import { useLobbyFeed } from '@/composables/useLobbyFeed'
 import { computed, nextTick, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import type { MttItem, MttActionType } from '@/components/ListItem/MttCard.vue'
 import type { MttIdInfoRecord, MttListRecord, MttSeriesInfoRecord } from '@/api/models/roomcenter'
 import pokerMiniIcon from '@/assets/icons/game_zone_mtt_mini.png'
 import mahjongMiniIcon from '@/assets/icons/game_zone_mahjong_mini.png'
-import { useAppConfigStore } from '@/stores/appConfig'
 import { useMttListStore } from '@/stores/mttList'
-import { useUserInfoStore } from '@/stores/userInfo'
 import { getLocale, t } from '@/i18n'
 import { ROOM_ORIGIN_TYPE } from '@/utils/roomVisibility'
-import { isMttRecordVisible } from '@/utils/mttVisibility'
 import {
   multiLanguageTemplateVersion,
   resolveTemplateTextByKey,
@@ -78,19 +75,12 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const router = useRouter()
-const appConfigStore = useAppConfigStore()
 const mttListStore = useMttListStore()
-const userInfoStore = useUserInfoStore()
-const displayPlatformDiamond = usePlatformDiamondVisibility()
+const { visibleMatches } = useLobbyFeed()
 
 const expandedGroupMap = ref<Record<string, boolean>>(restoreExpandedGroupMap())
 const scrollContainerRef = ref<HTMLElement | null>(null)
 const scrollRestored = ref(false)
-const selectedClub = computed(() => userInfoStore.currentClub ?? userInfoStore.channelDefaultClub)
-const selectedClubId = computed(() => toSafeInt(selectedClub.value?.club_id))
-const selectedTribeId = computed(() =>
-  toSafeInt((selectedClub.value as Record<string, unknown> | null)?.tribe_id),
-)
 
 const nowMs = ref(Date.now())
 let ticker: number | null = null
@@ -145,7 +135,7 @@ async function restoreScrollPosition(): Promise<void> {
   })
 }
 
-const sourceRecords = computed<RawMttRecord[]>(() => mttListStore.records as RawMttRecord[])
+const sourceRecords = computed<RawMttRecord[]>(() => visibleMatches.value)
 
 const normalizedItems = computed<MttViewItem[]>(() =>
   sourceRecords.value.map((record) => {
@@ -158,19 +148,7 @@ const normalizedItems = computed<MttViewItem[]>(() =>
 
 const filteredItems = computed<MttViewItem[]>(() => {
   return normalizedItems.value.filter((item) => {
-    // 基础可见性（排麻将 + club/tribe）由 isMttRecordVisible 统一兜底，保证首页统计与此处一致。
-    if (
-      !isMttRecordVisible(
-        item.raw,
-        mttListStore.mttIdMetaMap[toSafeInt(item.raw.match_id)],
-        selectedClubId.value,
-        selectedTribeId.value,
-        appConfigStore.clubDisplayPlatformMtt,
-        displayPlatformDiamond.value,
-      )
-    ) {
-      return false
-    }
+    // 基础可见性由 useLobbyFeed 与首页统计统一处理。
     // 顶部 tab 二次过滤：'all' 不再细分，'poker' 只留扑克类。
     if (props.activeTab !== 'all' && item.category !== props.activeTab) {
       return false

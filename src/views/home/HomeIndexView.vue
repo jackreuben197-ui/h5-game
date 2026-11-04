@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { usePlatformDiamondVisibility } from '@/composables/usePlatformDiamondVisibility'
+import { useLobbyFeed } from '@/composables/useLobbyFeed'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getCowboyRoomListApi } from '@/api/gc'
@@ -13,8 +13,7 @@ import { t } from '@/i18n'
 import { localStore } from '@/utils/localStore'
 import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
 import { useHomeAnnouncement } from '@/composables/useHomeAnnouncement'
-import { checkIsShowForClubAndTribe, getRoomPlayerCount } from '@/utils/roomVisibility'
-import { filterVisibleMttRecords } from '@/utils/mttVisibility'
+import { getRoomPlayerCount } from '@/utils/roomVisibility'
 import { showGameToast } from '@/components/Toast'
 import ChannelClubInfoPanel from '@/components/Club/ChannelClubInfoPanel.vue'
 import HomeTopBar from '@/components/HomeTopBar.vue'
@@ -38,7 +37,7 @@ const roomListStore = useRoomListStore()
 const mttListStore = useMttListStore()
 const appConfigStore = useAppConfigStore()
 const gameStore = useGameStore()
-const displayPlatformDiamond = usePlatformDiamondVisibility()
+const { visibleRooms, visibleMatches } = useLobbyFeed()
 // 配置缓存/接口到达后重新判断域名类型；未知域名首屏按渠道处理，避免错显官方布局。
 const isChannelPackage = computed(() => {
   void appConfigStore.globalConfig
@@ -113,7 +112,7 @@ interface HomeRoomStatsCachePayload {
   stats: HomeZoneStats
 }
 
-const HOME_ROOM_STATS_CACHE_VERSION = 1
+const HOME_ROOM_STATS_CACHE_VERSION = 2
 
 function createEmptyZoneStats(): HomeZoneStats {
   return {
@@ -181,22 +180,7 @@ function persistHomeRoomStatsCache(stats: HomeZoneStats): void {
 }
 
 const homeRoomStats = ref<HomeZoneStats>(restoreHomeRoomStatsCache() || createEmptyZoneStats())
-const currentClub = computed<ClubInfo | null>(() => {
-  // 渠道入口只能展示 default 接口锁定的俱乐部；持久化的 currentClub 也可能来自官方包。
-  if (isChannelPackage.value) {
-    return userInfoStore.channelDefaultClub
-  }
-  if (userInfoStore.currentClub) {
-    return userInfoStore.currentClub
-  }
-  return userInfoStore.clubList[0] || null
-})
-const selectedClubId = computed(() => toSafeInt(currentClub.value?.club_id))
-const selectedTribeId = computed(() =>
-  toSafeInt((currentClub.value as Record<string, unknown> | null)?.tribe_id),
-)
-
-const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages()
+const { banners, fetchLobbyBannerImages, refreshLobbyBanner } = useLobbyBannerImages()
 const { noticeText } = useHomeAnnouncement()
 const noticeTrackStyle = computed<CSSProperties>(() => ({
   '--notice-gap': `${NOTICE_GAP_PX}px`,
@@ -272,14 +256,6 @@ const showChannelFloatingActions = computed(() => canManageChannelClub.value)
 function toSafeNumber(value: unknown): number {
   const num = Number(value)
   return Number.isFinite(num) ? num : 0
-}
-
-function toSafeInt(value: unknown): number {
-  const num = Number(value)
-  if (!Number.isFinite(num)) {
-    return 0
-  }
-  return Math.floor(num)
 }
 
 function ensureClubDataReady(): void {
@@ -377,20 +353,7 @@ function classifyRoomToZone(room: RoomRecord): 'poker' | 'mahjong' | null {
 // 首页扑克/麻将统计直接复用共享牌桌列表，避免和 gameList 数据源分叉。
 function refreshHomePokerMahjongStatsFromStore(): void {
   const nextStats = createEmptyZoneStats()
-  roomListStore.records.forEach((room) => {
-    // 对齐 C# RequestTableDataListForClubOrTribe：先按俱乐部/联盟关系过滤可见牌桌。
-    if (
-      !checkIsShowForClubAndTribe(
-        room,
-        selectedClubId.value,
-        selectedTribeId.value,
-        true,
-        displayPlatformDiamond.value,
-      )
-    ) {
-      return
-    }
-
+  visibleRooms.value.forEach((room) => {
     const zone = classifyRoomToZone(room)
     if (!zone) {
       return
@@ -454,18 +417,11 @@ async function fetchHomeMiniGameStats(): Promise<void> {
   persistHomeRoomStatsCache(homeRoomStats.value)
 }
 
-// 首页 MTT 统计：和 MttContent 走同一份过滤口径（排麻将 + club/tribe 可见性），
+// 首页 MTT 统计：和 MttContent 共享已按俱乐部/联盟可见性过滤的赛事，
 // 保证「首页显示 N 桌 M 人」和「进入 MTT 列表后看到的赛事数 / 报名总人数」完全一致。
 // tables = 可见赛事数；players = 可见赛事 participants 之和。
 function refreshHomeMttStatsFromStore(): void {
-  const visibleRecords = filterVisibleMttRecords(
-    mttListStore.records,
-    mttListStore.mttIdMetaMap,
-    selectedClubId.value,
-    selectedTribeId.value,
-    appConfigStore.clubDisplayPlatformMtt,
-    displayPlatformDiamond.value,
-  )
+  const visibleRecords = visibleMatches.value
   const players = visibleRecords.reduce((sum, item) => sum + toSafeNumber(item.participants), 0)
 
   homeRoomStats.value = {
@@ -527,7 +483,7 @@ watch(
 )
 
 watch(
-  [() => roomListStore.records, selectedClubId, selectedTribeId, displayPlatformDiamond],
+  visibleRooms,
   () => {
     refreshHomePokerMahjongStatsFromStore()
     if (homeContentReady.value) {
@@ -540,15 +496,7 @@ watch(
 )
 
 watch(
-  [
-    () => mttListStore.records,
-    () => mttListStore.mttIdList,
-    selectedClubId,
-    selectedTribeId,
-    // 全局配置异步到达后重算，平台 MTT 可见性依赖 club_display_platform_mtt。
-    () => appConfigStore.clubDisplayPlatformMtt,
-    displayPlatformDiamond,
-  ],
+  visibleMatches,
   () => {
     refreshHomeMttStatsFromStore()
     if (homeContentReady.value) {
@@ -688,7 +636,7 @@ onBeforeUnmount(() => {
 
     <!-- 1. 顶部俱乐部介绍轮播图 -->
     <div class="home-header">
-      <HomeBannerSwiper :images="bannerImages" />
+      <HomeBannerSwiper :banners="banners" :refresh="refreshLobbyBanner" />
     </div>
 
     <!-- 2. 公告栏 -->

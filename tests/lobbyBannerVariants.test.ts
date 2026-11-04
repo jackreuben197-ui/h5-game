@@ -86,13 +86,13 @@ test('C and A/B read their own image fields and never share cached images', asyn
   state.cms = [banner(101)]
   const c = useLobbyBannerImages('c')
   await c.fetchLobbyBannerImages()
-  assert.deepEqual(c.bannerImages.value, ['c.png'])
+  assert.deepEqual(c.banners.value.map((item) => item.imageUrl), ['c.png'])
   const ab = useLobbyBannerImages()
   await ab.fetchLobbyBannerImages()
-  assert.deepEqual(ab.bannerImages.value, ['ab.png'])
+  assert.deepEqual(ab.banners.value.map((item) => item.imageUrl), ['ab.png'])
   const repeatedC = useLobbyBannerImages('c')
   await repeatedC.fetchLobbyBannerImages()
-  assert.deepEqual(repeatedC.bannerImages.value, ['c.png'])
+  assert.deepEqual(repeatedC.banners.value.map((item) => item.imageUrl), ['c.png'])
   assert.equal(state.calls.length, 2)
 })
 
@@ -105,7 +105,7 @@ test('a club with only A/B images falls back to the platform C image, not anothe
   ]
   const c = useLobbyBannerImages('c')
   await c.fetchLobbyBannerImages()
-  assert.deepEqual(c.bannerImages.value, ['platform-c.png'])
+  assert.deepEqual(c.banners.value.map((item) => item.imageUrl), ['platform-c.png'])
 })
 
 test('authenticated A/B and C requests share the H5 scene and select their own image fields', async () => {
@@ -115,14 +115,14 @@ test('authenticated A/B and C requests share the H5 scene and select their own i
   state.scene = [banner(999), banner(103, { image_url_c: 'club-scene-c.png' })]
   const c = useLobbyBannerImages('c')
   await c.fetchLobbyBannerImages()
-  assert.deepEqual(c.bannerImages.value, ['club-scene-c.png'])
+  assert.deepEqual(c.banners.value.map((item) => item.imageUrl), ['club-scene-c.png'])
   assert.equal(state.calls.length, 1)
   assert.equal(state.calls[0][0], 'scene')
   assert.equal(state.calls[0][1].club_id, 103)
   assert.equal(state.calls[0][1].display_scene, 1)
   const ab = useLobbyBannerImages('ab')
   await ab.fetchLobbyBannerImages()
-  assert.deepEqual(ab.bannerImages.value, ['ab.png'])
+  assert.deepEqual(ab.banners.value.map((item) => item.imageUrl), ['ab.png'])
   assert.equal(state.calls[1][1].display_scene, 1)
 })
 
@@ -133,7 +133,7 @@ test('missing C scene image falls through to the public C banner configuration',
   state.cms = [banner(0, { image_url_c: 'fallback-c.png' })]
   const c = useLobbyBannerImages('c')
   await c.fetchLobbyBannerImages()
-  assert.deepEqual(c.bannerImages.value, ['fallback-c.png'])
+  assert.deepEqual(c.banners.value.map((item) => item.imageUrl), ['fallback-c.png'])
 })
 
 test('missing C artwork returns no remote URL for the view fallback and respects visibility', async () => {
@@ -147,7 +147,7 @@ test('missing C artwork returns no remote URL for the view fallback and respects
   ]
   const c = useLobbyBannerImages('c')
   await c.fetchLobbyBannerImages()
-  assert.deepEqual(c.bannerImages.value, [])
+  assert.deepEqual(c.banners.value.map((item) => item.imageUrl), [])
 })
 
 test('Telegram keeps the same scene for both image variants', async () => {
@@ -160,9 +160,63 @@ test('Telegram keeps the same scene for both image variants', async () => {
   ]
   const c = useLobbyBannerImages('c')
   await c.fetchLobbyBannerImages()
-  assert.deepEqual(c.bannerImages.value, ['telegram-c.png'])
+  assert.deepEqual(c.banners.value.map((item) => item.imageUrl), ['telegram-c.png'])
   const ab = useLobbyBannerImages('ab')
   await ab.fetchLobbyBannerImages()
-  assert.deepEqual(ab.bannerImages.value, ['telegram-ab.png'])
+  assert.deepEqual(ab.banners.value.map((item) => item.imageUrl), ['telegram-ab.png'])
   state.telegram = false
+})
+
+test('club pictures read mutually exclusive association fields and refresh saved posters', async () => {
+  state.clubId = 107
+  state.realUser = true
+  state.scene = [
+    banner(107, { id: 42, association_type: 2, poster_url: 'https://cdn.example/old.png' }),
+    banner(107, {
+      id: 43,
+      association_type: 1,
+      template_id: 10,
+      template_name: 'Weekly tournament',
+      poster_url: 'https://cdn.example/unused.png',
+    }),
+    banner(107, { id: 44, resource_type: 2, association_type: 1, template_id: 10 }),
+    banner(107, { id: 45, redirect_url: 'https://example.com/legacy' }),
+  ]
+  const c = useLobbyBannerImages('c')
+  await c.fetchLobbyBannerImages()
+  const [poster, template, video, legacy] = c.banners.value
+  assert.deepEqual(poster?.association, { type: 'poster', url: 'https://cdn.example/old.png' })
+  assert.deepEqual(template?.association, {
+    type: 'mtt',
+    templateId: '10',
+    templateName: 'Weekly tournament',
+  })
+  assert.equal(video?.association, undefined)
+  assert.equal(legacy?.association, undefined)
+
+  state.scene = [
+    banner(107, { id: 42, association_type: 2, poster_url: 'https://cdn.example/new.png' }),
+  ]
+  const refreshed = await c.refreshLobbyBanner(poster!)
+  assert.deepEqual(refreshed?.association, { type: 'poster', url: 'https://cdn.example/new.png' })
+
+  state.scene = [
+    banner(107, { id: 42, association_type: 0, poster_url: 'https://cdn.example/new.png' }),
+  ]
+  assert.equal((await c.refreshLobbyBanner(poster!))?.association, undefined)
+})
+
+test('public channel banners also consume the server association fields', async () => {
+  state.clubId = 108
+  state.realUser = false
+  state.cms = [
+    banner(108, { id: 43, association_type: 1, template_id: '20', template_name: 'Weekend Cup' }),
+  ]
+  const ab = useLobbyBannerImages()
+  await ab.fetchLobbyBannerImages()
+  assert.deepEqual(ab.banners.value[0]?.association, {
+    type: 'mtt',
+    templateId: '20',
+    templateName: 'Weekend Cup',
+  })
 })

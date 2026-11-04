@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import type { ExtendGameRecord } from '@/api/casino'
 import type { MttListRecord, RoomRecord } from '@/api/models/roomcenter'
 import { buildWaterfallColumns, type LobbyCard } from '@/features/channelC/model'
@@ -19,11 +19,45 @@ defineEmits<{
   open: [match: MttListRecord]
   play: [game: ExtendGameRecord]
 }>()
-const columns = computed(() => buildWaterfallColumns(props.cards))
+const root = shallowRef<HTMLElement | null>(null)
+const columnCount = ref(2)
+let observer: ResizeObserver | null = null
+
+function updateColumnCount() {
+  const el = root.value
+  if (!el) return
+  const style = getComputedStyle(el)
+  const minColumn = parseFloat(style.getPropertyValue('--c-waterfall-min-column')) || 0
+  const gap = parseFloat(style.columnGap) || 0
+  columnCount.value =
+    minColumn > 0 ? Math.max(2, Math.floor((el.clientWidth + gap) / (minColumn + gap))) : 2
+}
+
+onMounted(() => {
+  updateColumnCount()
+  if (typeof ResizeObserver !== 'undefined' && root.value) {
+    observer = new ResizeObserver(updateColumnCount)
+    observer.observe(root.value)
+  } else {
+    window.addEventListener('resize', updateColumnCount)
+  }
+})
+onBeforeUnmount(() => {
+  observer?.disconnect()
+  observer = null
+  window.removeEventListener('resize', updateColumnCount)
+})
+
+const columns = computed(() => buildWaterfallColumns(props.cards, columnCount.value))
 </script>
 
 <template>
-  <div class="c-waterfall" :aria-label="label">
+  <div
+    ref="root"
+    class="c-waterfall"
+    :style="{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }"
+    :aria-label="label"
+  >
     <div v-for="(column, index) in columns" :key="index" class="c-waterfall-column">
       <template v-for="card in column" :key="card.key">
         <ChannelCPokerCard
@@ -65,5 +99,10 @@ const columns = computed(() => buildWaterfallColumns(props.cards))
   flex-direction: column;
   gap: 0.18rem;
   min-width: 0;
+}
+@media (min-width: 600px) {
+  .c-waterfall {
+    --c-waterfall-min-column: 210px;
+  }
 }
 </style>

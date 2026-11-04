@@ -106,6 +106,12 @@ function playLiveWin(item: LiveWinItem) {
 function container() {
   return root.value?.closest<HTMLElement>('.main-layout-content')
 }
+function holdHeight() {
+  if (root.value) root.value.style.minHeight = `${root.value.offsetHeight}px`
+}
+function releaseHeight() {
+  if (root.value) root.value.style.minHeight = ''
+}
 function scrollKey(section = props.section) {
   return `channel-c-${section}`
 }
@@ -198,28 +204,41 @@ watch(
       :blinds="blinds"
       :tournament-types="tournamentTypes"
     />
-    <CasinoView v-if="showCasino" :hide-header="true" :club-id="clubId" :category="casinoCategory" />
-    <div v-else-if="!ready" class="c-empty">
-      <van-loading size="24" />{{ t('UIChannelC_Loading') }}
-    </div>
-    <ChannelCWaterfall
-      v-else-if="cards.length"
-      :cards="cards"
-      :label="listLabel"
-      :now="now"
-      :desktop-icon-url="club?.safari_icon_url"
-      :joining-id="joiningId"
-      @join="joinRoom"
-      @open="openMatch"
-      @play="playGame"
-    />
-    <div v-else class="c-empty">
-      <van-icon name="search" size="32" />
-      <p>{{ t(section === 'home' ? 'UIChannelC_NoRecommendations' : 'UIChannelC_NoResults') }}</p>
-      <button v-if="section !== 'home'" type="button" @click="resetFilters">
-        {{ t('UIChannelC_ResetFilters') }}
-      </button>
-    </div>
+    <Transition
+      name="c-content"
+      mode="out-in"
+      @before-leave="holdHeight"
+      @after-enter="releaseHeight"
+      @enter-cancelled="releaseHeight"
+    >
+      <CasinoView
+        v-if="showCasino"
+        :hide-header="true"
+        :club-id="clubId"
+        :category="casinoCategory"
+      />
+      <div v-else-if="!ready" class="c-empty">
+        <van-loading size="24" />{{ t('UIChannelC_Loading') }}
+      </div>
+      <ChannelCWaterfall
+        v-else-if="cards.length"
+        :cards="cards"
+        :label="listLabel"
+        :now="now"
+        :desktop-icon-url="club?.safari_icon_url"
+        :joining-id="joiningId"
+        @join="joinRoom"
+        @open="openMatch"
+        @play="playGame"
+      />
+      <div v-else class="c-empty">
+        <van-icon name="search" size="32" />
+        <p>{{ t(section === 'home' ? 'UIChannelC_NoRecommendations' : 'UIChannelC_NoResults') }}</p>
+        <button v-if="section !== 'home'" type="button" @click="resetFilters">
+          {{ t('UIChannelC_ResetFilters') }}
+        </button>
+      </div>
+    </Transition>
     <ChannelCOverlays
       v-if="section === 'home'"
       ref="overlays"
@@ -256,6 +275,17 @@ watch(
 .channel-c-page .c-live-wins {
   margin: 0 0.0513rem 0.128rem;
 }
+@media (min-width: 600px) {
+  .channel-c-page {
+    --c-page-gutter: var(--main-page-gutter, 0.8rem);
+    max-width: calc(var(--main-content-max, 1360px) + var(--c-page-gutter) * 2);
+    padding-top: var(--main-page-top, 24px);
+    padding-bottom: 42px;
+  }
+  .channel-c-page .c-live-wins {
+    --live-wins-scale: 1.25;
+  }
+}
 .c-empty {
   display: flex;
   min-height: 5rem;
@@ -274,5 +304,20 @@ watch(
   background: #02cfbb;
   font: inherit;
   cursor: pointer;
+}
+.c-content-enter-active {
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
+}
+.c-content-leave-active {
+  transition: opacity 0.12s ease;
+}
+.c-content-enter-from {
+  opacity: 0;
+  transform: translateY(0.2rem);
+}
+.c-content-leave-to {
+  opacity: 0;
 }
 </style>

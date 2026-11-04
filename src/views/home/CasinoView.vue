@@ -972,6 +972,13 @@ function handleServiceClick(): void {
 
 // ─── Category row ─────────────────────────────────────────────────────────────
 const iconRowRef = ref<HTMLElement | null>(null)
+const pageRef = ref<HTMLElement | null>(null)
+function holdPageHeight() {
+  if (pageRef.value) pageRef.value.style.minHeight = `${pageRef.value.offsetHeight}px`
+}
+function releasePageHeight() {
+  if (pageRef.value) pageRef.value.style.minHeight = ''
+}
 
 // 8 категорий с длинными подписями (es/pt/ru) не помещаются в 390px:
 // строка скроллится по горизонтали, а выбранная категория подводится к центру.
@@ -1032,6 +1039,7 @@ onActivated(async () => {
 
 <template>
   <div
+    ref="pageRef"
     class="casino-page room-list-page themeType2"
     :style="hideHeader ? {} : pageStyle"
     :class="{ 'is-embedded': hideHeader, 'room-list-page--embedded': hideHeader }"
@@ -1191,115 +1199,125 @@ onActivated(async () => {
       -->
     </section>
 
-    <ChannelCWaterfall
-      v-if="category && waterfallCards.length"
-      :cards="waterfallCards"
-      :label="t('UICasino_Title')"
-      :now="0"
-      @play="playWaterfallGame"
-    />
-
-    <!-- ── Category List ── -->
-    <div
-      v-else-if="hasGames && !category"
-      class="category-list"
+    <Transition
+      name="casino-swap"
+      mode="out-in"
+      :css="hideHeader"
+      @before-leave="holdPageHeight"
+      @after-enter="releasePageHeight"
+      @enter-cancelled="releasePageHeight"
     >
-      <section
-        v-for="block in displayBlocks"
-        :key="block.key"
-        class="category-block"
+      <ChannelCWaterfall
+        v-if="category && waterfallCards.length"
+        :key="category"
+        :cards="waterfallCards"
+        :label="t('UICasino_Title')"
+        :now="0"
+        @play="playWaterfallGame"
+      />
+
+      <!-- ── Category List ── -->
+      <div
+        v-else-if="hasGames && !category"
+        class="category-list"
       >
-        <div class="category-header">
-          <div class="category-title-wrap">
-            <div
-              v-if="block.icon === img2"
-              class="icon-img-wrapper icon-img-wrapper-live"
-            >
-              <img :src="iconHotlive" alt="" class="category-icon-img" />
-            </div>
-            <img
-              v-else
-              :src="block.icon"
-              alt=""
-              class="category-icon-img"
-              :class="{
-                'category-icon-small': block.icon === img3,
-                'category-icon-contain': block.icon === minigameBlockIcon,
-              }"
-            />
-            <div class="category-text">
-              <span class="category-title">{{ block.title }}</span>
-              <span v-if="block.subtitle" class="category-sub">{{ block.subtitle }}</span>
-            </div>
-          </div>
-          <button
-            v-if="(block.key === 'hot-slot' || block.key === 'hot-fish') && selectedCategory === 'hot'"
-            class="header-expand-btn"
-            type="button"
-            @click="toggleBlockExpand(block.key)"
-          >
-            {{ t('UICasino_AllGames') }}
-          </button>
-        </div>
-        <div class="game-card-grid-wrapper">
-          <div
-            class="game-card-grid"
-            :class="{ wide: block.layout === 'wide' }"
-          >
-            <template
-              v-for="item in block.items"
-              :key="`${block.key}-${item.gameApiType || ''}-${item.gameId || ''}-${item.gameCode || ''}-${item.title || ''}`"
-            >
-              <button
-                class="app-card"
-                :class="{ wide: block.layout === 'wide' }"
-                type="button"
-                @click="handleGameClick(item)"
+        <section
+          v-for="block in displayBlocks"
+          :key="block.key"
+          class="category-block"
+        >
+          <div class="category-header">
+            <div class="category-title-wrap">
+              <div
+                v-if="block.icon === img2"
+                class="icon-img-wrapper icon-img-wrapper-live"
               >
-                <div
-                  class="app-card-img-wrapper"
-                  :class="[
-                    { wide: block.layout === 'wide', 'minigame-banner': block.key.includes('minigame') },
-                    block.key,
-                  ]"
-                >
-                  <img
-                    v-if="item.img"
-                    :src="item.img"
-                    :alt="item.title || 'item'"
-                    class="app-card-img"
-                    :class="{ wide: block.layout === 'wide' }"
-                    @error="handleCardImgError($event, item)"
-                  />
-                  <div v-else class="app-card-placeholder">
-                    <span class="placeholder-title">{{ item.title }}</span>
-                  </div>
-                </div>
-                <span v-if="!block.layout && item.title" class="app-card-title">
-                  {{ item.title }}
-                </span>
-              </button>
-            </template>
+                <img :src="iconHotlive" alt="" class="category-icon-img" />
+              </div>
+              <img
+                v-else
+                :src="block.icon"
+                alt=""
+                class="category-icon-img"
+                :class="{
+                  'category-icon-small': block.icon === img3,
+                  'category-icon-contain': block.icon === minigameBlockIcon,
+                }"
+              />
+              <div class="category-text">
+                <span class="category-title">{{ block.title }}</span>
+                <span v-if="block.subtitle" class="category-sub">{{ block.subtitle }}</span>
+              </div>
+            </div>
+            <button
+              v-if="(block.key === 'hot-slot' || block.key === 'hot-fish') && selectedCategory === 'hot'"
+              class="header-expand-btn"
+              type="button"
+              @click="toggleBlockExpand(block.key)"
+            >
+              {{ t('UICasino_AllGames') }}
+            </button>
           </div>
-        </div>
-      </section>
-    </div>
-
-    <!-- Loading spinner / skeleton -->
-    <div v-else-if="isInitLoading || (category && loadingGames)" class="loading-grid-wrapper">
-      <div class="loading-grid">
-        <div v-for="n in 9" :key="n" class="game-skeleton" aria-hidden="true"></div>
+          <div class="game-card-grid-wrapper">
+            <div
+              class="game-card-grid"
+              :class="{ wide: block.layout === 'wide' }"
+            >
+              <template
+                v-for="item in block.items"
+                :key="`${block.key}-${item.gameApiType || ''}-${item.gameId || ''}-${item.gameCode || ''}-${item.title || ''}`"
+              >
+                <button
+                  class="app-card"
+                  :class="{ wide: block.layout === 'wide' }"
+                  type="button"
+                  @click="handleGameClick(item)"
+                >
+                  <div
+                    class="app-card-img-wrapper"
+                    :class="[
+                      { wide: block.layout === 'wide', 'minigame-banner': block.key.includes('minigame') },
+                      block.key,
+                    ]"
+                  >
+                    <img
+                      v-if="item.img"
+                      :src="item.img"
+                      :alt="item.title || 'item'"
+                      class="app-card-img"
+                      :class="{ wide: block.layout === 'wide' }"
+                      @error="handleCardImgError($event, item)"
+                    />
+                    <div v-else class="app-card-placeholder">
+                      <span class="placeholder-title">{{ item.title }}</span>
+                    </div>
+                  </div>
+                  <span v-if="!block.layout && item.title" class="app-card-title">
+                    {{ item.title }}
+                  </span>
+                </button>
+              </template>
+            </div>
+          </div>
+        </section>
       </div>
-    </div>
 
-    <!-- Empty State -->
-    <div
-      v-else
-      class="empty-state"
-    >
-      <span class="empty-icon">🎮</span>
-      <p class="empty-text">{{ t('UICasino_NoGames') }}</p>
-    </div>
+      <!-- Loading spinner / skeleton -->
+      <div v-else-if="isInitLoading || (category && loadingGames)" class="loading-grid-wrapper">
+        <div class="loading-grid">
+          <div v-for="n in 9" :key="n" class="game-skeleton" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div
+        v-else
+        class="empty-state"
+      >
+        <span class="empty-icon">🎮</span>
+        <p class="empty-text">{{ t('UICasino_NoGames') }}</p>
+      </div>
+    </Transition>
 
     </div> <!-- End casino-content -->
     </div> <!-- End room-list-stage -->
@@ -1926,6 +1944,12 @@ onActivated(async () => {
     overflow-y: auto;
   }
 
+  .casino-content.is-embedded {
+    max-width: none;
+    height: auto;
+    overflow: visible;
+  }
+
   .popular-banner-section {
     max-width: 480px;
     margin: 16px auto 0;
@@ -2013,6 +2037,21 @@ onActivated(async () => {
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
   }
+}
+.casino-swap-enter-active {
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
+}
+.casino-swap-leave-active {
+  transition: opacity 0.12s ease;
+}
+.casino-swap-enter-from {
+  opacity: 0;
+  transform: translateY(0.2rem);
+}
+.casino-swap-leave-to {
+  opacity: 0;
 }
 </style>
 

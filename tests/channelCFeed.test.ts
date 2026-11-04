@@ -380,6 +380,32 @@ test('waterfall avoids level rows by pulling the nearest card of another height'
   assert.deepEqual([ids(one), ids(two)], [[1], [2]])
 })
 
+test('waterfall spreads cards over the requested number of columns', () => {
+  const cards = buildChannelCFeed(
+    [room(1), room(2), room(3), room(4), room(5), room(6), room(7)],
+    [match(1), match(2)],
+    'home',
+    now,
+  )
+  const columns = buildWaterfallColumns(cards, 4)
+  assert.equal(columns.length, 4)
+  assert.deepEqual(
+    columns.map((column) => column.map((card) => card.key)),
+    [
+      ['poker-7', 'poker-5', 'poker-1'],
+      ['mtt-1', 'poker-3'],
+      ['poker-6', 'poker-4'],
+      ['mtt-2', 'poker-2'],
+    ],
+  )
+  assert.equal(columns.flat().length, cards.length)
+  assert.equal(buildWaterfallColumns(cards, 1).length, 1)
+  assert.deepEqual(
+    buildWaterfallColumns(cards, 1)[0]!.map((card) => card.key),
+    cards.map((card) => card.key),
+  )
+})
+
 test('a provider card shows the image uploaded on its only child and the reverse', () => {
   const parent = { id: 1765, parent_id: 0, game_url_ca: '', game_url_cb: '', game_url_cc: '' }
   const child = { id: 1766, parent_id: 1765, game_url_cc: 'small.jpg' }

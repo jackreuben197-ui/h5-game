@@ -129,4 +129,14 @@ const mttOptions = [
   background: #02cfbb;
   color: #fff;
 }
+@media (min-width: 600px) {
+  .c-filter-row {
+    padding-inline: var(--c-page-gutter, 0.333rem);
+  }
+  .c-filter,
+  .c-filter-row--poker .c-filter {
+    flex: 0 0 auto;
+    padding-inline: 0.3rem;
+  }
+}
 </style>

@@ -279,4 +279,9 @@ function openAccount(path: string) {
 .casino-promo-banner-container.c-banner {
   margin: 0.051rem -0.025rem 0.128rem;
 }
+@media (min-width: 600px) {
+  .casino-promo-banner-container.c-banner :deep(.banner-viewport) {
+    max-height: clamp(140px, 12.5vw, 180px);
+  }
+}
 </style>

@@ -62,6 +62,8 @@ let revealTimer: ReturnType<typeof setTimeout> | null = null
 const slideTranslateX = ref(0)
 const CARD_GAP = 3.5
 const MIN_QUEUE_LENGTH = 6
+const MIN_CARD_REM = 4.1
+const visibleCards = ref(2)
 const cardStepWidth = ref(160 + CARD_GAP)
 
 // Auto-play timer
@@ -78,7 +80,8 @@ function formatCurrency(val: number): string {
 // Initialize card queue from source items
 function initQueue() {
   const source = props.items
-  const copies = Math.ceil(MIN_QUEUE_LENGTH / Math.max(1, source.length))
+  const minLength = Math.max(MIN_QUEUE_LENGTH, visibleCards.value * 2)
+  const copies = Math.ceil(minLength / Math.max(1, source.length))
   const items = Array.from({ length: copies }, (_, copy) =>
     source.map((item) => ({ ...item, id: `${item.id}-${copy}` })),
   ).flat()
@@ -93,7 +96,7 @@ function initQueue() {
   }))
 }
 
-// Calculate responsive step width (2 cards visible simultaneously with 6px gap)
+// Calculate responsive step width (as many cards as fit at MIN_CARD_REM each, at least 2)
 function updateCardDimensions() {
   const el = containerRef.value
   if (!el) return
@@ -101,8 +104,15 @@ function updateCardDimensions() {
   const horizontalPadding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight)
   const availableWidth = el.clientWidth - horizontalPadding
   if (availableWidth <= 0) return
-  const nextStep = (availableWidth - CARD_GAP) / 2 + CARD_GAP
-  if (Math.abs(nextStep - cardStepWidth.value) < 0.5) return
+  const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+  const scale = parseFloat(style.getPropertyValue('--live-wins-scale')) || 1
+  const count = Math.max(
+    2,
+    Math.floor((availableWidth + CARD_GAP) / (MIN_CARD_REM * rootFontSize * scale + CARD_GAP)),
+  )
+  const nextStep = (availableWidth - CARD_GAP * (count - 1)) / count + CARD_GAP
+  if (count === visibleCards.value && Math.abs(nextStep - cardStepWidth.value) < 0.5) return
+  visibleCards.value = count
   cardStepWidth.value = nextStep
   if (!isSliding.value && !isDragging.value) slideTranslateX.value = 0
 }
@@ -199,7 +209,6 @@ function pulseAmount(id: string | number) {
 
 const transitionMs = ref(0)
 const isDragging = ref(false)
-const VISIBLE_CARDS = 2
 let dragMoved = false
 let pointerId: number | null = null
 let startX = 0
@@ -250,7 +259,7 @@ function triggerSlide() {
   if (isSliding.value || pointerId !== null || cardQueue.value.length < 3) return
   isSliding.value = true
 
-  const incomingCard = cardQueue.value[VISIBLE_CARDS]
+  const incomingCard = cardQueue.value[visibleCards.value]
   if (incomingCard) {
     animateCardEntry(incomingCard)
   }
@@ -280,7 +289,7 @@ function visibleRange(): [number, number] {
   const first = Math.max(0, Math.floor(-slideTranslateX.value / step))
   const last = Math.min(
     cardQueue.value.length - 1,
-    Math.ceil(-slideTranslateX.value / step) + VISIBLE_CARDS - 1,
+    Math.ceil(-slideTranslateX.value / step) + visibleCards.value - 1,
   )
   return [first, last]
 }
@@ -299,14 +308,14 @@ function revealVisible(animate: boolean) {
 
 function settleTo(idx: number) {
   const step = cardStepWidth.value
-  const maxIdx = cardQueue.value.length - VISIBLE_CARDS
+  const maxIdx = cardQueue.value.length - visibleCards.value
   const finalIdx = Math.max(0, Math.min(maxIdx, idx))
   const target = -finalIdx * step
   const remaining = Math.abs(target - slideTranslateX.value)
   const duration =
     remaining < 1 ? 0 : Math.max(160, Math.round(props.slideSpeed * Math.min(1, remaining / step)))
 
-  for (let i = finalIdx; i < finalIdx + VISIBLE_CARDS; i++) {
+  for (let i = finalIdx; i < finalIdx + visibleCards.value; i++) {
     if (revealed.has(i)) continue
     revealed.add(i)
     const card = cardQueue.value[i]
@@ -341,7 +350,7 @@ function releasePointer(id: number) {
 }
 
 function onPointerDown(e: PointerEvent) {
-  if (cardQueue.value.length < VISIBLE_CARDS + 2) return
+  if (cardQueue.value.length < visibleCards.value + 2) return
   if (e.pointerType === 'mouse' && e.button !== 0) return
   pointerId = e.pointerId
   startX = e.clientX
@@ -370,7 +379,7 @@ function beginDrag() {
   isDragging.value = true
   dragMoved = true
   const step = cardStepWidth.value
-  const reserve = Math.max(0, Math.floor((cardQueue.value.length - VISIBLE_CARDS) / 2))
+  const reserve = Math.max(0, Math.floor((cardQueue.value.length - visibleCards.value) / 2))
   rotateBackward(reserve)
   revealed = new Set([...revealed].map((i) => i + reserve))
   dragBase = slideTranslateX.value - reserve * step
@@ -405,7 +414,7 @@ function onPointerMove(e: PointerEvent) {
       lastMoveT = now
     }
     const step = cardStepWidth.value
-    const minT = -(cardQueue.value.length - VISIBLE_CARDS) * step
+    const minT = -(cardQueue.value.length - visibleCards.value) * step
     slideTranslateX.value = Math.max(minT, Math.min(0, dragBase + dx))
     revealVisible(true)
   }
@@ -472,7 +481,15 @@ watch(
   },
 )
 
+watch(visibleCards, (count) => {
+  if (cardQueue.value.length >= count + 2) return
+  stopCardAnimations()
+  initQueue()
+  resetTrack()
+})
+
 onMounted(() => {
+  updateCardDimensions()
   initQueue()
   nextTick(() => {
     updateCardDimensions()
@@ -539,7 +556,10 @@ onBeforeUnmount(() => {
             v-for="(card, index) in cardQueue"
             :key="card.raw.id"
             class="live-win-card"
-            :style="{ width: `calc((100% - ${CARD_GAP}px) / 2)`, '--reveal-order': index }"
+            :style="{
+              width: `calc((100% - ${CARD_GAP * (visibleCards - 1)}px) / ${visibleCards})`,
+              '--reveal-order': index,
+            }"
             @click="onCardClick(card)"
           >
             <div class="live-win-card__body">
@@ -583,8 +603,13 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
+@function lw($n) {
+  @return calc($n * var(--lw, 1rem));
+}
+
 .live-wins-wrapper {
-  margin: 0.1282rem 0.3077rem 0.1538rem;
+  --lw: calc(1rem * var(--live-wins-scale, 1));
+  margin: lw(0.1282) lw(0.3077) lw(0.1538);
   position: relative;
   user-select: none;
   box-sizing: border-box;
@@ -593,15 +618,15 @@ onBeforeUnmount(() => {
 .live-wins-box {
   display: flex;
   align-items: center;
-  gap: 0.0897rem;
-  height: 1.641rem;
+  gap: lw(0.0897);
+  height: lw(1.641);
 }
 
 .live-wins-heading {
   position: relative;
   flex-shrink: 0;
-  width: 1rem;
-  height: 1.641rem;
+  width: lw(1);
+  height: lw(1.641);
 
   &__bg {
     position: absolute;
@@ -615,23 +640,23 @@ onBeforeUnmount(() => {
 
   &__text {
     position: absolute;
-    left: 0.2564rem;
-    top: 0.2051rem;
+    left: lw(0.2564);
+    top: lw(0.2051);
     display: flex;
     flex-direction: column;
-    width: 0.3077rem;
+    width: lw(0.3077);
   }
 
   &__label {
     position: absolute;
     top: 0;
     bottom: 0;
-    left: 0.14rem;
+    left: lw(0.14);
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 0.5rem;
-    font-size: 0.3077rem;
+    width: lw(0.5);
+    font-size: lw(0.3077);
     line-height: 1;
     font-weight: 700;
     color: #000;
@@ -641,8 +666,8 @@ onBeforeUnmount(() => {
   }
 
   &__char {
-    font-size: 0.3077rem;
-    line-height: 0.3077rem;
+    font-size: lw(0.3077);
+    line-height: lw(0.3077);
     font-weight: 700;
     color: #000;
     text-align: center;
@@ -650,10 +675,10 @@ onBeforeUnmount(() => {
 
   &__arrow {
     position: absolute;
-    left: 0.7179rem;
-    top: 0.7179rem;
-    width: 0.1026rem;
-    height: 0.1795rem;
+    left: lw(0.7179);
+    top: lw(0.7179);
+    width: lw(0.1026);
+    height: lw(0.1795);
     display: block;
     pointer-events: none;
     -webkit-user-drag: none;
@@ -692,9 +717,9 @@ onBeforeUnmount(() => {
 .live-win-card {
   position: relative;
   flex-shrink: 0;
-  height: 1.641rem;
+  height: lw(1.641);
   box-sizing: border-box;
-  border-radius: 0.1282rem;
+  border-radius: lw(0.1282);
   border: 1px solid rgba(235, 235, 235, 0.16);
   background: rgba(255, 255, 255, 0.16);
   overflow: hidden;
@@ -712,20 +737,20 @@ onBeforeUnmount(() => {
 
   &__body {
     position: absolute;
-    left: 0.1538rem;
-    top: 0.1538rem;
-    right: 0.1538rem;
-    height: 1.3333rem;
+    left: lw(0.1538);
+    top: lw(0.1538);
+    right: lw(0.1538);
+    height: lw(1.3333);
     display: flex;
     align-items: center;
-    gap: 0.2308rem;
+    gap: lw(0.2308);
   }
 
   &__art {
     flex-shrink: 0;
-    width: 1.3846rem;
-    height: 1.3333rem;
-    border-radius: 0.1026rem;
+    width: lw(1.3846);
+    height: lw(1.3333);
+    border-radius: lw(0.1026);
     overflow: hidden;
 
     img {
@@ -743,13 +768,13 @@ onBeforeUnmount(() => {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.0769rem;
+    gap: lw(0.0769);
   }
 
   &__amount {
     font-family: Arimo, Arial, Helvetica, sans-serif;
-    font-size: 0.3846rem;
-    line-height: 0.4359rem;
+    font-size: lw(0.3846);
+    line-height: lw(0.4359);
     font-weight: 700;
     color: #fff;
     white-space: nowrap;
@@ -772,7 +797,7 @@ onBeforeUnmount(() => {
 
   &__title,
   &__user {
-    font-size: 0.2051rem;
+    font-size: lw(0.2051);
     line-height: 1.2;
     color: rgba(255, 255, 255, 0.81);
     white-space: nowrap;
@@ -782,15 +807,15 @@ onBeforeUnmount(() => {
 
   &__tag {
     position: absolute;
-    top: -0.0256rem;
-    right: -0.0733rem;
+    top: -lw(0.0256);
+    right: -lw(0.0733);
     z-index: 2;
-    padding: 0.0492rem 0.2482rem;
-    border-radius: 0.1498rem;
+    padding: lw(0.0492) lw(0.2482);
+    border-radius: lw(0.1498);
     background: #ea366b;
     color: #f3f4f6;
-    font-size: 0.2247rem;
-    line-height: 0.282rem;
+    font-size: lw(0.2247);
+    line-height: lw(0.282);
     white-space: nowrap;
     pointer-events: none;
     opacity: 0;
@@ -830,7 +855,7 @@ onBeforeUnmount(() => {
 @keyframes liveWinCardReveal {
   0% {
     opacity: 0;
-    transform: translate3d(0, 0.2rem, 0);
+    transform: translate3d(0, lw(0.2), 0);
   }
   100% {
     opacity: 1;
@@ -841,11 +866,11 @@ onBeforeUnmount(() => {
 @keyframes liveWinTagPop {
   0% {
     opacity: 0;
-    transform: translateY(1.0256rem) scale(0);
+    transform: translateY(lw(1.0256)) scale(0);
   }
   50% {
     opacity: 1;
-    transform: translateY(-0.2564rem) scale(1.2);
+    transform: translateY(-lw(0.2564)) scale(1.2);
   }
   100% {
     opacity: 1;

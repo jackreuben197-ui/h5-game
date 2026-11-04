@@ -293,6 +293,14 @@ onBeforeUnmount(() => {
           <img
             :src="imageSource(slide.img)"
             alt=""
+            class="banner-backdrop"
+            aria-hidden="true"
+            draggable="false"
+            @error="useFallbackImage"
+          />
+          <img
+            :src="imageSource(slide.img)"
+            alt=""
             class="banner-img"
             draggable="false"
             @load="onImageLoad(index)"
@@ -368,6 +376,36 @@ onBeforeUnmount(() => {
     display: block;
     pointer-events: none;
     -webkit-user-drag: none;
+  }
+}
+
+.banner-backdrop {
+  display: none;
+}
+
+@media (min-width: 600px) {
+  .banner-slide {
+    overflow: hidden;
+  }
+
+  .banner-slide .banner-backdrop {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(24px);
+    transform: scale(1.15);
+    pointer-events: none;
+  }
+
+  .banner-slide .banner-img {
+    position: relative;
+    width: auto;
+    max-width: 100%;
+    aspect-ratio: 372 / 69;
+    margin: 0 auto;
   }
 }
 

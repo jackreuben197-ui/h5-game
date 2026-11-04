@@ -226,20 +226,21 @@ function findStaggeredCard(queue: readonly LobbyCard[], neighborHeight: number):
 }
 
 /** 首排左右顶部对齐，之后按已排高度放入较短列；与相邻列同一水平线且等高时，就近换一张不同高度的卡片形成错落。 */
-export function buildWaterfallColumns(cards: readonly LobbyCard[]): [LobbyCard[], LobbyCard[]] {
-  const columns: [LobbyCard[], LobbyCard[]] = [[], []]
-  const heights = [0, 0]
-  const lastTop = [-1, -1]
-  const lastHeight = [0, 0]
+export function buildWaterfallColumns(cards: readonly LobbyCard[], columnCount = 2): LobbyCard[][] {
+  const count = Math.max(1, Math.floor(columnCount))
+  const columns: LobbyCard[][] = Array.from({ length: count }, () => [])
+  const heights = Array.from({ length: count }, () => 0)
+  const lastTop = Array.from({ length: count }, () => -1)
+  const lastHeight = Array.from({ length: count }, () => 0)
   const queue = [...cards]
   while (queue.length) {
-    const column = heights[0]! <= heights[1]! ? 0 : 1
-    const neighbor = column === 0 ? 1 : 0
-    const aligned = Math.abs(lastTop[neighbor]! - heights[column]!) < 1
+    const column = heights.indexOf(Math.min(...heights))
+    const neighbor = column === 0 ? 1 : column - 1
+    const aligned = count > 1 && Math.abs(lastTop[neighbor]! - heights[column]!) < 1
     const index = aligned ? findStaggeredCard(queue, lastHeight[neighbor]!) : 0
     const card = queue.splice(index, 1)[0]!
     const height = estimateCardHeight(card)
-    columns[column].push(card)
+    columns[column]!.push(card)
     lastTop[column] = heights[column]!
     lastHeight[column] = height
     heights[column]! += height + 7

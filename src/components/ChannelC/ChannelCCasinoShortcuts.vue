@@ -66,6 +66,12 @@ const shortcuts = [
   height: px(46.363);
   margin-bottom: 0.128rem;
 }
+@media (min-width: 600px) {
+  .c-casino-shortcuts {
+    justify-content: center;
+    gap: px(36);
+  }
+}
 .c-casino-shortcut {
   position: relative;
   display: flex;
@@ -89,24 +95,34 @@ const shortcuts = [
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  width: px(50);
+  width: auto;
+  max-width: px(56);
   height: px(14);
+  padding: 0 px(3.974);
+  border: 0.331px solid transparent;
+  border-radius: px(16.558);
+  background: transparent;
   color: #fff;
   font-size: px(11);
   font-weight: 500;
   line-height: 1.2;
   text-align: center;
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease;
 
   @include theme-light-own {
     color: #000;
   }
   > span {
     display: block;
-    width: 100%;
+    width: auto;
+    max-width: px(48);
     white-space: nowrap;
   }
 }
-.c-casino-shortcut.is-active::before {
+.c-casino-shortcut::before {
   content: '';
   position: absolute;
   bottom: 0;
@@ -120,22 +136,20 @@ const shortcuts = [
     px(-1.656) px(-19.207) px(5.795) rgba(255, 255, 255, 0.44),
     px(-2.649) px(-34.11) px(6.789) rgba(255, 255, 255, 0.13);
   transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.c-casino-shortcut.is-active::before {
+  opacity: 1;
 }
 .c-casino-shortcut.is-active .c-shortcut-label {
-  width: auto;
-  max-width: px(56);
-  padding: 0 px(3.974);
-  border: 0.331px solid rgba(255, 255, 255, 0.5);
-  border-radius: px(16.558);
+  border-color: rgba(255, 255, 255, 0.5);
   background: #ff5708;
   color: #fff;
 
   @include theme-light-own {
     color: #fff;
-  }
-  > span {
-    width: auto;
-    max-width: px(48);
   }
 }
 .c-shortcut-icon {
@@ -143,12 +157,19 @@ const shortcuts = [
   z-index: 2;
   display: block;
   flex: none;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 
   img {
     position: absolute;
     display: block;
     max-width: none;
   }
+}
+.c-casino-shortcut.is-active .c-shortcut-icon {
+  transform: scale(1.08);
+}
+.c-casino-shortcut:active .c-shortcut-icon {
+  transform: scale(0.92);
 }
 .c-casino-shortcut--hot .c-shortcut-icon {
   width: px(28.873);

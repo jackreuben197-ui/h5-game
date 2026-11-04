@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { ExtendGameRecord } from '@/api/casino'
-import { getGameImage, type CardSize } from '@/features/channelC/model'
+import { getGameImage, type GameCardSize } from '@/features/channelC/model'
 import { t } from '@/i18n'
 
-const props = defineProps<{ game: ExtendGameRecord; size?: CardSize }>()
+const props = defineProps<{ game: ExtendGameRecord; size?: GameCardSize }>()
 defineEmits<{ play: [game: ExtendGameRecord] }>()
 const name = computed(() => props.game.game_name || '')
 const cover = computed(() => getGameImage(props.game, props.size))
@@ -68,6 +68,9 @@ const showCover = computed(() => Boolean(cover.value) && !failedCover.value)
   @include theme-dark {
     background: rgba(255, 255, 255, 0.08);
   }
+}
+.c-game-card--xlarge .c-game-cover {
+  aspect-ratio: 175 / 380;
 }
 .c-game-card--large .c-game-cover {
   aspect-ratio: 175 / 190;

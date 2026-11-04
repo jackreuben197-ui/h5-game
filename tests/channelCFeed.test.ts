@@ -351,9 +351,13 @@ test('casino cards take their size from the uploaded C image field', () => {
     { id: 2, game_url_ca: 'a', game_url_cb: 'b', game_url_cc: 'c' },
     { id: 3, game_url_cc: ' c ' },
     { id: 4, game_url_ca: '', game_icon: 'icon' },
+    { id: 5, game_url_ca: '', game_url_cb: '', game_url_cc: '', game_url_cd: 'd' },
+    { id: 6, game_url_ca: 'a', game_url_cd: 'd' },
   ])
   const sizes = cards.map((card) => (card.kind === 'game' ? card.size : undefined))
-  assert.deepEqual(sizes, ['large', 'large', 'small', 'large'])
+  assert.deepEqual(sizes, ['large', 'large', 'small', 'large', 'xlarge', 'xlarge'])
+  const fifth = cards[4]
+  assert.equal(fifth?.kind === 'game' ? getGameImage(fifth.game, fifth.size) : '', 'd')
   const third = cards[2]
   assert.equal(third?.kind === 'game' ? getGameImage(third.game, third.size) : '', 'c')
   const fourth = cards[3]
@@ -408,9 +412,10 @@ test('waterfall spreads cards over the requested number of columns', () => {
 
 test('a provider card shows the image uploaded on its only child and the reverse', () => {
   const parent = { id: 1765, parent_id: 0, game_url_ca: '', game_url_cb: '', game_url_cc: '' }
-  const child = { id: 1766, parent_id: 1765, game_url_cc: 'small.jpg' }
+  const child = { id: 1766, parent_id: 1765, game_url_cc: 'small.jpg', game_url_cd: 'xl.jpg' }
   const [merged] = mergeRelatedGameImages([parent], [child])
   assert.equal(merged?.game_url_cc, 'small.jpg')
+  assert.equal(merged?.game_url_cd, 'xl.jpg')
   assert.equal(merged?.id, 1765)
   const [reverse] = mergeRelatedGameImages(
     [{ id: 2, parent_id: 1 }],

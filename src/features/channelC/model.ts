@@ -7,33 +7,36 @@ import { roomDescription } from '@/features/channelC/pokerCard'
 
 export type ChannelCSection = 'home' | 'poker' | 'mtt'
 export type CardSize = 'large' | 'medium' | 'small'
+export type GameCardSize = CardSize | 'xlarge'
 export type PokerFilter = 'nlh' | 'plo' | 'short'
 export type MttFilter = 'free' | 'paid' | 'hunter' | 'snowball'
 export type LobbyCard =
   | { key: string; kind: 'poker'; room: RoomRecord }
   | { key: string; kind: 'mtt'; match: MttListRecord; size: CardSize; seriesName?: string }
-  | { key: string; kind: 'game'; game: ExtendGameRecord; size?: CardSize }
+  | { key: string; kind: 'game'; game: ExtendGameRecord; size?: GameCardSize }
 
 export const MTT_ARTWORK_HEIGHT: Record<CardSize, number> = { large: 225, medium: 152, small: 89 }
-export const GAME_ARTWORK_HEIGHT: Record<CardSize, number> = {
+export const GAME_ARTWORK_HEIGHT: Record<GameCardSize, number> = {
+  xlarge: 397.4,
   large: 198.7,
   medium: 152.7,
   small: 121.3,
 }
 const GAME_IMAGE_FIELDS = {
+  xlarge: 'game_url_cd',
   large: 'game_url_ca',
   medium: 'game_url_cb',
   small: 'game_url_cc',
-} as const satisfies Record<CardSize, keyof ExtendGameRecord>
-const GAME_IMAGE_SIZES: readonly CardSize[] = ['large', 'medium', 'small']
+} as const satisfies Record<GameCardSize, keyof ExtendGameRecord>
+const GAME_IMAGE_SIZES: readonly GameCardSize[] = ['xlarge', 'large', 'medium', 'small']
 const WATERFALL_LOOKAHEAD = 6
 const WATERFALL_MIN_STAGGER = 12
 
-export function getGameImage(game: ExtendGameRecord, size?: CardSize): string {
+export function getGameImage(game: ExtendGameRecord, size?: GameCardSize): string {
   return size ? game[GAME_IMAGE_FIELDS[size]]?.trim() || '' : ''
 }
 
-function resolveGameSize(game: ExtendGameRecord): CardSize {
+function resolveGameSize(game: ExtendGameRecord): GameCardSize {
   return GAME_IMAGE_SIZES.find((size) => getGameImage(game, size)) ?? 'large'
 }
 
@@ -71,6 +74,7 @@ export function mergeRelatedGameImages(
       game_url_ca: source.game_url_ca,
       game_url_cb: source.game_url_cb,
       game_url_cc: source.game_url_cc,
+      game_url_cd: source.game_url_cd,
     }
   })
 }

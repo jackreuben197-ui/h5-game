@@ -508,6 +508,13 @@ const getPopularGamesForCategory = (categoryKey: string): GameItem[] => {
     .map((game: any) => transformGameToItem(game))
 }
 
+const isChannelCEmbed = computed(() => Boolean(props.category))
+function resolveCategoryKeys(category: string): CategoryKey[] {
+  return isChannelCEmbed.value && category === 'minigame'
+    ? ['minigame', 'board']
+    : [category as CategoryKey]
+}
+
 const getCategoryGames = (category: string): GameItem[] => {
   if (category === 'hot') {
     return []
@@ -553,9 +560,19 @@ const getCategoryGames = (category: string): GameItem[] => {
   }
 
   const allGamesSource = [...gameRecords.value, ...categoryGames.value]
+  const categoryKeys: string[] = resolveCategoryKeys(category)
+  const mergedBoardProviders = new Set<number>(
+    categoryKeys.length > 1
+      ? allGamesSource
+          .filter((game: any) => getCategoryByGameApiType(game.game_api_type || '') === 'board')
+          .map((game: any) => Number(game.parent_id) || 0)
+          .filter((parentId) => parentId > 0)
+      : [],
+  )
   const allGames = allGamesSource.filter((game: any) => {
     const gameCategory = getCategoryByGameApiType(game.game_api_type || '')
-    return gameCategory === category
+    if (gameCategory === null || !categoryKeys.includes(gameCategory)) return false
+    return !(gameCategory === 'board' && mergedBoardProviders.has(Number(game.id) || 0))
   })
 
   const popularGameIds = new Set(popularGames.map((g) => g.id || g.game_id))
@@ -629,12 +646,17 @@ async function fetchPopularBannerGames(): Promise<void> {
 let categoryRequestId = 0
 async function fetchGamesByCategory(cat: CategoryKey): Promise<void> {
   const requestId = ++categoryRequestId
-  const cached = casinoStore.getCachedCategoryGames(cat, routeClubId.value, isGlobalMode.value)
-  categoryGames.value = cached ?? []
-  loadingGames.value = !cached
-  const list = await casinoStore.fetchCategoryGames(cat, routeClubId.value, isGlobalMode.value)
+  const keys = resolveCategoryKeys(cat)
+  const cached = keys.map((key) =>
+    casinoStore.getCachedCategoryGames(key, routeClubId.value, isGlobalMode.value),
+  )
+  categoryGames.value = cached.flatMap((list) => list ?? [])
+  loadingGames.value = cached.some((list) => !list)
+  const lists = await Promise.all(
+    keys.map((key) => casinoStore.fetchCategoryGames(key, routeClubId.value, isGlobalMode.value)),
+  )
   if (requestId !== categoryRequestId) return
-  if (list) categoryGames.value = list
+  if (lists.some(Boolean)) categoryGames.value = lists.flatMap((list) => list ?? [])
   loadingGames.value = false
 }
 

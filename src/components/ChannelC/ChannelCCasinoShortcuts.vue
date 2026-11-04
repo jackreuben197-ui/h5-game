@@ -11,8 +11,6 @@ import sportsDark from '@/assets/channelC/casino/sports-dark.webp'
 import sportsLight from '@/assets/channelC/casino/sports-light.webp'
 import fishingDark from '@/assets/channelC/casino/fishing-dark.webp'
 import fishingLight from '@/assets/channelC/casino/fishing-light.webp'
-import boardDark from '@/assets/channelC/casino/board-dark.webp'
-import boardLight from '@/assets/channelC/casino/board-light.webp'
 import minigameDark from '@/assets/channelC/casino/minigame-dark.webp'
 import minigameLight from '@/assets/channelC/casino/minigame-light.webp'
 
@@ -25,7 +23,6 @@ const shortcuts = [
   { key: 'dianzi', label: 'UICasino_TabSlots', dark: slotsDark, light: slotsLight },
   { key: 'tiyu', label: 'UICasino_TabSports', dark: sportsDark, light: sportsLight },
   { key: 'buyu', label: 'UICasino_TabFishing', dark: fishingDark, light: fishingLight },
-  { key: 'board', label: 'UICasino_TabCards', dark: boardDark, light: boardLight },
   { key: 'minigame', label: 'UICasino_TabMinigames', dark: minigameDark, light: minigameLight },
 ]
 </script>
@@ -225,17 +222,6 @@ const shortcuts = [
     left: px(-1.056);
     width: px(34.25);
     height: px(32.25);
-  }
-}
-.c-casino-shortcut--board .c-shortcut-icon {
-  width: px(27.108);
-  height: px(27.108);
-
-  img {
-    top: px(-0.542);
-    left: px(-0.857);
-    width: px(31);
-    height: px(31);
   }
 }
 .c-casino-shortcut--minigame .c-shortcut-icon {

@@ -1,4 +1,5 @@
 import { postDiamondConfigApi, postPrivateUcConfigApi } from '@/api/config'
+import type { UserInfoData } from '@/api/models/user'
 import { getUserClubApi, getUserInfoApi } from '@/api/user'
 import {
   forwardDiamondConfigToCocos,
@@ -48,7 +49,7 @@ function combinePostAuthSync(
 }
 
 // 登录成功 / 启动时持有有效 token 都走这里：把首页无关的拉取/同步集中起来，避免必须切到首页才触发。
-export function syncPostAuthData(): Promise<PostAuthSyncResult> {
+export function syncPostAuthData(confirmedUserInfo?: UserInfoData): Promise<PostAuthSyncResult> {
   const gameStore = useGameStore(pinia)
   const token = gameStore.sessionToken.trim()
   if (!token || gameStore.isGuestAccount) {
@@ -89,7 +90,7 @@ export function syncPostAuthData(): Promise<PostAuthSyncResult> {
   }
 
   inFlightToken = token
-  inFlightPromise = runPostAuthSync(token).finally(() => {
+  inFlightPromise = runPostAuthSync(token, confirmedUserInfo).finally(() => {
     if (inFlightToken === token) {
       inFlightToken = ''
       inFlightPromise = null
@@ -98,7 +99,10 @@ export function syncPostAuthData(): Promise<PostAuthSyncResult> {
   return combinePostAuthSync(wsReady, inFlightPromise)
 }
 
-async function runPostAuthSync(token: string): Promise<PostAuthProfileSyncResult> {
+async function runPostAuthSync(
+  token: string,
+  confirmedUserInfo?: UserInfoData,
+): Promise<PostAuthProfileSyncResult> {
   const gameStore = useGameStore(pinia)
   const appConfigStore = useAppConfigStore(pinia)
   const userInfoStore = useUserInfoStore(pinia)
@@ -142,7 +146,11 @@ async function runPostAuthSync(token: string): Promise<PostAuthProfileSyncResult
     }
   }
 
-  const userInfoSync = getUserInfoApi()
+  if (gameStore.sessionToken.trim() !== token || gameStore.isGuestAccount) {
+    return { userInfoSynced: false, userClubSynced: false }
+  }
+
+  const userInfoSync = (confirmedUserInfo ? Promise.resolve(confirmedUserInfo) : getUserInfoApi())
     .then((userInfo) => {
       if (gameStore.sessionToken.trim() !== token) {
         return false

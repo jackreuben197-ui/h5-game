@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict'
 import { registerHooks } from 'node:module'
 import test from 'node:test'
+import {
+  stageMttDetailForNavigation,
+  takeMttDetailForNavigation,
+} from '../src/utils/mttDetailHandoff.ts'
 
 const moduleUrl = (source: string) => `data:text/javascript,${encodeURIComponent(source)}`
 const stateUrl = moduleUrl('export const state = { matches: [] };')
@@ -61,14 +65,35 @@ test('each click finds the earliest visible match currently open for registratio
     match(7, 7000),
   ]
   const resolve = useLobbyBannerMatch()
-  assert.equal(await resolve(7, '42'), 1)
+  const first = await resolve(7, '42')
+  assert.equal(first?.id, 1)
+  assert.equal(first?.detail.state_code, 1)
 
   state.matches.push(match(8, -2000, { status: 1, state: 2 }))
-  assert.equal(await resolve(7, '42'), 8)
+  assert.equal((await resolve(7, '42'))?.id, 8)
 
   state.matches[7].state = 5
-  assert.equal(await resolve(7, '42'), 1)
+  assert.equal((await resolve(7, '42'))?.id, 1)
 
   state.matches = []
   assert.equal(await resolve(7, '42'), undefined)
+})
+
+test('the detail selected by a banner is only reused once for the same match and session', () => {
+  const detail = { state_code: 1 }
+  const match = { id: 42, sessionToken: 'current', detail }
+
+  stageMttDetailForNavigation(match)
+  assert.equal(takeMttDetailForNavigation(42, 'current'), detail)
+  assert.equal(takeMttDetailForNavigation(42, 'current'), undefined)
+
+  stageMttDetailForNavigation(match)
+  assert.equal(takeMttDetailForNavigation(42, 'another'), undefined)
+
+  stageMttDetailForNavigation(match)
+  assert.equal(takeMttDetailForNavigation(43, 'current'), undefined)
+
+  const discard = stageMttDetailForNavigation(match)
+  discard()
+  assert.equal(takeMttDetailForNavigation(42, 'current'), undefined)
 })

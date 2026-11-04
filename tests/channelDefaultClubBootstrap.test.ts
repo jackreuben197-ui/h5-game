@@ -6,15 +6,19 @@ import { createPinia, setActivePinia } from 'pinia'
 const moduleUrl = (source: string) => `data:text/javascript,${encodeURIComponent(source)}`
 const mockUrl = moduleUrl(`
   export const state = {
-    configRequests: [], defaultRequests: [], cachedConfig: null,
+    configRequests: [], defaultRequests: [], globalRequests: 0, cachedConfig: null,
     configResponse: async () => ({ code: 0, data: null }),
+    globalResponse: async () => ({ code: 0, data: null }),
     defaultResponse: async () => ({ code: 0, data: { club: { club_id: 97 } } }),
   };
   export async function postBeforeLoginConfigApi(payload) {
     state.configRequests.push(payload);
     return state.configResponse();
   }
-  export async function postGlobalConfigApi() { return { code: 0, data: null }; }
+  export async function postGlobalConfigApi() {
+    state.globalRequests++;
+    return state.globalResponse();
+  }
   export async function postOrgClubDefaultApi(payload) {
     state.defaultRequests.push(payload);
     return state.defaultResponse();
@@ -106,6 +110,7 @@ test('first visit waits for platform domains, deduplicates callers and sends the
   assert.deepEqual(clubs.map((club) => club?.club_id), [97, 97])
   assert.deepEqual(state.defaultRequests, [{ invite_code: 'ksgubmmk' }])
   await user.ensureChannelDefaultClub()
+  assert.equal(await useAppConfigStore().ensurePlatformDomainsReady(), true)
   assert.equal(state.configRequests.length, 1)
   assert.equal(state.defaultRequests.length, 1)
 })
@@ -144,6 +149,23 @@ test('fresh global config already received in this session does not need another
   await useUserInfoStore().ensureChannelDefaultClub()
   assert.deepEqual(state.configRequests, [])
   assert.deepEqual(state.defaultRequests, [{ invite_code: 'ksgubmmk' }])
+})
+
+test('home startup shares the first authenticated config result, and a later refresh can retry', async () => {
+  const app = useAppConfigStore()
+  const token = 'restored-session'
+  state.globalRequests = 0
+  state.globalResponse = async () => ({ code: 1, data: null })
+  const sync = app.ensureFreshGlobalConfig(token)
+  const home = app.waitForFreshGlobalConfig(token)
+  assert.deepEqual(await Promise.all([sync, home]), [false, false])
+  assert.equal(await app.waitForFreshGlobalConfig(token), false)
+  assert.equal(state.globalRequests, 1)
+
+  state.globalResponse = async () => ({ code: 0, data: domainConfig })
+  assert.equal(await app.ensureFreshGlobalConfig(token), true)
+  assert.equal(await app.waitForFreshGlobalConfig(token), true)
+  assert.equal(state.globalRequests, 2)
 })
 
 test('a real custom domain still sends its full hostname after platform domains load', async () => {

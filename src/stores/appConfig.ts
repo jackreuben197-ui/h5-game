@@ -40,6 +40,7 @@ let guestGlobalConfigPromise: Promise<void> | null = null
 let globalConfigRefreshPromise: Promise<boolean> | null = null
 let globalConfigRefreshSessionKey = ''
 let globalConfigLoadedSessionKey = ''
+let lastGlobalConfigRefresh: { sessionKey: string; promise: Promise<boolean> } | null = null
 
 // 兼容 global_config_resp 挂在 data 顶层或 data.data 内层两种返回结构（同 useLobbyBannerImages）。
 function extractGuestGlobalConfig(
@@ -198,8 +199,8 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
       if (globalConfigLoadedSessionKey === normalizedSessionKey && this.globalConfig) return true
 
       if (globalConfigRefreshPromise) {
-        await globalConfigRefreshPromise
-        if (globalConfigLoadedSessionKey === normalizedSessionKey && this.globalConfig) return true
+        if (globalConfigRefreshSessionKey === normalizedSessionKey) return globalConfigRefreshPromise
+        await globalConfigRefreshPromise.catch(() => false)
         return this.ensureFreshGlobalConfig(normalizedSessionKey)
       }
 
@@ -219,7 +220,15 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
         })
 
       globalConfigRefreshPromise = currentTask
+      lastGlobalConfigRefresh = { sessionKey: normalizedSessionKey, promise: currentTask }
       return currentTask
+    },
+    // 启动页面等待登录同步已经发起的配置请求，失败时也消费同一轮结果。
+    waitForFreshGlobalConfig(sessionKey: string): Promise<boolean> {
+      if (lastGlobalConfigRefresh?.sessionKey === sessionKey.trim()) {
+        return lastGlobalConfigRefresh.promise
+      }
+      return this.ensureFreshGlobalConfig(sessionKey)
     },
     setDiamondConfig(raw: DiamondConfigData): void {
       const map = buildDiamondConfigMap(raw)

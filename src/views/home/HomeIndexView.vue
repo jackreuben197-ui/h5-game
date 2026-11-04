@@ -508,6 +508,16 @@ watch(
   },
 )
 
+async function loadHomeBanners(): Promise<void> {
+  // 版本 C 首页由 ChannelCHome 加载自己的 Banner。
+  if (isVersionC.value) return
+  try {
+    await fetchLobbyBannerImages()
+  } catch (error) {
+    console.warn('[home] fetch lobby banner failed:', error)
+  }
+}
+
 async function bootstrapHomeContent(): Promise<void> {
   // 本地缓存和渠道 /default 可以在壳渲染后立刻启动，但都不能阻塞 Vue 首次挂载。
   const restoreConfigCacheReady = appConfigStore.restorePublicConfigCache().catch((error) => {
@@ -524,8 +534,13 @@ async function bootstrapHomeContent(): Promise<void> {
   // 公开配置不携带 token，可以和会话校验并行；任何 user/* 请求必须等旧 token
   // 校验/恢复完成，避免刷新时拿刚被 pagehide/logout 释放的体验 token 抢跑。
   const publicConfigReady = restoreConfigCacheReady.then(() =>
-    appConfigStore.ensureGuestGlobalConfig(true),
+    appConfigStore.ensurePlatformDomainsReady(),
   )
+  // 渠道 /default 确认 h5_menu 后，才决定是否加载 A/B Banner。
+  const initialBannersReady = channelClubReady.then(loadHomeBanners)
+  const ensureSessionConfig = gameStore.shouldSyncIdentity(gameStore.sessionToken)
+    ? appConfigStore.waitForFreshGlobalConfig
+    : appConfigStore.ensureFreshGlobalConfig
   const sessionReady = ensureExperienceSession().catch((error) => {
     console.warn('[home] resolve session identity failed:', error)
     return false
@@ -533,7 +548,7 @@ async function bootstrapHomeContent(): Promise<void> {
   const configReady = sessionReady.then(async (ready) => {
     const sessionKey = gameStore.sessionToken.trim()
     if (ready && sessionKey && !gameStore.isGuestAccount) {
-      return appConfigStore.ensureFreshGlobalConfig(sessionKey)
+      return ensureSessionConfig(sessionKey)
     }
     await publicConfigReady
     return false
@@ -584,20 +599,13 @@ async function bootstrapHomeContent(): Promise<void> {
   commitHomeContentMode()
   homeContentReady.value = true
 
-  // 配置与 /default 已稳定后再确认一次 banner scope；运行时缓存会自动去重。
-  void fetchLobbyBannerImages().catch((error) => {
-    console.warn('[home] refresh lobby banner failed:', error)
-  })
+  // 首次加载完成后再确认 Banner scope，避免两次加载同时请求相同配置。
+  void initialBannersReady.then(loadHomeBanners)
 }
 
 onMounted(() => {
   // 首页和两个列表页共用 store；俱乐部、身份和配置就绪后一次性提交首屏。
   void bootstrapHomeContent()
-  void waitForH5FirstPaint().then(() =>
-    fetchLobbyBannerImages().catch((error) => {
-      console.warn('[home] fetch lobby banner failed:', error)
-    }),
-  )
   void updateNoticeMarquee()
 
   if (typeof ResizeObserver !== 'undefined') {

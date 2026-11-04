@@ -36,6 +36,7 @@ import {
   resolveTemplateTextByKey,
 } from '@/utils/multiLanguageTemplate'
 import { toUnixSeconds } from '@/utils/time'
+import { takeMttDetailForNavigation } from '@/utils/mttDetailHandoff'
 import { enterMtt, subscribeCocosMessages } from '@/bridge/core'
 import {
   BRIDGE_ACTION,
@@ -406,7 +407,13 @@ onMounted(() => {
   if (gameStore.sessionToken) {
     void ensureMultiLanguageTemplateLoaded()
   }
-  refreshStatusAndRankData()
+  const initialDetail = takeMttDetailForNavigation(matchId.value, gameStore.sessionToken)
+  if (initialDetail) {
+    detailData.value = initialDetail
+    void loadRankList()
+  } else {
+    refreshStatusAndRankData()
+  }
   // Cocos 返回 H5 时页面不会重新挂载，同时刷新淘汰状态和最终排名。
   stopCocosMessageListener = subscribeCocosMessages(
     (message: BridgeMessage) => {

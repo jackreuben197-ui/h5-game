@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { postBeforeLoginConfigApi } from '@/api/config'
 import { postMiscBannerListApi } from '@/api/misc'
 import type { MiscBannerListBannerInfo } from '@/api/models/misc'
@@ -34,6 +34,7 @@ type CmsBannerScope =
 // 只缓存当前 SPA 已由服务端确认过的 Banner。浏览器刷新后 Map 会清空，
 // 不读取持久化旧图；无图时的默认图由各版本视图处理。
 const runtimeBanners = new Map<string, LobbyBanner[]>()
+const pendingBanners = new Map<string, Promise<LobbyBanner[] | null>>()
 type LobbyBannerVariant = 'ab' | 'c'
 
 function getDisplayScene(): 1 | 2 {
@@ -50,10 +51,13 @@ function createRuntimeBannerKey(
   displayScene: 1 | 2,
   isChannelPackage: boolean,
   channelClubId: number,
+  hasRealUser: boolean,
   variant: LobbyBannerVariant,
 ): string {
   const hostname = typeof window === 'undefined' ? '' : window.location.hostname.toLowerCase()
-  const scope = isChannelPackage ? `channel_${channelClubId || 'pending'}` : 'platform'
+  const scope = isChannelPackage
+    ? `channel_${channelClubId || 'pending'}_${hasRealUser ? 'member' : 'guest'}`
+    : 'platform'
   return `${hostname}_${lang}_scene_${displayScene}_${scope}_${variant}`
 }
 
@@ -77,16 +81,18 @@ function extractBannerRecords(
 ): MiscBannerListBannerInfo[] {
   if (!data) return []
   const inner = data.data as Record<string, unknown> | null | undefined
-  const resp = (data.banner_list_resp ?? inner?.banner_list_resp) as {
-    list?: unknown
-  } | null
-  return resp && Array.isArray(resp.list) ? (resp.list as MiscBannerListBannerInfo[]) : []
+  const resp = (data.banner_list_resp ?? inner?.banner_list_resp) as { list?: unknown } | null
+  return Array.isArray(resp?.list) ? (resp.list as MiscBannerListBannerInfo[]) : []
 }
 
-// 过滤出当前语言、当前场景、启用中的大厅 banner 图片。
-// display_scene 由客户端过滤（登录前聚合接口不感知场景）；
-// 字段缺省、null 或 0 的旧 CMS 数据视为全场景可见。
-// 官方包只展示平台配置；渠道包游客精确匹配渠道俱乐部，未配置时回退平台配置。
+function matchesBannerScene(item: MiscBannerListBannerInfo, displayScene: 1 | 2): boolean {
+  return (
+    item.display_scene == null ||
+    Number(item.display_scene) <= 0 ||
+    Number(item.display_scene) === displayScene
+  )
+}
+
 function filterLobbyBanners(
   records: MiscBannerListBannerInfo[],
   lang: string,
@@ -96,25 +102,29 @@ function filterLobbyBanners(
 ): LobbyBanner[] {
   const visible = records.filter(
     (item) =>
-      item?.lang === lang &&
-      Boolean(bannerImageUrl(item, variant)) &&
-      Number(item?.status) === BANNER_STATUS_ENABLED &&
-      Number(item?.banner_type) === LOBBY_BANNER_TYPE &&
-      (item?.display_scene == null ||
-        Number(item.display_scene) <= 0 ||
-        Number(item.display_scene) === displayScene),
+      item &&
+      Number(item.status) === BANNER_STATUS_ENABLED &&
+      Number(item.banner_type) === LOBBY_BANNER_TYPE &&
+      matchesBannerScene(item, displayScene),
   )
-  const clubOwned = visible.filter((item) => Number(item?.club_id) > 0)
-  const platformOwned = visible.filter((item) => Number(item?.club_id) === 0)
-  let selected = platformOwned
-  if (scope.type === 'default-club') {
-    selected = clubOwned.length ? clubOwned : platformOwned
-  } else if (scope.type === 'channel-club') {
-    const channelOwned = clubOwned.filter((item) => Number(item.club_id) === scope.clubId)
-    // 渠道俱乐部未配置 banner 时回退平台配置，不能误用其他俱乐部的配置。
-    selected = channelOwned.length ? channelOwned : platformOwned
+  function select(imageVariant: LobbyBannerVariant) {
+    const artwork = visible.filter((item) => bannerImageUrl(item, imageVariant))
+    const platformOwned = artwork.filter((item) => Number(item.club_id) === 0)
+    const scoped = scope.type === 'default-club'
+      ? artwork.filter((item) => Number(item.club_id) > 0)
+      : scope.type === 'channel-club'
+        ? artwork.filter((item) => Number(item.club_id) === scope.clubId)
+        : []
+    const preferred = [...scoped, ...platformOwned].filter((item) => item.lang === lang)
+    const selected = preferred.length || lang !== 'zh_CN'
+      ? preferred
+      : [...scoped, ...platformOwned].filter((item) => item.lang === 'zh_TW')
+    const clubOwned = selected.filter((item) => Number(item.club_id) > 0)
+    return toLobbyBanners(clubOwned.length ? clubOwned : selected, imageVariant)
   }
-  return toLobbyBanners(selected, variant)
+  const selected = select(variant)
+  // 旧版游客聚合接口只有 image_url，C 图缺失时仍可展示已有配置。
+  return variant === 'c' && !selected.length ? select('ab') : selected
 }
 
 // 登录后走 /misc/banner/list（带 display_scene 区分 h5 / telegram + club_id），
@@ -149,11 +159,10 @@ async function fetchSceneBanners(
     // 避免服务端用平台 banner 兜底后被误认为俱乐部配置。
     const visible = records.filter(
       (item) =>
-        (item?.status === undefined || Number(item.status) === BANNER_STATUS_ENABLED) &&
-        (item?.display_scene == null ||
-          Number(item.display_scene) <= 0 ||
-          Number(item.display_scene) === displayScene) &&
-        Number(item?.club_id) === clubId,
+        item &&
+        (item.status == null || Number(item.status) === BANNER_STATUS_ENABLED) &&
+        matchesBannerScene(item, displayScene) &&
+        Number(item.club_id) === clubId,
     )
     return toLobbyBanners(visible, variant)
   } catch {
@@ -193,6 +202,7 @@ async function fetchCmsBanners(
  * 平台链接始终读取平台 banner；渠道俱乐部没有数据时也回落到平台 banner。
  */
 export function useLobbyBannerImages(variant: LobbyBannerVariant = 'ab') {
+  const gameStore = useGameStore()
   const initialLang = getLobbyBannerLang()
   const initialDisplayScene = getDisplayScene()
   const initialUserInfoStore = useUserInfoStore()
@@ -210,15 +220,24 @@ export function useLobbyBannerImages(variant: LobbyBannerVariant = 'ab') {
     initialDisplayScene,
     initialIsChannelPackage,
     initialChannelClubId,
+    gameStore.isRealUser,
     variant,
   )
   const banners = ref<LobbyBanner[]>([...(runtimeBanners.get(initialRuntimeKey) || [])])
   let revision = 0
+  let started = false
 
-  async function loadBanners(refresh: boolean): Promise<LobbyBanner[] | null> {
-    const request = ++revision
+  watch(
+    () => gameStore.isRealUser,
+    () => {
+      if (started && isChannelPackageHost()) void loadBanners('reload')
+    },
+  )
+
+  async function loadBanners(mode: 'reuse' | 'reload' | 'action'): Promise<LobbyBanner[] | null> {
+    const request = mode === 'action' ? revision : ++revision
     const lang = getLobbyBannerLang()
-    const hasRealUser = useGameStore().isRealUser
+    const hasRealUser = gameStore.isRealUser
     const displayScene = getDisplayScene()
 
     const userInfoStore = useUserInfoStore()
@@ -234,46 +253,56 @@ export function useLobbyBannerImages(variant: LobbyBannerVariant = 'ab') {
       displayScene,
       isChannelPackage,
       channelClubId,
+      hasRealUser,
       variant,
     )
 
-    // 页面间切换只复用本次 SPA 已确认的结果，不再发请求造成旧图切新图。
-    if (request !== revision) return null
+    const isCurrent = () =>
+      (mode === 'action' || request === revision) &&
+      lang === getLobbyBannerLang() &&
+      (!isChannelPackage || gameStore.isRealUser === hasRealUser)
+    if (!isCurrent()) return null
+
+    // 页面切换可复用同一来源的缓存，身份切换需要重新取对应来源。
+    let pending = pendingBanners.get(runtimeKey)
     const runtimeCached = runtimeBanners.get(runtimeKey)
-    if (!refresh && runtimeCached) {
+    if (mode === 'reuse' && !pending && runtimeCached) {
       banners.value = [...runtimeCached]
       return runtimeCached
     }
-    // 渠道包调用 before-login CMS 时传渠道 club_id；官方包不传，只取平台配置。
-    const cmsScope: CmsBannerScope = hasChannelClub
-      ? { type: 'channel-club', clubId: channelClubId }
-      : !hasRealUser && !isChannelPackage && OFFICIAL_GUEST_BANNER_MODE === 'default-club'
-        ? { type: 'default-club' }
-        : { type: 'platform' }
-    // 只有渠道链接才请求俱乐部 banner。平台链接即使账号是俱乐部创始人，也只展示平台 banner。
-    const shouldFetchClubBanner = hasRealUser && hasChannelClub
-    const sceneBanners = shouldFetchClubBanner
-      ? await fetchSceneBanners(lang, displayScene, channelClubId, variant)
-      : []
+    if (!pending) {
+      const cmsScope: CmsBannerScope = hasChannelClub
+        ? { type: 'channel-club', clubId: channelClubId }
+        : !hasRealUser && !isChannelPackage && OFFICIAL_GUEST_BANNER_MODE === 'default-club'
+          ? { type: 'default-club' }
+          : { type: 'platform' }
+      pending = (async () => {
+        const sceneBanners = hasRealUser && hasChannelClub
+          ? await fetchSceneBanners(lang, displayScene, channelClubId, variant)
+          : []
+        const loaded = sceneBanners.length
+          ? sceneBanners
+          : await fetchCmsBanners(lang, displayScene, cmsScope, variant)
+        if (loaded) runtimeBanners.set(runtimeKey, loaded)
+        return loaded
+      })().finally(() => pendingBanners.delete(runtimeKey))
+      pendingBanners.set(runtimeKey, pending)
+    }
 
-    // 渠道没有可用场景图时走公开配置，仍优先匹配渠道俱乐部。
-    const nextBanners = sceneBanners.length
-      ? sceneBanners
-      : await fetchCmsBanners(lang, displayScene, cmsScope, variant)
-
-    if (!nextBanners || request !== revision || lang !== getLobbyBannerLang()) return null
-    // 点击时更新缓存，保留当前轮播，避免读取关联期间正在点击的幻灯片被卸载。
-    if (!refresh) banners.value = nextBanners
-    runtimeBanners.set(runtimeKey, [...nextBanners])
+    const nextBanners = await pending
+    if (!nextBanners || !isCurrent()) return null
+    // 点击时保持当前轮播，避免读取关联期间正在点击的幻灯片被卸载。
+    if (mode !== 'action') banners.value = nextBanners
     return nextBanners
   }
 
   async function fetchLobbyBannerImages(): Promise<void> {
-    await loadBanners(false)
+    started = true
+    await loadBanners('reuse')
   }
 
   async function refreshLobbyBanner(banner: LobbyBanner): Promise<LobbyBanner | undefined> {
-    const fresh = await loadBanners(true)
+    const fresh = await loadBanners('action')
     return fresh?.find((item) => item.id === banner.id && item.clubId === banner.clubId)
   }
 

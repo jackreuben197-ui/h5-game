@@ -115,7 +115,7 @@ async function runEnsureExperienceSession(revision: number): Promise<boolean> {
         gameStore.markIdentitySynced(existingToken)
         await bootstrapCurrentSessionLists()
       } else {
-        await syncPostAuthData()
+        await syncPostAuthData(userInfo)
         // 渠道版底部导航需要根据真实列表决定动态入口。身份未确认前不能由
         // Tab 组件抢跑；确认是真实账号后在会话层统一预热。
         if (isChannelPackageHost()) {

@@ -4,6 +4,7 @@ import { useCachedImages } from '@/utils/imageCache'
 import ThemeQuickSwitch from '@/components/ThemeQuickSwitch.vue'
 import LobbyBannerImage from '@/components/LobbyBannerImage.vue'
 import type { LobbyBanner } from '@/utils/lobbyBannerAssociation'
+import defaultBanner from '@/assets/images/home_header_1.png'
 
 const props = withDefaults(
   defineProps<{
@@ -13,7 +14,7 @@ const props = withDefaults(
     alt?: string
     fallback?: string
   }>(),
-  { variant: 'ab', alt: 'Banner' },
+  { variant: 'ab', alt: 'Banner', fallback: defaultBanner },
 )
 
 const compact = computed(() => props.variant === 'c')
@@ -51,7 +52,7 @@ const singleImage = computed(() => cachedImages.value[0] || props.fallback)
       </template>
     </van-swipe>
     <LobbyBannerImage
-      v-else-if="singleImage"
+      v-else
       :class="imageClass"
       :src="singleImage"
       :banner="banners[0]"

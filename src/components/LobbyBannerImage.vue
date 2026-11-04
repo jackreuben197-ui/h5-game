@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useLobbyBannerMatch } from '@/composables/useLobbyBannerMatch'
 import { t } from '@/i18n'
 import type { LobbyBanner } from '@/utils/lobbyBannerAssociation'
+import { stageMttDetailForNavigation } from '@/utils/mttDetailHandoff'
 
 const props = defineProps<{
   banner?: LobbyBanner
@@ -53,8 +54,16 @@ async function openBanner() {
       return
     }
 
-    const id = await resolveMatch(banner.clubId, banner.association.templateId)
-    if (id && isCurrent()) await router.push({ name: 'mtt-detail', query: { id: String(id) } })
+    const match = await resolveMatch(banner.clubId, banner.association.templateId)
+    if (!match || !isCurrent()) return
+    const discardDetail = stageMttDetailForNavigation(match)
+    try {
+      const failure = await router.push({ name: 'mtt-detail', query: { id: String(match.id) } })
+      if (failure) discardDetail()
+    } catch (error) {
+      discardDetail()
+      throw error
+    }
   } catch (error) {
     console.warn('[lobby-banner] Unable to open associated content', error)
   } finally {
@@ -74,6 +83,12 @@ async function openBanner() {
       @click="openBanner"
     >
       <img class="lobby-banner-image__art" :src="src" :alt="alt" @error="handleImageError" />
+      <van-icon
+        v-if="banner?.association?.type === 'mtt'"
+        class="lobby-banner-image__arrow"
+        name="arrow"
+        aria-hidden="true"
+      />
     </component>
 
     <van-popup
@@ -83,15 +98,18 @@ async function openBanner() {
       close-on-popstate
       position="bottom"
       class="lobby-banner-poster"
+      :aria-label="t('UISNG_CreateSNGPoster')"
+      @click.self="posterOpen = false"
     >
-      <div class="lobby-banner-poster__bar">
-        <button type="button" @click="posterOpen = false">
-          {{ t('UIBackDialog_ticketsbtnClose') }}
-        </button>
-      </div>
-      <div class="lobby-banner-poster__image">
-        <img :src="posterUrl" :alt="t('UISNG_CreateSNGPoster')" />
-      </div>
+      <img class="lobby-banner-poster__image" :src="posterUrl" :alt="t('UISNG_CreateSNGPoster')" />
+      <button
+        type="button"
+        class="lobby-banner-poster__close"
+        :aria-label="t('UIBackDialog_ticketsbtnClose')"
+        @click="posterOpen = false"
+      >
+        <van-icon name="cross" aria-hidden="true" />
+      </button>
     </van-popup>
   </div>
 </template>
@@ -106,6 +124,7 @@ async function openBanner() {
 }
 
 .lobby-banner-image__frame {
+  position: relative;
   padding: 0;
   border: 0;
   background: none;
@@ -119,38 +138,54 @@ button.lobby-banner-image__frame {
   object-fit: cover;
 }
 
+.lobby-banner-image__arrow {
+  position: absolute;
+  top: 50%;
+  right: clamp(8px, 0.32rem, 22px);
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.76);
+  font-size: clamp(16px, 0.48rem, 24px);
+  text-shadow: 0 1px 4px #0006;
+  pointer-events: none;
+}
+
 .lobby-banner-poster {
+  --poster-close-size: 40px;
+  --poster-top: max(12px, var(--app-content-safe-area-top, env(safe-area-inset-top)));
+  --poster-right: max(12px, env(safe-area-inset-right));
+
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   height: 100%;
-  background: #151515;
-}
-
-.lobby-banner-poster__bar {
-  flex: none;
-  padding: max(12px, env(safe-area-inset-top)) 12px 12px;
-  text-align: right;
-}
-
-.lobby-banner-poster__bar button {
-  padding: 6px 14px;
-  border: 1px solid #fff8;
-  border-radius: 16px;
-  color: #fff;
-  background: #333;
-  cursor: pointer;
+  height: var(--app-viewport-height, 100dvh);
+  overflow: hidden;
+  padding: calc(var(--poster-top) + var(--poster-close-size) + 8px) var(--poster-right)
+    max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  background: transparent;
 }
 
 .lobby-banner-poster__image {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-  padding-bottom: env(safe-area-inset-bottom);
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 
-.lobby-banner-poster__image img {
-  display: block;
-  max-width: none;
-  margin-inline: auto;
+.lobby-banner-poster__close {
+  position: absolute;
+  top: var(--poster-top);
+  right: var(--poster-right);
+  display: grid;
+  width: var(--poster-close-size);
+  height: var(--poster-close-size);
+  padding: 0;
+  place-items: center;
+  border: 1px solid #ffffff4d;
+  border-radius: 50%;
+  color: #fff;
+  background: #ffffff26;
+  font-size: 20px;
+  cursor: pointer;
 }
 </style>

@@ -11,6 +11,7 @@ import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { filterVisibleMttRecords } from '@/utils/mttVisibility'
 import { toTimestampMs } from '@/utils/time'
+import type { PrefetchedMttDetail } from '@/utils/mttDetailHandoff'
 
 export function useLobbyBannerMatch() {
   const game = useGameStore()
@@ -18,7 +19,10 @@ export function useLobbyBannerMatch() {
   const config = useAppConfigStore()
   const showPlatformDiamond = usePlatformDiamondVisibility()
 
-  return async function resolveMatch(clubId: number, templateId: string): Promise<number | undefined> {
+  return async function resolveMatch(
+    clubId: number,
+    templateId: string,
+  ): Promise<PrefetchedMttDetail | undefined> {
     if (Number(user.channelDefaultClub?.club_id) !== clubId) return
     if (!game.sessionToken && !(await ensureExperienceSessionReady())) return
     const token = game.sessionToken
@@ -81,7 +85,9 @@ export function useLobbyBannerMatch() {
           String(data?.mtt?.template_id) === templateId &&
           (state === MttPlayerStatus.CAN_APPLY_NOT_START || state === MttPlayerStatus.CAN_APPLY_DELAY)
       })
-      if (matchIndex >= 0) return batch[matchIndex]?.id
+      const match = batch[matchIndex]
+      const detail = details[matchIndex]?.data
+      if (match && detail) return { id: match.id, sessionToken: token, detail }
     }
   }
 }

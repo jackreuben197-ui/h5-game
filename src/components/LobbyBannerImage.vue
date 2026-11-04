@@ -97,7 +97,13 @@ async function openBanner() {
       :aria-label="actionLabel"
       @click="openBanner"
     >
-      <img class="lobby-banner-image__art" :src="src" :alt="alt" @error="handleImageError" />
+      <img
+        class="lobby-banner-image__art"
+        :src="src"
+        :alt="alt"
+        draggable="false"
+        @error="handleImageError"
+      />
       <van-icon
         v-if="currentBanner?.association"
         class="lobby-banner-image__arrow"

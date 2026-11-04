@@ -39,7 +39,7 @@ const props = withDefaults(
 const { club, clubId, tribeId, visibleRooms, visibleMatches, tournamentSeries } = useChannelCFeed()
 useChannelCVersionRouting()
 const ready = useChannelCDataReady(toRef(props, 'ready'))
-const { banners, fetchLobbyBannerImages, refreshLobbyBanner } = useLobbyBannerImages('c')
+const { banners, fetchLobbyBannerImages, refreshLobbyBanner } = useLobbyBannerImages()
 const roomStore = useRoomListStore()
 const root = ref<HTMLElement | null>(null)
 const overlays = ref<InstanceType<typeof ChannelCOverlays> | null>(null)

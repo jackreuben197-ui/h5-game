@@ -11,6 +11,9 @@ export interface LobbyBanner {
   association?: LobbyBannerAssociation
 }
 
+// null 表示刷新后找不到这条 Banner；undefined 表示本次未取得最新配置。
+export type RefreshLobbyBanner = (banner: LobbyBanner) => Promise<LobbyBanner | null | undefined>
+
 export function parseLobbyBannerAssociation(
   banner: Pick<MiscBannerListBannerInfo, 'association_type' | 'template_id' | 'template_name' | 'poster_url'>,
 ): LobbyBannerAssociation | undefined {

@@ -6,7 +6,7 @@ import { effectScope } from 'vue'
 const moduleUrl = (source: string) => `data:text/javascript,${encodeURIComponent(source)}`
 const stateUrl = moduleUrl(`
   import { reactive } from "${import.meta.resolve('vue')}";
-  export const state = reactive({ clubId: 1, channel: true, realUser: false, telegram: false, cms: [], scene: [], calls: [], cmsGate: null });
+  export const state = reactive({ clubId: 1, h5Menu: 3, cachedMenu: null, channel: true, realUser: false, telegram: false, cms: [], scene: [], calls: [], cmsGate: null });
 `)
 const dependencies = new Map([
   [
@@ -43,8 +43,8 @@ const dependencies = new Map([
     moduleUrl(`
     import { state } from '${stateUrl}';
     export const useUserInfoStore = () => ({
-      get channelDefaultClub() { return { club_id: state.clubId }; },
-      async ensureChannelDefaultClub() { return { club_id: state.clubId }; },
+      get channelDefaultClub() { return { club_id: state.clubId, h5_menu: state.cachedMenu ?? state.h5Menu }; },
+      async ensureChannelDefaultClub() { return { club_id: state.clubId, h5_menu: state.h5Menu }; },
     });
   `),
   ],
@@ -76,10 +76,10 @@ const { useLobbyBannerImages } = await import('../src/composables/useLobbyBanner
 const { state } = await import(stateUrl)
 hooks.deregister()
 
-function mountBanners(t: TestContext, variant?: 'c') {
+function mountBanners(t: TestContext) {
   const scope = effectScope()
   t.after(() => scope.stop())
-  return scope.run(() => useLobbyBannerImages(variant))!
+  return scope.run(useLobbyBannerImages)!
 }
 
 function banner(clubId: number, extra: Record<string, unknown> = {}) {
@@ -95,33 +95,44 @@ function banner(clubId: number, extra: Record<string, unknown> = {}) {
   }
 }
 
-test('C and A/B read their own image fields and never share cached images', async (t) => {
+test('guest artwork follows the public h5_menu and cache keys separate the variants', async (t) => {
   state.clubId = 101
+  state.h5Menu = 3
+  state.cachedMenu = 2
+  t.after(() => {
+    state.h5Menu = 3
+    state.cachedMenu = null
+  })
   state.realUser = false
   state.calls = []
   state.cms = [banner(101)]
-  const c = mountBanners(t, 'c')
+  const c = mountBanners(t)
   await c.fetchLobbyBannerImages()
   assert.deepEqual(c.banners.value.map((item) => item.imageUrl), ['c.png'])
-  const ab = mountBanners(t)
-  await ab.fetchLobbyBannerImages()
-  assert.deepEqual(ab.banners.value.map((item) => item.imageUrl), ['ab.png'])
-  const repeatedC = mountBanners(t, 'c')
+  for (const h5Menu of [1, 2]) {
+    state.h5Menu = h5Menu
+    const ab = mountBanners(t)
+    await ab.fetchLobbyBannerImages()
+    assert.deepEqual(ab.banners.value.map((item) => item.imageUrl), ['ab.png'])
+  }
+  state.h5Menu = 3
+  const repeatedC = mountBanners(t)
   await repeatedC.fetchLobbyBannerImages()
   assert.deepEqual(repeatedC.banners.value.map((item) => item.imageUrl), ['c.png'])
   assert.equal(state.calls.length, 2)
 })
 
-test('a club with only A/B images falls back to the platform C image, not another club', async (t) => {
+test('each C banner can fall back to its regular artwork without losing other slides', async (t) => {
   state.clubId = 102
   state.cms = [
-    banner(102, { image_url_c: '' }),
+    banner(102, { image_url_c: '   ' }),
+    banner(102, { image_url_c: 'club-c.png' }),
     banner(0, { image_url_c: 'platform-c.png' }),
     banner(999, { image_url_c: 'other-club.png' }),
   ]
-  const c = mountBanners(t, 'c')
+  const c = mountBanners(t)
   await c.fetchLobbyBannerImages()
-  assert.deepEqual(c.banners.value.map((item) => item.imageUrl), ['platform-c.png'])
+  assert.deepEqual(c.banners.value.map((item) => item.imageUrl), ['ab.png', 'club-c.png'])
 })
 
 test('authenticated A/B and C requests share the H5 scene and select their own image fields', async (t) => {
@@ -129,25 +140,27 @@ test('authenticated A/B and C requests share the H5 scene and select their own i
   state.realUser = true
   state.calls = []
   state.scene = [banner(999), banner(103, { image_url_c: 'club-scene-c.png' })]
-  const c = mountBanners(t, 'c')
+  const c = mountBanners(t)
   await c.fetchLobbyBannerImages()
   assert.deepEqual(c.banners.value.map((item) => item.imageUrl), ['club-scene-c.png'])
   assert.equal(state.calls.length, 1)
   assert.equal(state.calls[0][0], 'scene')
   assert.equal(state.calls[0][1].club_id, 103)
   assert.equal(state.calls[0][1].display_scene, 1)
+  state.h5Menu = 1
+  t.after(() => { state.h5Menu = 3 })
   const ab = mountBanners(t)
   await ab.fetchLobbyBannerImages()
   assert.deepEqual(ab.banners.value.map((item) => item.imageUrl), ['ab.png'])
   assert.equal(state.calls[1][1].display_scene, 1)
 })
 
-test('missing C scene image falls through to the public C banner configuration', async (t) => {
+test('an empty scene banner falls through to the public C banner configuration', async (t) => {
   state.clubId = 104
   state.realUser = true
-  state.scene = [banner(104, { image_url_c: '' })]
+  state.scene = [banner(104, { image_url: '', image_url_c: '' })]
   state.cms = [banner(0, { image_url_c: 'fallback-c.png' })]
-  const c = mountBanners(t, 'c')
+  const c = mountBanners(t)
   await c.fetchLobbyBannerImages()
   assert.deepEqual(c.banners.value.map((item) => item.imageUrl), ['fallback-c.png'])
 })
@@ -161,7 +174,7 @@ test('missing artwork returns no remote URL for the view fallback and respects v
     banner(105, { display_scene: 2 }),
     banner(105, { status: 2 }),
   ]
-  const c = mountBanners(t, 'c')
+  const c = mountBanners(t)
   await c.fetchLobbyBannerImages()
   assert.deepEqual(c.banners.value.map((item) => item.imageUrl), [])
 })
@@ -174,9 +187,11 @@ test('Telegram keeps the same scene for both image variants', async (t) => {
     banner(106, { display_scene: 1, image_url_c: 'h5-c.png' }),
     banner(106, { display_scene: 2, image_url: 'telegram-ab.png', image_url_c: 'telegram-c.png' }),
   ]
-  const c = mountBanners(t, 'c')
+  const c = mountBanners(t)
   await c.fetchLobbyBannerImages()
   assert.deepEqual(c.banners.value.map((item) => item.imageUrl), ['telegram-c.png'])
+  state.h5Menu = 2
+  t.after(() => { state.h5Menu = 3 })
   const ab = mountBanners(t)
   await ab.fetchLobbyBannerImages()
   assert.deepEqual(ab.banners.value.map((item) => item.imageUrl), ['telegram-ab.png'])
@@ -198,7 +213,7 @@ test('club pictures read mutually exclusive association fields and refresh saved
     banner(107, { id: 44, resource_type: 2, association_type: 1, template_id: 10 }),
     banner(107, { id: 45, redirect_url: 'https://example.com/legacy' }),
   ]
-  const c = mountBanners(t, 'c')
+  const c = mountBanners(t)
   await c.fetchLobbyBannerImages()
   const [poster, template, video, legacy] = c.banners.value
   assert.deepEqual(poster?.association, { type: 'poster', url: 'https://cdn.example/old.png' })
@@ -220,6 +235,10 @@ test('club pictures read mutually exclusive association fields and refresh saved
     banner(107, { id: 42, association_type: 0, poster_url: 'https://cdn.example/new.png' }),
   ]
   assert.equal((await c.refreshLobbyBanner(poster!))?.association, undefined)
+
+  state.scene = []
+  state.cms = []
+  assert.equal(await c.refreshLobbyBanner(poster!), null)
 })
 
 test('public channel banners also consume the server association fields', async (t) => {
@@ -248,7 +267,7 @@ test('C guests use the club public artwork when the aggregate does not include t
     banner(49, { id: 301, banner_type: 13, image_url: 'other-position.png', image_url_c: undefined }),
     banner(99, { id: 302, image_url: 'other-club.png', image_url_c: undefined }),
   ]
-  const c = mountBanners(t, 'c')
+  const c = mountBanners(t)
   await c.fetchLobbyBannerImages()
   assert.deepEqual(c.banners.value.map((item) => item.imageUrl), ['club-first.png', 'club-second.png'])
   assert.equal(state.calls[0]?.[1].banner_list_req.club_id, 49)
@@ -260,7 +279,7 @@ test('a mounted C guest page requests banner/list when the player signs in', asy
   state.calls = []
   state.cms = [banner(109, { image_url_c: 'guest-c.png' })]
   state.scene = [banner(109, { image_url_c: 'member-c.png' })]
-  const c = mountBanners(t, 'c')
+  const c = mountBanners(t)
   await c.fetchLobbyBannerImages()
   assert.deepEqual(c.banners.value.map((item) => item.imageUrl), ['guest-c.png'])
 
@@ -270,7 +289,7 @@ test('a mounted C guest page requests banner/list when the player signs in', asy
   assert.deepEqual(state.calls.map(([source]) => source), ['cms', 'scene'])
   assert.equal(state.calls[1]?.[1].club_id, 109)
 
-  const reopened = mountBanners(t, 'c')
+  const reopened = mountBanners(t)
   await reopened.fetchLobbyBannerImages()
   assert.equal(state.calls.length, 2)
 })
@@ -284,7 +303,7 @@ test('a late public response cannot replace the authenticated banner', async (t)
   let releaseCms!: () => void
   state.cmsGate = new Promise<void>((resolve) => { releaseCms = resolve })
   t.after(() => { state.cmsGate = null })
-  const c = mountBanners(t, 'c')
+  const c = mountBanners(t)
   const guestLoad = c.fetchLobbyBannerImages()
   await new Promise<void>((resolve) => setImmediate(resolve))
 

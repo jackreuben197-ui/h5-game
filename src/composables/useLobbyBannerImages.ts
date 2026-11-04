@@ -2,12 +2,13 @@ import { ref, watch } from 'vue'
 import { postBeforeLoginConfigApi } from '@/api/config'
 import { postMiscBannerListApi } from '@/api/misc'
 import type { MiscBannerListBannerInfo } from '@/api/models/misc'
+import { resolveChannelMenu } from '../features/channelC/menu.ts'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { getLocale, toServerLang } from '@/i18n'
 import { isTelegramMiniAppEnv } from '@/utils/environment'
 import { isChannelPackageHost } from '@/utils/channelPackage'
-import { parseLobbyBannerAssociation, type LobbyBanner } from '../utils/lobbyBannerAssociation.ts'
+import { parseLobbyBannerAssociation, type LobbyBanner, type RefreshLobbyBanner } from '../utils/lobbyBannerAssociation.ts'
 
 // /config/before/login/config 聚合项：8 = banner 列表。
 const NO_AUTH_API_BANNER_LIST = 8
@@ -42,8 +43,11 @@ function getDisplayScene(): 1 | 2 {
 }
 
 function bannerImageUrl(item: MiscBannerListBannerInfo, variant: LobbyBannerVariant): string {
-  const value = variant === 'c' ? item.image_url_c : item.image_url
-  return typeof value === 'string' ? value.trim() : ''
+  if (variant === 'c' && typeof item.image_url_c === 'string') {
+    const compactUrl = item.image_url_c.trim()
+    if (compactUrl) return compactUrl
+  }
+  return typeof item.image_url === 'string' ? item.image_url.trim() : ''
 }
 
 function createRuntimeBannerKey(
@@ -100,31 +104,25 @@ function filterLobbyBanners(
   scope: CmsBannerScope,
   variant: LobbyBannerVariant,
 ): LobbyBanner[] {
-  const visible = records.filter(
-    (item) =>
-      item &&
-      Number(item.status) === BANNER_STATUS_ENABLED &&
-      Number(item.banner_type) === LOBBY_BANNER_TYPE &&
-      matchesBannerScene(item, displayScene),
-  )
-  function select(imageVariant: LobbyBannerVariant) {
-    const artwork = visible.filter((item) => bannerImageUrl(item, imageVariant))
-    const platformOwned = artwork.filter((item) => Number(item.club_id) === 0)
-    const scoped = scope.type === 'default-club'
-      ? artwork.filter((item) => Number(item.club_id) > 0)
-      : scope.type === 'channel-club'
-        ? artwork.filter((item) => Number(item.club_id) === scope.clubId)
-        : []
-    const preferred = [...scoped, ...platformOwned].filter((item) => item.lang === lang)
-    const selected = preferred.length || lang !== 'zh_CN'
-      ? preferred
-      : [...scoped, ...platformOwned].filter((item) => item.lang === 'zh_TW')
-    const clubOwned = selected.filter((item) => Number(item.club_id) > 0)
-    return toLobbyBanners(clubOwned.length ? clubOwned : selected, imageVariant)
-  }
-  const selected = select(variant)
-  // 旧版游客聚合接口只有 image_url，C 图缺失时仍可展示已有配置。
-  return variant === 'c' && !selected.length ? select('ab') : selected
+  const visible = records.filter((item) => {
+    if (
+      !item ||
+      Number(item.status) !== BANNER_STATUS_ENABLED ||
+      Number(item.banner_type) !== LOBBY_BANNER_TYPE ||
+      !matchesBannerScene(item, displayScene) ||
+      !bannerImageUrl(item, variant)
+    ) return false
+    const clubId = Number(item.club_id)
+    return clubId === 0 ||
+      (scope.type === 'channel-club' && clubId === scope.clubId) ||
+      (scope.type === 'default-club' && clubId > 0)
+  })
+  const preferred = visible.filter((item) => item.lang === lang)
+  const selected = preferred.length || lang !== 'zh_CN'
+    ? preferred
+    : visible.filter((item) => item.lang === 'zh_TW')
+  const clubOwned = selected.filter((item) => Number(item.club_id) > 0)
+  return toLobbyBanners(clubOwned.length ? clubOwned : selected, variant)
 }
 
 // 登录后走 /misc/banner/list（带 display_scene 区分 h5 / telegram + club_id），
@@ -201,27 +199,18 @@ async function fetchCmsBanners(
  * 渠道链接登录后优先请求 /misc/banner/list（按 h5/telegram 场景 + 渠道俱乐部配置），
  * 平台链接始终读取平台 banner；渠道俱乐部没有数据时也回落到平台 banner。
  */
-export function useLobbyBannerImages(variant: LobbyBannerVariant = 'ab') {
+export function useLobbyBannerImages() {
   const gameStore = useGameStore()
-  const initialLang = getLobbyBannerLang()
-  const initialDisplayScene = getDisplayScene()
-  const initialUserInfoStore = useUserInfoStore()
+  const userInfoStore = useUserInfoStore()
   const initialIsChannelPackage = isChannelPackageHost()
-  const initialChannelClubId = initialIsChannelPackage
-    ? Math.floor(
-        Number(
-          initialUserInfoStore.channelDefaultClub?.club_id ??
-            initialUserInfoStore.currentClub?.club_id,
-        ),
-      ) || 0
-    : 0
+  const initialClub = initialIsChannelPackage ? userInfoStore.channelDefaultClub : null
   const initialRuntimeKey = createRuntimeBannerKey(
-    initialLang,
-    initialDisplayScene,
+    getLobbyBannerLang(),
+    getDisplayScene(),
     initialIsChannelPackage,
-    initialChannelClubId,
+    Number(initialClub?.club_id) || 0,
     gameStore.isRealUser,
-    variant,
+    resolveChannelMenu(initialClub) === 3 ? 'c' : 'ab',
   )
   const banners = ref<LobbyBanner[]>([...(runtimeBanners.get(initialRuntimeKey) || [])])
   let revision = 0
@@ -240,14 +229,12 @@ export function useLobbyBannerImages(variant: LobbyBannerVariant = 'ab') {
     const hasRealUser = gameStore.isRealUser
     const displayScene = getDisplayScene()
 
-    const userInfoStore = useUserInfoStore()
     const isChannelPackage = isChannelPackageHost()
-    let channelClubId = 0
-    if (isChannelPackage) {
-      const channelClub = await userInfoStore.ensureChannelDefaultClub()
-      channelClubId = Math.floor(Number(channelClub?.club_id)) || 0
-    }
-    const hasChannelClub = isChannelPackage && channelClubId > 0
+    const channelClub = isChannelPackage ? await userInfoStore.ensureChannelDefaultClub() : null
+    const channelClubId = Number(channelClub?.club_id) || 0
+    const hasChannelClub = channelClubId > 0
+    // /org/club/default 在游客态可用，图片版本跟随渠道公开的 h5_menu。
+    const variant = resolveChannelMenu(channelClub) === 3 ? 'c' : 'ab'
     const runtimeKey = createRuntimeBannerKey(
       lang,
       displayScene,
@@ -301,9 +288,10 @@ export function useLobbyBannerImages(variant: LobbyBannerVariant = 'ab') {
     await loadBanners('reuse')
   }
 
-  async function refreshLobbyBanner(banner: LobbyBanner): Promise<LobbyBanner | undefined> {
+  const refreshLobbyBanner: RefreshLobbyBanner = async (banner) => {
     const fresh = await loadBanners('action')
-    return fresh?.find((item) => item.id === banner.id && item.clubId === banner.clubId)
+    if (!fresh) return undefined
+    return fresh.find((item) => item.id === banner.id && item.clubId === banner.clubId) ?? null
   }
 
   return { banners, fetchLobbyBannerImages, refreshLobbyBanner }

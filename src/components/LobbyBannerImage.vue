@@ -1,38 +1,47 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onDeactivated, ref } from 'vue'
+import { computed, onBeforeUnmount, onDeactivated, ref, shallowRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLobbyBannerMatch } from '@/composables/useLobbyBannerMatch'
 import { t } from '@/i18n'
-import type { LobbyBanner } from '@/utils/lobbyBannerAssociation'
+import type { LobbyBanner, RefreshLobbyBanner } from '@/utils/lobbyBannerAssociation'
 import { stageMttDetailForNavigation } from '@/utils/mttDetailHandoff'
+import { useCachedImage } from '@/utils/imageCache'
 
 const props = defineProps<{
   banner?: LobbyBanner
   src: string
   alt: string
   fallback?: string
-  refresh: (banner: LobbyBanner) => Promise<LobbyBanner | undefined>
+  refresh: RefreshLobbyBanner
 }>()
 
 const router = useRouter()
 const resolveMatch = useLobbyBannerMatch()
 const busy = ref(false)
-const posterUrl = ref('')
+const currentBanner = shallowRef(props.banner)
 const posterOpen = ref(false)
+const posterSrc = useCachedImage(() => {
+  const association = currentBanner.value?.association
+  return association?.type === 'poster' ? association.url : ''
+})
 const actionLabel = computed(() => {
-  const association = props.banner?.association
+  const association = currentBanner.value?.association
   if (!association) return undefined
   return (association.type === 'mtt' && association.templateName) || t('UIMine_RecordItemsNormal')
 })
 let revision = 0
 
-function reset() {
+function closeBanner() {
   revision += 1
   busy.value = false
   posterOpen.value = false
 }
-onDeactivated(reset)
-onBeforeUnmount(reset)
+onDeactivated(closeBanner)
+onBeforeUnmount(closeBanner)
+watch(() => props.banner, (banner) => {
+  closeBanner()
+  currentBanner.value = banner
+})
 
 function handleImageError(event: Event) {
   const image = event.target as HTMLImageElement
@@ -40,20 +49,26 @@ function handleImageError(event: Event) {
 }
 
 async function openBanner() {
-  if (!props.banner?.association || busy.value) return
-  busy.value = true
+  const selected = currentBanner.value
+  if (!selected?.association || busy.value || posterOpen.value) return
+  // 已知海报立即打开，刷新配置在后台进行，重复点击不等待列表请求。
+  posterOpen.value = selected.association.type === 'poster'
+  busy.value = !posterOpen.value
   const request = ++revision
   const currentRoute = router.currentRoute.value
   const isCurrent = () => request === revision && router.currentRoute.value === currentRoute
   try {
-    const banner = await props.refresh(props.banner)
-    if (!isCurrent() || !banner?.association) return
-    if (banner.association.type === 'poster') {
-      posterUrl.value = banner.association.url
+    const banner = await props.refresh(selected)
+    if (!isCurrent() || banner === undefined) return
+    currentBanner.value = banner ?? undefined
+    if (banner?.association?.type === 'poster') {
       posterOpen.value = true
       return
     }
 
+    posterOpen.value = false
+    if (banner?.association?.type !== 'mtt') return
+    busy.value = true
     const match = await resolveMatch(banner.clubId, banner.association.templateId)
     if (!match || !isCurrent()) return
     const discardDetail = stageMttDetailForNavigation(match)
@@ -75,16 +90,16 @@ async function openBanner() {
 <template>
   <div>
     <component
-      :is="banner?.association ? 'button' : 'div'"
+      :is="currentBanner?.association ? 'button' : 'div'"
       class="lobby-banner-image__frame"
-      :type="banner?.association ? 'button' : undefined"
-      :aria-busy="banner?.association ? busy : undefined"
+      :type="currentBanner?.association ? 'button' : undefined"
+      :aria-busy="currentBanner?.association ? busy : undefined"
       :aria-label="actionLabel"
       @click="openBanner"
     >
       <img class="lobby-banner-image__art" :src="src" :alt="alt" @error="handleImageError" />
       <van-icon
-        v-if="banner?.association?.type === 'mtt'"
+        v-if="currentBanner?.association?.type === 'mtt'"
         class="lobby-banner-image__arrow"
         name="arrow"
         aria-hidden="true"
@@ -92,21 +107,22 @@ async function openBanner() {
     </component>
 
     <van-popup
-      v-if="posterUrl"
-      v-model:show="posterOpen"
+      v-if="posterSrc"
+      :show="posterOpen"
+      :duration="0"
       teleport="body"
       close-on-popstate
-      position="bottom"
       class="lobby-banner-poster"
       :aria-label="t('UISNG_CreateSNGPoster')"
-      @click.self="posterOpen = false"
+      @update:show="(show) => { if (!show) closeBanner() }"
+      @click.self="closeBanner"
     >
-      <img class="lobby-banner-poster__image" :src="posterUrl" :alt="t('UISNG_CreateSNGPoster')" />
+      <img class="lobby-banner-poster__image" :src="posterSrc" :alt="t('UISNG_CreateSNGPoster')" />
       <button
         type="button"
         class="lobby-banner-poster__close"
         :aria-label="t('UIBackDialog_ticketsbtnClose')"
-        @click="posterOpen = false"
+        @click="closeBanner"
       >
         <van-icon name="cross" aria-hidden="true" />
       </button>
@@ -157,6 +173,8 @@ button.lobby-banner-image__frame {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  max-width: none;
   height: 100%;
   height: var(--app-viewport-height, 100dvh);
   overflow: hidden;

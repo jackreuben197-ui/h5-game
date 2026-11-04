@@ -3,13 +3,13 @@ import { computed } from 'vue'
 import { useCachedImages } from '@/utils/imageCache'
 import ThemeQuickSwitch from '@/components/ThemeQuickSwitch.vue'
 import LobbyBannerImage from '@/components/LobbyBannerImage.vue'
-import type { LobbyBanner } from '@/utils/lobbyBannerAssociation'
+import type { LobbyBanner, RefreshLobbyBanner } from '@/utils/lobbyBannerAssociation'
 import defaultBanner from '@/assets/images/home_header_1.png'
 
 const props = withDefaults(
   defineProps<{
     banners: LobbyBanner[]
-    refresh: (banner: LobbyBanner) => Promise<LobbyBanner | undefined>
+    refresh: RefreshLobbyBanner
     variant?: 'ab' | 'c'
     alt?: string
     fallback?: string

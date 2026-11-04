@@ -9,7 +9,7 @@ import { requireRealUser } from '@/session/realUserGate'
 import GuestAuthActions from '@/components/GuestAuthActions.vue'
 import ThemeQuickSwitch from '@/components/ThemeQuickSwitch.vue'
 import HomeBannerSwiper from '@/components/HomeBannerSwiper.vue'
-import type { LobbyBanner } from '@/utils/lobbyBannerAssociation'
+import type { LobbyBanner, RefreshLobbyBanner } from '@/utils/lobbyBannerAssociation'
 import logo from '@/assets/channelC/logo.png'
 import search from '@/assets/channelC/search.svg'
 import messageLight from '@/assets/channelC/message.svg'
@@ -26,7 +26,7 @@ import type { ChannelCAction } from '@/features/channelC/rewards'
 defineProps<{
   banners: LobbyBanner[]
   clubName: string
-  refreshBanner: (banner: LobbyBanner) => Promise<LobbyBanner | undefined>
+  refreshBanner: RefreshLobbyBanner
 }>()
 defineEmits<{ action: [action: ChannelCAction] }>()
 const router = useRouter()

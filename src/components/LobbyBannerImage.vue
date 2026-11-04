@@ -99,7 +99,7 @@ async function openBanner() {
     >
       <img class="lobby-banner-image__art" :src="src" :alt="alt" @error="handleImageError" />
       <van-icon
-        v-if="currentBanner?.association?.type === 'mtt'"
+        v-if="currentBanner?.association"
         class="lobby-banner-image__arrow"
         name="arrow"
         aria-hidden="true"
@@ -158,9 +158,16 @@ button.lobby-banner-image__frame {
   position: absolute;
   top: 50%;
   right: clamp(8px, 0.32rem, 22px);
+  display: grid;
+  width: clamp(26px, 0.78rem, 36px);
+  aspect-ratio: 1;
+  place-items: center;
   transform: translateY(-50%);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.28);
   color: rgba(255, 255, 255, 0.76);
   font-size: clamp(16px, 0.48rem, 24px);
+  -webkit-text-stroke: 0.7px currentColor;
   text-shadow: 0 1px 4px #0006;
   pointer-events: none;
 }

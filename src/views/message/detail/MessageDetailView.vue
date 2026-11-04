@@ -846,7 +846,7 @@ async function auditCredit(item: CreditMessageItem, pass: boolean): Promise<void
     const response = await postRoomcenterFriendRoomApplyAuditApi({
       room_id: item.roomId,
       apply_id: item.id,
-      action: pass ? 2 : 3,
+      audit_op: pass ? 2 : 3,
     })
     if (response.code === 0) {
       await fetchCreditList()

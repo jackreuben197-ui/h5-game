@@ -254,8 +254,8 @@ export interface RoomcenterFriendRoomApplyAuditRequest {
   room_id?: number
   // 申请 id。
   apply_id?: number
-  // 审核动作。
-  action?: number
+  // 审批状态：2 通过，3 拒绝。
+  audit_op?: number
   [key: string]: unknown
 }
 

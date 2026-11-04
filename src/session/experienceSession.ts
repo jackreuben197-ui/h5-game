@@ -9,12 +9,13 @@ import { syncPostAuthData } from '@/session/postAuthSync'
 import StorageKey from '@/constants/storageKey'
 import { getLocale } from '@/i18n'
 import { pinia } from '@/stores/pinia'
+import { useCasinoStore } from '@/stores/casino'
 import { useGameStore } from '@/stores/game'
 import { useMttListStore } from '@/stores/mttList'
 import { useRoomListStore } from '@/stores/roomList'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { localStore } from '@/utils/localStore'
-import { isChannelPackageHost, resolveInviteCode } from '@/utils/channelPackage'
+import { isChannelPackageHost, isPrivateDomainMode, resolveInviteCode } from '@/utils/channelPackage'
 import { ensureMultiLanguageTemplateLoaded } from '@/utils/multiLanguageTemplate'
 import type { ExperienceLoginRequest, UserInfoData } from '@/api/models/user'
 
@@ -73,6 +74,9 @@ export async function bootstrapCurrentSessionLists(): Promise<void> {
     ensureMultiLanguageTemplateLoaded(),
     useRoomListStore(pinia).bootstrapRoomList(),
     useMttListStore(pinia).bootstrapMttList(),
+    isPrivateDomainMode()
+      ? useCasinoStore(pinia).preloadCasinoData(undefined, false)
+      : Promise.resolve(),
   ])
 }
 

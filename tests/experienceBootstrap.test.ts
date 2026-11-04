@@ -23,11 +23,13 @@ const mockUrl = moduleUrl(`
   export const postUserLogoutApi = async () => {};
   export const useRoomListStore = () => ({ bootstrapRoomList: async () => { calls.push('rooms') } });
   export const useMttListStore = () => ({ bootstrapMttList: async () => { calls.push('mtt') } });
+  export const useCasinoStore = () => ({ preloadCasinoData: async () => { calls.push('casino') } });
   export const useUserInfoStore = () => ({});
   export const localStore = { getItem: () => '', setItem() {} };
   export const pinia = {};
   export const getLocale = () => 'en';
   export const isChannelPackageHost = () => false;
+  export const isPrivateDomainMode = () => Boolean(globalThis.window.__H5_PRIVATE_DOMAIN__);
   export const resolveInviteCode = () => '';
   export const isTelegramMiniAppEnv = () => Boolean(globalThis.window.__H5_TG_MINI_APP__);
   export const syncPostAuthData = async () => {};
@@ -45,7 +47,7 @@ const stubs: Record<string, string> = {
   '@/constants/storageKey': moduleUrl('export default {}'),
 }
 for (const name of ['api/user', 'session/postAuthSync', 'i18n', 'stores/pinia', 'stores/game',
-  'stores/mttList', 'stores/roomList', 'stores/userInfo', 'utils/localStore', 'utils/environment',
+  'stores/casino', 'stores/mttList', 'stores/roomList', 'stores/userInfo', 'utils/localStore', 'utils/environment',
   'utils/channelPackage', 'utils/multiLanguageTemplate']) {
   stubs[`@/${name}`] = mockUrl
 }
@@ -82,3 +84,18 @@ for (const telegram of [false, true]) {
     }
   })
 }
+
+test('private domain bootstrap also preloads casino games', async () => {
+  const previousWindow = Object.getOwnPropertyDescriptor(globalThis, 'window')
+  Object.defineProperty(globalThis, 'window', { configurable: true, value: { __H5_PRIVATE_DOMAIN__: true } })
+  try {
+    Object.assign(game, { sessionToken: '', loginUserId: '', syncedIdentityToken: '', isGuestAccount: false })
+    calls.length = 0
+    resetTemplateMock()
+    assert.equal(await ensureExperienceSession(), true)
+    assert.deepEqual(calls, ['experience-login', 'user-info', 'templates', 'rooms', 'mtt', 'casino'])
+  } finally {
+    if (previousWindow) Object.defineProperty(globalThis, 'window', previousWindow)
+    else Reflect.deleteProperty(globalThis, 'window')
+  }
+})

@@ -77,6 +77,7 @@ function categoryCacheKey(cat: CategoryKey, clubId: number | undefined, isGlobal
 }
 
 const categoryRequests = new Map<string, Promise<ExtendGameRecord[] | null>>()
+const preloadRequests = new Map<string, Promise<void>>()
 
 export const useCasinoStore = defineStore('casino', {
   state: (): CasinoState => ({
@@ -308,17 +309,26 @@ export const useCasinoStore = defineStore('casino', {
       }
     },
 
-    async preloadCasinoData(clubId?: number, isGlobalMode: boolean = true) {
-      if (this.hasFetchedInitialData && this.gameRecords.length > 0) return
-      const { effectiveClubId, effectiveGlobalMode } = await resolveCasinoContext(clubId, isGlobalMode)
-      await Promise.allSettled([
-        this.fetchPopularGames(effectiveClubId, effectiveGlobalMode),
-        this.fetchPopularBannerGames(effectiveClubId, effectiveGlobalMode),
-      ])
-      const gameStore = useGameStore()
-      if (gameStore.sessionToken && this.gameRecords.length > 0) {
-        this.setHasFetchedInitialData(true)
-      }
+    preloadCasinoData(clubId?: number, isGlobalMode: boolean = true): Promise<void> {
+      if (this.hasFetchedInitialData && this.gameRecords.length > 0) return Promise.resolve()
+      const key = `${clubId ?? 0}|${isGlobalMode}`
+      const pending = preloadRequests.get(key)
+      if (pending) return pending
+      const request = (async () => {
+        const { effectiveClubId, effectiveGlobalMode } = await resolveCasinoContext(clubId, isGlobalMode)
+        await Promise.allSettled([
+          this.fetchPopularGames(effectiveClubId, effectiveGlobalMode),
+          this.fetchPopularBannerGames(effectiveClubId, effectiveGlobalMode),
+        ])
+        const gameStore = useGameStore()
+        if (gameStore.sessionToken && this.gameRecords.length > 0) {
+          this.setHasFetchedInitialData(true)
+        }
+      })().finally(() => {
+        preloadRequests.delete(key)
+      })
+      preloadRequests.set(key, request)
+      return request
     }
   },
 })

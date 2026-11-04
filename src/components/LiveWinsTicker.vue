@@ -807,8 +807,8 @@ onBeforeUnmount(() => {
 
   &__tag {
     position: absolute;
-    top: -lw(0.0256);
-    right: -lw(0.0733);
+    top: lw(-0.0256);
+    right: lw(-0.0733);
     z-index: 2;
     padding: lw(0.0492) lw(0.2482);
     border-radius: lw(0.1498);
@@ -870,7 +870,7 @@ onBeforeUnmount(() => {
   }
   50% {
     opacity: 1;
-    transform: translateY(-lw(0.2564)) scale(1.2);
+    transform: translateY(lw(-0.2564)) scale(1.2);
   }
   100% {
     opacity: 1;

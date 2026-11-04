@@ -1,11 +1,20 @@
 <script setup lang="ts">
 import backspaceIcon from '@/assets/icons/backspace_figma.svg'
 
+const props = withDefaults(
+  defineProps<{
+    allowDecimal?: boolean
+  }>(),
+  {
+    allowDecimal: true,
+  },
+)
+
 const rows = [
   ['1', '2', '3'],
   ['4', '5', '6'],
   ['7', '8', '9'],
-  ['C', '0', 'DEL'],
+  ['.', '0', 'DEL'],
 ] as const
 
 const emit = defineEmits<{
@@ -22,9 +31,11 @@ const emit = defineEmits<{
         type="button"
         class="keypad-btn"
         :class="{
-          'keypad-btn--accent': key === 'C' || key === 'DEL',
+          'keypad-btn--accent': key === '.' || key === 'DEL',
           'keypad-btn--del': key === 'DEL',
+          'keypad-btn--disabled': key === '.' && !props.allowDecimal,
         }"
+        :disabled="key === '.' && !props.allowDecimal"
         @click="emit('press', key)"
       >
         <span v-if="key !== 'DEL'">{{ key }}</span>

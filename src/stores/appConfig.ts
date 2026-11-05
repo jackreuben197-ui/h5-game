@@ -140,8 +140,11 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
   },
   actions: {
     setGlobalConfig(config: GlobalConfigData): void {
+      const domainsReady = configurePlatformDomains(config)
       this.globalConfig = config
-      this.platformDomainsReady = configurePlatformDomains(config)
+      if (domainsReady) {
+        this.platformDomainsReady = true
+      }
       void persistGlobalConfig(config, StorageKey.APP_CONFIG_CACHE)
         .catch((error) => {
           console.warn('[appConfig] persist app_config cache failed:', error)
@@ -185,8 +188,7 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
       await guestGlobalConfigPromise
     },
     async ensurePlatformDomainsReady(): Promise<boolean> {
-      // 缓存只用于首屏展示；本次会话必须先取得服务端域名列表，避免旧缓存
-      // 缺少新二维码域名时把“邀请码.平台域名”误当成俱乐部自定义域名。
+      // 本次会话以服务端列表为准，避免旧缓存误判新加入的平台域名。
       if (!this.platformDomainsReady) {
         await this.ensureGuestGlobalConfig(true)
       }
@@ -268,14 +270,14 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
       }
     },
     async restorePublicConfigCache(): Promise<void> {
-      // 必须先恢复全局域名配置，才能准确判断当前是否为渠道包。
       const globalConfig = await restoreGlobalConfig(StorageKey.APP_CONFIG_CACHE)
 
       // 网络刷新与缓存恢复可能并行；缓存只能填空，不能覆盖刚返回的新配置。
       if (globalConfig && !this.globalConfig) {
         this.globalConfig = globalConfig
-        configurePlatformDomains(globalConfig)
       }
+
+      if (!this.platformDomainsReady) return
 
       // 私域版本改用独立 UC 收费配置，不能再恢复旧的钻石收费缓存。
       if (isChannelPackageHost()) {

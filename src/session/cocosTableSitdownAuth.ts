@@ -14,6 +14,7 @@ import { syncPostAuthData } from '@/session/postAuthSync'
 import { pinia } from '@/stores/pinia'
 import { useGameStore } from '@/stores/game'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { copyStorageToMainDomain, resolveInviteCode } from '@/utils/channelPackage'
 import { localStore } from '@/utils/localStore'
 
 export interface CompleteCocosTableSitdownAuthOptions {
@@ -114,6 +115,7 @@ export async function completeCocosTableSitdownAuth(
         },
         { msgtype: BRIDGE_MSG_TYPE.H5 },
       )
+      if (resolveInviteCode()) copyStorageToMainDomain()
       return { destination: 'official-home' }
     }
 

@@ -16,7 +16,6 @@ import { localStore } from '@/utils/localStore'
 import {
   findConfiguredBaseDomain,
   isChannelPackageHostname,
-  isConfiguredDomainHostname,
   isPlatformDomainListAvailable,
   parseActivePlatformDomains,
 } from '@/utils/channelHost'
@@ -75,6 +74,11 @@ export function configurePlatformDomains(
 ): boolean {
   const typeOneDomains = parseActivePlatformDomains(config?.plat_domain_qrcode_info, 1)
   const typeTwoDomains = parseActivePlatformDomains(config?.plat_domain_main_info, 2)
+  const ready =
+    isPlatformDomainListAvailable(config?.plat_domain_qrcode_info) &&
+    isPlatformDomainListAvailable(config?.plat_domain_main_info)
+  // 缺字段或解析失败的响应不能覆盖已经取得的官方域名列表。
+  if (config && !ready) return false
 
   // 两种平台域名本身都属于官方包；只有其下的邀请码子域名按渠道包处理。
   platformMainDomains = Array.from(
@@ -83,13 +87,7 @@ export function configurePlatformDomains(
   // domain_type=1 专门用于生成俱乐部邀请二维码链接。
   platformQrCodeDomains = typeOneDomains
 
-  // 内置官方域名不能证明服务端域名列表已就绪；两份列表均需成功解析，
-  // 且至少有一个生效域名，才能安全地区分邀请码子域名和独立 CNAME。
-  return (
-    isPlatformDomainListAvailable(config?.plat_domain_qrcode_info) &&
-    isPlatformDomainListAvailable(config?.plat_domain_main_info) &&
-    typeOneDomains.length + typeTwoDomains.length > 0
-  )
+  return ready
 }
 
 export function getPlatformMainDomains(): readonly string[] {
@@ -98,15 +96,6 @@ export function getPlatformMainDomains(): readonly string[] {
 
 export function getPlatformQrCodeDomains(): readonly string[] {
   return platformQrCodeDomains
-}
-
-export function isOfficialPackageHost(hostname: string = window.location.hostname): boolean {
-  const normalizedHost = readString(hostname).toLowerCase()
-  return platformMainDomains.includes(normalizedHost)
-}
-
-export function isPlatformQrCodeHost(hostname: string = window.location.hostname): boolean {
-  return isConfiguredDomainHostname(readString(hostname), platformQrCodeDomains)
 }
 
 function getPrimaryPlatformMainDomain(): string {
@@ -510,20 +499,14 @@ export function extractInviteCodeFromSubdomain(
   // 渠道邀请码联调：先启用文件顶部的 TEST_CHANNEL_INVITE_CODE，再取消下面两行注释。
   // void hostname
   if (TEST_CHANNEL_INVITE_CODE) return TEST_CHANNEL_INVITE_CODE
-  const normalizedHost = readString(hostname).toLowerCase()
-  // 二维码域名和历史主域名都兼容“邀请码.域名”的分享结构；俱乐部独立
-  // CNAME 域名没有邀请码前缀，继续由 /org/club/default 的 base_url 解析。
-  const baseDomain =
-    findConfiguredBaseDomain(normalizedHost, platformQrCodeDomains) ||
-    findConfiguredBaseDomain(normalizedHost, platformMainDomains)
+  const normalizedHost = readString(hostname).toLowerCase().replace(/\.$/, '')
+  // 两种官方域名统一取最长匹配，官方域名本身不会被更上层的域名解析成邀请码。
+  const baseDomain = findConfiguredBaseDomain(normalizedHost, platformMainDomains)
   if (!baseDomain || normalizedHost === baseDomain) {
     return ''
   }
 
-  const suffix = `.${baseDomain}`
-  const withoutSuffix = normalizedHost.slice(0, -suffix.length)
-  const firstLabel = withoutSuffix.split('.')[0] || ''
-  return readString(firstLabel)
+  return normalizedHost.slice(0, -(baseDomain.length + 1))
 }
 
 export function parseInviteParamsFromLocation(
@@ -546,15 +529,7 @@ export function parseInviteParamsFromLocation(
 }
 
 export function resolveInviteCode(hostname: string = window.location.hostname): string {
-  // 渠道邀请码联调：先启用文件顶部的 TEST_CHANNEL_INVITE_CODE，再取消下面两行注释。
-  // void hostname
-  if (TEST_CHANNEL_INVITE_CODE) return TEST_CHANNEL_INVITE_CODE
-  const parsed = parseInviteParamsFromLocation()
-  if (parsed.inviteCode) {
-    return parsed.inviteCode
-  }
-
-  return extractInviteCodeFromSubdomain(hostname)
+  return extractInviteCodeFromSubdomain(hostname) || parseInviteParamsFromLocation().inviteCode
 }
 
 export function resolveTraceHash(): string {

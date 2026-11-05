@@ -12,7 +12,7 @@ import { resolveGameToastMessage, showGameToast } from '@/components/Toast'
 import LoginSession from '@/session/loginSession'
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
-import { resolveInviteCode, resolveTraceHash, resolveAgentInviteCode } from '@/utils/channelPackage'
+import { resolveTraceHash } from '@/utils/channelPackage'
 import { isTelegramMiniAppEnv } from '@/utils/environment'
 
 const http = axios.create({
@@ -360,12 +360,12 @@ async function doTelegramAutoLogin(): Promise<boolean> {
     return false
   }
 
-  const inviteCode = resolveAgentInviteCode() || resolveInviteCode()
   const traceHash = resolveTraceHash()
 
   showTelegramLoginLoading()
 
   try {
+    const inviteCode = await useUserInfoStore(pinia).resolveAuthInviteCode()
     const { postUserThirdPartyApi, getUserInfoApi, getUserClubApi } = await import('@/api/user')
     const loginRes = await postUserThirdPartyApi(
       {

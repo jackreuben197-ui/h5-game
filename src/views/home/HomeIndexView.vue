@@ -260,7 +260,7 @@ function toSafeNumber(value: unknown): number {
 
 function ensureClubDataReady(): void {
   // 仅消费 store 已有俱乐部数据，不在首页回流时触发 user/club 请求。
-  if (!userInfoStore.currentClub && userInfoStore.clubList.length) {
+  if (!isChannelPackage.value && !userInfoStore.currentClub && userInfoStore.clubList.length) {
     userInfoStore.setCurrentClub(userInfoStore.clubList[0] || null)
   }
 }

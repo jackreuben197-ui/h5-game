@@ -9,6 +9,7 @@ import { syncPostAuthData } from '@/session/postAuthSync'
 import StorageKey from '@/constants/storageKey'
 import { getLocale } from '@/i18n'
 import { pinia } from '@/stores/pinia'
+import { useAppConfigStore } from '@/stores/appConfig'
 import { useGameStore } from '@/stores/game'
 import { useMttListStore } from '@/stores/mttList'
 import { useRoomListStore } from '@/stores/roomList'
@@ -99,6 +100,7 @@ async function releaseSupersededExperienceToken(token: string): Promise<void> {
 async function runEnsureExperienceSession(revision: number): Promise<boolean> {
   const gameStore = useGameStore(pinia)
 
+  if (!(await useAppConfigStore(pinia).ensurePlatformDomainsReady())) return false
   await ensureChannelClubContext()
 
   // 渠道俱乐部请求可能等待较久，token 必须在等待后重新读取，不能使用旧快照。

@@ -48,13 +48,10 @@ import { showGameToast } from '@/components/Toast'
 import { Loading } from 'vant'
 import { DEBUG_ACCOUNTS, type DebugAccount } from '@/constants/debugAccounts'
 import {
-  resolveInviteCode,
+  parseInviteParamsFromLocation,
   resolveInviterRandomId,
-  resolveTraceHash,
   shouldOpenRegisterMode,
-  resolveAgentInviteCode,
   clearAgentInviteCodeCache,
-  isChannelPackageHost,
 } from '@/utils/channelPackage'
 import { withPlayerInviter } from '@/utils/playerInvitation'
 import type { UserRegisterRequest } from '@/api/models/user'
@@ -146,8 +143,7 @@ watch(
             { msgtype: BRIDGE_MSG_TYPE.H5 },
           )
         }
-        // 原桌恢复时隐藏 H5 显示 Cocos Loading；俱乐部不匹配时保留 H5，
-        // 由既有渠道逻辑跳转到官方包首页。
+        // 原桌恢复时隐藏 H5 显示 Cocos Loading；取消入座时保留 H5。
         setH5TableAuthOverlay(false)
         setH5Visible(tableAuthDestination.value === 'official-home')
       }
@@ -435,10 +431,10 @@ async function handleLogin(target: string) {
 }
 
 async function runLoginTransaction(target: string, replacingExperienceAccount: boolean) {
+  const effectiveInviteCode = await useUserInfoStore().resolveAuthInviteCode(inviteCodeFromChannel.value)
   if (replacingExperienceAccount) {
     await logoutCurrentSession()
   }
-  const effectiveInviteCode = resolveAgentInviteCode() || inviteCodeFromChannel.value
   const res = await loginV2Api({
     phone: contactType.value === 'phone' ? target : undefined,
     email: contactType.value === 'email' ? target : undefined,
@@ -517,12 +513,7 @@ async function runLoginTransaction(target: string, replacingExperienceAccount: b
 }
 
 async function handleRegister(target: string) {
-  const linkInviteCode = resolveAgentInviteCode() || inviteCodeFromChannel.value
-  // 自定义域名没有邀请码子域名前缀，使用渠道俱乐部默认接口返回的邀请码。
-  const channelClub = !linkInviteCode && isChannelPackageHost()
-    ? await useUserInfoStore().ensureChannelDefaultClub()
-    : null
-  const effectiveInviteCode = linkInviteCode || String(channelClub?.invitation_code || '').trim()
+  const effectiveInviteCode = await useUserInfoStore().resolveAuthInviteCode(inviteCodeFromChannel.value)
 
   const payload: UserRegisterRequest = {
     password: md5(form.password.trim()),
@@ -668,10 +659,11 @@ function localeToServerLang(locale: string): number {
 }
 
 function applyChannelInviteContext(): void {
-  inviteCodeFromChannel.value = resolveInviteCode()
-  traceHashFromChannel.value = resolveTraceHash()
+  const { inviteCode, traceHash, mode } = parseInviteParamsFromLocation()
+  inviteCodeFromChannel.value = inviteCode
+  traceHashFromChannel.value = traceHash
 
-  if (shouldOpenRegisterMode() && pageMode.value === 'login') {
+  if (mode === 'register' && pageMode.value === 'login') {
     pageMode.value = 'register'
   }
 }

@@ -6,11 +6,8 @@ import StorageKey from '@/constants/storageKey'
 import { dzpkPersistStorage } from '@/utils/localStore'
 import { useAppConfigStore } from '@/stores/appConfig'
 import {
-  copyStorageToMainDomain,
-  extractInviteCodeFromSubdomain,
   isChannelPackageHost,
-  isOfficialPackageHost,
-  isPlatformQrCodeHost,
+  resolveAgentInviteCode,
   resolveInviteCode,
 } from '@/utils/channelPackage'
 
@@ -26,18 +23,6 @@ interface UserInfoState {
 
 function normalizeClubId(value: unknown): string {
   return value === undefined || value === null ? '' : String(value).trim()
-}
-
-function resolveSafariBaseUrl(hostname: string): string {
-  const normalizedHostname = hostname.trim().toLowerCase()
-  if (
-    !normalizedHostname ||
-    isOfficialPackageHost(normalizedHostname) ||
-    isPlatformQrCodeHost(normalizedHostname)
-  ) {
-    return ''
-  }
-  return normalizedHostname
 }
 
 function toSafeInt(value: unknown): number {
@@ -133,56 +118,31 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
 
       this.clubList = normalized
 
-      const subDomainInviteCode = resolveInviteCode()
-      // 独立自定义域名没有邀请码前缀，必须用 default 接口返回的 club_id 固定当前俱乐部。
-      // 否则登录/体验账号的俱乐部列表会默认选中第一项，把页面重新渲染成官方包。
-      if (!subDomainInviteCode && isChannelPackageHost()) {
-        const channelClubId = normalizeClubId(this.channelDefaultClub?.club_id)
-        if (channelClubId) {
-          const targetClub = normalized.find(
-            (item) => normalizeClubId(item.club_id) === channelClubId,
-          )
-          if (targetClub) {
-            this.channelDefaultClub = {
-              ...this.channelDefaultClub,
-              ...targetClub,
-              diamond_room_switch:
-                targetClub.diamond_room_switch ?? this.channelDefaultClub?.diamond_room_switch,
-              h5_menu: targetClub.h5_menu ?? this.channelDefaultClub?.h5_menu,
-            }
-            channelDefaultClubLoaded = true
-            this.currentClubId = channelClubId
-          } else {
-            // 未加入自定义域名对应的俱乐部时，保留公开俱乐部配置用于游客页面，
-            // 但不能选中账号名下的其他俱乐部。
-            this.currentClubId = ''
-          }
-          return
-        }
-      }
-
-      if (subDomainInviteCode) {
+      const isChannel = isChannelPackageHost()
+      const inviteCode = resolveInviteCode().toLowerCase()
+      const channelClubId = isChannel ? normalizeClubId(this.channelDefaultClub?.club_id) : ''
+      if (isChannel || inviteCode) {
+        // 渠道俱乐部以 default 返回的 ID 为准，用户列表可能未返回邀请码。
         const targetClub = normalized.find(
-          (item) => item.invitation_code?.toLowerCase() === subDomainInviteCode.toLowerCase(),
+          (item) =>
+            channelClubId
+              ? normalizeClubId(item.club_id) === channelClubId
+              : inviteCode !== '' && item.invitation_code?.toLowerCase() === inviteCode,
         )
         if (targetClub) {
-          // 用户俱乐部接口不保证返回渠道 CMS 配置字段；保留 default 接口的公开配置，
-          // 再用登录用户的俱乐部资料刷新成员态字段。
           this.channelDefaultClub = {
             ...this.channelDefaultClub,
             ...targetClub,
+            invitation_code: targetClub.invitation_code || this.channelDefaultClub?.invitation_code,
             diamond_room_switch:
               targetClub.diamond_room_switch ?? this.channelDefaultClub?.diamond_room_switch,
             h5_menu: targetClub.h5_menu ?? this.channelDefaultClub?.h5_menu,
           }
           channelDefaultClubLoaded = true
-          this.currentClubId = normalizeClubId(targetClub.club_id)
-          return
-        } else {
-          this.currentClubId = ''
-          copyStorageToMainDomain()
-          return
         }
+        // 未加入时保留公开渠道资料，只清除当前成员俱乐部。
+        this.currentClubId = normalizeClubId(targetClub?.club_id)
+        return
       }
 
       if (!normalized.length) {
@@ -203,6 +163,16 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
     setChannelDefaultClub(club: ClubInfo | null): void {
       this.channelDefaultClub = club
     },
+    async resolveAuthInviteCode(initialInviteCode = ''): Promise<string> {
+      if (!(await useAppConfigStore().ensurePlatformDomainsReady())) {
+        throw new Error('平台域名配置加载失败')
+      }
+      const inviteCode = resolveAgentInviteCode() || resolveInviteCode() || initialInviteCode
+      if (inviteCode || !isChannelPackageHost()) return inviteCode
+
+      const club = await this.ensureChannelDefaultClub()
+      return club?.invitation_code?.trim() || ''
+    },
     async ensureChannelDefaultClub(): Promise<ClubInfo | null> {
       if (channelDefaultClubLoaded) {
         return this.channelDefaultClub
@@ -212,7 +182,7 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       }
 
       const hostname =
-        typeof window === 'undefined' ? '' : window.location.hostname.trim().toLowerCase()
+        typeof window === 'undefined' ? '' : window.location.hostname.toLowerCase().replace(/\.$/, '')
       // 普通本地开发无需请求渠道俱乐部；但渠道包模拟同样运行在 localhost
       // （Cocos 预览通常是 :7456），此时必须按测试邀请码正常初始化。
       if (hostname === 'localhost' && !isChannelPackageHost(hostname)) return null
@@ -225,20 +195,10 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
           }
           if (!isChannelPackageHost(hostname)) return null
 
-          // “邀请码.二维码域名”必须按邀请码查询，不能当成俱乐部独立 CNAME 域名。
-          const localInviteCode = import.meta.env?.DEV && (hostname === 'localhost' || hostname.startsWith('127.'))
-            ? resolveInviteCode(hostname)
-            : ''
-          const channelInviteCode = localInviteCode || extractInviteCodeFromSubdomain(hostname)
-          const baseUrl = channelInviteCode ? '' : resolveSafariBaseUrl(hostname)
-          const inviteCode = channelInviteCode || (baseUrl ? '' : resolveInviteCode(hostname))
-          const payload = baseUrl
-            ? { base_url: baseUrl }
-            : inviteCode
-              ? { invite_code: inviteCode }
-              : {}
-
-          const response = await postOrgClubDefaultApi(payload)
+          const inviteCode = resolveInviteCode(hostname)
+          const response = await postOrgClubDefaultApi(
+            inviteCode ? { invite_code: inviteCode } : { base_url: hostname },
+          )
           if (Number(response.code) !== 0) {
             throw new Error(String(response.msg || '渠道俱乐部加载失败'))
           }

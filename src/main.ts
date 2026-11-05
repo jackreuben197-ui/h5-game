@@ -1,4 +1,4 @@
-import { createApp, type App as VueApp } from 'vue'
+import { createApp, watch, type App as VueApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 // 函数式 Toast 不会自动按模板组件注入样式，这里在入口统一引入。
@@ -32,6 +32,7 @@ import { recordDebugEvent } from './utils/debugCapture'
 import { createLogger } from './utils/logger'
 import { clearMainLayout } from './utils/mainLayout'
 import { useGameStore } from './stores/game'
+import { useAppConfigStore } from './stores/appConfig'
 import { useUserInfoStore } from './stores/userInfo'
 import { applySafariWebAppConfig } from './utils/safariWebApp'
 import { setupViewportZoomGuard } from './utils/viewportZoomGuard'
@@ -53,6 +54,7 @@ let stopWsProxyBridgeChannel: (() => void) | null = null
 let stopH5VisibilityBridgeChannel: (() => void) | null = null
 let stopCcStorageProxy: (() => void) | null = null
 let stopCurrentClubSync: (() => void) | null = null
+let stopPlatformBootstrap: (() => void) | null = null
 let stopNativeMenuGuard: (() => void) | null = null
 let stopNativeDragGuard: (() => void) | null = null
 let stopViewportZoomGuard: (() => void) | null = null
@@ -60,8 +62,6 @@ let stopDailyH5DisplayPanel: (() => void) | null = null
 let stopExperienceSessionLifecycle: (() => void) | null = null
 // 启动即接管主题：恢复持久化模式 + 监听系统明暗变化（首帧由 index.html 内联脚本防闪烁）。
 initTheme()
-// 启动时缓存 URL 中的代理邀请码，防止跨页面丢失
-cacheAgentInviteCodeIfPresent()
 // 启动时从 URL 恢复可能的存储数据，子域名跳转主域名时使用。
 restoreStorageFromUrl()
 
@@ -159,7 +159,6 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
   }
 
   setupRem()
-  document.documentElement.toggleAttribute('data-channel-package', isChannelPackageHost())
   stopViewportZoomGuard = setupViewportZoomGuard()
   stopNativeMenuGuard = setupNativeMenuGuard()
   stopNativeDragGuard = setupNativeDragGuard()
@@ -167,16 +166,8 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
   try {
     app = createApp(App)
     app.use(pinia)
-    stopCurrentClubSync = initCurrentClubSync()
     app.use(textI18nPlugin)
     app.use(router)
-    const gameStore = useGameStore(pinia)
-    // 真实 token 先做本地过期检查；体验 token 由 user/info + 90010 流程校验，避免误弹登录。
-    if (gameStore.isRealUser) {
-      checkLocalTokenAtBootstrap()
-    }
-    // 无条件启动 token 续期循环：内部按 sessionToken 是否存在自动跳过，登录后无需额外触发。
-    startTokenRefreshLoop()
     // 启动 WS 代理通道：Cocos 发指令给 H5，由 H5 执行 websocket 收发并回传结果。
     stopWsProxyBridgeChannel = setupWsProxyBridgeChannel()
     // 启动全局桥接 dialog：接收 Cocos 消息后统一弹窗并回传交互结果。
@@ -190,20 +181,31 @@ export function mountH5App(container: string | Element = '#app'): VueApp<Element
     // 启动持久化代理：Cocos 把 indexedDB/localStorage 操作经 bridge 委托给 H5，
     // h5 与 cocos 共用 user_cache_${userId} 一个 IndexedDB；localStorage 用 dzpk_cc_ 前缀隔离。
     stopCcStorageProxy = installCcStorageProxy()
+    const appConfigStore = useAppConfigStore(pinia)
+    stopPlatformBootstrap = watch(
+      () => appConfigStore.platformDomainsReady,
+      (ready) => {
+        if (!ready) return
+        const isChannel = isChannelPackageHost()
+        document.documentElement.toggleAttribute('data-channel-package', isChannel)
+        cacheAgentInviteCodeIfPresent()
+        stopCurrentClubSync = initCurrentClubSync()
+        if (useGameStore(pinia).isRealUser) checkLocalTokenAtBootstrap()
+        startTokenRefreshLoop()
+        stopDailyH5DisplayPanel = setupDailyH5DisplayPanel()
+        if (isChannel) {
+          void useUserInfoStore(pinia)
+            .ensureChannelDefaultClub()
+            .then((club) => applySafariWebAppConfig(club))
+            .catch((error) => console.warn('[safariWebApp] load config failed:', error))
+        }
+      },
+      { immediate: true, flush: 'sync' },
+    )
     app.mount(mountTarget)
-    // Vue 壳挂载后，渠道入口才请求 /default 并更新 Safari 名称、图标。
-    // HomeIndexView 同时调用时会复用 store 内的同一个 in-flight 请求。
-    if (isChannelPackageHost()) {
-      void useUserInfoStore(pinia)
-        .ensureChannelDefaultClub()
-        .then((club) => applySafariWebAppConfig(club))
-        .catch((error) => console.warn('[safariWebApp] load config failed:', error))
-    }
     // pagehide 时体验账号必须调用服务端登出，真实账号保持正常持久登录。
     // 首次游客登录由首页在首帧后启动，不能与 Vue 壳争抢首次渲染。
     stopExperienceSessionLifecycle = setupExperienceSessionLifecycle()
-    // 每天首次进入 H5 自动弹一次大厅展示面板：挂载、可见性变化、Cocos h5Show 均会触发。
-    stopDailyH5DisplayPanel = setupDailyH5DisplayPanel()
     recordDebugEvent('[h5]', 'mount success', {
       route: window.location.hash || window.location.pathname,
       visible: window.__H5_VISIBLE__ !== false,
@@ -236,6 +238,8 @@ export function unmountH5App(): void {
   stopH5VisibilityBridgeChannel = null
   stopCcStorageProxy?.()
   stopCcStorageProxy = null
+  stopPlatformBootstrap?.()
+  stopPlatformBootstrap = null
   stopCurrentClubSync?.()
   stopCurrentClubSync = null
   stopNativeMenuGuard?.()

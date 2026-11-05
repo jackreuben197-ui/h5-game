@@ -5,10 +5,13 @@ import {
   type RouteRecordRaw,
 } from 'vue-router'
 import { useGameStore } from '@/stores/game'
+import { useAppConfigStore } from '@/stores/appConfig'
 import { useWalletStore } from '@/stores/wallet'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { useUserInfoStore } from '@/stores/userInfo'
+import { showLocalBridgeDialog } from '@/bridge/channels/dialogChannel'
 import { resolveChannelMenu } from '@/features/channelC/menu'
+import { t } from '@/i18n'
 import { pinia } from '@/stores/pinia'
 import { createLogger } from '@/utils/logger'
 import { isChannelDiamondFreeMode, isChannelPackageHost } from '@/utils/channelPackage'
@@ -165,6 +168,16 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from) => {
+  const appConfigStore = useAppConfigStore(pinia)
+  if (!appConfigStore.platformDomainsReady && !(await appConfigStore.ensurePlatformDomainsReady())) {
+    showLocalBridgeDialog({
+      message: t('error999'),
+      showConfirmButton: true,
+      confirmButtonText: t('UILogin_Load'),
+      onConfirm: () => window.location.reload(),
+    })
+    return false
+  }
   const gameStore = useGameStore(pinia)
   const token = gameStore.sessionToken
   const isRealUser = gameStore.isRealUser

@@ -339,6 +339,10 @@ export interface MiscBannerListBannerInfo {
     image_url: string; //Banner图片连接
     image_url_c?: string; //版本 C 大厅 Banner 图片链接
     redirect_url: string; //跳转连接
+    association_type?: 0 | 1 | 2; // 0 不关联，1 比赛模板，2 海报
+    template_id?: number | string;
+    template_name?: string;
+    poster_url?: string;
     description: string; //描述
     resource_type?: number; // 1图片，2视频
     video_url?: string; // 视频链接

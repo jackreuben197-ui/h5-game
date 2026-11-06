@@ -18,7 +18,7 @@ type MttTabName = 'all' | 'poker' | 'mahjong'
 const activeTab = ref<MttTabName>('all')
 useChannelCVersionRouting()
 const mttListStore = useMttListStore()
-const { bannerImages, fetchLobbyBannerImages } = useLobbyBannerImages()
+const { banners, fetchLobbyBannerImages, refreshLobbyBanner } = useLobbyBannerImages()
 
 // 目前没有麻将赛事，暂时隐藏「全部 / 扑克赛事」切换 tab。
 const showMttTabs = false
@@ -51,7 +51,7 @@ onMounted(() => {
     <div class="match-stage">
       <HomeTopBar standalone sticky />
       <div class="match-banner">
-        <HomeBannerSwiper :images="bannerImages" />
+        <HomeBannerSwiper :banners="banners" :refresh="refreshLobbyBanner" />
       </div>
       <ClubIntroductionBar standalone />
       <ChannelClubInfoPanel class="match-club-info" />

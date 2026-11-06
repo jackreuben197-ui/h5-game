@@ -1,24 +1,101 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
+import type { SwipeInstance } from 'vant'
 import { useCachedImages } from '@/utils/imageCache'
 import ThemeQuickSwitch from '@/components/ThemeQuickSwitch.vue'
+import LobbyBannerImage from '@/components/LobbyBannerImage.vue'
+import type { LobbyBanner, RefreshLobbyBanner } from '@/utils/lobbyBannerAssociation'
 
-const props = defineProps<{
-  images: string[]
-}>()
+const props = withDefaults(
+  defineProps<{
+    banners: LobbyBanner[]
+    refresh: RefreshLobbyBanner
+    alt?: string
+    fallback?: string
+  }>(),
+  { alt: 'Banner', fallback: '' },
+)
 
-// 首次服务端结果返回前保持空白占位，不展示默认图或持久化旧图。
-const displayImages = computed(() => props.images.filter((url) => Boolean(url?.trim())))
-const cachedImages = useCachedImages(() => displayImages.value)
+// 首次服务端结果返回前保持空白占位，不展示默认图或持久化旧图；默认图由调用方决定。
+const displayBanners = computed(() => props.banners.filter((banner) => Boolean(banner.imageUrl?.trim())))
+const cachedImages = useCachedImages(() => displayBanners.value.map((banner) => banner.imageUrl))
 const isSwipeEnabled = computed(() => cachedImages.value.length > 1)
+const swipe = ref<SwipeInstance>()
+const mouseDrag = ref<{ id: number; x: number; y: number } | null>(null)
+const suppressClick = ref(false)
+
+watch(() => props.banners, () => {
+  mouseDrag.value = null
+})
+
+function startMouseDrag(event: PointerEvent) {
+  if (event.pointerType !== 'mouse' || event.button !== 0) return
+  const target = event.target as Element
+  suppressClick.value = false
+  mouseDrag.value = { id: event.pointerId, x: event.clientX, y: event.clientY }
+  // 让短按保留原点击目标，拖到 Banner 外也能收到松手事件。
+  target.setPointerCapture(event.pointerId)
+}
+
+function trackMouseDrag(event: PointerEvent) {
+  const start = mouseDrag.value
+  if (!start || start.id !== event.pointerId) return
+  if (Math.max(Math.abs(event.clientX - start.x), Math.abs(event.clientY - start.y)) >= 8) {
+    suppressClick.value = true
+  }
+}
+
+function endMouseDrag(event: PointerEvent) {
+  const start = mouseDrag.value
+  if (!start || start.id !== event.pointerId) return
+  mouseDrag.value = null
+  if (event.type !== 'pointerup') return
+  const dx = event.clientX - start.x
+  const dy = event.clientY - start.y
+  if (Math.abs(dx) < 24 || Math.abs(dx) <= Math.abs(dy)) return
+  suppressClick.value = true
+  if (dx < 0) swipe.value?.next()
+  else swipe.value?.prev()
+}
+
+function guardBannerClick(event: MouseEvent) {
+  if (!suppressClick.value || event.detail === 0) return
+  event.preventDefault()
+  event.stopPropagation()
+}
 </script>
 
 <template>
   <div class="home-banner" :class="{ 'is-loaded': cachedImages.length > 0 }">
     <Transition name="banner-fade" mode="out-in">
-      <van-swipe v-if="isSwipeEnabled" key="swipe" class="home-banner__swipe" loop :autoplay="3000">
-        <van-swipe-item v-for="(url, index) in cachedImages" :key="index">
-          <img class="home-banner__img" :src="url" alt="banner" />
+      <van-swipe
+        v-if="isSwipeEnabled"
+        key="swipe"
+        ref="swipe"
+        class="home-banner__swipe"
+        loop
+        touchable
+        :autoplay="mouseDrag ? 0 : 3000"
+        @touchstart.capture="suppressClick = false"
+        @drag-start="suppressClick = true"
+        @pointerdown="startMouseDrag"
+        @pointermove="trackMouseDrag"
+        @pointerup="endMouseDrag"
+        @lostpointercapture="endMouseDrag"
+        @click.capture="guardBannerClick"
+      >
+        <van-swipe-item
+          v-for="(banner, index) in displayBanners"
+          :key="banner.id > 0 ? `banner-${banner.id}` : index"
+        >
+          <LobbyBannerImage
+            class="home-banner__img"
+            :src="cachedImages[index]!"
+            :banner="banner"
+            :refresh="refresh"
+            :alt="alt"
+            :fallback="fallback"
+          />
         </van-swipe-item>
         <template #indicator="{ active, total }">
           <div class="home-banner__dots">
@@ -31,12 +108,15 @@ const isSwipeEnabled = computed(() => cachedImages.value.length > 1)
           </div>
         </template>
       </van-swipe>
-      <img
+      <LobbyBannerImage
         v-else-if="cachedImages.length === 1"
         key="single"
         class="home-banner__img"
-        :src="cachedImages[0]"
-        alt="banner"
+        :src="cachedImages[0]!"
+        :banner="displayBanners[0]"
+        :refresh="refresh"
+        :alt="alt"
+        :fallback="fallback"
       />
     </Transition>
     <ThemeQuickSwitch class="home-banner__theme-switch" />
@@ -64,6 +144,7 @@ const isSwipeEnabled = computed(() => cachedImages.value.length > 1)
 .home-banner__swipe {
   width: 100%;
   height: 100%;
+  touch-action: pan-y;
 }
 
 .home-banner__swipe :deep(.van-swipe__track),
@@ -74,7 +155,6 @@ const isSwipeEnabled = computed(() => cachedImages.value.length > 1)
 .home-banner__img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
   display: block;
   border-radius: 0.8rem;
 }

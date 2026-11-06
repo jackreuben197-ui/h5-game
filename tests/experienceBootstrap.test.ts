@@ -5,6 +5,7 @@ import { registerHooks } from 'node:module'
 const moduleUrl = (source: string) => `data:text/javascript,${encodeURIComponent(source)}`
 const mockUrl = moduleUrl(`
   export const calls = [];
+  export const platform = { ready: async () => true };
   export const game = {
     sessionToken: '', loginUserId: '', loginAccount: '', syncedIdentityToken: '', isGuestAccount: false,
     shouldSyncIdentity(token) { return token !== this.syncedIdentityToken },
@@ -14,6 +15,7 @@ const mockUrl = moduleUrl(`
     markIdentitySynced(value) { this.syncedIdentityToken = value }
   };
   export const useGameStore = () => game;
+  export const useAppConfigStore = () => ({ ensurePlatformDomainsReady: () => platform.ready() });
   export const postUserExperienceLoginApi = async () => {
     calls.push('experience-login'); return { token: 'experience-token' };
   };
@@ -46,7 +48,7 @@ const stubs: Record<string, string> = {
   '@/session/loginSession': moduleUrl('export default { EnsureWS: async () => {} }'),
   '@/constants/storageKey': moduleUrl('export default {}'),
 }
-for (const name of ['api/user', 'session/postAuthSync', 'i18n', 'stores/pinia', 'stores/game',
+for (const name of ['api/user', 'session/postAuthSync', 'i18n', 'stores/pinia', 'stores/game', 'stores/appConfig',
   'stores/casino', 'stores/mttList', 'stores/roomList', 'stores/userInfo', 'utils/localStore', 'utils/environment',
   'utils/channelPackage', 'utils/multiLanguageTemplate']) {
   stubs[`@/${name}`] = mockUrl
@@ -57,7 +59,7 @@ const hooks = registerHooks({
   },
 })
 const { ensureExperienceSession } = await import('../src/session/experienceSession.ts')
-const { game, calls, resetTemplateMock } = await import(mockUrl)
+const { game, calls, platform, resetTemplateMock } = await import(mockUrl)
 hooks.deregister()
 
 for (const telegram of [false, true]) {
@@ -68,7 +70,14 @@ for (const telegram of [false, true]) {
       Object.assign(game, { sessionToken: '', loginUserId: '', syncedIdentityToken: '', isGuestAccount: false })
       calls.length = 0
       resetTemplateMock()
-      assert.equal(await ensureExperienceSession(), true)
+      let resolveDomains!: (ready: boolean) => void
+      platform.ready = () => new Promise((resolve) => { resolveDomains = resolve })
+      const session = ensureExperienceSession()
+      await new Promise<void>((resolve) => setImmediate(resolve))
+      assert.deepEqual(calls, [])
+      resolveDomains(true)
+      platform.ready = async () => true
+      assert.equal(await session, true)
       assert.equal(game.isGuestAccount, true)
       assert.deepEqual(calls, ['experience-login', 'user-info', 'templates', 'rooms', 'mtt'])
       // 路由再次调用时不重复领取；模拟刷新重新校验仍复用已领取的体验 token。
@@ -79,6 +88,7 @@ for (const telegram of [false, true]) {
       assert.equal(calls.filter((call: string) => call === 'experience-login').length, 1)
       assert.equal(game.sessionToken, 'experience-token')
     } finally {
+      platform.ready = async () => true
       if (previousWindow) Object.defineProperty(globalThis, 'window', previousWindow)
       else Reflect.deleteProperty(globalThis, 'window')
     }

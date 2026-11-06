@@ -55,7 +55,6 @@ import {
   shouldOpenRegisterMode,
   resolveAgentInviteCode,
   clearAgentInviteCodeCache,
-  isChannelPackageHost,
 } from '@/utils/channelPackage'
 import { withPlayerInviter } from '@/utils/playerInvitation'
 import ProtocolView from './components/ProtocolView.vue'
@@ -164,8 +163,7 @@ watch(
             { msgtype: BRIDGE_MSG_TYPE.H5 },
           )
         }
-        // 原桌恢复时隐藏 H5 显示 Cocos Loading；俱乐部不匹配时保留 H5，
-        // 由既有渠道逻辑跳转到官方包首页。
+        // 原桌恢复时隐藏 H5 显示 Cocos Loading；取消入座时保留 H5。
         setH5TableAuthOverlay(false)
         setH5Visible(tableAuthDestination.value === 'official-home')
       }
@@ -423,7 +421,7 @@ async function runLoginTransaction(target: string, replacingExperienceAccount: b
   }
 
   const agentCode = resolveAgentInviteCode()
-  const effectiveInviteCode = agentCode || inviteCodeFromChannel.value || resolveInviteCode()
+  const effectiveInviteCode = await useUserInfoStore().resolveAuthInviteCode(inviteCodeFromChannel.value)
   const effectiveTraceHash = traceHashFromChannel.value || resolveTraceHash() || agentCode
 
   let res
@@ -517,12 +515,8 @@ async function runLoginTransaction(target: string, replacingExperienceAccount: b
 
 async function handleRegister(target: string) {
   const agentCode = resolveAgentInviteCode()
-  const linkInviteCode = agentCode || inviteCodeFromChannel.value || resolveInviteCode()
   // 自定义域名没有邀请码子域名前缀，使用渠道俱乐部默认接口返回的邀请码。
-  const channelClub = !linkInviteCode && isChannelPackageHost()
-    ? await useUserInfoStore().ensureChannelDefaultClub()
-    : null
-  const effectiveInviteCode = linkInviteCode || String(channelClub?.invitation_code || '').trim()
+  const effectiveInviteCode = await useUserInfoStore().resolveAuthInviteCode(inviteCodeFromChannel.value)
   const effectiveTraceHash = traceHashFromChannel.value || resolveTraceHash() || agentCode
   const password = md5(form.password.trim())
   const baseExtra: { invite_code?: string; trace_hash?: string } = {}

@@ -3,7 +3,7 @@ let lastCommittedHomeContentMode: 'zones' | 'mtt' | 'poker' | 'casino' | null = 
 </script>
 
 <script setup lang="ts">
-import { usePlatformDiamondVisibility } from '@/composables/usePlatformDiamondVisibility'
+import { useLobbyFeed } from '@/composables/useLobbyFeed'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from 'vue'
 import clubDetailButtonIconDark from '@/assets/icons/img_club_detail_button.png'
 import clubDetailButtonIconLight from '@/assets/icons/img_club_detail_button_light.svg'
@@ -30,8 +30,8 @@ import { t } from '@/i18n'
 import { localStore } from '@/utils/localStore'
 import { useLobbyBannerImages } from '@/composables/useLobbyBannerImages'
 import { useHomeAnnouncement } from '@/composables/useHomeAnnouncement'
-import { checkIsShowForClubAndTribe, getRoomPlayerCount } from '@/utils/roomVisibility'
-import { filterVisibleMttRecords } from '@/utils/mttVisibility'
+import { getRoomPlayerCount } from '@/utils/roomVisibility'
+import type { LobbyBanner } from '@/utils/lobbyBannerAssociation'
 import { showGameToast } from '@/components/Toast'
 import { useCasinoStore } from '@/stores/casino'
 import GameClubSelector from '@/components/GameClubSelector.vue'
@@ -112,7 +112,7 @@ const casinoStore = useCasinoStore()
 const appConfigStore = useAppConfigStore()
 const gameStore = useGameStore()
 const gameLaunchStore = useGameLaunchStore()
-const displayPlatformDiamond = usePlatformDiamondVisibility()
+const { visibleRooms, visibleMatches } = useLobbyFeed()
 const { isChannelPackage, isVersionB, isVersionC } = useChannelBottomMenu()
 const isOfficialNewHome = computed(() => !isChannelPackage.value && appConfigStore.h5HomeVersion === 1)
 
@@ -340,7 +340,7 @@ interface HomeRoomStatsCachePayload {
   stats: HomeZoneStats
 }
 
-const HOME_ROOM_STATS_CACHE_VERSION = 1
+const HOME_ROOM_STATS_CACHE_VERSION = 2
 
 function createEmptyZoneStats(): HomeZoneStats {
   return {
@@ -417,19 +417,15 @@ const currentClub = computed<ClubInfo | null>(() => {
   }
   return userInfoStore.clubList[0] || null
 })
-const selectedClubId = computed(() => toSafeInt(currentClub.value?.club_id))
-const selectedTribeId = computed(() =>
-  toSafeInt((currentClub.value as Record<string, unknown> | null)?.tribe_id),
-)
 
-const { bannerImages, isBannerLoaded, fetchLobbyBannerImages } = useLobbyBannerImages()
+const { banners, isBannerLoaded, fetchLobbyBannerImages, refreshLobbyBanner } = useLobbyBannerImages()
 // 仅在服务端 banner 确认且无配置时，才回落到内置单图和 hero 文案。
 // 在服务端接口未完成返回前 (isBannerLoaded === false)，保持为空数组，不盲目展示默认图。
-const displayBannerImages = computed<string[]>(() => {
+const displayBanners = computed<LobbyBanner[]>(() => {
   if (!isBannerLoaded.value) return []
-  return bannerImages.value.length ? bannerImages.value : [homeHeaderFallback]
+  return banners.value.length ? banners.value : [{ id: 0, clubId: 0, imageUrl: homeHeaderFallback }]
 })
-const isFallbackBanner = computed<boolean>(() => isBannerLoaded.value && !bannerImages.value.length)
+const isFallbackBanner = computed<boolean>(() => isBannerLoaded.value && !banners.value.length)
 const { noticeText } = useHomeAnnouncement()
 const noticeTrackStyle = computed<CSSProperties>(() => ({
   '--notice-gap': `${NOTICE_GAP_PX}px`,
@@ -551,7 +547,7 @@ function toSafeInt(value: unknown): number {
 
 function ensureClubDataReady(): void {
   // 仅消费 store 已有俱乐部数据，不在首页回流时触发 user/club 请求。
-  if (!userInfoStore.currentClub && userInfoStore.clubList.length) {
+  if (!isChannelPackage.value && !userInfoStore.currentClub && userInfoStore.clubList.length) {
     userInfoStore.setCurrentClub(userInfoStore.clubList[0] || null)
   }
 }
@@ -594,20 +590,7 @@ function classifyRoomToZone(room: RoomRecord): 'poker' | 'mahjong' | null {
 // 首页扑克/麻将统计直接复用共享牌桌列表，避免和 gameList 数据源分叉。
 function refreshHomePokerMahjongStatsFromStore(): void {
   const nextStats = createEmptyZoneStats()
-  roomListStore.records.forEach((room) => {
-    // 对齐 C# RequestTableDataListForClubOrTribe：先按俱乐部/联盟关系过滤可见牌桌。
-    if (
-      !checkIsShowForClubAndTribe(
-        room,
-        selectedClubId.value,
-        selectedTribeId.value,
-        true,
-        displayPlatformDiamond.value,
-      )
-    ) {
-      return
-    }
-
+  visibleRooms.value.forEach((room) => {
     const zone = classifyRoomToZone(room)
     if (!zone) {
       return
@@ -626,18 +609,11 @@ function refreshHomePokerMahjongStatsFromStore(): void {
   persistHomeRoomStatsCache(homeRoomStats.value)
 }
 
-// 首页 MTT 统计：和 MttContent 走同一份过滤口径（排麻将 + club/tribe 可见性），
+// 首页 MTT 统计：和 MttContent 共享已按俱乐部/联盟可见性过滤的赛事，
 // 保证「首页显示 N 桌 M 人」和「进入 MTT 列表后看到的赛事数 / 报名总人数」完全一致。
 // tables = 可见赛事数；players = 可见赛事 participants 之和。
 function refreshHomeMttStatsFromStore(): void {
-  const visibleRecords = filterVisibleMttRecords(
-    mttListStore.records,
-    mttListStore.mttIdMetaMap,
-    selectedClubId.value,
-    selectedTribeId.value,
-    appConfigStore.clubDisplayPlatformMtt,
-    displayPlatformDiamond.value,
-  )
+  const visibleRecords = visibleMatches.value
   const players = visibleRecords.reduce((sum, item) => sum + toSafeNumber(item.participants), 0)
 
   homeRoomStats.value = {
@@ -736,7 +712,7 @@ watch(
 )
 
 watch(
-  [() => roomListStore.records, selectedClubId, selectedTribeId, displayPlatformDiamond],
+  visibleRooms,
   () => {
     refreshHomePokerMahjongStatsFromStore()
     if (homeContentReady.value) {
@@ -749,15 +725,7 @@ watch(
 )
 
 watch(
-  [
-    () => mttListStore.records,
-    () => mttListStore.mttIdList,
-    selectedClubId,
-    selectedTribeId,
-    // 全局配置异步到达后重算，平台 MTT 可见性依赖 club_display_platform_mtt。
-    () => appConfigStore.clubDisplayPlatformMtt,
-    displayPlatformDiamond,
-  ],
+  visibleMatches,
   () => {
     refreshHomeMttStatsFromStore()
     if (homeContentReady.value) {
@@ -768,6 +736,16 @@ watch(
     deep: false,
   },
 )
+
+async function loadHomeBanners(): Promise<void> {
+  // 版本 C 首页由 ChannelCHome 加载自己的 Banner。
+  if (isVersionC.value) return
+  try {
+    await fetchLobbyBannerImages()
+  } catch (error) {
+    console.warn('[home] fetch lobby banner failed:', error)
+  }
+}
 
 async function bootstrapHomeContent(): Promise<void> {
   // 本地缓存和渠道 /default 可以在壳渲染后立刻启动，但都不能阻塞 Vue 首次挂载。
@@ -785,8 +763,13 @@ async function bootstrapHomeContent(): Promise<void> {
   // 公开配置不携带 token，可以和会话校验并行；任何 user/* 请求必须等旧 token
   // 校验/恢复完成，避免刷新时拿刚被 pagehide/logout 释放的体验 token 抢跑。
   const publicConfigReady = restoreConfigCacheReady.then(() =>
-    appConfigStore.ensureGuestGlobalConfig(true),
+    appConfigStore.ensurePlatformDomainsReady(),
   )
+  // 渠道 /default 确认 h5_menu 后，才决定是否加载 A/B Banner。
+  const initialBannersReady = channelClubReady.then(loadHomeBanners)
+  const ensureSessionConfig = gameStore.shouldSyncIdentity(gameStore.sessionToken)
+    ? appConfigStore.waitForFreshGlobalConfig
+    : appConfigStore.ensureFreshGlobalConfig
   const sessionReady = ensureExperienceSession().catch((error) => {
     console.warn('[home] resolve session identity failed:', error)
     return false
@@ -794,7 +777,7 @@ async function bootstrapHomeContent(): Promise<void> {
   const configReady = sessionReady.then(async (ready) => {
     const sessionKey = gameStore.sessionToken.trim()
     if (ready && sessionKey && !gameStore.isGuestAccount) {
-      return appConfigStore.ensureFreshGlobalConfig(sessionKey)
+      return ensureSessionConfig(sessionKey)
     }
     await publicConfigReady
     return false
@@ -852,10 +835,8 @@ async function bootstrapHomeContent(): Promise<void> {
   commitHomeContentMode()
   homeContentReady.value = true
 
-  // 配置与 /default 已稳定后再确认一次 banner scope；运行时缓存会自动去重。
-  void fetchLobbyBannerImages().catch((error) => {
-    console.warn('[home] refresh lobby banner failed:', error)
-  })
+  // 首次加载完成后再确认 Banner scope，避免两次加载同时请求相同配置。
+  void initialBannersReady.then(loadHomeBanners)
 }
 
 if (homeContentReady.value) {
@@ -867,11 +848,6 @@ if (homeContentReady.value) {
 onMounted(() => {
   // 首页和两个列表页共用 store；俱乐部、身份和配置就绪后一次性提交首屏。
   void bootstrapHomeContent()
-  void waitForH5FirstPaint().then(() =>
-    fetchLobbyBannerImages().catch((error) => {
-      console.warn('[home] fetch lobby banner failed:', error)
-    }),
-  )
   void updateNoticeMarquee()
 
   if (typeof ResizeObserver !== 'undefined') {
@@ -917,7 +893,7 @@ onBeforeUnmount(() => {
     <!-- 1. 顶部俱乐部介绍轮播图 -->
     <div class="home-header">
       <div class="home-header__inner">
-        <HomeBannerSwiper :images="displayBannerImages" />
+        <HomeBannerSwiper :banners="displayBanners" :refresh="refreshLobbyBanner" />
         <Transition name="banner-fade">
           <div v-if="isFallbackBanner" class="home-header__hero">
             <div class="home-header__text">

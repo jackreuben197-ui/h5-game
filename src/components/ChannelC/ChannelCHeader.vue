@@ -8,6 +8,7 @@ import { useGameStore } from '@/stores/game'
 import { requireRealUser } from '@/session/realUserGate'
 import GuestAuthActions from '@/components/GuestAuthActions.vue'
 import ChannelCThemeSwitch from './ChannelCThemeSwitch.vue'
+import type { LobbyBanner, RefreshLobbyBanner } from '@/utils/lobbyBannerAssociation'
 import logo from '@/assets/channelC/logo-party-holdem.png'
 import logoTextDark from '@/assets/channelC/logo-party-holdem-text-dark.png'
 import search from '@/assets/channelC/search.svg'
@@ -28,7 +29,12 @@ import supportDark from '@/assets/channelC/support-dark.webp'
 import supportLight from '@/assets/channelC/support-light.webp'
 import type { ChannelCAction } from '@/features/channelC/rewards'
 
-defineProps<{ banners: string[]; bannerLoaded: boolean; clubName: string }>()
+defineProps<{
+  banners: LobbyBanner[]
+  bannerLoaded: boolean
+  clubName: string
+  refreshBanner: RefreshLobbyBanner
+}>()
 defineEmits<{ action: [action: ChannelCAction] }>()
 const router = useRouter()
 const { isDark } = useTheme()
@@ -109,9 +115,10 @@ function openAccount(path: string) {
   </div>
   <CasinoPromoBanner
     class="c-banner"
-    :images="banners"
+    :banners="banners"
     :fallback-image="defaultBanner"
     :loaded="bannerLoaded"
+    :refresh="refreshBanner"
   />
 </template>
 

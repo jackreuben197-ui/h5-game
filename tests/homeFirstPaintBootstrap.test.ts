@@ -14,8 +14,19 @@ const homeSource = readFileSync(
 
 test('Vue mount is not gated by before-login config or channel landing requests', () => {
   assert.doesNotMatch(entrySource, /ensureGuestGlobalConfig|preparePlatformDomains/)
-  assert.doesNotMatch(routerSource, /ensureChannelDefaultClub|ensureExperienceSession/)
+  const blockingGuards = routerSource.slice(
+    routerSource.indexOf('router.beforeEach'),
+    routerSource.indexOf('router.afterEach'),
+  )
+  assert.doesNotMatch(blockingGuards, /ensureChannelDefaultClub|ensureExperienceSession/)
+  assert.match(routerSource, /to\.meta\.requiresAuth && to\.name !== 'lobby'/)
   assert.match(entrySource, /mountH5App\(container\)/)
+})
+
+test('the A/B banner waits for the channel menu and skips the version C homepage', () => {
+  assert.match(homeSource, /channelClubReady\.then\(loadHomeBanners\)/)
+  assert.match(homeSource, /if \(isVersionC\.value\) return\s+try \{\s+await fetchLobbyBannerImages\(\)/)
+  assert.match(homeSource, /initialBannersReady\.then\(loadHomeBanners\)/)
 })
 
 test('home defers session bootstrap until first paint and validates it before loading lists', () => {

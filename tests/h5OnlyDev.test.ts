@@ -298,6 +298,27 @@ test('H5-only mode still reports profile failures instead of fabricating a succe
   }
 })
 
+test('post-auth startup reuses the profile already fetched to validate the persisted session', async () => {
+  const browser = browserHarness()
+  try {
+    state.h5 = true
+    state.synced = ''
+    state.calls.length = 0
+    const result = await syncPostAuthData({
+      user: { p_u_id: 123, nickname: 'Restored user' },
+      muteList: [],
+      openChat: false,
+    })
+    assert.equal(result.userInfoSynced, true)
+    assert.equal(game.loginUserId, '123')
+    assert.equal(state.synced, game.sessionToken)
+    assert.ok(state.calls.includes('clubs'))
+    assert.ok(!state.calls.includes('user-info'))
+  } finally {
+    browser.cleanup()
+  }
+})
+
 test(
   'normal integration keeps WS as a login requirement and retains automatic reconnect',
   { timeout: 1000 },

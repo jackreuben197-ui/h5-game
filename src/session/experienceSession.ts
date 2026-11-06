@@ -10,6 +10,7 @@ import StorageKey from '@/constants/storageKey'
 import { getLocale } from '@/i18n'
 import { pinia } from '@/stores/pinia'
 import { useCasinoStore } from '@/stores/casino'
+import { useAppConfigStore } from '@/stores/appConfig'
 import { useGameStore } from '@/stores/game'
 import { useMttListStore } from '@/stores/mttList'
 import { useRoomListStore } from '@/stores/roomList'
@@ -103,6 +104,7 @@ async function releaseSupersededExperienceToken(token: string): Promise<void> {
 async function runEnsureExperienceSession(revision: number): Promise<boolean> {
   const gameStore = useGameStore(pinia)
 
+  await useAppConfigStore(pinia).ensurePlatformDomainsReady()
   await ensureChannelClubContext()
 
   // 渠道俱乐部请求可能等待较久，token 必须在等待后重新读取，不能使用旧快照。
@@ -119,7 +121,7 @@ async function runEnsureExperienceSession(revision: number): Promise<boolean> {
         gameStore.markIdentitySynced(existingToken)
         await bootstrapCurrentSessionLists()
       } else {
-        await syncPostAuthData()
+        await syncPostAuthData(userInfo)
         // 渠道版底部导航需要根据真实列表决定动态入口。身份未确认前不能由
         // Tab 组件抢跑；确认是真实账号后在会话层统一预热。
         if (isChannelPackageHost()) {

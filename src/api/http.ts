@@ -12,7 +12,7 @@ import { resolveGameToastMessage, showGameToast } from '@/components/Toast'
 import LoginSession from '@/session/loginSession'
 import StorageKey from '@/constants/storageKey'
 import { localStore } from '@/utils/localStore'
-import { resolveInviteCode, resolveTraceHash, resolveAgentInviteCode } from '@/utils/channelPackage'
+import { resolveTraceHash } from '@/utils/channelPackage'
 import { isTelegramMiniAppEnv } from '@/utils/environment'
 
 const http = axios.create({
@@ -392,15 +392,12 @@ async function doTelegramAutoLogin(): Promise<boolean> {
     return false
   }
 
-  // resolveInviteCode() now also reads the Telegram start_param, so the club to
-  // auto-enroll into (spec 2.2) flows into the login payload exactly like a web channel
-  // invite code — the backend enrolls on invite_code at login_third_party.
-  const inviteCode = resolveAgentInviteCode() || resolveInviteCode()
   const traceHash = resolveTraceHash()
 
   showTelegramLoginLoading()
 
   try {
+    const inviteCode = await useUserInfoStore(pinia).resolveAuthInviteCode()
     const { postUserThirdPartyApi, getUserInfoApi, getUserClubApi } = await import('@/api/user')
     const loginRes = await postUserThirdPartyApi(
       {

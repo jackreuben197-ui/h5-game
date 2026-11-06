@@ -16,6 +16,9 @@ export function useChannelCDataReady(externalReady?: Ref<boolean | undefined>) {
     const user = useUserInfoStore()
     const game = useGameStore()
     const app = useAppConfigStore()
+    const ensureSessionConfig = game.shouldSyncIdentity(game.sessionToken)
+      ? app.waitForFreshGlobalConfig
+      : app.ensureFreshGlobalConfig
     try {
       await Promise.all([
         user.ensureChannelDefaultClub(),
@@ -23,7 +26,7 @@ export function useChannelCDataReady(externalReady?: Ref<boolean | undefined>) {
         ensureExperienceSession(),
       ])
       if (game.isRealUser && game.sessionToken) {
-        await app.ensureFreshGlobalConfig(game.sessionToken)
+        await ensureSessionConfig(game.sessionToken)
       }
       await Promise.all([
         useRoomListStore().bootstrapRoomList(),

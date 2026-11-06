@@ -17,6 +17,7 @@ import {
   isPrivateDomainMode,
 } from '@/utils/channelPackage'
 import { preloadMainLayoutStyles, syncMainLayout } from '@/utils/mainLayout'
+import { ensureExperienceSession } from '@/session/experienceSession'
 import { syncPostAuthData } from '@/session/postAuthSync'
 import { clubRoutes } from './routes/club'
 import { mainRoute } from './routes/main'
@@ -312,10 +313,14 @@ router.afterEach((to, from, failure) => {
     to: to.fullPath,
   })
 
-  if (to.meta.requiresAuth) {
+  // 首页在首帧后统一恢复会话，其他受限路由复用同一个启动入口。
+  if (to.meta.requiresAuth && to.name !== 'lobby') {
     const gameStore = useGameStore(pinia)
     if (gameStore.isRealUser) {
-      syncPostAuthData()
+      const task = gameStore.shouldSyncIdentity(gameStore.sessionToken)
+        ? ensureExperienceSession()
+        : syncPostAuthData()
+      void task.catch((error) => log.warn('restore session failed', error))
     }
   }
 })

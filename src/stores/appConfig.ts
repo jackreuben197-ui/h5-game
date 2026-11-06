@@ -41,6 +41,7 @@ let guestGlobalConfigPromise: Promise<void> | null = null
 let globalConfigRefreshPromise: Promise<boolean> | null = null
 let globalConfigRefreshSessionKey = ''
 let globalConfigLoadedSessionKey = ''
+let lastGlobalConfigRefresh: { sessionKey: string; promise: Promise<boolean> } | null = null
 
 // 兼容 global_config_resp 挂在 data 顶层或 data.data 内层两种返回结构。
 function extractGuestGlobalConfig(
@@ -148,8 +149,11 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
   },
   actions: {
     setGlobalConfig(config: GlobalConfigData): void {
+      const domainsReady = configurePlatformDomains(config)
       this.globalConfig = config
-      this.platformDomainsReady = configurePlatformDomains(config)
+      if (domainsReady) {
+        this.platformDomainsReady = true
+      }
       void persistGlobalConfig(config, StorageKey.APP_CONFIG_CACHE)
         .catch((error) => {
           console.warn('[appConfig] persist app_config cache failed:', error)
@@ -193,8 +197,7 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
       await guestGlobalConfigPromise
     },
     async ensurePlatformDomainsReady(): Promise<boolean> {
-      // 缓存只用于首屏展示；本次会话必须先取得服务端域名列表，避免旧缓存
-      // 缺少新二维码域名时把“邀请码.平台域名”误当成俱乐部自定义域名。
+      // 本次会话以服务端列表为准，避免旧缓存误判新加入的平台域名。
       if (!this.platformDomainsReady) {
         await this.ensureGuestGlobalConfig(true)
       }
@@ -207,8 +210,8 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
       if (globalConfigLoadedSessionKey === normalizedSessionKey && this.globalConfig) return true
 
       if (globalConfigRefreshPromise) {
-        await globalConfigRefreshPromise
-        if (globalConfigLoadedSessionKey === normalizedSessionKey && this.globalConfig) return true
+        if (globalConfigRefreshSessionKey === normalizedSessionKey) return globalConfigRefreshPromise
+        await globalConfigRefreshPromise.catch(() => false)
         return this.ensureFreshGlobalConfig(normalizedSessionKey)
       }
 
@@ -228,7 +231,15 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
         })
 
       globalConfigRefreshPromise = currentTask
+      lastGlobalConfigRefresh = { sessionKey: normalizedSessionKey, promise: currentTask }
       return currentTask
+    },
+    // 启动页面等待登录同步已经发起的配置请求，失败时也消费同一轮结果。
+    waitForFreshGlobalConfig(sessionKey: string): Promise<boolean> {
+      if (lastGlobalConfigRefresh?.sessionKey === sessionKey.trim()) {
+        return lastGlobalConfigRefresh.promise
+      }
+      return this.ensureFreshGlobalConfig(sessionKey)
     },
     setDiamondConfig(raw: DiamondConfigData): void {
       const map = buildDiamondConfigMap(raw)
@@ -268,7 +279,6 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
       }
     },
     async restorePublicConfigCache(): Promise<void> {
-      // 必须先恢复全局域名配置，才能准确判断当前是否为渠道包。
       const globalConfig = await restoreGlobalConfig(StorageKey.APP_CONFIG_CACHE)
 
       // 网络刷新与缓存恢复可能并行；缓存只能填空，不能覆盖刚返回的新配置。

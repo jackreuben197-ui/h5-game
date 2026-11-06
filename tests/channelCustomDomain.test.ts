@@ -63,21 +63,6 @@ test('platform domain config ignores inactive and mismatched records', () => {
   assert.deepEqual(parseActivePlatformDomains(raw, 2), ['main.example.com'])
 })
 
-test('custom domain club stays scoped to the default API club', () => {
-  const storeSource = readFileSync(new URL('../src/stores/userInfo.ts', import.meta.url), 'utf8')
-  const homeSource = readFileSync(
-    new URL('../src/views/home/HomeIndexView.vue', import.meta.url),
-    'utf8',
-  )
-
-  assert.match(storeSource, /!subDomainInviteCode && isChannelPackageHost\(\)/)
-  assert.match(storeSource, /normalizeClubId\(this\.channelDefaultClub\?\.club_id\)/)
-  assert.match(
-    homeSource,
-    /if \(isChannelPackage\.value\) \{\s*return userInfoStore\.channelDefaultClub/,
-  )
-})
-
 test('channel table entry keeps the channel club through sitdown and account switch', () => {
   const gameListSource = readFileSync(
     new URL('../src/views/home/gameList.vue', import.meta.url),

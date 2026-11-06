@@ -14,6 +14,7 @@ import {
   isOfficialPackageHost,
   isPlatformQrCodeHost,
   isPrivateDomainMode,
+  resolveAgentInviteCode,
   resolveInviteCode,
   resolveUrlClubId,
   resolveUrlClubRandomId,
@@ -163,6 +164,7 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
             this.channelDefaultClub = {
               ...this.channelDefaultClub,
               ...targetClub,
+              invitation_code: targetClub.invitation_code || this.channelDefaultClub?.invitation_code,
               diamond_room_switch:
                 targetClub.diamond_room_switch ?? this.channelDefaultClub?.diamond_room_switch,
               h5_menu: targetClub.h5_menu ?? this.channelDefaultClub?.h5_menu,
@@ -188,6 +190,7 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
           this.channelDefaultClub = {
             ...this.channelDefaultClub,
             ...targetClub,
+            invitation_code: targetClub.invitation_code || this.channelDefaultClub?.invitation_code,
             diamond_room_switch:
               targetClub.diamond_room_switch ?? this.channelDefaultClub?.diamond_room_switch,
             h5_menu: targetClub.h5_menu ?? this.channelDefaultClub?.h5_menu,
@@ -225,6 +228,15 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       if (club) {
         applySafariWebAppConfig(club)
       }
+    },
+    async resolveAuthInviteCode(initialInviteCode = ''): Promise<string> {
+      // 域名列表只影响邀请码的解析来源，拿不到列表时沿用内置域名继续，不能阻塞登录。
+      await useAppConfigStore().ensurePlatformDomainsReady()
+      const inviteCode = resolveAgentInviteCode() || resolveInviteCode() || initialInviteCode
+      if (inviteCode || !isPrivateDomainMode()) return inviteCode
+
+      const club = await this.ensureChannelDefaultClub()
+      return club?.invitation_code?.trim() || ''
     },
     async ensureChannelDefaultClub(): Promise<ClubInfo | null> {
       const hostname =

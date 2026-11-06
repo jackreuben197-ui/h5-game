@@ -104,6 +104,11 @@ export function configurePlatformDomains(
 ): boolean {
   const typeOneDomains = parseActivePlatformDomains(config?.plat_domain_qrcode_info, 1)
   const typeTwoDomains = parseActivePlatformDomains(config?.plat_domain_main_info, 2)
+  const ready =
+    isPlatformDomainListAvailable(config?.plat_domain_qrcode_info) &&
+    isPlatformDomainListAvailable(config?.plat_domain_main_info)
+  // 缺字段或解析失败的响应不能覆盖已经取得的官方域名列表。
+  if (config && !ready) return false
 
   // 两种平台域名本身都属于官方包；只有其下的邀请码子域名按渠道包处理。
   platformMainDomains = Array.from(
@@ -113,13 +118,7 @@ export function configurePlatformDomains(
   // domain_type=1 专门用于生成俱乐部邀请二维码链接。
   platformQrCodeDomains = typeOneDomains
 
-  // 内置官方域名不能证明服务端域名列表已就绪；两份列表均需成功解析，
-  // 且至少有一个生效域名，才能安全地区分邀请码子域名和独立 CNAME。
-  return (
-    isPlatformDomainListAvailable(config?.plat_domain_qrcode_info) &&
-    isPlatformDomainListAvailable(config?.plat_domain_main_info) &&
-    typeOneDomains.length + typeTwoDomains.length > 0
-  )
+  return ready
 }
 
 function findPlatformBaseDomain(hostname: string): string {

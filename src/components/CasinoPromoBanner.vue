@@ -1,33 +1,69 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useCachedImages } from '@/utils/imageCache'
+import LobbyBannerPoster from '@/components/LobbyBannerPoster.vue'
+import { useLobbyBannerAction } from '@/composables/useLobbyBannerAction'
+import type { LobbyBanner, RefreshLobbyBanner } from '@/utils/lobbyBannerAssociation'
 
 const props = withDefaults(
   defineProps<{
-    images: string[]
+    banners: LobbyBanner[]
     fallbackImage: string
     loaded: boolean
+    refresh?: RefreshLobbyBanner
     autoplayDuration?: number
     transitionDuration?: number
   }>(),
   {
+    refresh: undefined,
     autoplayDuration: 3500,
     transitionDuration: 600,
   },
 )
 
-const imageUrls = computed(() => [
-  ...new Set(props.images.map((url) => url.trim()).filter(Boolean)),
-])
+const sourceBanners = computed(() => {
+  const seen = new Set<string>()
+  return props.banners.filter((banner) => {
+    const url = banner.imageUrl?.trim()
+    if (!url || seen.has(url)) return false
+    seen.add(url)
+    return true
+  })
+})
+const imageUrls = computed(() => sourceBanners.value.map((banner) => banner.imageUrl.trim()))
 const cachedImageUrls = useCachedImages(() => imageUrls.value)
 
 const banners = computed(() => {
-  const fallback = props.loaded ? [props.fallbackImage] : []
-  return (imageUrls.value.length ? imageUrls.value : fallback).map((img, index) => ({
-    id: `${index}-${img}`,
-    img,
-  }))
+  if (sourceBanners.value.length) {
+    return sourceBanners.value.map((banner, index) => ({
+      id: `${index}-${banner.imageUrl.trim()}`,
+      img: banner.imageUrl.trim(),
+      banner,
+    }))
+  }
+  return props.loaded
+    ? [{ id: `0-${props.fallbackImage}`, img: props.fallbackImage, banner: undefined }]
+    : []
 })
+
+// 点击关联了比赛模板或海报的 Banner：先刷新配置，再跳转详情或打开海报。
+const { busy: actionBusy, posterOpen, posterSrc, closeBanner, openBanner } = useLobbyBannerAction(
+  () => props.refresh ?? (async () => undefined),
+)
+let suppressTap = false
+
+function activeBanner(): LobbyBanner | undefined {
+  if (!count.value) return undefined
+  const index = ((position.value % count.value) + count.value) % count.value
+  return banners.value[index]?.banner
+}
+
+function openActiveBanner(): void {
+  if (suppressTap || !props.refresh) return
+  const banner = activeBanner()
+  if (!banner?.association) return
+  void openBanner(banner)
+}
 
 const count = computed(() => banners.value.length)
 const loop = computed(() => count.value > 1)
@@ -132,8 +168,9 @@ function releasePointer(id: number) {
 }
 
 function onPointerDown(e: PointerEvent) {
-  if (!loop.value) return
   if (e.pointerType === 'mouse' && e.button !== 0) return
+  suppressTap = false
+  if (!loop.value) return
   pointerId = e.pointerId
   startX = e.clientX
   startY = e.clientY
@@ -162,6 +199,7 @@ function onPointerMove(e: PointerEvent) {
   if (!axisLocked) {
     if (Math.abs(dx) < 4 && Math.abs(dy) < 4) return
     axisLocked = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
+    suppressTap = true
     if (axisLocked === 'y') {
       releasePointer(e.pointerId)
       pointerId = null
@@ -253,6 +291,7 @@ function useFallbackImage(event: Event) {
 }
 
 watch(banners, () => {
+  closeBanner()
   clearTimers()
   transitionMs.value = 0
   dragOffset.value = 0
@@ -282,6 +321,7 @@ onBeforeUnmount(() => {
       @pointerup="finishDrag"
       @pointercancel="onPointerCancel"
       @lostpointercapture="onPointerCancel"
+      @click="openActiveBanner"
     >
       <div ref="trackRef" class="banner-track" :class="{ 'is-ready': isImageReady }" :style="trackStyle">
         <div
@@ -306,6 +346,13 @@ onBeforeUnmount(() => {
             @load="onImageLoad(index)"
             @error="useFallbackImage"
           />
+          <van-icon
+            v-if="slide.banner?.association"
+            class="banner-arrow"
+            :class="{ 'is-busy': actionBusy && index === position }"
+            name="arrow"
+            aria-hidden="true"
+          />
         </div>
       </div>
 
@@ -320,6 +367,7 @@ onBeforeUnmount(() => {
         ></div>
       </div>
     </div>
+    <LobbyBannerPoster :src="posterSrc" :open="posterOpen" @close="closeBanner" />
   </div>
 </template>
 
@@ -381,6 +429,29 @@ onBeforeUnmount(() => {
 
 .banner-backdrop {
   display: none;
+}
+
+.banner-arrow {
+  position: absolute;
+  top: 50%;
+  right: clamp(8px, 0.32rem, 22px);
+  display: grid;
+  width: clamp(22px, 0.6rem, 32px);
+  aspect-ratio: 1;
+  place-items: center;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.28);
+  color: rgba(255, 255, 255, 0.76);
+  font-size: clamp(14px, 0.38rem, 20px);
+  -webkit-text-stroke: 0.7px currentColor;
+  text-shadow: 0 1px 4px #0006;
+  pointer-events: none;
+  z-index: 3;
+
+  &.is-busy {
+    opacity: 0.5;
+  }
 }
 
 @media (min-width: 600px) {

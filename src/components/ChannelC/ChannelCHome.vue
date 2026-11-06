@@ -50,7 +50,7 @@ useChannelCVersionRouting()
 const ready = useChannelCDataReady(toRef(props, 'ready'))
 const { liveWinItems, liveWinInterval, findLiveWinGame } = useLiveWins(clubId)
 const { play } = useCasinoGameLaunch()
-const { bannerImages, isBannerLoaded, fetchLobbyBannerImages } = useLobbyBannerImages('c')
+const { banners, isBannerLoaded, fetchLobbyBannerImages, refreshLobbyBanner } = useLobbyBannerImages('c')
 const roomStore = useRoomListStore()
 const casinoStore = useCasinoStore()
 const root = ref<HTMLElement | null>(null)
@@ -177,8 +177,9 @@ watch(
   >
     <ChannelCHeader
       v-if="section === 'home'"
-      :banners="bannerImages"
+      :banners="banners"
       :banner-loaded="isBannerLoaded"
+      :refresh-banner="refreshLobbyBanner"
       :club-name="club?.club_name || ''"
       @action="overlays?.open($event)"
     />

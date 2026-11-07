@@ -35,7 +35,7 @@ import { completeCocosTableSitdownAuth } from '@/session/cocosTableSitdownAuth'
 import { sendBridgeMessage } from '@/bridge/core'
 import { setH5TableAuthOverlay, setH5Visible } from '@/bridge/channels/uiChannel'
 import { clearPendingRealUserAction, takePendingRealUserAction } from '@/session/realUserGate'
-import { SUPPORTED_LOCALES_OPTIONS, getLocale, setLocale, t, type LocaleCode } from '@/i18n'
+import { SUPPORTED_LOCALES_OPTIONS, getLocale, setLocale, t, toServerLangId, type LocaleCode } from '@/i18n'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
 import loginModalBg from '@/assets/images/main_bg2.png'
 import icPhone from '@/assets/icons/ic_phone.svg'
@@ -286,7 +286,7 @@ async function sendOtp() {
       }
 
       const result = await postUserSendEmailCodeApi({
-        lang: localeToServerLang(currentLang.value),
+        lang: toServerLangId(currentLang.value),
         email: target,
       })
       if (result.code !== 0) {

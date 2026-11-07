@@ -176,6 +176,17 @@ export function toServerLang(locale: LocaleCode = currentLocale.value): string {
   return LOCALE_TO_SERVER_LANG[locale] ?? 'zh_TW'
 }
 
+const LOCALE_TO_SERVER_LANG_ID: Partial<Record<LocaleCode, number>> = {
+  cn: 0,
+  en: 1,
+  zh: 2,
+  pt: 3,
+}
+
+export function toServerLangId(locale: LocaleCode = currentLocale.value): number {
+  return LOCALE_TO_SERVER_LANG_ID[locale] ?? 1
+}
+
 export function t(key: string, ...args: FormatArg[] | [FormatArgs]): string {
   // 读 ref 以便组件在 setLocale 时自动重渲染。
   const locale = currentLocale.value

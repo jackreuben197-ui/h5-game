@@ -50,7 +50,7 @@ export interface UserSendCodeRequest {
 
 // /user/send_email_code 请求参数。
 export interface UserSendEmailCodeRequest {
-  lang?: string
+  lang?: number
   email?: string
   [key: string]: unknown
 }
@@ -411,7 +411,7 @@ export interface UserDeleteCodeRequest {
   area?: string // 区号
   phone?: string // 手机号码
   email?: string // 邮箱地址
-  lang?: string // 语言代码，如 zh_CN / en_US
+  lang?: number
 
   [key: string]: unknown
 }

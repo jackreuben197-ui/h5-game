@@ -344,14 +344,6 @@ async function copyAllUrls(): Promise<void> {
 }
 
 // ==================== 步骤1/3 操作 ====================
-function onDownload(): void {
-  const url = downloadAppData.value.download_url
-  props.emitPanelEvent('primaryAction', currentStep.value)
-  if (url) {
-    window.open(url, '_blank')
-  }
-}
-
 async function onSecondaryAction(): Promise<void> {
   props.emitPanelEvent('secondaryAction', currentStep.value)
 
@@ -415,15 +407,6 @@ async function onSecondaryAction(): Promise<void> {
           >
             <img src="@/assets/icons/icon_layer.svg" alt="" />
             <span>{{ t('UILanding_Table') }}</span>
-          </button>
-          <button
-            v-if="!isClub"
-            class="notification-panel__btn notification-panel__btn--primary"
-            type="button"
-            @click="onDownload"
-          >
-            <img src="@/assets/icons/download_icon.png" alt="" />
-            <span>{{ t('UIGuildDownloadFightData_Tip17') }}APP</span>
           </button>
         </div>
       </div>

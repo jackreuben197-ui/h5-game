@@ -10,7 +10,7 @@ import GuestAuthActions from '@/components/GuestAuthActions.vue'
 import ThemeQuickSwitch from '@/components/ThemeQuickSwitch.vue'
 import HomeBannerSwiper from '@/components/HomeBannerSwiper.vue'
 import type { LobbyBanner, RefreshLobbyBanner } from '@/utils/lobbyBannerAssociation'
-import logo from '@/assets/channelC/logo.png'
+import defaultLogo from '@/assets/channelC/logo.png'
 import search from '@/assets/channelC/search.svg'
 import messageLight from '@/assets/channelC/message.svg'
 import messageDark from '@/assets/channelC/message-dark.svg'
@@ -50,7 +50,7 @@ function openAccount(path: string) {
 
 <template>
   <header class="c-header">
-    <img class="c-logo" :src="logo" alt="POKER" />
+    <img class="c-logo" :src="user.channelDefaultClub?.home_logo || defaultLogo" alt="POKER" />
     <div class="c-header-actions">
       <GuestAuthActions class="c-auth-actions" />
       <button

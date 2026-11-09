@@ -1178,6 +1178,7 @@ export interface OrgClubSearchInfoData {
   club_name?: string // 俱乐部名称
   invitation_code?: string // 俱乐部邀请码，供自定义域名注册使用
   logo?: string // 俱乐部头像
+  home_logo?: string // 首页图标
   tribe_random_id?: number // 所属联盟随机ID
   safari_icon_url?: string // Safari 添加到主屏幕使用的图标
   safari_label?: string // Safari 添加到主屏幕使用的名称
@@ -2489,6 +2490,7 @@ export interface OrgClubData {
   club_id?: number
   club_name?: string
   logo?: string
+  home_logo?: string
   safari_icon_url?: string
   safari_label?: string
   safari_base_url?: string

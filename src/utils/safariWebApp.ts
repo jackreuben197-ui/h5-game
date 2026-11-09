@@ -1,6 +1,14 @@
 import type { OrgClubSearchInfoData } from '@/api/models/org'
 import { isIos } from '@/utils/iosWebClip'
 import { isClubLinkContext } from '@/utils/channelPackage'
+import {
+  clearHomeShortcutCache,
+  readHomeShortcutCode,
+  resolveHomeShortcutConfig,
+  setHomeShortcutRecords,
+  writeHomeShortcutCache,
+  type HomeShortcutGlobalConfig,
+} from '@/utils/homeShortcut'
 import nexGameIcon from '@/assets/icons/NEX-GAME.png'
 import officialLogoIcon from '@/assets/icons/Official_web_logo.jpeg'
 
@@ -24,6 +32,10 @@ function normalizedHttpUrl(value: unknown): string {
   } catch {
     return ''
   }
+}
+
+function iconMimeType(iconUrl: string): string {
+  return iconUrl.endsWith('.jpeg') || iconUrl.endsWith('.jpg') ? 'image/jpeg' : 'image/png'
 }
 
 function ensureMeta(name: string): HTMLMetaElement | null {
@@ -114,27 +126,48 @@ export function applySafariWebAppConfig(club?: OrgClubSearchInfoData | null): vo
 
     updateWebManifest(label, iconUrl, true)
   } else {
-    document.title = OFFICIAL_WEB_NAME
-    ensureMeta('apple-mobile-web-app-title')?.setAttribute('content', OFFICIAL_WEB_NAME)
-    ensureMeta('application-name')?.setAttribute('content', OFFICIAL_WEB_NAME)
+    const homeShortcut = resolveHomeShortcutConfig()
+    const label = homeShortcut?.label || OFFICIAL_WEB_NAME
+    const iconUrl = homeShortcut?.iconUrl || OFFICIAL_WEB_ICON
+
+    document.title = label
+    ensureMeta('apple-mobile-web-app-title')?.setAttribute('content', label)
+    ensureMeta('application-name')?.setAttribute('content', label)
 
     const touchIcon = ensureLink('apple-touch-icon')
-    touchIcon?.setAttribute('href', OFFICIAL_WEB_ICON)
+    touchIcon?.setAttribute('href', iconUrl)
 
     const favicon = ensureLink('icon')
-    favicon?.setAttribute('href', OFFICIAL_WEB_ICON)
-    favicon?.setAttribute('type', 'image/jpeg')
+    favicon?.setAttribute('href', iconUrl)
+    favicon?.setAttribute('type', iconMimeType(iconUrl))
 
     try {
       window.localStorage.removeItem('dzpk_h5_safari_label')
       window.localStorage.removeItem('dzpk_h5_safari_icon')
     } catch {}
 
-    updateWebManifest(OFFICIAL_WEB_NAME, OFFICIAL_WEB_ICON, false)
+    if (homeShortcut) {
+      writeHomeShortcutCache(homeShortcut)
+    } else if (readHomeShortcutCode()) {
+      clearHomeShortcutCache()
+    }
+
+    updateWebManifest(label, iconUrl, Boolean(homeShortcut))
   }
 }
 
-function updateWebManifest(label: string, iconUrl: string, isClub: boolean): void {
+export function applyHomeShortcutFromGlobalConfig(
+  config: HomeShortcutGlobalConfig | null | undefined,
+): void {
+  setHomeShortcutRecords(config?.plat_domain_home_config_info)
+  if (typeof document === 'undefined' || !readHomeShortcutCode()) return
+  if (isClubLinkContext()) return
+  applySafariWebAppConfig(null)
+}
+
+export { hasUnresolvedHomeShortcutCode } from '@/utils/homeShortcut'
+
+function updateWebManifest(label: string, iconUrl: string, isCustom: boolean): void {
   if (typeof document === 'undefined') return
 
   let manifestLink = document.querySelector<HTMLLinkElement>('link[rel="manifest"]')
@@ -146,7 +179,7 @@ function updateWebManifest(label: string, iconUrl: string, isClub: boolean): voi
     }
   }
 
-  if (!isClub) {
+  if (!isCustom) {
     const defaultHref = manifestLink?.dataset.defaultHref
     if (manifestLink && defaultHref) {
       manifestLink.setAttribute('href', defaultHref)
@@ -161,8 +194,7 @@ function updateWebManifest(label: string, iconUrl: string, isClub: boolean): voi
     return
   }
 
-  const iconType =
-    iconUrl.endsWith('.jpeg') || iconUrl.endsWith('.jpg') ? 'image/jpeg' : 'image/png'
+  const iconType = iconMimeType(iconUrl)
 
   const manifestData = {
     name: label,

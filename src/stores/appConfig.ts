@@ -28,6 +28,10 @@ import {
   type PrivateUcChargeConfigItemExt,
 } from '@/utils/channelPackage'
 import runtimeAppConfig from '@/utils/appConfig'
+import {
+  applyHomeShortcutFromGlobalConfig,
+  hasUnresolvedHomeShortcutCode,
+} from '@/utils/safariWebApp'
 
 interface AppConfigState {
   globalConfig: GlobalConfigData | null
@@ -154,6 +158,7 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
       if (domainsReady) {
         this.platformDomainsReady = true
       }
+      applyHomeShortcutFromGlobalConfig(config)
       void persistGlobalConfig(config, StorageKey.APP_CONFIG_CACHE)
         .catch((error) => {
           console.warn('[appConfig] persist app_config cache failed:', error)
@@ -285,6 +290,10 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
       if (globalConfig && !this.globalConfig) {
         this.globalConfig = globalConfig
         configurePlatformDomains(globalConfig)
+        applyHomeShortcutFromGlobalConfig(globalConfig)
+        if (hasUnresolvedHomeShortcutCode()) {
+          void this.ensureGuestGlobalConfig(true)
+        }
       }
 
       // 私域版本改用独立 UC 收费配置，不能再恢复旧的钻石收费缓存。

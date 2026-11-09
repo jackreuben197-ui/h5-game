@@ -29,6 +29,7 @@ export interface GlobalConfigData {
   // 平台域名配置 JSON：data 中 domain_type=1 为二维码域名，2 为官方主域名。
   plat_domain_qrcode_info?: string | Record<string, unknown>
   plat_domain_main_info?: string | Record<string, unknown>
+  plat_domain_home_config_info?: string | Record<string, unknown>
   extend_live_wins_info?: string | Record<string, unknown>
   extend_live_wins_rotation_interval?: number
   support_email?: string

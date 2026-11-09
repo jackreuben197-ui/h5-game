@@ -57,16 +57,34 @@
           }
           var isClubLink = hasClubParam || isSubdomain
 
-          if (isClubLink) {
-            var cachedLabel = ''
-            var cachedIcon = ''
-            try {
-              cachedLabel = window.localStorage.getItem('dzpk_h5_safari_label') || ''
-              cachedIcon = window.localStorage.getItem('dzpk_h5_safari_icon') || ''
-            } catch (e) {}
+          var cachedLabel = ''
+          var cachedIcon = ''
+          try {
+            cachedLabel = window.localStorage.getItem('dzpk_h5_safari_label') || ''
+            cachedIcon = window.localStorage.getItem('dzpk_h5_safari_icon') || ''
+          } catch (e) {}
 
-            var label = cachedLabel || 'NEW-GAME'
-            var icon = cachedIcon || '/icons/NEX-GAME.png'
+          var homeShortcutCode = ''
+          try {
+            homeShortcutCode = (new URLSearchParams(search).get('icon') || '').trim()
+            var hashQueryIndex = hash.indexOf('?')
+            if (!homeShortcutCode && hashQueryIndex >= 0) {
+              homeShortcutCode = (new URLSearchParams(hash.slice(hashQueryIndex)).get('icon') || '').trim()
+            }
+          } catch (e) {}
+          var homeShortcut = null
+          if (homeShortcutCode && !cachedLabel) {
+            try {
+              var cachedHome = JSON.parse(window.localStorage.getItem('dzpk_h5_home_shortcut') || 'null')
+              if (cachedHome && cachedHome.code === homeShortcutCode && (cachedHome.label || cachedHome.iconUrl)) {
+                homeShortcut = cachedHome
+              }
+            } catch (e) {}
+          }
+
+          if (homeShortcut || isClubLink) {
+            var label = homeShortcut ? (homeShortcut.label || '派对德州') : (cachedLabel || 'NEW-GAME')
+            var icon = homeShortcut ? (homeShortcut.iconUrl || '/icons/Official_web_logo.jpeg') : (cachedIcon || '/icons/NEX-GAME.png')
 
             document.title = label
 

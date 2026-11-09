@@ -23,6 +23,7 @@ import {
   OFFICIAL_WEB_ICON,
   OFFICIAL_WEB_NAME,
 } from '@/utils/safariWebApp'
+import { resolveHomeShortcutConfig, type HomeShortcutRecord } from '@/utils/homeShortcut'
 
 const props = defineProps<{
   panelProps?: Record<string, unknown>
@@ -119,6 +120,8 @@ const isClub = computed<boolean>(() => {
   return isChannelPackageHost() || isPrivateDomainMode()
 })
 
+const homeShortcutRecord = ref<HomeShortcutRecord | null>(resolveHomeShortcutConfig())
+
 const dynamicGuideLabel = computed<string>(() => {
   if (isClub.value) {
     const club = userInfoStore.channelDefaultClub || userInfoStore.currentClub
@@ -147,7 +150,7 @@ const dynamicGuideLabel = computed<string>(() => {
 
     return DEFAULT_CLUB_NAME
   }
-  return OFFICIAL_WEB_NAME
+  return homeShortcutRecord.value?.label || OFFICIAL_WEB_NAME
 })
 
 const dynamicGuideIcon = computed<string>(() => {
@@ -176,7 +179,7 @@ const dynamicGuideIcon = computed<string>(() => {
 
     return DEFAULT_CLUB_ICON
   }
-  return OFFICIAL_WEB_ICON
+  return homeShortcutRecord.value?.iconUrl || OFFICIAL_WEB_ICON
 })
 
 function onGuideIconError(event: Event): void {
@@ -354,6 +357,7 @@ async function onSecondaryAction(): Promise<void> {
 
   // iOS 设备：统一展示 iOS 专用的“添加到主屏幕”图文引导弹窗
   if (isIos()) {
+    homeShortcutRecord.value = resolveHomeShortcutConfig()
     showAddHomeGuide.value = true
     return
   }

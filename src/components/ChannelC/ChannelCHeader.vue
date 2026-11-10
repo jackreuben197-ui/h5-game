@@ -41,6 +41,7 @@ const { isDark } = useTheme()
 const user = useUserInfoStore()
 const gameStore = useGameStore()
 const avatar = computed(() => user.userInfo?.user?.avatar || defaultAvatar)
+const homeLogo = computed(() => user.channelDefaultClub?.home_logo || '')
 const actions: Array<{ key: ChannelCAction; label: string; dark: string; light: string }> = [
   { key: 'game', label: 'UIChannelC_GameRewardShort', dark: gameDark, light: gameLight },
   { key: 'notice', label: 'UIChannelC_Announcements', dark: noticeDark, light: noticeLight },
@@ -57,8 +58,9 @@ function openAccount(path: string) {
 
 <template>
   <header class="c-header">
-    <div class="c-logo" role="img" aria-label="PARTY HOLDEM">
-      <template v-if="isDark">
+    <div class="c-logo" role="img" :aria-label="homeLogo ? clubName : 'PARTY HOLDEM'">
+      <img v-if="homeLogo" class="c-logo-cms" :src="homeLogo" alt="" />
+      <template v-else-if="isDark">
         <span class="c-logo-mark"><img :src="logo" alt="" /></span>
         <img class="c-logo-text" :src="logoTextDark" alt="" />
       </template>
@@ -175,6 +177,13 @@ function openAccount(path: string) {
   width: 2.846rem;
   height: 100%;
   object-fit: cover;
+}
+.c-logo-cms {
+  display: block;
+  max-width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: left center;
 }
 .c-header-actions {
   display: flex;

@@ -181,7 +181,7 @@ export function buildCasinoCards(games: readonly ExtendGameRecord[]): LobbyCard[
   }))
 }
 
-/** 首页与搜索共用的 3 桌 + 1 MTT 混排；首页每个 MTT 后跟 1 个游戏，保留不足一组的剩余牌桌和比赛。 */
+/** 首页与搜索共用的 3 桌 + 1 MTT 混排；首页每组后跟 1 个游戏，保留不足一组的剩余牌桌和比赛。 */
 export function interleaveChannelCCards(
   tables: readonly LobbyCard[],
   mtts: readonly LobbyCard[],
@@ -194,10 +194,8 @@ export function interleaveChannelCCards(
   while (tableIndex < tables.length || matchIndex < mtts.length) {
     feed.push(...tables.slice(tableIndex, tableIndex + 3))
     tableIndex += 3
-    if (matchIndex < mtts.length) {
-      feed.push(mtts[matchIndex++]!)
-      if (gameIndex < games.length) feed.push(games[gameIndex++]!)
-    }
+    if (matchIndex < mtts.length) feed.push(mtts[matchIndex++]!)
+    if (gameIndex < games.length) feed.push(games[gameIndex++]!)
   }
   return feed
 }

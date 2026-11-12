@@ -198,6 +198,24 @@ test('mixing handles zero, partial, and exhausted categories without dropping or
   )
 })
 
+test('home feed adds one hot game after every table group even without MTTs', () => {
+  const games = [1, 2, 3, 4, 5].map((id) => ({ id, game_url_ca: 'a' }))
+  const rooms = Array.from({ length: 7 }, (_, i) => room(i + 1))
+  assert.deepEqual(
+    buildChannelCFeed(rooms, [], 'home', now, [], games).map((card) => card.key),
+    ['poker-7', 'poker-6', 'poker-5', 'game-1', 'poker-4', 'poker-3', 'poker-2', 'game-2', 'poker-1', 'game-3'],
+  )
+  assert.deepEqual(
+    buildChannelCFeed(rooms.slice(0, 4), [match(1)], 'home', now, [], games).map((card) => card.key),
+    ['poker-4', 'poker-3', 'poker-2', 'mtt-1', 'game-1', 'poker-1', 'game-2'],
+  )
+  assert.deepEqual(buildChannelCFeed([], [], 'home', now, [], games), [])
+  assert.equal(
+    buildChannelCFeed(rooms, [], 'poker', now, [], games).every((card) => card.kind === 'poker'),
+    true,
+  )
+})
+
 test('MTTs sort registered, registration open, waiting, then by ascending start time', () => {
   const records = [
     match(1, { apply_start_time: now + 5000 }),

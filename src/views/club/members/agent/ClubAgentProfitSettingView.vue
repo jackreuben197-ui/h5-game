@@ -257,7 +257,7 @@ onMounted(() => {
   background-position: center;
   background-repeat: no-repeat;
 
-  @include theme-light {
+  @include theme-light-own {
     background-color: var(--c-page);
     background-image: var(--profit-setting-bg-light);
   }
@@ -370,7 +370,7 @@ onMounted(() => {
 }
 
 .profit-bg {
-  @include theme-light {
+  @include theme-light-own {
     .glass {
       background: #fff;
       backdrop-filter: none;
@@ -401,6 +401,20 @@ onMounted(() => {
     .value__number,
     .value__unit {
       color: rgba(0, 0, 0, 0.71);
+    }
+  }
+}
+
+.profit-bg {
+  @include theme-light-own {
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: rgba(0, 0, 0, 1);
+    }
+
+    :deep(.title) {
+      color: rgba(15, 8, 8, 0.85);
+      text-shadow: none;
     }
   }
 }

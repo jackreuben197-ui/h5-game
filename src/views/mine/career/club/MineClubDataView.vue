@@ -21,7 +21,7 @@ import { useGameStore } from '@/stores/game'
 import { userCache } from '@/utils/userCache'
 import { createKeyedRefresh } from '@/utils/keyedRefresh'
 import { USER_STORE_CAREER } from '@/utils/indexedDB'
-import { t } from '@/i18n'
+import { t, tJoin } from '@/i18n'
 import { useTheme } from '@/composables/useTheme'
 
 const title = computed(() => t('adaptation10124'))
@@ -63,9 +63,21 @@ const mainTabs: Array<{ key: MainTabKey; label: string }> = [
 const personalGameTabs = ['NLH', 'PLO', '6+']
 const opponentPeriodTabs = ['week', 'month', 'history']
 
-const personalGameTabOptions: FilterTabOption[] = personalGameTabs.map((t) => ({
-  name: t,
-  title: t,
+const MODE_LABEL_KEYS: Record<string, string> = {
+  NLH: 'GameType_0',
+  PLO: 'adaptation10009',
+  '6+': 'PokerType_2',
+}
+function modeLabel(mode: string): string {
+  const isAof = mode.startsWith('AOF ')
+  const base = isAof ? mode.slice(4) : mode
+  const label = MODE_LABEL_KEYS[base] ? t(MODE_LABEL_KEYS[base]) : base
+  return isAof ? tJoin('AOF', label) : label
+}
+
+const personalGameTabOptions: FilterTabOption[] = personalGameTabs.map((mode) => ({
+  name: mode,
+  title: modeLabel(mode),
 }))
 const OPPONENT_PERIOD_TAB_LABEL: Record<string, string> = {
   week: t('UICareer_PersonWeek'),
@@ -518,10 +530,19 @@ async function refreshDeckMode(mode: string): Promise<void> {
 }
 
 function applyCurrentPersonal(): void {
-  personalRings.value =
-    personalCache.get(selectedPersonalGame.value) ??
-    personalRingMeta.map((item) => ({ ...item, value: 0 }))
+  const cachedRings = personalCache.get(selectedPersonalGame.value)
+  personalRings.value = personalRingMeta.map((item) => ({
+    ...item,
+    value: cachedRings?.find((ring) => ring.key === item.key)?.value ?? 0,
+  }))
   personalBestHand.value = personalBestHandCache.get(selectedPersonalGame.value) ?? []
+}
+
+const ALLIN_RATE_LABEL_KEYS: Record<string, string> = {
+  active: 'UICareer_Zhudong',
+  passive: 'UICareer_Beidong',
+  ahead: 'UICareer_Lingxian',
+  behind: 'UICareer_Luohou',
 }
 
 function applyCurrentAllIn(): void {
@@ -533,12 +554,17 @@ function applyCurrentAllIn(): void {
     { label: 'UICareer_HuoWin', value: '0' },
     { label: 'UICareer_AllinLost', value: '0' },
   ]
-  allInRateRows.value = value?.rates ?? [
-    { key: 'active', label: t('UICareer_Zhudong'), rate: 0, color: '#50a7ec' },
-    { key: 'passive', label: t('UICareer_Beidong'), rate: 0, color: '#fa2b4b' },
-    { key: 'ahead', label: t('UICareer_Lingxian'), rate: 0, color: '#109657' },
-    { key: 'behind', label: t('UICareer_Luohou'), rate: 0, color: '#b519d8' },
-  ]
+  allInRateRows.value = (
+    value?.rates ?? [
+      { key: 'active', label: '', rate: 0, color: '#50a7ec' },
+      { key: 'passive', label: '', rate: 0, color: '#fa2b4b' },
+      { key: 'ahead', label: '', rate: 0, color: '#109657' },
+      { key: 'behind', label: '', rate: 0, color: '#b519d8' },
+    ]
+  ).map((row) => ({
+    ...row,
+    label: ALLIN_RATE_LABEL_KEYS[row.key] ? t(ALLIN_RATE_LABEL_KEYS[row.key]) : row.label,
+  }))
 }
 
 function applyCurrentDeck(): void {
@@ -1160,7 +1186,9 @@ onBeforeUnmount(() => {
               :class="{ active: selectedAllInMode === mode }"
               @click="selectedAllInMode = mode"
             >
-              {{ mode }}
+              <span v-fit-text="{ maxLines: 1, minScale: 0.6 }" class="mode-chip-label">
+                {{ modeLabel(mode) }}
+              </span>
             </button>
           </div>
 
@@ -1215,7 +1243,9 @@ onBeforeUnmount(() => {
               :class="{ active: selectedDeckMode === mode }"
               @click="selectedDeckMode = mode"
             >
-              {{ mode }}
+              <span v-fit-text="{ maxLines: 1, minScale: 0.6 }" class="mode-chip-label">
+                {{ modeLabel(mode) }}
+              </span>
             </button>
           </div>
         </section>
@@ -1816,6 +1846,14 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.14rem;
+}
+
+.mode-chip-label {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0 0.1rem;
+  line-height: 1.2;
 }
 
 .deck-mode-chip {

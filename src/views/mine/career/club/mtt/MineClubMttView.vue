@@ -47,9 +47,30 @@ interface TabItem {
 }
 
 const gameTabs: GameTab[] = [
-  { label: 'NLH', key: 'nlh', gameTypes: [0], pokerTypes: [0] },
-  { label: 'PLO', key: 'plo', gameTypes: [1, 2, 3], pokerTypes: [0] },
-  { label: '6+', key: '6+', gameTypes: [0, 1, 2, 3], pokerTypes: [2] },
+  {
+    get label() {
+      return t('GameType_0')
+    },
+    key: 'nlh',
+    gameTypes: [0],
+    pokerTypes: [0],
+  },
+  {
+    get label() {
+      return t('adaptation10009')
+    },
+    key: 'plo',
+    gameTypes: [1, 2, 3],
+    pokerTypes: [0],
+  },
+  {
+    get label() {
+      return t('PokerType_2')
+    },
+    key: '6+',
+    gameTypes: [0, 1, 2, 3],
+    pokerTypes: [2],
+  },
 ]
 
 const dateTabs: TabItem[] = [
@@ -171,8 +192,19 @@ function writeMttCache(key: string): void {
   void mttCache().put(USER_STORE_CAREER, key, payload)
 }
 
+const SUMMARY_LABEL_KEYS = [
+  'UIData_YGvXd5iXr_005',
+  'UITexasInfo_wincount',
+  'UIData_YGvXd5iXr_006',
+  'UIData_YGvXd5iXr_007',
+  'UIData_YGvXd5iXr_008',
+]
+
 function applyMttCache(payload: MttSummaryCache): void {
-  summary.value = payload.summary
+  summary.value = SUMMARY_LABEL_KEYS.map((key, index) => ({
+    label: t(key),
+    value: payload.summary[index]?.value ?? '0',
+  }))
   records.value = payload.records
   listOffset.value = payload.listOffset
   hasMore.value = payload.hasMore
@@ -901,7 +933,7 @@ onBeforeUnmount(() => {
     }
   }
 
-  .metric-item .label {
+  .summary-item .label {
     color: rgba(15, 8, 8, 0.45);
   }
 

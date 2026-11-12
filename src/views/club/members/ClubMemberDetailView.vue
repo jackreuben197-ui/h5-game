@@ -182,7 +182,7 @@ const statRows = computed(() => [
     label: tJoin(t('UIClub_FundDetail_recycle'), ucLabel()),
     value: formatAmount(statsData.value.recover_gold_amount),
   },
-  { label: t('UIMine_Paipu_win'), value: formatAmount(statsData.value.profit) },
+  { label: t('UIClub_MemberDetail_Win'), value: formatAmount(statsData.value.profit) },
   { label: t('adaptation10179'), value: formatAmount(statsData.value.insurance) },
   { label: t('UIMine_WalletPlatform_fee_f'), value: formatAmount(statsData.value.fee) },
 ])
@@ -819,9 +819,6 @@ onMounted(() => {
           <button :class="{ active: gameType === 'texas' }" @click="switchGameType('texas')">
             <span v-fit-text="{ maxLines: 1 }" class="tab-label">{{ t('adaptation10022') }}</span>
           </button>
-          <button :class="{ active: gameType === 'mahjong' }" @click="switchGameType('mahjong')">
-            <span v-fit-text="{ maxLines: 1 }" class="tab-label">{{ t('Mahjong_Name') }}</span>
-          </button>
           <button :class="{ active: gameType === 'mini' }" @click="switchGameType('mini')">
             <span v-fit-text="{ maxLines: 1 }" class="tab-label">{{ t('UIClub_Text24') }}</span>
           </button>
@@ -1276,7 +1273,7 @@ onMounted(() => {
 
 .pill-tabs {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: center;
   gap: 0.1rem;
   background: rgba(0, 0, 0, 0.2);

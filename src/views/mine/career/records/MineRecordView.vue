@@ -350,11 +350,22 @@ function writeRecordCache(key: string): void {
   void recordCache().put(USER_STORE_CAREER, key, payload)
 }
 
+const METRIC_LABEL_KEYS = {
+  left: ['UITexasInfo_games', 'UIMine_RecordItemsNormal_3RCUa3w8'],
+  right: ['UIClub_Mlistinfo_rRyW4JkW', 'UITexasInfo_winrate'],
+  rowsOne: ['UIData_YGvXd5iXr_003', 'UIClub_Text46', 'UIData_kpHsdqDe5', 'UIClub_Text39'],
+  rowsTwo: ['UIClub_Text47', 'UIClub_Text48', 'adaptation10318', 'UIClub_Text49'],
+}
+
+function relabelMetrics(keys: string[], cached: SummaryMetric[]): SummaryMetric[] {
+  return keys.map((key, index) => ({ label: t(key), value: cached[index]?.value ?? '0' }))
+}
+
 function applyRecordCache(payload: RecordSummaryCache): void {
-  leftMetrics.value = payload.leftMetrics
-  rightMetrics.value = payload.rightMetrics
-  detailRowsOne.value = payload.detailRowsOne
-  detailRowsTwo.value = payload.detailRowsTwo
+  leftMetrics.value = relabelMetrics(METRIC_LABEL_KEYS.left, payload.leftMetrics)
+  rightMetrics.value = relabelMetrics(METRIC_LABEL_KEYS.right, payload.rightMetrics)
+  detailRowsOne.value = relabelMetrics(METRIC_LABEL_KEYS.rowsOne, payload.detailRowsOne)
+  detailRowsTwo.value = relabelMetrics(METRIC_LABEL_KEYS.rowsTwo, payload.detailRowsTwo)
   todayProfit.value = payload.todayProfit
   records.value = payload.records
 }

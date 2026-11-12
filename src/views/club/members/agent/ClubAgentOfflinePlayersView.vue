@@ -393,7 +393,7 @@ onMounted(() => {
   background-position: center;
   background-repeat: no-repeat;
 
-  @include theme-light {
+  @include theme-light-own {
     background-color: var(--c-page);
     background-image: var(--offline-players-bg-light);
   }
@@ -425,7 +425,7 @@ onMounted(() => {
   color: #fff;
   border-bottom: 1px solid rgba(255, 255, 255, 0.85);
 
-  @include theme-light {
+  @include theme-light-own {
     color: var(--c-brand);
     border-bottom-color: var(--c-brand);
   }
@@ -436,7 +436,7 @@ onMounted(() => {
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(figma-rem(6));
 
-  @include theme-light {
+  @include theme-light-own {
     background: #fff;
   }
 }
@@ -453,7 +453,7 @@ onMounted(() => {
   width: figma-rem(21.961);
   height: figma-rem(21.53);
 
-  @include theme-light {
+  @include theme-light-own {
     filter: brightness(0);
   }
 }
@@ -722,7 +722,7 @@ onMounted(() => {
 }
 
 .sub-bg {
-  @include theme-light {
+  @include theme-light-own {
     .tabs button {
       color: rgba(0, 0, 0, 0.7);
     }
@@ -780,6 +780,20 @@ onMounted(() => {
 
     .status {
       color: rgba(0, 0, 0, 0.62);
+    }
+  }
+}
+
+.sub-bg {
+  @include theme-light-own {
+    :deep(.back-trigger),
+    :deep(.back-icon) {
+      color: rgba(0, 0, 0, 1);
+    }
+
+    :deep(.title) {
+      color: rgba(15, 8, 8, 0.85);
+      text-shadow: none;
     }
   }
 }

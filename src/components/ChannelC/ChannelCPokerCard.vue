@@ -109,16 +109,13 @@ function fallbackDesktopIcon(event: Event) {
       <div class="c-room-meta">
         <strong :title="room.name">{{ room.name || t('UITexasReport_Label_AllBarPZ') }}</strong>
         <div class="c-stakes">
-          <span class="c-stakes-pill">
-            <span class="c-stakes-blind">
-              <img class="c-uc-icon" :src="chips" :alt="t('adaptation20006')" />
-              <span>
-                {{ formatUC(Number(room.sb) || 0) }}/{{ formatUC((Number(room.sb) || 0) * 2) }}
-              </span>
+          <span class="c-stakes-pill c-stakes-blind">
+            <img class="c-uc-icon" :src="chips" :alt="t('adaptation20006')" />
+            <span>
+              {{ formatUC(Number(room.sb) || 0) }}/{{ formatUC((Number(room.sb) || 0) * 2) }}
             </span>
-            <span class="c-stakes-divider" aria-hidden="true"></span>
-            <span class="c-buy-in">{{ t('MTT_xq_buy') }} {{ buyIn }}</span>
           </span>
+          <span class="c-stakes-pill c-buy-in">{{ t('MTT_xq_buy') }} {{ buyIn }}</span>
         </div>
       </div>
       <button type="button" class="c-join" :disabled="joining" @click.stop="$emit('join', room)">
@@ -196,15 +193,15 @@ function fallbackDesktopIcon(event: Event) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.01rem;
-  font-size: 0.205rem;
+  gap: 0.03rem;
+  font-size: 0.3rem;
   color: #fff;
   text-align: center;
   line-height: 1;
   text-shadow: 0 1px 3px #0005;
 }
 .c-table-label strong {
-  font-size: 0.205rem;
+  font-size: 0.3rem;
   letter-spacing: 0.012rem;
 }
 .c-table-label .c-table-name--plo {
@@ -221,11 +218,11 @@ function fallbackDesktopIcon(event: Event) {
   max-width: 100%;
   flex-wrap: nowrap;
   gap: 0.04rem;
-  font-size: 0.16rem;
+  font-size: 0.22rem;
 }
 
 .c-table-time {
-  font-size: 0.182rem;
+  font-size: 0.26rem;
   line-height: 1.1;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
@@ -245,13 +242,13 @@ function fallbackDesktopIcon(event: Event) {
 
 .c-special-modes img {
   flex: none;
-  width: 0.26rem;
-  height: 0.26rem;
+  width: 0.3rem;
+  height: 0.3rem;
   object-fit: contain;
 }
 
 .c-special-modes > span:only-child {
-  font-size: 0.204rem;
+  font-size: 0.3rem;
   letter-spacing: 0.0225rem;
 
   img {
@@ -295,9 +292,9 @@ function fallbackDesktopIcon(event: Event) {
   display: flex;
   align-items: center;
   gap: 0.1rem;
-  height: 0.875rem;
+  min-height: 0.875rem;
   margin: 0 -1px -1px;
-  padding: 0.05rem 0.148rem 0.05rem 0.1rem;
+  padding: 0.1rem 0.148rem 0.12rem 0.1rem;
   background: linear-gradient(90deg, #f3f4f6, #e8f7f5);
   color: #17191e;
 }
@@ -331,9 +328,11 @@ function fallbackDesktopIcon(event: Event) {
 
 .c-stakes {
   display: flex;
-  align-items: center;
-  padding-top: 0.035rem;
-  font-size: 0.202rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.05rem;
+  padding-top: 0.05rem;
+  font-size: 0.256rem;
   white-space: nowrap;
   min-width: 0;
 }
@@ -341,38 +340,29 @@ function fallbackDesktopIcon(event: Event) {
 .c-stakes-pill {
   display: flex;
   align-items: center;
-  gap: 0.08rem;
   max-width: 100%;
   min-width: 0;
-  padding: 0.042rem 0.132rem;
+  padding: 0.05rem 0.14rem;
   border-radius: 0.225rem;
   background: #fff;
   color: #000;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .c-stakes-blind {
-  display: flex;
-  align-items: center;
-  gap: 0.026rem;
-  flex: none;
+  gap: 0.05rem;
 }
 
 .c-uc-icon {
-  width: 0.23rem;
-  height: 0.23rem;
+  flex: none;
+  width: 0.28rem;
+  height: 0.28rem;
   object-fit: contain;
 }
 
-.c-stakes-divider {
-  flex: none;
-  width: 0.5px;
-  height: 6px;
-  background: rgba(0, 0, 0, 0.61);
-}
-
 .c-buy-in {
-  min-width: 0;
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
 }

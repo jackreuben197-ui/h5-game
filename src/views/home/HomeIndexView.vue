@@ -46,6 +46,7 @@ import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
 import { isChannelPackageHost } from '@/utils/channelPackage'
 import { getCowboyRoomListApi } from '@/api/gc'
 import { requireRealUser } from '@/session/realUserGate'
+import { getUserClubApi } from '@/api/user'
 import { ensureExperienceSession } from '@/session/experienceSession'
 import LoginSession from '@/session/loginSession'
 import { isBridgeHandshakeDone, onBridgeHandshakeDone } from '@/bridge/core/cocosBridgeChannel'
@@ -531,6 +532,48 @@ const canManageChannelClub = computed(
   () => isChannelPackage.value && Boolean(gameStore.isRealUser && currentJoinedClub.value),
 )
 const showChannelFloatingActions = computed(() => canManageChannelClub.value)
+
+const CLUB_LIST_RECOVERY_DELAY_MS = 2500
+const isChannelClubMissing = computed(
+  () => isChannelPackage.value && gameStore.isRealUser && !currentJoinedClub.value,
+)
+let clubListRecoveryTimer: ReturnType<typeof setTimeout> | null = null
+let clubListRecoveryToken = ''
+
+function cancelClubListRecovery(): void {
+  if (clubListRecoveryTimer) {
+    clearTimeout(clubListRecoveryTimer)
+    clubListRecoveryTimer = null
+  }
+}
+
+function scheduleClubListRecovery(): void {
+  cancelClubListRecovery()
+  clubListRecoveryTimer = setTimeout(() => {
+    clubListRecoveryTimer = null
+    const token = gameStore.sessionToken.trim()
+    if (!isChannelClubMissing.value || !token || clubListRecoveryToken === token) return
+    clubListRecoveryToken = token
+    void getUserClubApi().catch((error) => {
+      console.warn('[home] recover club list failed:', error)
+    })
+  }, CLUB_LIST_RECOVERY_DELAY_MS)
+}
+
+watch(
+  isChannelClubMissing,
+  (missing) => {
+    if (missing) {
+      scheduleClubListRecovery()
+      return
+    }
+    cancelClubListRecovery()
+    clubListRecoveryToken = ''
+  },
+  { immediate: true },
+)
+
+onBeforeUnmount(cancelClubListRecovery)
 
 function toSafeNumber(value: unknown): number {
   const num = Number(value)

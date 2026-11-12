@@ -149,7 +149,7 @@ const menuList: CareerMenuItem[] = [
     icon: 'record',
     route: '/mine/career/club/record',
   },
-  { key: 'mtt', label: 'MTT', icon: 'mtt', route: '/mine/career/club/mtt' },
+  { key: 'mtt', label: t('UICareer_MttMenu'), icon: 'mtt', route: '/mine/career/club/mtt' },
   // {
   //   key: 'cowboy',
   //   label: 'Cowboy',

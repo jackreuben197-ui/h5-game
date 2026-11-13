@@ -1,4 +1,5 @@
 import type { RoomDisplayFields, MttDisplayFields } from '@/utils/lobbyDisplayFields'
+import type { MttRegistrationGps } from '@/utils/mttRegistration'
 
 // /roomcenter/groups 请求参数。
 export interface RoomcenterGroupsRequest {
@@ -606,8 +607,15 @@ export interface RoomcenterMttBlindLevelDelay {
   [key: string]: unknown
 }
 
+export interface RoomcenterMttRegistrationRestrictions {
+  limit_gps?: boolean | 0 | 1
+  limit_gps_on?: number
+  limit_gps_distance?: number
+  limit_ip?: boolean | 0 | 1
+}
+
 // /roomcenter/mtt/{id}/detail mtt 字段（对应 cocos RoomCenterMttDetailS.MttDetails，并补充 RoomCenterMttIdDetail.Mtt 字段）。
-export interface RoomcenterMttDetails extends MttDisplayFields {
+export interface RoomcenterMttDetails extends MttDisplayFields, RoomcenterMttRegistrationRestrictions {
   mtt_banner_url?: string
   match_id?: number
   name?: string
@@ -1124,11 +1132,16 @@ export interface GuestAllMttSngIdsRequest {
 }
 
 // /roomcenter/mtt/{id}/buyin 请求体。
-export interface MttBuyInRequest {
+export interface MttBuyInRequest extends Partial<MttRegistrationGps> {
   ticket?: boolean
   ratio?: number
   use_free?: boolean
   club_id?: number
+}
+
+export interface MttBuyInData {
+  tribe_name?: string
+  limit_gps_distance?: number
 }
 
 // /roomcenter/mtt/{id}/rebuy 请求体。

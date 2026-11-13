@@ -1,10 +1,11 @@
 import http from '@/api/http'
-import type { AxiosRequestConfig } from 'axios'
+import { isAxiosError, type AxiosRequestConfig } from 'axios'
 import type { ApiResponse } from '@/api/models/common'
 import type {
   AllMttSngIdsData,
   AllMttSngIdsRequest,
   GuestAllMttSngIdsRequest,
+  MttBuyInData,
   MttBuyInRequest,
   MttRebuyRequest,
   MttUserWalletData,
@@ -37,6 +38,7 @@ import type {
   RoomcenterMttMyRankData,
   RoomcenterMttRealPrize,
   RoomcenterMttRealPrizeRequest,
+  RoomcenterMttRegistrationRestrictions,
   RoomcenterMttRoomsData,
   RoomcenterMttRoomsRequest,
   RoomcenterRandomEnterData,
@@ -70,6 +72,8 @@ import type {
   RoomCenterGuestMatchListRequest,
 } from '@/api/models/roomcenter'
 import { forwardRoomsListToCocos } from '@/bridge/sync'
+import { resolveGameToastMessage, showGameToast } from '@/components/Toast'
+import { t } from '@/i18n'
 
 export interface RoomcenterRequestOptions extends AxiosRequestConfig {
   suppressBusinessToast?: boolean
@@ -193,6 +197,25 @@ export async function getRoomcenterMttDetailApi(
   const endpoint = `/roomcenter/mtt/${mttId}/detail`
   const response = await http.post<ApiResponse<RoomcenterMttDetailData>>(endpoint, payload)
   return response.data
+}
+
+export async function getRoomcenterMttRegistrationRestrictionsApi(
+  mttId: number | string,
+): Promise<ApiResponse<RoomcenterMttRegistrationRestrictions | null>> {
+  const { data: result } = await http.post<
+    ApiResponse<(RoomcenterMttRegistrationRestrictions & { mtt?: RoomcenterMttRegistrationRestrictions }) | null>
+  >(`/roomcenter/mtt/${mttId}`, {})
+  const { data } = result
+  if (!data) return result
+  return {
+    ...result,
+    data: {
+      limit_gps: data.mtt?.limit_gps ?? data.limit_gps,
+      limit_gps_on: data.mtt?.limit_gps_on ?? data.limit_gps_on,
+      limit_gps_distance: data.mtt?.limit_gps_distance ?? data.limit_gps_distance,
+      limit_ip: data.mtt?.limit_ip ?? data.limit_ip,
+    },
+  }
 }
 
 // 对齐 cocos /api/roomcenter/mtt/{id}/myrank。
@@ -366,13 +389,43 @@ export async function getMttUserWalletApi(
   return response.data
 }
 
+const MTT_BUY_IN_GPS_DISTANCE = 10024
+const mttBuyInRestrictionCodes = [10023, MTT_BUY_IN_GPS_DISTANCE, 10025, 10026]
+type MttBuyInResponse = ApiResponse<MttBuyInData | null>
+
 // 对齐 cocos /api/roomcenter/mtt/{id}/buyin。
 export async function mttBuyInApi(
   mttId: number | string,
   payload: MttBuyInRequest = {},
-): Promise<ApiResponse<unknown>> {
-  const response = await http.post<ApiResponse<unknown>>(`/roomcenter/mtt/${mttId}/buyin`, payload)
-  return response.data
+  gpsDistance?: number,
+): Promise<MttBuyInResponse> {
+  let result: MttBuyInResponse
+  try {
+    const response = await http.post<MttBuyInResponse>(`/roomcenter/mtt/${mttId}/buyin`, payload, {
+      suppressBusinessToast: true,
+      suppressBusinessCodes: mttBuyInRestrictionCodes,
+    })
+    result = response.data
+  } catch (error) {
+    const body = isAxiosError<MttBuyInResponse>(error) ? error.response?.data : undefined
+    if (!body || !mttBuyInRestrictionCodes.includes(body.code)) throw error
+    result = body
+  }
+
+  if (result.code === MTT_BUY_IN_GPS_DISTANCE) {
+    const distance = [result.data?.limit_gps_distance, gpsDistance].find(
+      (value) => value != null && Number.isFinite(value) && value > 0,
+    )
+    showGameToast(
+      distance === undefined
+        ? t('MttApplyGpsTooClose')
+        : t(`ServerErrorCode_${result.code}`, { distance }),
+    )
+  } else if (result.code !== 0) {
+    const message = resolveGameToastMessage(`ServerErrorCode_${result.code}`)
+    showGameToast(message || result.message)
+  }
+  return result
 }
 
 // 对齐 cocos /api/roomcenter/mtt/{id}/quit。

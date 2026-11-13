@@ -13,6 +13,21 @@ import { filterVisibleMttRecords } from '@/utils/mttVisibility'
 import { toTimestampMs } from '@/utils/time'
 import type { PrefetchedMttDetail } from '@/utils/mttDetailHandoff'
 
+// Banner 只跳过「报名已截止」的比赛，跳转目标是模板下开赛时间最早的一场：
+// 报名未开始、开放报名、已开赛但仍在延迟报名，以及当前玩家已报名待开赛/待入场，都仍然进入该场。
+// 5 及以后（报名截止、淘汰、完赛等）属于报名结束，改匹配下一场开赛时间最早的比赛。
+const REGISTRATION_OPEN_STATES: ReadonlySet<number> = new Set<number>([
+  MttPlayerStatus.WAITING_APPLY,
+  MttPlayerStatus.CAN_APPLY_NOT_START,
+  MttPlayerStatus.CAN_APPLY_DELAY,
+  MttPlayerStatus.APPLIED_NOT_START,
+  MttPlayerStatus.CAN_JOIN,
+])
+
+function isRegistrationOpen(stateCode: unknown): boolean {
+  return REGISTRATION_OPEN_STATES.has(Number(stateCode))
+}
+
 export function useLobbyBannerMatch() {
   const game = useGameStore()
   const user = useUserInfoStore()
@@ -48,7 +63,6 @@ export function useLobbyBannerMatch() {
       records.push(...(response.data?.mtt_list ?? []))
     }
 
-    const now = Date.now()
     const candidates = filterVisibleMttRecords(
       records,
       metadata,
@@ -62,28 +76,27 @@ export function useLobbyBannerMatch() {
         const start = toTimestampMs(match.start_time)
         const knownTemplate = match.template_id ?? metadata[id]?.template_id
         const status = Number(match.status)
+        // 不再按 apply_start_time 过滤：报名未开始的比赛同样是最早开赛的目标。
         if (
           !Number.isSafeInteger(id) || id <= 0 || start <= 0 ||
           (status !== 0 && status !== 1) ||
-          toTimestampMs(match.apply_start_time) > now ||
           (Number(knownTemplate) > 0 && String(knownTemplate) !== templateId)
         ) return []
         return [{ id, start }]
       })
       .sort((a, b) => a.start - b.start || a.id - b.id)
 
-    // 旧版列表没有模板 ID。按开赛时间分批查询详情，并以服务端当前报名状态确认。
+    // 旧版列表没有模板 ID。按开赛时间分批查询详情，并以服务端当前状态排除报名已截止的比赛。
     for (let i = 0; i < candidates.length; i += 6) {
       const batch = candidates.slice(i, i + 6)
       const details = await Promise.all(batch.map(({ id }) => getRoomcenterMttDetailApi(id)))
       if (!isCurrentSession()) return
       const matchIndex = details.findIndex(({ code, data }) => {
-        const state = Number(data?.state_code)
         const status = Number(data?.mtt?.status)
         return Number(code) === 0 &&
           (status === 0 || status === 1) &&
           String(data?.mtt?.template_id) === templateId &&
-          (state === MttPlayerStatus.CAN_APPLY_NOT_START || state === MttPlayerStatus.CAN_APPLY_DELAY)
+          isRegistrationOpen(data?.state_code)
       })
       const match = batch[matchIndex]
       const detail = details[matchIndex]?.data

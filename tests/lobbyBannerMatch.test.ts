@@ -42,7 +42,7 @@ const { useLobbyBannerMatch } = await import('../src/composables/useLobbyBannerM
 const { state } = await import(stateUrl)
 hooks.deregister()
 
-test('each click finds the earliest visible match currently open for registration', async () => {
+test('each click finds the earliest visible match whose registration has not closed', async () => {
   const now = Date.now()
   const match = (id: number, offset: number, extra: Record<string, unknown> = {}) => ({
     match_id: id,
@@ -57,23 +57,33 @@ test('each click finds the earliest visible match currently open for registratio
   })
   state.matches = [
     match(1, 6000),
-    match(2, -1000, { status: 1, state: 5 }),
-    match(3, 1000, { detailTemplate: 99 }),
-    match(4, 2000, { status: 2 }),
-    match(5, 3000, { apply_start_time: now + 1000, state: 0 }),
-    match(6, 4000, { relate_tribe_club_list: [{ tribe_id: 12 }] }),
+    match(2, -1000, { status: 1, state: 5 }), // 报名已截止 → 排除
+    match(3, 1000, { detailTemplate: 99 }), // 模板不符 → 排除
+    match(4, 2000, { status: 2 }), // 已结束 → 排除
+    match(5, 3000, { apply_start_time: now + 1000, state: 0 }), // 报名未开始 → 命中
+    match(6, 4000, { relate_tribe_club_list: [{ tribe_id: 12 }] }), // 不可见 → 排除
     match(7, 7000),
   ]
   const resolve = useLobbyBannerMatch()
   const first = await resolve(7, '42')
-  assert.equal(first?.id, 1)
-  assert.equal(first?.detail.state_code, 1)
+  assert.equal(first?.id, 5)
+  assert.equal(first?.detail.state_code, 0)
 
+  // 开赛最早的一场即使已开赛但仍在延迟报名，也要命中。
   state.matches.push(match(8, -2000, { status: 1, state: 2 }))
   assert.equal((await resolve(7, '42'))?.id, 8)
 
+  // 该场报名截止后，自动跳到下一场开赛最早的比赛（含报名未开始的比赛）。
   state.matches[7].state = 5
-  assert.equal((await resolve(7, '42'))?.id, 1)
+  assert.equal((await resolve(7, '42'))?.id, 5)
+
+  // 当前玩家已报名、等待入场的比赛仍然可以进入。
+  state.matches[7].state = 4
+  assert.equal((await resolve(7, '42'))?.id, 8)
+
+  // 剩余比赛报名均已截止时不跳转。
+  state.matches = [match(9, 1000, { state: 5 }), match(10, 2000, { state: 7 })]
+  assert.equal(await resolve(7, '42'), undefined)
 
   state.matches = []
   assert.equal(await resolve(7, '42'), undefined)

@@ -23,6 +23,10 @@ import { useCasinoGameLaunch } from '@/composables/useCasinoGameLaunch'
 import { useRoomListStore } from '@/stores/roomList'
 import { useCasinoStore } from '@/stores/casino'
 import { buildChannelCFeed, type ChannelCSection } from '@/features/channelC/model'
+import {
+  readChannelCListScroll,
+  saveChannelCListScroll,
+} from '@/features/channelC/listState'
 import ChannelCHeader from './ChannelCHeader.vue'
 import ChannelCFilters from './ChannelCFilters.vue'
 import ChannelCOverlays from './ChannelCOverlays.vue'
@@ -55,6 +59,7 @@ const roomStore = useRoomListStore()
 const casinoStore = useCasinoStore()
 const root = ref<HTMLElement | null>(null)
 const overlays = ref<InstanceType<typeof ChannelCOverlays> | null>(null)
+const persistFilters = computed(() => props.section !== 'home')
 const {
   pokerFilter,
   blindFilter,
@@ -65,7 +70,7 @@ const {
   filteredRooms,
   filteredMatches,
   resetFilters,
-} = useChannelCFilters(visibleRooms, visibleMatches, tournamentSeries)
+} = useChannelCFilters(visibleRooms, visibleMatches, tournamentSeries, persistFilters)
 const casinoCategory = ref('hot')
 const showCasino = computed(() => props.section === 'home' && casinoCategory.value !== 'hot')
 const now = ref(Date.now())
@@ -103,8 +108,13 @@ function playLiveWin(item: LiveWinItem) {
   else showGameToast(t('UICasino_ClubNotEnabled'))
 }
 
-function container() {
-  return root.value?.closest<HTMLElement>('.main-layout-content')
+let lastScrollTop = 0
+let scrollElement: HTMLElement | null = null
+let scrollRestored = false
+let restoreFrame: number | undefined
+
+function container(): HTMLElement | null {
+  return root.value?.closest<HTMLElement>('.main-layout-content') ?? null
 }
 function holdHeight() {
   if (root.value) root.value.style.minHeight = `${root.value.offsetHeight}px`
@@ -112,27 +122,71 @@ function holdHeight() {
 function releaseHeight() {
   if (root.value) root.value.style.minHeight = ''
 }
-function scrollKey(section = props.section) {
+function scrollKey(section: ChannelCSection = props.section) {
   return `channel-c-${section}`
 }
-function saveScroll() {
+function savedScroll(section: ChannelCSection = props.section) {
+  return readChannelCListScroll(section) || roomStore.getScrollPosition(scrollKey(section))
+}
+function handleContainerScroll(event: Event) {
+  lastScrollTop = Math.max(0, (event.currentTarget as HTMLElement | null)?.scrollTop || 0)
+}
+function unbindScrollTracking() {
+  scrollElement?.removeEventListener('scroll', handleContainerScroll)
+  scrollElement = null
+}
+function bindScrollTracking() {
   const element = container()
-  if (element) roomStore.saveScrollPosition(scrollKey(), element.scrollTop)
+  if (element === scrollElement) return
+  unbindScrollTracking()
+  scrollElement = element
+  if (element) {
+    lastScrollTop = Math.max(element.scrollTop, savedScroll())
+    element.addEventListener('scroll', handleContainerScroll, { passive: true })
+  }
+}
+function saveScroll(section: ChannelCSection = props.section) {
+  const currentTop = Math.max(0, container()?.scrollTop || 0)
+  const scrollTop = currentTop > 0 ? currentTop : lastScrollTop
+  roomStore.saveScrollPosition(scrollKey(section), scrollTop)
+  saveChannelCListScroll(section, scrollTop)
+}
+function cancelScheduledRestore() {
+  if (restoreFrame !== undefined) cancelAnimationFrame(restoreFrame)
+  restoreFrame = undefined
+}
+function scheduleRestore() {
+  if (restoreFrame !== undefined || scrollRestored || !ready.value) return
+  restoreFrame = requestAnimationFrame(() => {
+    restoreFrame = undefined
+    const element = container()
+    if (!element || !ready.value) return
+    const target = savedScroll()
+    const position = Math.min(target, Math.max(0, element.scrollHeight - element.clientHeight))
+    element.scrollTop = position
+    lastScrollTop = position
+    // 卡片尚未渲染时保留未恢复状态，等 cards.length 变化后再次尝试。
+    scrollRestored = target === 0 || cards.value.length > 0 || position >= target - 1
+  })
 }
 async function restoreScroll() {
+  scrollRestored = false
+  cancelScheduledRestore()
   await nextTick()
-  const element = container()
-  if (element && ready.value) element.scrollTop = roomStore.getScrollPosition(scrollKey())
+  scheduleRestore()
 }
 function activate() {
   if (!clock)
     clock = setInterval(() => {
       now.value = Date.now()
     }, 1000)
+  bindScrollTracking()
   void restoreScroll()
 }
 function deactivate() {
   saveScroll()
+  cancelScheduledRestore()
+  unbindScrollTracking()
   clearInterval(clock)
   clock = undefined
 }
@@ -144,9 +198,13 @@ onMounted(() => {
 onActivated(activate)
 onDeactivated(deactivate)
 onBeforeUnmount(deactivate)
-watch(ready, (value) => {
-  if (value) void restoreScroll()
-})
+watch(
+  [ready, () => cards.value.length],
+  () => {
+    if (ready.value && !scrollRestored) void restoreScroll()
+  },
+  { flush: 'post' },
+)
 watch(
   [clubId, () => props.section],
   ([id, section]) => {
@@ -157,9 +215,9 @@ watch(
 watch(
   () => props.section,
   (_next, previous) => {
-    const element = container()
-    if (element) roomStore.saveScrollPosition(scrollKey(previous), element.scrollTop)
+    saveScroll(previous)
     resetFilters()
+    lastScrollTop = 0
     void restoreScroll()
   },
 )

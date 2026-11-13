@@ -124,6 +124,11 @@ function toSafeNumber(value: unknown): number {
   return Number.isFinite(numeric) ? numeric : 0
 }
 
+function getCurrentChannelClubId(): number {
+  const currentClub = userInfoStore.channelDefaultClub || userInfoStore.currentClub
+  return toSafeNumber(currentClub?.club_id)
+}
+
 function formatAmount(value: unknown): string {
   if (activeTab.value === 4) {
     return toSafeNumber(value).toLocaleString('en-US')
@@ -418,11 +423,19 @@ function mapWalletList(wallet: UserWalletWallet[] | undefined): WalletDetailItem
   })
 }
 
-// 对齐 Unity UIMineBillComponent.RefreshTotalBillUC / RefreshTotalBillClubScore：
-// tab 1/2 顶部"总额度"与"明细"全部来自 /user/my_wallets，而不是汇总 clubList。
+// 普通包对齐 Unity UIMineBillComponent.RefreshTotalBillUC / RefreshTotalBillClubScore：
+// tab 1/2 顶部"总额度"与"明细"来自 /user/my_wallets；渠道包 UC 只取当前俱乐部余额。
 async function fetchWallet(
   goldType: number,
 ): Promise<{ amount: number; details: WalletDetailItem[] } | null> {
+  if (isChannelPackage && goldType === 1) {
+    const currentClub = userInfoStore.channelDefaultClub || userInfoStore.currentClub
+    return {
+      amount: toSafeNumber(currentClub?.user_gold),
+      details: [],
+    }
+  }
+
   try {
     const res = await postUserWalletApi({ gold_type: goldType, origin_type: 0 })
     if (res.code !== 0 || !res.data) {
@@ -438,6 +451,9 @@ async function fetchWallet(
 }
 
 const showWalletDetailButton = computed(() => {
+  if (isChannelPackage && activeTab.value !== 4) {
+    return false
+  }
   if (activeTab.value === 1 || activeTab.value === 2) {
     return walletDetails.value.length > 0
   }
@@ -530,9 +546,12 @@ function billCache() {
 }
 
 function billCacheKey(tab: number): string {
-  const clubId = userInfoStore.currentClub?.club_id ?? 0
-  // -v2：行结构变更（去 day/month/dateKey，新增 titleText/diamondTable* 等），需失效旧缓存。
-  return `${clubId}-${tab}-v2`
+  const clubId = isChannelPackage
+    ? getCurrentChannelClubId()
+    : (userInfoStore.currentClub?.club_id ?? 0)
+  // 渠道包 v3：账单查询新增 club_id 过滤，不能继续使用旧的全俱乐部明细缓存。
+  const cacheVersion = isChannelPackage ? 'v3' : 'v2'
+  return `${clubId}-${tab}-${cacheVersion}`
 }
 
 async function readBillCache(tab: number): Promise<BillCachePayload | null> {
@@ -587,11 +606,13 @@ async function fetchBillData(reset = true, silent = false): Promise<void> {
     loadingMore.value = true
   }
 
+  const channelClubId = isChannelPackage ? getCurrentChannelClubId() : 0
   const payload = {
     ...billRequestByTab[tab],
     limit: PAGE_LIMIT,
     offset: reset ? 0 : pageOffset.value,
     order_type: 2,
+    ...(channelClubId > 0 ? { club_id: channelClubId } : {}),
   }
 
   const walletGold = tab === 1 || tab === 2 ? billRequestByTab[tab].gold_type : 0
@@ -727,7 +748,9 @@ onMounted(() => {
       </div>
 
       <section v-if="activeTab !== 3" class="glass-card total-card">
-        <div v-if="activeTab === 1" class="label">UC{{ t('UIClub_Text33') }}</div>
+        <div v-if="activeTab === 1" class="label">
+          {{ isChannelPackage ? t('Wallet_BalanceLabel') : 'UC' + t('UIClub_Text33') }}
+        </div>
         <div v-else-if="activeTab === 2" class="label">{{ t('UIMineAllClub') }}</div>
         <div v-else-if="activeTab === 4" class="label">{{ t('UIMineAllDiamond') }}</div>
         <div class="amount-row">
@@ -768,7 +791,10 @@ onMounted(() => {
             </div>
           </div>
         </div>
-        <div v-if="!walletDetailExpanded" class="divided"></div>
+        <div
+          v-if="!walletDetailExpanded && (!isChannelPackage || activeTab === 4)"
+          class="divided"
+        ></div>
         <button
           v-if="showWalletDetailButton"
           class="detail-btn"

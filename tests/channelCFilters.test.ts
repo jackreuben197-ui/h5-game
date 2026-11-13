@@ -30,6 +30,7 @@ const {
   toggleFilterValue,
 } = await import('../src/features/channelC/filters.ts')
 const { useChannelCFilters } = await import('../src/composables/useChannelCFilters.ts')
+const listState = await import('../src/features/channelC/listState.ts')
 hooks.deregister()
 
 function room(rid: number, sb: number, extra: Partial<RoomRecord> = {}): RoomRecord {
@@ -164,4 +165,37 @@ test('changing gameplay preserves multiple blinds; backend removal clears only o
   assert.deepEqual(filters.blindFilter.value, [])
   assert.deepEqual(filters.tournamentFilter.value, [])
   assert.deepEqual(filters.mttFilter.value, [])
+})
+
+test('channel C list filters and scroll survive a component remount', async () => {
+  listState.saveChannelCListFilters({ poker: [], blind: [], tournament: [], mtt: [] })
+  const rooms = ref([room(1, 100), room(2, 500, { game_type: 1 })])
+  const matches = ref<MttListRecord[]>([])
+  const series = ref<MttSeriesInfoRecord[]>([
+    { id: 10, name: 'Monthly' },
+    { id: 20, name: 'Weekly' },
+  ])
+
+  const beforeNavigation = useChannelCFilters(rooms, matches, series, true)
+  beforeNavigation.pokerFilter.value = ['plo']
+  beforeNavigation.blindFilter.value = [100]
+  beforeNavigation.tournamentFilter.value = [10]
+  beforeNavigation.mttFilter.value = ['free']
+  listState.saveChannelCListScroll('mtt', 320)
+  await nextTick()
+
+  const afterBack = useChannelCFilters(rooms, matches, series, true)
+  assert.deepEqual(afterBack.pokerFilter.value, ['plo'])
+  assert.deepEqual(afterBack.blindFilter.value, [100])
+  assert.deepEqual(afterBack.tournamentFilter.value, [10])
+  assert.deepEqual(afterBack.mttFilter.value, ['free'])
+  assert.equal(listState.readChannelCListScroll('mtt'), 320)
+
+  afterBack.resetFilters()
+  assert.deepEqual(listState.readChannelCListFilters(), {
+    poker: [],
+    blind: [],
+    tournament: [],
+    mtt: [],
+  })
 })

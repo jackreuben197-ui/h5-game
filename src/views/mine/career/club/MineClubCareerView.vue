@@ -22,7 +22,8 @@ const CAREER_CLUB_ALL = 'all'
 const router = useRouter()
 const userInfoStore = useUserInfoStore()
 const gameStore = useGameStore()
-const pageTitle = isChannelPackageHost() ? t('UIData_KrVdD5WqB') : t('PageMineClubCareer')
+const isChannelPackage = isChannelPackageHost()
+const pageTitle = isChannelPackage ? t('UIData_KrVdD5WqB') : t('PageMineClubCareer')
 
 // 背景素材由 CSS 根据 data-theme 选择，切换主题时无需重建页面。
 const backgroundStyle = computed(() => ({
@@ -203,14 +204,17 @@ function handleMenuClick(item: CareerMenuItem): void {
     showGameToast(t('UIClub_InDeve'))
     return
   }
-  // 将本页面上选中的俱乐部同步到全局 currentClubId，保证子页面以当前选择为准；
-  // "全部" 时清空，子页面接口侧（withClubId / 可选链）会自然走"不限俱乐部"。
-  if (selectedClubIndex.value === 0) {
-    userInfoStore.currentClubId = ''
+  // 子页面分别读取全局 currentClubId 和生涯选择缓存，进入前同步实际生效的俱乐部。
+  const clubId = resolveSelectedClubId()
+  if (clubId > 0) {
+    userInfoStore.setCurrentClubById(clubId)
+    if (isChannelPackage) {
+      localStore.setItem(CAREER_CLUB_STORE_KEY, String(clubId))
+    }
   } else {
-    const club = userInfoStore.clubList[selectedClubIndex.value - 1]
-    if (club?.club_id != null) {
-      userInfoStore.setCurrentClubById(club.club_id)
+    userInfoStore.currentClubId = ''
+    if (isChannelPackage) {
+      localStore.setItem(CAREER_CLUB_STORE_KEY, CAREER_CLUB_ALL)
     }
   }
   void router.push(item.route)
@@ -219,6 +223,20 @@ function handleMenuClick(item: CareerMenuItem): void {
 function toSafeNumber(value: unknown): number {
   const numeric = Number(value)
   return Number.isFinite(numeric) ? numeric : 0
+}
+
+function resolveSelectedClubId(): number {
+  if (isChannelPackage) {
+    const currentClub = userInfoStore.channelDefaultClub || userInfoStore.currentClub
+    return toSafeNumber(currentClub?.club_id)
+  }
+  return selectedClubIndex.value === 0
+    ? 0
+    : toSafeNumber(userInfoStore.clubList[selectedClubIndex.value - 1]?.club_id)
+}
+
+function resolveCurrencyType(): number {
+  return isChannelPackage ? 1 : currencyTypes[selectedCurrencyIndex.value].value
 }
 
 /**
@@ -236,17 +254,12 @@ function resolveRequestParams() {
     gameTypes = [0]
   }
 
-  // 对齐 Unity CareerRecordPart：「全部」必须显式传 club_id=0，省略字段时服务端会回上一次的俱乐部数据。
-  const clubId =
-    selectedClubIndex.value === 0
-      ? 0
-      : (userInfoStore.clubList[selectedClubIndex.value - 1]?.club_id ?? 0)
-
+  // 普通包「全部」显式传 club_id=0；渠道包始终传当前俱乐部 ID。
   return {
-    filter_type: currencyTypes[selectedCurrencyIndex.value].value,
+    filter_type: resolveCurrencyType(),
     game_types: gameTypes,
     poker_types: selectedGameTab.value === '6+' ? [2] : [0],
-    club_id: clubId,
+    club_id: resolveSelectedClubId(),
   }
 }
 
@@ -301,12 +314,7 @@ function extractMetricsFromCache(): CareerMetric[] {
 //   clubId = 0(全部) / 俱乐部 id；currency = 1(UC)/3(记分牌)/4(钻石)；gameTab = nlh|plo|6+|mahjong。
 // 接口返回 one_day/week_day/mon_day 全部时间窗的数据，所以 date tab 不进 key。
 function homeCacheKey(): string {
-  const clubId =
-    selectedClubIndex.value === 0
-      ? 0
-      : (userInfoStore.clubList[selectedClubIndex.value - 1]?.club_id ?? 0)
-  const currency = currencyTypes[selectedCurrencyIndex.value].value
-  return `${clubId}_home_${currency}_${selectedGameTab.value}`
+  return `${resolveSelectedClubId()}_home_${resolveCurrencyType()}_${selectedGameTab.value}`
 }
 
 function homeCache() {
@@ -375,7 +383,7 @@ onMounted(() => {
   <div class="page-shell career-page" :style="backgroundStyle" @click="closePopup">
     <div class="page-top"></div>
     <HeaderBack :title="pageTitle" extra-padding>
-      <template #right>
+      <template v-if="!isChannelPackage" #right>
         <div class="action-wrap">
           <TopActionButton
             :name="selectedClubLabel"

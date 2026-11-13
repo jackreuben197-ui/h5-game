@@ -8,6 +8,7 @@ import {
 } from '@bridge-protocol'
 import router from '@/router'
 import type { RouteLocationRaw } from 'vue-router'
+import { useGameStore } from '@/stores/game'
 import { useLoginModalStore } from '@/stores/loginModal'
 import { pinia } from '@/stores/pinia'
 import { createLogger } from '@/utils/logger'
@@ -165,6 +166,8 @@ async function navigateH5(payload: unknown): Promise<void> {
     setH5Visible(true)
   }
 
+  const openLoginModal = normalized.openLoginModal && !useGameStore(pinia).isRealUser
+
   try {
     await router.isReady()
     const failure = normalized.replace
@@ -174,19 +177,19 @@ async function navigateH5(payload: unknown): Promise<void> {
       log.warn('[h5-navigate] navigation failed:', failure)
       // 牌桌内请求登录时，H5 路由通常仍停留在大厅，只是根节点被隐藏。
       // 重复导航会返回 failure，但登录弹窗仍应在当前页面打开。
-      if (normalized.openLoginModal) {
+      if (openLoginModal) {
         useLoginModalStore(pinia).open()
       }
       return
     }
-    if (normalized.openLoginModal) {
+    if (openLoginModal) {
       useLoginModalStore(pinia).open()
     }
 
     log.info('[h5-navigate] done', {
       mode: normalized.replace ? 'replace' : 'push',
       target: normalized.route,
-      openLoginModal: normalized.openLoginModal,
+      openLoginModal,
     })
   } catch (error) {
     log.warn('[h5-navigate] navigation error:', error)

@@ -463,8 +463,7 @@ function triggerReconnect(reason: WsReconnectingPayload['reason']): void {
     pendingHeartbeats: pendingHeartbeatCount,
     attempts: reconnectAttempts,
   })
-  if (reconnectState === 'failed') {
-    // 已放弃；新的触发要求清掉旧的失败状态再重试。
+  if (reconnectState === 'failed' || reason === 'visibility' || reason === 'online') {
     reconnectState = 'idle'
     firstFailedAt = 0
     reconnectAttempts = 0
@@ -473,20 +472,22 @@ function triggerReconnect(reason: WsReconnectingPayload['reason']): void {
   nextReconnectReason = reason
   pendingHeartbeatCount = 0
   clearReconnectTimer()
-  // 已经打开就不重复触发。
-  if (isWsOpen()) {
-    log.info('triggerReconnect skipped: ws already open', { reason })
-    return
-  }
-  // 关闭旧连接，让 onclose 走 scheduleReconnect。
   if (ws) {
-    log.info('triggerReconnect: closing stale ws to trigger reconnect path', { reason })
+    const stale = ws
+    log.info('triggerReconnect: closing stale ws to trigger reconnect path', {
+      reason,
+      wsReady: stale.readyState,
+    })
+    cleanWsHandlers()
+    ws = null
+    stopHeartbeatLoop()
     try {
-      ws.close()
+      stale.close()
     } catch {
       // 忽略关闭异常。
     }
-    return
+    emitWsClosed({ code: 1006, reason: `stale-${reason}`, wasClean: false })
+    reconnectState = 'reconnecting'
   }
   scheduleReconnect()
 }

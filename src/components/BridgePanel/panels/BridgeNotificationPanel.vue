@@ -1,29 +1,21 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { showFailToast, showSuccessToast, showToast } from 'vant'
-import { t } from '@/i18n'
+import { t, textI18n } from '@/i18n'
 import {
   canPromptInstall,
   isStandaloneDisplay,
   showAddToHomeScreenPrompt,
 } from '@/utils/environment'
 import { isIos } from '@/utils/iosWebClip'
-import hometab1 from '@/assets/images/hometab1.png'
-import hometab2 from '@/assets/images/hometab2.png'
+import addHomeGuide from '@/assets/images/add_home_guide.jpg'
+import addHomeGuideEn from '@/assets/images/add_home_guide_en.jpg'
 import { sanitizeRichHtml } from '@/utils/safeHtml'
 import {
   isExternalLinkIframeModeEnabled,
   openExternalLinkFrame,
 } from '@/utils/externalLinkFrame'
 import { isChannelPackageHost, isPrivateDomainMode } from '@/utils/channelPackage'
-import { useUserInfoStore } from '@/stores/userInfo'
-import {
-  DEFAULT_CLUB_ICON,
-  DEFAULT_CLUB_NAME,
-  OFFICIAL_WEB_ICON,
-  OFFICIAL_WEB_NAME,
-} from '@/utils/safariWebApp'
-import { resolveHomeShortcutConfig, type HomeShortcutRecord } from '@/utils/homeShortcut'
 
 const props = defineProps<{
   panelProps?: Record<string, unknown>
@@ -111,83 +103,12 @@ const findUsData = computed<FindUsData & { link_list: string[] }>(() => {
 })
 
 // ==================== 状态 ====================
-const userInfoStore = useUserInfoStore()
-
 const isClub = computed<boolean>(() => {
   if (typeof props.panelProps?.isClub === 'boolean') {
     return props.panelProps.isClub
   }
   return isChannelPackageHost() || isPrivateDomainMode()
 })
-
-const homeShortcutRecord = ref<HomeShortcutRecord | null>(resolveHomeShortcutConfig())
-
-const dynamicGuideLabel = computed<string>(() => {
-  if (isClub.value) {
-    const club = userInfoStore.channelDefaultClub || userInfoStore.currentClub
-    const raw = (club || {}) as Record<string, unknown>
-    const fromClub =
-      (typeof club?.safari_label === 'string' && club.safari_label.trim()) ||
-      (typeof raw.safari_name === 'string' && raw.safari_name.trim()) ||
-      (typeof raw.desktop_name === 'string' && raw.desktop_name.trim()) ||
-      (typeof club?.name === 'string' && club.name.trim()) ||
-      (typeof raw.app_name === 'string' && raw.app_name.trim())
-    if (fromClub) return fromClub
-
-    if (typeof window !== 'undefined') {
-      const cached = window.localStorage.getItem('dzpk_h5_safari_label')
-      if (cached && cached.trim()) return cached.trim()
-    }
-
-    if (
-      typeof document !== 'undefined' &&
-      document.title &&
-      document.title.trim() &&
-      document.title !== OFFICIAL_WEB_NAME
-    ) {
-      return document.title.trim()
-    }
-
-    return DEFAULT_CLUB_NAME
-  }
-  return homeShortcutRecord.value?.label || OFFICIAL_WEB_NAME
-})
-
-const dynamicGuideIcon = computed<string>(() => {
-  if (isClub.value) {
-    const club = userInfoStore.channelDefaultClub || userInfoStore.currentClub
-    const raw = (club || {}) as Record<string, unknown>
-    const fromClub =
-      (typeof club?.safari_icon_url === 'string' && club.safari_icon_url.trim()) ||
-      (typeof raw.safari_icon === 'string' && raw.safari_icon.trim()) ||
-      (typeof raw.desktop_icon === 'string' && raw.desktop_icon.trim()) ||
-      (typeof club?.logo === 'string' && club.logo.trim()) ||
-      (typeof raw.app_icon === 'string' && raw.app_icon.trim())
-    if (fromClub) return fromClub
-
-    if (typeof window !== 'undefined') {
-      const cached = window.localStorage.getItem('dzpk_h5_safari_icon')
-      if (cached && cached.trim()) return cached.trim()
-    }
-
-    if (typeof document !== 'undefined') {
-      const touchIcon = document.querySelector<HTMLLinkElement>('link[rel="apple-touch-icon"]')?.href
-      if (touchIcon && touchIcon.trim()) return touchIcon.trim()
-      const favIcon = document.querySelector<HTMLLinkElement>('link[rel="icon"]')?.href
-      if (favIcon && favIcon.trim()) return favIcon.trim()
-    }
-
-    return DEFAULT_CLUB_ICON
-  }
-  return homeShortcutRecord.value?.iconUrl || OFFICIAL_WEB_ICON
-})
-
-function onGuideIconError(event: Event): void {
-  const target = event.target
-  if (target instanceof HTMLImageElement) {
-    target.src = isClub.value ? DEFAULT_CLUB_ICON : OFFICIAL_WEB_ICON
-  }
-}
 
 // 按需显示：只把有数据的步骤纳入递进序列（1=下载APP 2=弹窗公告 3=备用地址）
 // 俱乐部版本只保留第1步，不展示后两步
@@ -212,6 +133,11 @@ const popupNoticeIndex = ref(0)
 
 // iOS 无法自动安装（第三方浏览器 / 内嵌 WebView）时的手动“添加到主屏幕”引导。
 const showAddHomeGuide = ref(false)
+
+const currentGuideImage = computed(() => {
+  const loc = textI18n.locale.value
+  return loc === 'cn' || loc === 'zh' ? addHomeGuide : addHomeGuideEn
+})
 
 function closeAddHomeGuide(): void {
   showAddHomeGuide.value = false
@@ -357,7 +283,6 @@ async function onSecondaryAction(): Promise<void> {
 
   // iOS 设备：统一展示 iOS 专用的“添加到主屏幕”图文引导弹窗
   if (isIos()) {
-    homeShortcutRecord.value = resolveHomeShortcutConfig()
     showAddHomeGuide.value = true
     return
   }
@@ -549,52 +474,19 @@ async function onSecondaryAction(): Promise<void> {
     <Transition name="a2h-pop">
       <div v-if="showAddHomeGuide" class="a2h-guide-overlay" @click.self="closeAddHomeGuide">
         <div class="a2h-guide">
-          <div class="a2h-guide__header">
-            <h2 class="a2h-guide__title">{{ t('H5Display_GuideTitle') }}</h2>
-            <button class="a2h-guide__close" type="button" @click="closeAddHomeGuide">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round">
-                <line x1="6" y1="6" x2="18" y2="18" />
-                <line x1="18" y1="6" x2="6" y2="18" />
-              </svg>
-            </button>
-          </div>
+          <button
+            class="a2h-guide__close"
+            type="button"
+            aria-label="Close"
+            @click="closeAddHomeGuide"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" />
+            </svg>
+          </button>
           <div class="a2h-guide__body">
-            <div class="a2h-guide__step">
-              <p class="a2h-guide__text">
-                {{ t('H5Display_GuideStep1Part1') }}
-                <svg class="a2h-guide__inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                  <polyline points="16 6 12 2 8 6" />
-                  <line x1="12" y1="2" x2="12" y2="15" />
-                </svg>
-                {{ t('H5Display_GuideStep1Part2') }}
-              </p>
-              <div class="a2h-guide__img-wrap">
-                <img :src="hometab1" alt="" class="a2h-guide__img" />
-              </div>
-            </div>
-            <div class="a2h-guide__step">
-              <p class="a2h-guide__text">{{ t('H5Display_GuideStep2') }}</p>
-              <div class="a2h-guide__img-wrap a2h-guide__img-wrap--step2">
-                <img :src="hometab2" alt="" class="a2h-guide__img" />
-                <div class="a2h-guide__mock-row">
-                  <div class="a2h-guide__mock-icon-wrap">
-                    <img
-                      :src="dynamicGuideIcon"
-                      alt=""
-                      class="a2h-guide__mock-icon"
-                      @error="onGuideIconError"
-                    />
-                  </div>
-                  <div class="a2h-guide__mock-info">
-                    <div class="a2h-guide__mock-title">
-                      <span>{{ dynamicGuideLabel }}</span>
-                    </div>
-                    <div class="a2h-guide__mock-sub">{{ dynamicGuideLabel }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <img :src="currentGuideImage" alt="" class="a2h-guide__img" />
           </div>
         </div>
       </div>
@@ -1098,98 +990,70 @@ async function onSecondaryAction(): Promise<void> {
   }
 }
 
-/* ============ 手动“添加到主屏幕”引导（tooltip + guide）============ */
+/* ============ 手动“添加到主屏幕”引导（tutorial card）============ */
 .a2h-guide-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 12% 8% 0;
+  padding: 0 16px max(16px, env(safe-area-inset-bottom, 16px));
   z-index: 100000006;
 }
 
 .a2h-guide {
+  position: relative;
   width: 100%;
-  height: auto;
-  max-height: 100%;
-  border-top-left-radius: 40px;
-  border-top-right-radius: 40px;
+  max-width: 380px;
+  max-height: 90vh;
+  border-radius: 24px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
   display: flex;
   flex-direction: column;
-  position: relative;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-top-left-radius: 40px;
-    border-top-right-radius: 40px;
-    padding: 1px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.08) 30%, rgba(255, 255, 255, 0) 100%);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-  }
-
-  &__header {
-    padding: 20px 20px 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    min-height: 60px;
-  }
-
-  &__title {
-    color: #fff;
-    font-size: 18px;
-    font-weight: 700;
-    margin: 0;
-    text-align: center;
-    letter-spacing: 0.5px;
-  }
 
   &__close {
     position: absolute;
-    top: 16px;
-    right: 16px;
-    width: 32px;
-    height: 32px;
+    top: 12px;
+    right: 12px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(0, 0, 0, 0.08);
+    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    z-index: 10;
+    color: #444444;
+    transition: background-color 0.2s, transform 0.15s;
 
     svg {
-      width: 16px;
-      height: 16px;
+      width: 14px;
+      height: 14px;
+    }
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.14);
     }
 
     &:active {
-      transform: scale(0.9);
+      background: rgba(0, 0, 0, 0.2);
+      transform: scale(0.92);
     }
   }
 
   &__body {
-    padding: 0 16px 40px;
-    flex: 0 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    position: relative;
+    width: 100%;
+    max-height: 90vh;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
 
     &::-webkit-scrollbar {
@@ -1197,112 +1061,9 @@ async function onSecondaryAction(): Promise<void> {
     }
   }
 
-  &__step {
-    flex-shrink: 0;
-  }
-
-  &__text {
-    color: #fff;
-    font-size: 13px;
-    font-weight: 500;
-    line-height: 1.5;
-    margin: 0 auto 12px;
-    width: 90%;
-    max-width: 340px;
-  }
-
-  &__inline-icon {
-    display: inline-block;
-    width: 18px;
-    height: 18px;
-    vertical-align: middle;
-    margin: 0 2px 4px;
-  }
-
-  &__img-wrap {
-    position: relative;
-    border-radius: 20px;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    width: 80%;
-    max-width: 300px;
-    margin: 0 auto;
-
-    &--step2 {
-      position: relative;
-    }
-  }
-
-  &__mock-row {
-    position: absolute;
-    top: 29.67%;
-    left: 0;
-    width: 100%;
-    height: 33.06%;
-    display: flex;
-    align-items: center;
-    padding: 0 4% 0 3.2%;
-    box-sizing: border-box;
-    pointer-events: none;
-    z-index: 2;
-  }
-
-  &__mock-icon-wrap {
-    width: 17.14%;
-    aspect-ratio: 1 / 1;
-    border-radius: 22%;
-    overflow: hidden;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f2f2f7;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-  }
-
-  &__mock-icon {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
-  &__mock-info {
-    margin-left: 3.5%;
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 4px;
-  }
-
-  &__mock-title {
-    font-size: clamp(10px, 3.4vw, 13px);
-    font-weight: 500;
-    color: #000000;
-    line-height: 1.25;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: flex;
-    align-items: center;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', sans-serif;
-  }
-
-  &__mock-sub {
-    font-size: clamp(8px, 2.7vw, 10px);
-    color: #8e8e93;
-    line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', sans-serif;
-  }
-
   &__img {
     width: 100%;
+    height: auto;
     display: block;
   }
 }

@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import HeaderBack from '@/components/HeaderBack/HeaderBack.vue'
 import FilterTabbar from '@/components/Tabbar/FilterTabbar.vue'
 import PrimaryButton from '@/components/Button/PrimaryButton.vue'
+import { showGameToast } from '@/components/Toast'
 import MttStatusTab from './components/MttStatusTab.vue'
 import MttPlayersTab from './components/MttPlayersTab.vue'
 import MttRewardsTab from './components/MttRewardsTab.vue'
@@ -13,6 +14,7 @@ import MttBuyinModal from './components/MttBuyinModal.vue'
 import type { FilterTabOption } from '@/components/Tabbar/FilterTabbar.vue'
 import {
   MttPlayerStatus,
+  type MttBuyInRequest,
   type RoomcenterMttDetailData,
   type RoomcenterMttHunterRanksData,
   type RoomcenterMttRanksData,
@@ -21,6 +23,7 @@ import {
 } from '@/api/models/roomcenter'
 import {
   getRoomcenterMttDetailApi,
+  getRoomcenterMttRegistrationRestrictionsApi,
   mttBuyInApi,
   mttQuitApi,
   mttRebuyApi,
@@ -37,6 +40,7 @@ import {
 } from '@/utils/multiLanguageTemplate'
 import { toUnixSeconds } from '@/utils/time'
 import { takeMttDetailForNavigation } from '@/utils/mttDetailHandoff'
+import { getMttRegistrationLocation } from '@/utils/mttRegistration'
 import { enterMtt, subscribeCocosMessages } from '@/bridge/core'
 import {
   BRIDGE_ACTION,
@@ -69,6 +73,7 @@ let tickTimer: ReturnType<typeof setInterval> | null = null
 let stopCocosMessageListener: (() => void) | null = null
 let detailRequest: Promise<void> | null = null
 const navigatingToRecharge = ref(false)
+let detailMounted = true
 
 /* ===== 各 tab 子数据（提升到父级管理，跨 tab 切换时数据保留） ===== */
 const MTT_LIST_PAGE_SIZE = 50
@@ -437,6 +442,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  detailMounted = false
   if (tickTimer) clearInterval(tickTimer)
   stopCocosMessageListener?.()
   stopCocosMessageListener = null
@@ -518,19 +524,47 @@ async function handleBuyinConfirm(payload: {
   useFree: boolean
   clubId?: number
 }): Promise<void> {
+  if (btnLoading.value) return
   if (!requireRealUser(() => handleBuyinConfirm(payload))) return
   showBuyinModal.value = false
   const id = matchId.value
+  const sessionToken = gameStore.sessionToken
+  const mtt = detailData.value?.mtt
   btnLoading.value = true
   try {
     const isRebuy = buyinJoinMode.value === 'rebuy'
-    const apiPayload = {
+    const apiPayload: MttBuyInRequest = {
       ticket: payload.ticket,
       ratio: payload.ratio,
       use_free: payload.useFree,
-      club_id: payload.clubId ?? detailData.value?.mtt?.club_id ?? 0,
+      club_id: payload.clubId ?? mtt?.club_id ?? 0,
     }
-    const res = isRebuy ? await mttRebuyApi(id, apiPayload) : await mttBuyInApi(id, apiPayload)
+    let restrictions = mtt
+    if (!isRebuy && mtt?.limit_gps === undefined) {
+      const res = await getRoomcenterMttRegistrationRestrictionsApi(id)
+      if (!detailMounted || id !== matchId.value || sessionToken !== gameStore.sessionToken) return
+      if (res.code !== 0) return
+      restrictions = {
+        ...mtt,
+        limit_gps: res.data?.limit_gps,
+        limit_gps_on: res.data?.limit_gps_on ?? mtt?.limit_gps_on,
+        limit_gps_distance: res.data?.limit_gps_distance ?? mtt?.limit_gps_distance,
+      }
+    }
+    if (!isRebuy && Number(restrictions?.limit_gps ?? restrictions?.limit_gps_on) === 1) {
+      const { status, ...gps } = await getMttRegistrationLocation(navigator.geolocation)
+      if (!detailMounted || id !== matchId.value || sessionToken !== gameStore.sessionToken) return
+      if (status !== 'located') {
+        const key =
+          status === 'permission-denied' ? 'ServerErrorCode_10025' : 'ServerErrorCode_10026'
+        showGameToast(key)
+        return
+      }
+      Object.assign(apiPayload, gps)
+    }
+    const res = isRebuy
+      ? await mttRebuyApi(id, apiPayload)
+      : await mttBuyInApi(id, apiPayload, restrictions?.limit_gps_distance)
     if (res && res.code === 0) {
       if (!isRebuy) mttListStore.setMttRegistered(id, true)
       await Promise.all([loadDetail(true), mttListStore.refreshMttRecord(id)])

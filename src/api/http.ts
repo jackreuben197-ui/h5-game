@@ -282,6 +282,12 @@ http.interceptors.response.use(
       void forceToLogin(requestConfig?.sessionTokenSnapshot)
       return Promise.reject(error)
     }
+    if (
+      businessCode !== undefined &&
+      requestConfig?.suppressBusinessCodes?.includes(Number(businessCode))
+    ) {
+      return Promise.reject(error)
+    }
 
     const backendMessage = error.response?.data?.message
     const toastMessage = resolveGameToastMessage(

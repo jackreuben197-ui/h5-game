@@ -16,6 +16,7 @@ import squid from '@/assets/icons/table_icon_squid.png'
 import critical from '@/assets/icons/table_icon_critical.png'
 import aof from '@/assets/icons/table_icon_Aof.png'
 import chips from '@/assets/icons/icon_chips.png'
+import micIcon from '@/assets/channelC/table-mic.svg'
 import { t } from '@/i18n'
 
 const props = defineProps<{ room: RoomRecord; now: number; desktopIconUrl?: string; joining?: boolean }>()
@@ -39,6 +40,7 @@ const seats = computed(() => getOccupiedSeats(props.room))
 const playerCount = computed(() => getRoomPlayerCount(props.room))
 const seatCount = computed(() => Math.max(2, Number(props.room.seat_count) || 8))
 const timeText = computed(() => getRoomTimeText(props.room, props.now))
+const isVoiceTable = computed(() => Number(props.room.anti_cheat_type) === 2)
 const showParticipation = computed(() => isRoomParticipated(props.room))
 const buyIn = computed(() => formatUC(getRoomBuyIn(props.room)))
 const specialModes = computed(() =>
@@ -86,7 +88,10 @@ function fallbackDesktopIcon(event: Event) {
           </span>
         </div>
         <strong v-else :class="`c-table-name--${kind}`">{{ gameName }}</strong>
-        <span class="c-table-time">{{ timeText }}</span>
+        <span class="c-table-time">
+          <span>{{ timeText }}</span>
+          <img v-if="isVoiceTable" class="c-table-mic" :src="micIcon" alt="" />
+        </span>
       </div>
       <img
         v-for="seat in seats"
@@ -144,6 +149,7 @@ function fallbackDesktopIcon(event: Event) {
 
 .c-table-art {
   position: relative;
+  isolation: isolate;
   width: calc(100% + 2px);
   margin: -1px -1px 0;
   aspect-ratio: 182 / 92.5;
@@ -219,10 +225,11 @@ function fallbackDesktopIcon(event: Event) {
 
 .c-table-label {
   position: absolute;
-  top: 58.8%;
+  top: 0;
+  bottom: 0;
   left: 17%;
   right: 17%;
-  transform: translateY(-50%);
+  padding-top: 8.944%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -256,11 +263,21 @@ function fallbackDesktopIcon(event: Event) {
 }
 
 .c-table-time {
+  position: relative;
   color: #f3f4f6;
   font-size: 0.244rem;
   line-height: 0.308rem;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+.c-table-mic {
+  position: absolute;
+  left: calc(100% + 0.24rem);
+  top: calc(50% - 0.225rem);
+  width: 0.39rem;
+  height: 0.39rem;
+  mix-blend-mode: overlay;
+  pointer-events: none;
 }
 
 .c-special-modes > span {

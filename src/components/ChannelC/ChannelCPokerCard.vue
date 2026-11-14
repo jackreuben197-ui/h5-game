@@ -370,6 +370,7 @@ function fallbackDesktopIcon(event: Event) {
   color: #000000c9;
   font-size: 0.231rem;
   font-weight: 700;
+  font-family: 'HONOR Sans CN Bold', var(--font-family-sans);
   line-height: 0.282rem;
   overflow: hidden;
   white-space: nowrap;
@@ -393,6 +394,7 @@ function fallbackDesktopIcon(event: Event) {
   color: #000;
   font-size: 0.282rem;
   font-weight: 700;
+  font-family: 'HONOR Sans CN Bold', var(--font-family-sans);
   line-height: 0.359rem;
   white-space: nowrap;
 
@@ -419,6 +421,7 @@ function fallbackDesktopIcon(event: Event) {
 .c-buy-in {
   position: relative;
   flex: none;
+  font-family: 'HONOR Sans CN Bold CJK', 'HONOR Sans CN Bold', var(--font-family-sans);
 
   &::before {
     content: '';

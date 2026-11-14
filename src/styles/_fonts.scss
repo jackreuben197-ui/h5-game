@@ -14,3 +14,19 @@
   font-style: normal;
   font-display: swap;
 }
+
+@font-face {
+  font-family: 'HONOR Sans CN Bold';
+  src: url('@/assets/fonts/honor-sans-cn-bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'HONOR Sans CN Bold CJK';
+  src: url('@/assets/fonts/honor-sans-cn-bold-cjk.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}

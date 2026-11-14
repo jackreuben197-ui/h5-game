@@ -272,8 +272,8 @@ function fallbackDesktopIcon(event: Event) {
 }
 .c-table-mic {
   position: absolute;
-  left: calc(100% + 0.24rem);
-  top: calc(50% - 0.225rem);
+  left: calc(100% + 0.1rem);
+  top: calc(50% - 0.45rem);
   width: 0.39rem;
   height: 0.39rem;
   mix-blend-mode: overlay;
@@ -369,6 +369,7 @@ function fallbackDesktopIcon(event: Event) {
   display: block;
   color: #000000c9;
   font-size: 0.231rem;
+  font-weight: 700;
   line-height: 0.282rem;
   overflow: hidden;
   white-space: nowrap;
@@ -391,6 +392,7 @@ function fallbackDesktopIcon(event: Event) {
   margin-top: 0.077rem;
   color: #000;
   font-size: 0.282rem;
+  font-weight: 700;
   line-height: 0.359rem;
   white-space: nowrap;
 

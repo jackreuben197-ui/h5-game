@@ -5,6 +5,7 @@ import { getPokerKind } from '@/features/channelC/model'
 import { getOccupiedSeats, getRoomBuyIn, getRoomTimeText } from '@/features/channelC/pokerCard'
 import { getRoomPlayerCount, formatUC } from '@/utils/roomVisibility'
 import { resolveSafariWebAppConfig } from '@/utils/safariWebApp'
+import { isRoomParticipated } from '@/utils/roomListSort'
 import nlh from '@/assets/images/table_bg_nlh.png'
 // 保留已导入素材的原文件名。
 import plo from '@/assets/images/tbale_bg_plo.png'
@@ -38,6 +39,7 @@ const seats = computed(() => getOccupiedSeats(props.room))
 const playerCount = computed(() => getRoomPlayerCount(props.room))
 const seatCount = computed(() => Math.max(2, Number(props.room.seat_count) || 8))
 const timeText = computed(() => getRoomTimeText(props.room, props.now))
+const showParticipation = computed(() => isRoomParticipated(props.room))
 const buyIn = computed(() => formatUC(getRoomBuyIn(props.room)))
 const specialModes = computed(() =>
   [
@@ -72,6 +74,9 @@ function fallbackDesktopIcon(event: Event) {
       <img class="c-table-bg" :src="background" alt="" />
       <span class="c-playing">
         <span>{{ t('UIChannelC_Playing', playerCount, seatCount) }}</span>
+      </span>
+      <span v-if="showParticipation" class="c-participated">
+        <span>{{ t('UIFriendsTable_Text3') }}</span>
       </span>
       <div class="c-table-label">
         <div v-if="specialModes.length" class="c-special-modes">
@@ -172,6 +177,35 @@ function fallbackDesktopIcon(event: Event) {
 
 .c-playing::after {
   @include gradient-stroke(1px, linear-gradient(90deg, #ffffff0a, #fff3));
+}
+
+
+.c-participated {
+  position: absolute;
+  z-index: 2;
+  top: 0.048rem;
+  right: 0.12rem;
+  display: flex;
+  align-items: center;
+  height: 0.432rem;
+  padding: 0 0.12rem;
+  border-radius: 0.15rem;
+  background: #000c;
+  color: #f3f4f6;
+  font-size: 0.225rem;
+  line-height: normal;
+  white-space: nowrap;
+  max-width: 45%;
+}
+
+.c-participated > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.c-participated::after {
+  @include gradient-stroke(1px, linear-gradient(90deg, #fff3, #ffffff0a));
 }
 
 .c-playing::before {

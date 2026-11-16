@@ -1,4 +1,4 @@
-import { postDiamondConfigApi } from '@/api/config'
+import { postDiamondConfigApi, postPrivateUcConfigApi } from '@/api/config'
 import type { UserInfoData } from '@/api/models/user'
 import { getUserClubApi, getUserInfoApi } from '@/api/user'
 import {
@@ -18,7 +18,13 @@ import { localStore } from '@/utils/localStore'
 import { isH5OnlyDevMode } from '@/utils/h5OnlyDev'
 import { ensureMultiLanguageTemplateLoaded } from '@/utils/multiLanguageTemplate'
 import { readClubListCache } from '@/utils/userClubListCache'
-import { getPrivateUcChargeConfigs, isChannelPackageHost } from '@/utils/channelPackage'
+import {
+  getPrivateUcChargeConfigs,
+  isChannelDiamondFreeMode,
+  isChannelPackageHost,
+  isClubLinkContext,
+  normalizePrivateUcConfig,
+} from '@/utils/channelPackage'
 
 let inFlightToken = ''
 let inFlightPromise: Promise<PostAuthProfileSyncResult> | null = null
@@ -61,7 +67,7 @@ export function syncPostAuthData(confirmedUserInfo?: UserInfoData): Promise<Post
     })
   }
 
-  const isPrivateUcPackage = isChannelPackageHost()
+  const isPrivateUcPackage = isChannelDiamondFreeMode() || isClubLinkContext()
   const appConfigStore = useAppConfigStore(pinia)
   forwardPrivateUcChargeConfigToCocos(
     isPrivateUcPackage ? appConfigStore.privateUcChargeConfig : [],
@@ -106,7 +112,7 @@ async function runPostAuthSync(
   const gameStore = useGameStore(pinia)
   const appConfigStore = useAppConfigStore(pinia)
   const userInfoStore = useUserInfoStore(pinia)
-  const isPrivateUcPackage = isChannelPackageHost()
+  const isPrivateUcPackage = isChannelDiamondFreeMode() || isClubLinkContext()
 
   // 体验账号退出时会清理用户状态。真实账号同步前重新加载渠道公开配置，
   // 保证 diamond_room_switch、h5_menu 等 CMS 字段在登录切换后仍然存在。
@@ -198,16 +204,20 @@ async function runPostAuthSync(
 
     // 私域版本只拉独立 UC 收费配置，不请求钻石收费列表。
     isPrivateUcPackage
-      ? Promise.resolve().then(() => {
-          if (gameStore.sessionToken.trim() !== token) return
-          appConfigStore.setPrivateUcConfig({
-            chargeItems: getPrivateUcChargeConfigs(),
-            diamondConfig: {},
-            mttRecordFeeConfig: null,
+      ? postPrivateUcConfigApi({})
+          .then((res) => {
+            if (gameStore.sessionToken.trim() !== token) return
+            if (Number(res.code) === 0 && res.data) {
+              appConfigStore.setPrivateUcConfig(normalizePrivateUcConfig(res.data))
+            }
+            forwardDiamondConfigToCocos(appConfigStore.diamondConfig ?? {})
+            forwardPrivateUcChargeConfigToCocos(appConfigStore.privateUcChargeConfig)
           })
-          forwardDiamondConfigToCocos(appConfigStore.diamondConfig ?? {})
-          forwardPrivateUcChargeConfigToCocos(appConfigStore.privateUcChargeConfig)
-        })
+          .catch((error) => {
+            console.warn('[post-auth-sync] sync private UC config failed:', error)
+            forwardDiamondConfigToCocos(appConfigStore.diamondConfig ?? {})
+            forwardPrivateUcChargeConfigToCocos(appConfigStore.privateUcChargeConfig)
+          })
       : postDiamondConfigApi({})
           .then((res) => {
             if (res.code === 0 && res.data) {

@@ -680,6 +680,10 @@
     white-space: nowrap !important;
   }
 
+  html[data-main-layout='primary'] .room-list-page .table-grid {
+    grid-template-columns: repeat(auto-fill, 4.4rem);
+  }
+
   html[data-main-layout='primary'] .room-list-page .toggle-btn {
     width: 32px;
     height: 32px;

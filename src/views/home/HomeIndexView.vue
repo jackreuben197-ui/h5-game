@@ -43,7 +43,14 @@ import { useGameStore } from '@/stores/game'
 import PokerGameList from '@/views/home/gameList.vue'
 import CasinoView from '@/views/home/CasinoView.vue'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
-import { isChannelPackageHost } from '@/utils/channelPackage'
+import {
+  isChannelPackageHost,
+  isOfficialPackageHost,
+  hasClubLinkParams,
+} from '@/utils/channelPackage'
+import ClubSplashLoading from '@/components/Splash/ClubSplashLoading.vue'
+import { setClubSplashActive } from '@/utils/clubSplashState'
+import { triggerDailyH5DisplayPanelAfterHomeReady } from '@/bridge/dailyH5DisplayPanel'
 import { getCowboyRoomListApi } from '@/api/gc'
 import { requireRealUser } from '@/session/realUserGate'
 import { getUserClubApi } from '@/api/user'
@@ -115,7 +122,9 @@ const gameStore = useGameStore()
 const gameLaunchStore = useGameLaunchStore()
 const { visibleRooms, visibleMatches } = useLobbyFeed()
 const { isChannelPackage, isVersionB, isVersionC } = useChannelBottomMenu()
-const isOfficialNewHome = computed(() => !isChannelPackage.value && appConfigStore.h5HomeVersion === 1)
+const isOfficialNewHome = computed(
+  () => !isChannelPackage.value && appConfigStore.h5HomeVersion === 1,
+)
 
 const noticeScrollRef = ref<HTMLElement | null>(null)
 const noticeItemRef = ref<HTMLElement | null>(null)
@@ -419,7 +428,8 @@ const currentClub = computed<ClubInfo | null>(() => {
   return userInfoStore.clubList[0] || null
 })
 
-const { banners, isBannerLoaded, fetchLobbyBannerImages, refreshLobbyBanner } = useLobbyBannerImages()
+const { banners, isBannerLoaded, fetchLobbyBannerImages, refreshLobbyBanner } =
+  useLobbyBannerImages()
 // 仅在服务端 banner 确认且无配置时，才回落到内置单图和 hero 文案。
 // 在服务端接口未完成返回前 (isBannerLoaded === false)，保持为空数组，不盲目展示默认图。
 const displayBanners = computed<LobbyBanner[]>(() => {
@@ -473,11 +483,15 @@ const requestedHomeSection = computed<'mtt' | 'poker' | null>(() => {
     : route.query.section
   return rawSection === 'mtt' || rawSection === 'poker' ? rawSection : null
 })
-watch([isVersionC, requestedHomeSection], ([versionC, section]) => {
-  if (versionC && section) {
-    void router.replace({ name: section === 'poker' ? 'channel-c-poker' : 'channel-c-mtt' })
-  }
-}, { immediate: true })
+watch(
+  [isVersionC, requestedHomeSection],
+  ([versionC, section]) => {
+    if (versionC && section) {
+      void router.replace({ name: section === 'poker' ? 'channel-c-poker' : 'channel-c-mtt' })
+    }
+  },
+  { immediate: true },
+)
 
 // 私域版：只开一块内容时不给入口，直接铺列表；开两块及以上（以及一块都没有）时展示专区入口。
 // 官方包继续沿用原有的「仅有赛事时直接展示 MTT」行为。
@@ -533,6 +547,101 @@ const isHomeLayoutReady = computed(() => {
   // 3. 渠道包 / 私域模式：必须等待默认俱乐部配置确认 (以确定是 Version A, B, 还是 C)
   return userInfoStore.isChannelDefaultClubResolved
 })
+
+let hasClubSplashCompleted = false
+
+// 仅对俱乐部私域链接（非平台官方大厅）展示 splash：
+const isClubSplashEligible = computed(() => {
+  if (hasClubSplashCompleted) return false
+  if (appConfigStore.platformDomainsReady && !isChannelPackage.value) return false
+  if (isChannelPackage.value) return true
+  const host = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : ''
+  if (host && !isOfficialPackageHost(host)) return true
+  if (typeof window !== 'undefined' && hasClubLinkParams()) return true
+  return false
+})
+
+const isClubSplashActive = ref(isClubSplashEligible.value)
+setClubSplashActive(isClubSplashActive.value)
+let splashSafetyTimer: ReturnType<typeof setTimeout> | null = null
+
+let hasTriggeredDailyPanel = false
+function onHomeCompletelyReady(): void {
+  if (hasTriggeredDailyPanel) return
+  hasTriggeredDailyPanel = true
+  // 等待主页首屏完全稳定展示后（500ms），再精准调起添加桌面快捷方式等通知弹窗
+  setTimeout(() => {
+    triggerDailyH5DisplayPanelAfterHomeReady()
+  }, 500)
+}
+
+function dismissClubSplash(): void {
+  if (!isClubSplashActive.value) return
+  hasClubSplashCompleted = true
+  isClubSplashActive.value = false
+  setClubSplashActive(false)
+  if (splashSafetyTimer) {
+    clearTimeout(splashSafetyTimer)
+    splashSafetyTimer = null
+  }
+  // Splash 平滑淡出 (350ms) 后，主页面完整呈现，此时精确触发桌面引导弹窗
+  setTimeout(() => {
+    onHomeCompletelyReady()
+  }, 400)
+}
+
+function checkSplashDismissal(): void {
+  if (!isClubSplashActive.value) return
+
+  // 1. 官方新版首页不需要俱乐部 splash，立即关闭
+  if (appConfigStore.platformDomainsReady && isOfficialNewHome.value) {
+    dismissClubSplash()
+    return
+  }
+
+  // 2. 官方大厅包不需要展示
+  if (appConfigStore.platformDomainsReady && !isChannelPackage.value) {
+    dismissClubSplash()
+    return
+  }
+
+  // 3. 渠道包：必须等待默认俱乐部配置确认 (以得知具体是 Version A/B/C)
+  if (!userInfoStore.isChannelDefaultClubResolved) return
+
+  // 4. 只有 Version B 和 Version C 保持展示 splash，Version A 确认后立即关闭
+  if (!isVersionB.value && !isVersionC.value) {
+    dismissClubSplash()
+    return
+  }
+
+  // 5. Version B 或 Version C：必须等待所有 UI 组件与 API 完全加载就绪 (homeContentReady)
+  if (homeContentReady.value) {
+    void nextTick(() => {
+      setTimeout(() => {
+        dismissClubSplash()
+      }, 120)
+    })
+  }
+}
+
+watch(
+  [
+    () => appConfigStore.platformDomainsReady,
+    () => isOfficialNewHome.value,
+    () => isChannelPackage.value,
+    () => userInfoStore.isChannelDefaultClubResolved,
+    () => isVersionB.value,
+    () => isVersionC.value,
+    () => homeContentReady.value,
+  ],
+  () => {
+    checkSplashDismissal()
+    if (homeContentReady.value && !isClubSplashActive.value) {
+      onHomeCompletelyReady()
+    }
+  },
+  { immediate: true },
+)
 
 function commitHomeContentMode(): void {
   homeContentMode.value = homeContentModeRaw.value
@@ -820,8 +929,10 @@ async function bootstrapHomeContent(): Promise<void> {
     ? userInfoStore.ensureChannelDefaultClub()
     : Promise.resolve(null)
 
-  // 游客登录和 login/config 后置到首帧之后，避免与首页壳争抢主线程和网络调度。
-  await waitForH5FirstPaint()
+  // 仅在非俱乐部 Splash 场景等待首屏绘制，避免与首页壳争抢；俱乐部私域场景在 Splash 保护下立即并发加载数据
+  if (!isClubSplashActive.value) {
+    await waitForH5FirstPaint()
+  }
 
   // 公开配置不携带 token，可以和会话校验并行；任何 user/* 请求必须等旧 token
   // 校验/恢复完成，避免刷新时拿刚被 pagehide/logout 释放的体验 token 抢跑。
@@ -849,13 +960,9 @@ async function bootstrapHomeContent(): Promise<void> {
   // 本地可能保留已被 pagehide/logout 释放的体验 token。牌桌与赛事无论是否已有
   // token，都必须等会话校验完成后再请求，不能让 contrast/rooms 携带旧 token 抢跑。
   const loadHomeLists = async (): Promise<void> => {
-    await Promise.allSettled([
-      roomListStore.bootstrapRoomList(),
-      mttListStore.bootstrapMttList(),
-    ])
+    await Promise.allSettled([roomListStore.bootstrapRoomList(), mttListStore.bootstrapMttList()])
   }
-  const listsReady = sessionReady.then(async (ready) => {
-    if (!ready || !gameStore.sessionToken.trim()) return
+  const listsReady = sessionReady.then(async () => {
     await loadHomeLists()
   })
   const websocketReady = sessionReady.then((ready) => {
@@ -890,10 +997,21 @@ async function bootstrapHomeContent(): Promise<void> {
   refreshHomeMttStatsFromStore()
   const casinoClubId = channelCasinoClubId.value
   await casinoStore
-    .preloadCasinoData(casinoClubId || undefined, isChannelPackage.value ? false : casinoClubId <= 0)
+    .preloadCasinoData(
+      casinoClubId || undefined,
+      isChannelPackage.value ? false : casinoClubId <= 0,
+    )
     .catch((e) => {
       console.warn('[home] preload casino data failed:', e)
     })
+
+  if (isVersionC.value) {
+    try {
+      await useLobbyBannerImages('c').fetchLobbyBannerImages()
+    } catch (error) {
+      console.warn('[home] preload version C banner failed:', error)
+    }
+  }
 
   commitHomeContentMode()
   homeContentReady.value = true
@@ -912,7 +1030,14 @@ onMounted(() => {
   if (!isHomeLayoutReady.value) {
     layoutTimeoutTimer = setTimeout(() => {
       layoutTimeoutReached.value = true
-    }, 1500)
+    }, 2500)
+  }
+
+  if (isClubSplashActive.value) {
+    splashSafetyTimer = setTimeout(() => {
+      dismissClubSplash()
+    }, 10000)
+    checkSplashDismissal()
   }
 
   // 首页和两个列表页共用 store；俱乐部、身份和配置就绪后一次性提交首屏。
@@ -930,9 +1055,14 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  setClubSplashActive(false)
   if (layoutTimeoutTimer) {
     clearTimeout(layoutTimeoutTimer)
     layoutTimeoutTimer = null
+  }
+  if (splashSafetyTimer) {
+    clearTimeout(splashSafetyTimer)
+    splashSafetyTimer = null
   }
   stopHomeWsBridgeReadyListener?.()
   stopHomeWsBridgeReadyListener = null
@@ -956,8 +1086,9 @@ onBeforeUnmount(() => {
     :class="{
       'home-page--fit': homeContentMode === 'zones',
       'home-page--mtt': homeContentReady && homeContentMode === 'mtt',
-      'home-page--banner-capped': isChannelPackage && !(homeContentReady && homeContentMode === 'zones'),
-      'is-version-b': isVersionB
+      'home-page--banner-capped':
+        isChannelPackage && !(homeContentReady && homeContentMode === 'zones'),
+      'is-version-b': isVersionB,
     }"
   >
     <!-- 0. 正式首页统一承载游客/真实账号；游客仅额外显示注册、登录入口。 -->
@@ -1005,16 +1136,9 @@ onBeforeUnmount(() => {
     <ChannelClubInfoPanel />
 
     <!-- 渠道包单类型直接展示列表；赛事和牌桌并存时展示专区入口。 -->
-    <div
-      class="home-swap-container"
-      :aria-busy="isChannelPackage && !homeContentReady"
-    >
+    <div class="home-swap-container" :aria-busy="isChannelPackage && !homeContentReady">
       <Transition name="home-swap">
-        <div
-          v-if="homeContentReady && homeContentMode === 'mtt'"
-          key="mtt"
-          class="home-swap-panel"
-        >
+        <div v-if="homeContentReady && homeContentMode === 'mtt'" key="mtt" class="home-swap-panel">
           <MttContent embedded class="home-mtt-content" scroll-key="home-mtt" />
         </div>
         <div
@@ -1059,7 +1183,9 @@ onBeforeUnmount(() => {
                   <p class="zone-sub-desc">{{ t('UIHomeMttAreaTip') }}</p>
                 </div>
                 <div class="zone-online-bar">
-                  <span v-fit-text="{ maxLines: 1 }" class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
+                  <span v-fit-text="{ maxLines: 1 }" class="online-text">
+                    {{ t('UIClub_Mlist_zaixian') }}
+                  </span>
                   <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
                   <span class="online-num"> {{ mttTablesText }} </span>
                   <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
@@ -1090,7 +1216,9 @@ onBeforeUnmount(() => {
                   </div>
                 </div>
                 <div class="zone-online-bar">
-                  <span v-fit-text="{ maxLines: 1 }" class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
+                  <span v-fit-text="{ maxLines: 1 }" class="online-text">
+                    {{ t('UIClub_Mlist_zaixian') }}
+                  </span>
                   <img class="online-icon" src="@/assets/icons/game_zone_table_mini.png" alt="" />
                   <span class="online-num"> {{ pokerTablesText }} </span>
                   <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
@@ -1123,7 +1251,9 @@ onBeforeUnmount(() => {
                   </div>
                 </div>
                 <div class="zone-online-bar">
-                  <span v-fit-text="{ maxLines: 1 }" class="online-text"> {{ t('UIClub_Mlist_zaixian') }} </span>
+                  <span v-fit-text="{ maxLines: 1 }" class="online-text">
+                    {{ t('UIClub_Mlist_zaixian') }}
+                  </span>
                   <img class="online-icon" src="@/assets/icons/game_zone_people_mini.png" alt="" />
                   <span class="online-num"> {{ mahjongPlayersText }} </span>
                 </div>
@@ -1185,6 +1315,7 @@ onBeforeUnmount(() => {
       <img :src="clubDetailButtonIcon" alt="" />
     </button>
   </div>
+  <ClubSplashLoading :visible="isClubSplashActive" />
 </template>
 
 <style scoped lang="scss">

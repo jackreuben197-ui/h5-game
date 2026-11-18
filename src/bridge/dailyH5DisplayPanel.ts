@@ -8,6 +8,7 @@ import { openBridgePanel } from '@/bridge/channels/panelChannel'
 import { subscribeCocosMessages } from '@/bridge/core/cocosBridgeChannel'
 import StorageKey from '@/constants/storageKey'
 import { isChannelPackageHost, isPrivateDomainMode, isTelegramClubContext } from '@/utils/channelPackage'
+import { isClubSplashActive, waitForClubSplashDismiss } from '@/utils/clubSplashState'
 import { BRIDGE_ACTION, BRIDGE_MSG_TYPE, type BridgeMessage } from '@bridge-protocol'
 import { t } from '@/i18n'
 import { localStore } from '@/utils/localStore'
@@ -132,6 +133,12 @@ export async function tryShowDailyH5DisplayPanel(): Promise<void> {
     findUs = fallback.find_us
   }
 
+  // 若处于俱乐部 Splash 启动或加载状态，等待 Splash 完全关闭且主页内容渲染完毕后再弹出引导
+  if (isClub || isClubSplashActive()) {
+    await waitForClubSplashDismiss()
+    await new Promise((resolve) => setTimeout(resolve, 400))
+  }
+
   openBridgePanel({
     panelType: 'notification',
     title: '',
@@ -152,13 +159,15 @@ function runTrigger(reason: string): void {
   })
 }
 
-// 启动每日触发链路：首次挂载、可见性变化、Cocos h5Show 都会重新检查一次本地日期。
-// 任意触点发现"今天还没弹"就请求接口并弹窗。
-export function setupDailyH5DisplayPanel(): () => void {
-  // 1) 入口立即尝试一次。
-  runTrigger('bootstrap')
+// 主页组件完全加载就绪后（且任何冷启动 Splash 均已平稳淡出后）由首页精确触发
+export function triggerDailyH5DisplayPanelAfterHomeReady(): void {
+  runTrigger('home:ready')
+}
 
-  // 2) document.visibilitychange：覆盖系统级前后台切换（如浏览器/系统层面）。
+// 启动每日触发链路：可见性变化、Cocos h5Show 会重新检查一次本地日期。
+// 不在 main.ts 挂载时立即盲目弹窗，避免打断冷启动 Splash 或页面初始化流程。
+export function setupDailyH5DisplayPanel(): () => void {
+  // 1) document.visibilitychange：覆盖系统级前后台切换（如浏览器/系统层面）。
   const onVisibilityChange = (): void => {
     if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
       runTrigger('visibilitychange')
@@ -168,7 +177,7 @@ export function setupDailyH5DisplayPanel(): () => void {
     document.addEventListener('visibilitychange', onVisibilityChange)
   }
 
-  // 3) Cocos h5Show 桥接：Cocos 调起 WebView 时不一定触发浏览器 visibilitychange，单独兜底。
+  // 2) Cocos h5Show 桥接：Cocos 调起 WebView 时不一定触发浏览器 visibilitychange，单独兜底。
   const unsubscribeBridge = subscribeCocosMessages(
     (message: BridgeMessage) => {
       if (message.action === BRIDGE_ACTION.H5_SHOW) {

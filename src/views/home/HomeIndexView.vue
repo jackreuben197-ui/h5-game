@@ -516,6 +516,15 @@ const homeContentMode = ref<HomeContentMode>(lastCommittedHomeContentMode ?? 'zo
 const homeContentReady = ref(lastCommittedHomeContentMode !== null)
 const showOfficialHomeSections = computed(() => !isChannelPackage.value)
 
+const privateClubTimeoutReached = ref(false)
+let privateClubTimeoutTimer: ReturnType<typeof setTimeout> | null = null
+
+// 渠道/私域模式在默认俱乐部配置确认前保持在 splash 壳下，防止 A 版半屏 UI 闪现
+const isPrivateClubReady = computed(() => {
+  if (!isChannelPackage.value) return true
+  return userInfoStore.isChannelDefaultClubResolved || privateClubTimeoutReached.value
+})
+
 function commitHomeContentMode(): void {
   homeContentMode.value = homeContentModeRaw.value
   lastCommittedHomeContentMode = homeContentMode.value
@@ -531,7 +540,9 @@ const currentJoinedClub = computed(() => userInfoStore.currentJoinedClub)
 const canManageChannelClub = computed(
   () => isChannelPackage.value && Boolean(gameStore.isRealUser && currentJoinedClub.value),
 )
-const showChannelFloatingActions = computed(() => canManageChannelClub.value)
+const showChannelFloatingActions = computed(
+  () => isPrivateClubReady.value && canManageChannelClub.value,
+)
 
 const CLUB_LIST_RECOVERY_DELAY_MS = 2500
 const isChannelClubMissing = computed(
@@ -889,6 +900,12 @@ if (homeContentReady.value) {
 }
 
 onMounted(() => {
+  if (isChannelPackage.value && !userInfoStore.isChannelDefaultClubResolved) {
+    privateClubTimeoutTimer = setTimeout(() => {
+      privateClubTimeoutReached.value = true
+    }, 1500)
+  }
+
   // 首页和两个列表页共用 store；俱乐部、身份和配置就绪后一次性提交首屏。
   void bootstrapHomeContent()
   void updateNoticeMarquee()
@@ -904,6 +921,10 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  if (privateClubTimeoutTimer) {
+    clearTimeout(privateClubTimeoutTimer)
+    privateClubTimeoutTimer = null
+  }
   stopHomeWsBridgeReadyListener?.()
   stopHomeWsBridgeReadyListener = null
   if (noticeResizeObserver) {
@@ -921,7 +942,7 @@ onBeforeUnmount(() => {
   />
   <HomeNewView v-else-if="isOfficialNewHome" />
   <div
-    v-else
+    v-else-if="isPrivateClubReady"
     class="home-page"
     :class="{
       'home-page--fit': homeContentMode === 'zones',
@@ -1143,6 +1164,7 @@ onBeforeUnmount(() => {
       @cancel="showGameClubSelector = false"
     />
   </div>
+  <div v-else class="home-page-splash-shell" aria-hidden="true" />
   <div v-if="showChannelFloatingActions" class="floating-action-area">
     <button
       v-if="canManageChannelClub"
@@ -1895,5 +1917,13 @@ onBeforeUnmount(() => {
 .banner-fade-enter-from,
 .banner-fade-leave-to {
   opacity: 0;
+}
+
+.home-page-splash-shell {
+  width: 100%;
+  min-height: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  background-color: transparent;
 }
 </style>

@@ -30,6 +30,7 @@ interface UserInfoState {
   channelDefaultClub: ClubInfo | null
   currentClubId: string
   clubAgentInvitations: Record<string, string>
+  isChannelDefaultClubResolved: boolean
 }
 
 function normalizeClubId(value: unknown): string {
@@ -104,6 +105,7 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
     channelDefaultClub: null,
     currentClubId: '',
     clubAgentInvitations: {},
+    isChannelDefaultClubResolved: channelDefaultClubLoaded,
   }),
   getters: {
     currentJoinedClub(state): ClubInfo | null {
@@ -226,6 +228,7 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
     setChannelDefaultClub(club: ClubInfo | null): void {
       this.channelDefaultClub = club
       if (club) {
+        this.isChannelDefaultClubResolved = true
         applySafariWebAppConfig(club)
       }
     },
@@ -245,6 +248,7 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       if (hostname === 'localhost' && !isChannelPackageHost(hostname) && !hasClubLinkParams()) {
         this.channelDefaultClub = null
         channelDefaultClubLoaded = false
+        this.isChannelDefaultClubResolved = true
         applySafariWebAppConfig(null)
         return null
       }
@@ -255,10 +259,12 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       if (!isClubLinkContext(hostname) && !baseUrl) {
         this.channelDefaultClub = null
         channelDefaultClubLoaded = false
+        this.isChannelDefaultClubResolved = true
         applySafariWebAppConfig(null)
         return null
       }
       if (channelDefaultClubLoaded) {
+        this.isChannelDefaultClubResolved = true
         applySafariWebAppConfig(this.channelDefaultClub)
         return this.channelDefaultClub
       }
@@ -332,10 +338,12 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
           }
           this.channelDefaultClub = club
           channelDefaultClubLoaded = true
+          this.isChannelDefaultClubResolved = true
           applySafariWebAppConfig(club)
           return club
         } catch (error) {
           console.warn('[userInfo] ensureChannelDefaultClub failed:', error)
+          this.isChannelDefaultClubResolved = true
           applySafariWebAppConfig(this.channelDefaultClub)
           return this.channelDefaultClub
         } finally {

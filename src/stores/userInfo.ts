@@ -252,17 +252,6 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
         applySafariWebAppConfig(null)
         return null
       }
-      // “邀请码.二维码域名”必须按邀请码查询，不能当成俱乐部独立 CNAME 域名。
-      const channelInviteCode = extractInviteCodeFromSubdomain(hostname)
-      const baseUrl = channelInviteCode ? '' : resolveSafariBaseUrl(hostname)
-      // 主域名既不是渠道子域名、解析不出自定义域名，也不含俱乐部参数，不发默认俱乐部请求。
-      if (!isClubLinkContext(hostname) && !baseUrl) {
-        this.channelDefaultClub = null
-        channelDefaultClubLoaded = false
-        this.isChannelDefaultClubResolved = true
-        applySafariWebAppConfig(null)
-        return null
-      }
       if (channelDefaultClubLoaded) {
         this.isChannelDefaultClubResolved = true
         applySafariWebAppConfig(this.channelDefaultClub)
@@ -275,6 +264,18 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       channelDefaultClubInFlight = (async () => {
         try {
           await useAppConfigStore().ensurePlatformDomainsReady()
+
+          // “邀请码.二维码域名”必须按邀请码查询，不能当成俱乐部独立 CNAME 域名。
+          const channelInviteCode = extractInviteCodeFromSubdomain(hostname)
+          const baseUrl = channelInviteCode ? '' : resolveSafariBaseUrl(hostname)
+          // 主域名既不是渠道子域名、解析不出自定义域名，也不含俱乐部参数，不发默认俱乐部请求。
+          if (!isClubLinkContext(hostname) && !baseUrl) {
+            this.channelDefaultClub = null
+            channelDefaultClubLoaded = false
+            this.isChannelDefaultClubResolved = true
+            applySafariWebAppConfig(null)
+            return null
+          }
 
           const localInviteCode =
             import.meta.env?.DEV && (hostname === 'localhost' || hostname.startsWith('127.'))

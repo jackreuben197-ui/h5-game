@@ -516,13 +516,22 @@ const homeContentMode = ref<HomeContentMode>(lastCommittedHomeContentMode ?? 'zo
 const homeContentReady = ref(lastCommittedHomeContentMode !== null)
 const showOfficialHomeSections = computed(() => !isChannelPackage.value)
 
-const privateClubTimeoutReached = ref(false)
-let privateClubTimeoutTimer: ReturnType<typeof setTimeout> | null = null
+const layoutTimeoutReached = ref(false)
+let layoutTimeoutTimer: ReturnType<typeof setTimeout> | null = null
 
-// 渠道/私域模式在默认俱乐部配置确认前保持在 splash 壳下，防止 A 版半屏 UI 闪现
-const isPrivateClubReady = computed(() => {
+// 首页布局就绪状态：冷启动时等待版本确认（官方首页 / 渠道 A/B/C），确认前停留在 splash 壳下，防止 A 版半屏 UI 闪现
+const isHomeLayoutReady = computed(() => {
+  // 超时兜底：若网络异常或超时，直接展示默认布局，避免永久停留
+  if (layoutTimeoutReached.value) return true
+
+  // 1. 若全局域名配置尚未就绪，说明还在冷启动等待判定当前域名是官方还是渠道，保持在 splash 壳下
+  if (!appConfigStore.platformDomainsReady) return false
+
+  // 2. 官方包：平台域名已就绪且判定为官方包，由 isOfficialNewHome 或默认首页接管
   if (!isChannelPackage.value) return true
-  return userInfoStore.isChannelDefaultClubResolved || privateClubTimeoutReached.value
+
+  // 3. 渠道包 / 私域模式：必须等待默认俱乐部配置确认 (以确定是 Version A, B, 还是 C)
+  return userInfoStore.isChannelDefaultClubResolved
 })
 
 function commitHomeContentMode(): void {
@@ -541,7 +550,7 @@ const canManageChannelClub = computed(
   () => isChannelPackage.value && Boolean(gameStore.isRealUser && currentJoinedClub.value),
 )
 const showChannelFloatingActions = computed(
-  () => isPrivateClubReady.value && canManageChannelClub.value,
+  () => isHomeLayoutReady.value && canManageChannelClub.value,
 )
 
 const CLUB_LIST_RECOVERY_DELAY_MS = 2500
@@ -900,9 +909,9 @@ if (homeContentReady.value) {
 }
 
 onMounted(() => {
-  if (isChannelPackage.value && !userInfoStore.isChannelDefaultClubResolved) {
-    privateClubTimeoutTimer = setTimeout(() => {
-      privateClubTimeoutReached.value = true
+  if (!isHomeLayoutReady.value) {
+    layoutTimeoutTimer = setTimeout(() => {
+      layoutTimeoutReached.value = true
     }, 1500)
   }
 
@@ -921,9 +930,9 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  if (privateClubTimeoutTimer) {
-    clearTimeout(privateClubTimeoutTimer)
-    privateClubTimeoutTimer = null
+  if (layoutTimeoutTimer) {
+    clearTimeout(layoutTimeoutTimer)
+    layoutTimeoutTimer = null
   }
   stopHomeWsBridgeReadyListener?.()
   stopHomeWsBridgeReadyListener = null
@@ -936,13 +945,13 @@ onBeforeUnmount(() => {
 
 <template>
   <ChannelCHome
-    v-if="isVersionC"
+    v-if="isHomeLayoutReady && isVersionC"
     :ready="homeContentReady"
     :club-management="canManageChannelClub"
   />
-  <HomeNewView v-else-if="isOfficialNewHome" />
+  <HomeNewView v-else-if="isHomeLayoutReady && isOfficialNewHome" />
   <div
-    v-else-if="isPrivateClubReady"
+    v-else-if="isHomeLayoutReady"
     class="home-page"
     :class="{
       'home-page--fit': homeContentMode === 'zones',

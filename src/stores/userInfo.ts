@@ -30,7 +30,6 @@ interface UserInfoState {
   channelDefaultClub: ClubInfo | null
   currentClubId: string
   clubAgentInvitations: Record<string, string>
-  channelClubLoaded: boolean
 }
 
 function normalizeClubId(value: unknown): string {
@@ -105,7 +104,6 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
     channelDefaultClub: null,
     currentClubId: '',
     clubAgentInvitations: {},
-    channelClubLoaded: false,
   }),
   getters: {
     currentJoinedClub(state): ClubInfo | null {
@@ -247,7 +245,6 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       if (hostname === 'localhost' && !isChannelPackageHost(hostname) && !hasClubLinkParams()) {
         this.channelDefaultClub = null
         channelDefaultClubLoaded = false
-        this.channelClubLoaded = true
         applySafariWebAppConfig(null)
         return null
       }
@@ -258,12 +255,10 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       if (!isClubLinkContext(hostname) && !baseUrl) {
         this.channelDefaultClub = null
         channelDefaultClubLoaded = false
-        this.channelClubLoaded = true
         applySafariWebAppConfig(null)
         return null
       }
       if (channelDefaultClubLoaded) {
-        this.channelClubLoaded = true
         applySafariWebAppConfig(this.channelDefaultClub)
         return this.channelDefaultClub
       }
@@ -337,13 +332,11 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
           }
           this.channelDefaultClub = club
           channelDefaultClubLoaded = true
-          this.channelClubLoaded = true
           applySafariWebAppConfig(club)
           return club
         } catch (error) {
           console.warn('[userInfo] ensureChannelDefaultClub failed:', error)
           applySafariWebAppConfig(this.channelDefaultClub)
-          this.channelClubLoaded = true
           return this.channelDefaultClub
         } finally {
           channelDefaultClubInFlight = null
@@ -455,7 +448,6 @@ export const useUserInfoStore = defineStore('h5-userInfo-store', {
       this.channelDefaultClub = null
       this.currentClubId = ''
       this.clubAgentInvitations = {}
-      this.channelClubLoaded = false
       channelDefaultClubLoaded = false
       channelDefaultClubInFlight = null
     },

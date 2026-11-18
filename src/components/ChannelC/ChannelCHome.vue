@@ -34,7 +34,7 @@ import ChannelCWaterfall from './ChannelCWaterfall.vue'
 import ChannelCCasinoShortcuts from './ChannelCCasinoShortcuts.vue'
 import LiveWinsTicker, { type LiveWinItem } from '@/components/LiveWinsTicker.vue'
 import CasinoView from '@/views/home/CasinoView.vue'
-import { useLiveWins } from '@/composables/useLiveWins'
+import { useLiveWins, useLiveWinsPolling } from '@/composables/useLiveWins'
 
 const props = withDefaults(
   defineProps<{
@@ -53,6 +53,7 @@ const { club, clubId, tribeId, visibleRooms, visibleMatches, tournamentSeries, p
 useChannelCVersionRouting()
 const ready = useChannelCDataReady(toRef(props, 'ready'))
 const { liveWinItems, liveWinInterval, findLiveWinGame } = useLiveWins(clubId)
+useLiveWinsPolling(computed(() => props.section === 'home'))
 const { play } = useCasinoGameLaunch()
 const { banners, isBannerLoaded, fetchLobbyBannerImages, refreshLobbyBanner } = useLobbyBannerImages('c')
 const roomStore = useRoomListStore()

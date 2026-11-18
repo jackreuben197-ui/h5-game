@@ -1,4 +1,13 @@
-import { computed, ref, watch, type Ref } from 'vue'
+import {
+  computed,
+  onActivated,
+  onBeforeUnmount,
+  onDeactivated,
+  onMounted,
+  ref,
+  watch,
+  type Ref,
+} from 'vue'
 import {
   CATEGORY_API_TYPES,
   getGamesByCategoryClub,
@@ -10,6 +19,9 @@ import { useCasinoStore } from '@/stores/casino'
 
 const ACTIVE_STATE = 1
 const DEFAULT_ROTATION_SECONDS = 3
+const LIVE_WINS_POLL_MS = 60_000
+
+let lastLiveWinsRefreshAt = Date.now()
 
 interface LiveWinRecord {
   id?: unknown
@@ -140,4 +152,46 @@ export function useLiveWins(clubId?: Ref<number>) {
   }
 
   return { liveWinItems, liveWinInterval, findLiveWinGame }
+}
+
+export function useLiveWinsPolling(enabled: Ref<boolean>) {
+  const appConfigStore = useAppConfigStore()
+  let timer: ReturnType<typeof setTimeout> | undefined
+  let attached = false
+
+  function stop() {
+    clearTimeout(timer)
+    timer = undefined
+  }
+
+  function schedule() {
+    stop()
+    if (!attached || !enabled.value || document.hidden) return
+    const delay = Math.max(0, lastLiveWinsRefreshAt + LIVE_WINS_POLL_MS - Date.now())
+    timer = setTimeout(async () => {
+      timer = undefined
+      await appConfigStore.refreshLiveWinsConfig()
+      lastLiveWinsRefreshAt = Date.now()
+      schedule()
+    }, delay)
+  }
+
+  function attach() {
+    if (attached) return
+    attached = true
+    document.addEventListener('visibilitychange', schedule)
+    schedule()
+  }
+
+  function detach() {
+    attached = false
+    document.removeEventListener('visibilitychange', schedule)
+    stop()
+  }
+
+  watch(enabled, schedule)
+  onMounted(attach)
+  onActivated(attach)
+  onDeactivated(detach)
+  onBeforeUnmount(detach)
 }

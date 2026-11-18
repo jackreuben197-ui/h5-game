@@ -46,6 +46,26 @@ let globalConfigRefreshPromise: Promise<boolean> | null = null
 let globalConfigRefreshSessionKey = ''
 let globalConfigLoadedSessionKey = ''
 let lastGlobalConfigRefresh: { sessionKey: string; promise: Promise<boolean> } | null = null
+let liveWinsRefreshPromise: Promise<void> | null = null
+let liveWinsUpdateTime = 0
+
+const NO_AUTH_API_GLOBAL_CONFIG = 1
+const LIVE_WINS_CONFIG_KEYS = [
+  'extend_live_wins_info',
+  'extend_live_wins_rotation_interval',
+] as const
+
+function extractGuestGlobalConfigUpdateTime(
+  data: Record<string, unknown> | null | undefined,
+): number {
+  if (!data) return 0
+  const inner = data.data as Record<string, unknown> | null | undefined
+  const resp = (data.global_config_resp ?? inner?.global_config_resp) as {
+    last_update_time?: unknown
+  } | null
+  const value = Number(resp?.last_update_time)
+  return Number.isFinite(value) && value > 0 ? value : 0
+}
 
 // 兼容 global_config_resp 挂在 data 顶层或 data.data 内层两种返回结构。
 function extractGuestGlobalConfig(
@@ -200,6 +220,35 @@ export const useAppConfigStore = defineStore('h5-appConfig-store', {
           })
       }
       await guestGlobalConfigPromise
+    },
+    refreshLiveWinsConfig(): Promise<void> {
+      if (liveWinsRefreshPromise) return liveWinsRefreshPromise
+      liveWinsRefreshPromise = postBeforeLoginConfigApi({
+        no_auth_api_list: [NO_AUTH_API_GLOBAL_CONFIG],
+        global_config_req: { last_update_time: liveWinsUpdateTime },
+      })
+        .then((response) => {
+          if (Number(response.code) !== 0 || !response.data) return
+          const config = extractGuestGlobalConfig(response.data)
+          const current = this.globalConfig
+          if (config) {
+            if (!current) return
+            LIVE_WINS_CONFIG_KEYS.forEach((key) => {
+              if (JSON.stringify(current[key]) !== JSON.stringify(config[key])) {
+                current[key] = config[key] as never
+              }
+            })
+          }
+          const updateTime = extractGuestGlobalConfigUpdateTime(response.data)
+          if (updateTime) liveWinsUpdateTime = updateTime
+        })
+        .catch((error) => {
+          console.warn('[appConfig] refresh live wins config failed:', error)
+        })
+        .finally(() => {
+          liveWinsRefreshPromise = null
+        })
+      return liveWinsRefreshPromise
     },
     async ensurePlatformDomainsReady(): Promise<boolean> {
       // 本次会话以服务端列表为准，避免旧缓存误判新加入的平台域名。

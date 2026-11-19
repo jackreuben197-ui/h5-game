@@ -278,7 +278,24 @@
         var root = document.documentElement
         var lastViewportSignature = ''
 
+        function hasIosBrowserChrome() {
+          var innerWidth = Number(window.innerWidth) || 0
+          var innerHeight = Number(window.innerHeight) || 0
+          var screenWidth = window.screen ? Number(window.screen.width) || 0 : 0
+          var screenHeight = window.screen ? Number(window.screen.height) || 0 : 0
+          if (!innerWidth || !innerHeight || !screenWidth || !screenHeight) {
+            return false
+          }
+          var expectedHeight = innerWidth > innerHeight
+            ? Math.min(screenWidth, screenHeight)
+            : Math.max(screenWidth, screenHeight)
+          return innerHeight / expectedHeight < 0.9
+        }
+
         function isIosStandalone() {
+          if (typeof window.__H5_IOS_STANDALONE__ === 'boolean') {
+            return window.__H5_IOS_STANDALONE__
+          }
           var nav = window.navigator || {}
           var ua = String(nav.userAgent || '')
           var isIos = /iPad|iPhone|iPod/.test(ua)
@@ -286,7 +303,8 @@
           var isStandalone = nav.standalone === true
             || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
 
-          return isIos && isStandalone
+          window.__H5_IOS_STANDALONE__ = Boolean(isIos && isStandalone && !hasIosBrowserChrome())
+          return window.__H5_IOS_STANDALONE__
         }
 
         if (isIosStandalone()) {
@@ -1761,6 +1779,9 @@
     <script>
       ;(function () {
         function isIosStandalone() {
+          if (typeof window.__H5_IOS_STANDALONE__ === 'boolean') {
+            return window.__H5_IOS_STANDALONE__
+          }
           var nav = window.navigator || {}
           var ua = String(nav.userAgent || '')
           var isIos = /iPad|iPhone|iPod/.test(ua)

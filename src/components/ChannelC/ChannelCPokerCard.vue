@@ -17,6 +17,7 @@ import critical from '@/assets/icons/table_icon_critical.png'
 import aof from '@/assets/icons/table_icon_Aof.png'
 import chips from '@/assets/icons/icon_chips.png'
 import micIcon from '@/assets/channelC/table-mic.svg'
+import videoIcon from '@/assets/channelC/table-video.svg'
 import { t } from '@/i18n'
 
 const props = defineProps<{ room: RoomRecord; now: number; desktopIconUrl?: string; joining?: boolean }>()
@@ -41,6 +42,12 @@ const playerCount = computed(() => getRoomPlayerCount(props.room))
 const seatCount = computed(() => Math.max(2, Number(props.room.seat_count) || 8))
 const timeText = computed(() => getRoomTimeText(props.room, props.now))
 const isVoiceTable = computed(() => Number(props.room.anti_cheat_type) === 2)
+const isVideoTable = computed(() => Number(props.room.anti_cheat_type) === 3)
+const mediaIcon = computed(() => {
+  if (isVideoTable.value) return videoIcon
+  if (isVoiceTable.value) return micIcon
+  return null
+})
 const showParticipation = computed(() => isRoomParticipated(props.room))
 const buyIn = computed(() => formatUC(getRoomBuyIn(props.room)))
 const specialModes = computed(() =>
@@ -77,9 +84,14 @@ function fallbackDesktopIcon(event: Event) {
       <span class="c-playing">
         <span>{{ t('UIChannelC_Playing', playerCount, seatCount) }}</span>
       </span>
-      <span v-if="showParticipation" class="c-participated">
-        <span>{{ t('UIFriendsTable_Text3') }}</span>
-      </span>
+      <div v-if="showParticipation || mediaIcon" class="c-table-badges">
+        <span v-if="showParticipation" class="c-participated">
+          <span>{{ t('UIFriendsTable_Text3') }}</span>
+        </span>
+        <span v-if="mediaIcon" class="c-media-badge">
+          <img class="c-media-icon" :src="mediaIcon" alt="" />
+        </span>
+      </div>
       <div class="c-table-label">
         <div v-if="specialModes.length" class="c-special-modes">
           <span v-for="mode in specialModes" :key="mode.label">
@@ -90,7 +102,6 @@ function fallbackDesktopIcon(event: Event) {
         <strong v-else :class="`c-table-name--${kind}`">{{ gameName }}</strong>
         <span class="c-table-time">
           <span>{{ timeText }}</span>
-          <img v-if="isVoiceTable" class="c-table-mic" :src="micIcon" alt="" />
         </span>
       </div>
       <img
@@ -186,11 +197,19 @@ function fallbackDesktopIcon(event: Event) {
 }
 
 
-.c-participated {
+.c-table-badges {
   position: absolute;
   z-index: 2;
   top: 0.048rem;
   right: 0.12rem;
+  display: flex;
+  align-items: center;
+  gap: 0.08rem;
+  max-width: 55%;
+}
+
+.c-participated {
+  position: relative;
   display: flex;
   align-items: center;
   height: 0.432rem;
@@ -201,7 +220,7 @@ function fallbackDesktopIcon(event: Event) {
   font-size: 0.225rem;
   line-height: normal;
   white-space: nowrap;
-  max-width: 45%;
+  min-width: 0;
 }
 
 .c-participated > span {
@@ -212,6 +231,30 @@ function fallbackDesktopIcon(event: Event) {
 
 .c-participated::after {
   @include gradient-stroke(1px, linear-gradient(90deg, #fff3, #ffffff0a));
+}
+
+.c-media-badge {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 0.432rem;
+  height: 0.432rem;
+  border-radius: 0.15rem;
+  background: #000c;
+}
+
+.c-media-badge::after {
+  @include gradient-stroke(1px, linear-gradient(90deg, #fff3, #ffffff0a));
+}
+
+.c-media-icon {
+  width: 0.25rem;
+  height: 0.25rem;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
 }
 
 .c-playing::before {
@@ -269,15 +312,6 @@ function fallbackDesktopIcon(event: Event) {
   line-height: 0.308rem;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
-}
-.c-table-mic {
-  position: absolute;
-  left: calc(100% + 0.1rem);
-  top: calc(50% - 0.45rem);
-  width: 0.39rem;
-  height: 0.39rem;
-  mix-blend-mode: overlay;
-  pointer-events: none;
 }
 
 .c-special-modes > span {

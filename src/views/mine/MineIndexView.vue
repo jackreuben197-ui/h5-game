@@ -7,7 +7,6 @@ import iconDiamond from '@/assets/icons/icon_diamond.png'
 import iconAddDark from '@/assets/icons/icon_add.svg'
 import iconAddLight from '@/assets/icons/icon_add_light.svg'
 import { theme } from '@/utils/theme'
-import iconChip from '@/assets/icons/icon_chips.png'
 import { t } from '@/i18n'
 import iconBoxClubT from '@/assets/icons/icon_club_data.png'
 import iconBoxFriendT from '@/assets/icons/icon_box_friend_t.png'
@@ -21,7 +20,6 @@ import defaultAvatar from '@/assets/images/default_avatar.png'
 import meBanner from '@/assets/images/me_banner.png'
 import ProfileCard from '@/components/ProfileCard/ProfileCard.vue'
 import { isChannelDiamondFreeMode, isPrivateDomainMode } from '@/utils/channelPackage'
-import { formatUC } from '@/utils/roomVisibility'
 import { requireRealUser } from '@/session/realUserGate'
 
 const router = useRouter()
@@ -110,19 +108,13 @@ const displayUser = computed(() => {
       userID: '-',
       avatar: defaultAvatar,
       diamond: 0,
-      gold: 0,
     }
-  }
-  let totalGold = 0
-  for (const club of userInfoStore.clubList || []) {
-    totalGold += club.user_gold ?? 0
   }
   return {
     nickname: userInfoStore.userInfo?.user.nickname || gameStore.loginNickname || '-',
     userID: userInfoStore.userInfo?.user.un_id || gameStore.loginUserId || '-',
     avatar: userInfoStore.userInfo?.user.avatar || defaultAvatar,
     diamond: userInfoStore.userInfo?.user.diamonds ?? 0,
-    gold: totalGold,
   }
 })
 </script>
@@ -149,18 +141,14 @@ const displayUser = computed(() => {
       :bg-image="meBanner"
       @avatar-click="goToProfileEdit"
     >
-      <template #bottom>
+      <template v-if="!hideDiamondElements" #bottom>
         <div class="left-board">
-          <div v-if="isChannelPackage" class="currency">
-            <img class="icon-currency" :src="iconChip" alt="gold" />
-            <div class="num">{{ formatUC(displayUser.gold) }}</div>
-          </div>
-          <div v-if="!hideDiamondElements" class="currency">
+          <div class="currency">
             <img class="icon-currency" :src="iconDiamond" alt="diamond" />
             <div class="num">{{ displayUser.diamond.toLocaleString() }}</div>
           </div>
         </div>
-        <button v-if="!hideDiamondElements" class="button" type="button" @click="goToMineShop">
+        <button class="button" type="button" @click="goToMineShop">
           <div v-fit-text="{ maxLines: 1 }" class="text">{{ t('UIHappyShop_ActivityShop') }}</div>
           <div class="round-icon">
             <img :src="iconShop" alt="我的商城" />

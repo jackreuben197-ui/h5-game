@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent } from 'vue'
+import { useRoute } from 'vue-router'
 import { H5_LOGIN_CONTEXT } from '@bridge-protocol'
 import GlobalCsOrderFloat from '@/components/GlobalCsOrderFloat/GlobalCsOrderFloat.vue'
 import TelegramClubJoinModal from '@/components/Dialog/TelegramClubJoinModal.vue'
@@ -9,8 +10,15 @@ import { useLoginModalStore } from '@/stores/loginModal'
 import ExternalLinkFrame from '@/components/ExternalLinkFrame/ExternalLinkFrame.vue'
 import LoginModal from '@/views/login/LoginModal.vue'
 
+const route = useRoute()
 const gameStore = useGameStore()
 const loginModalStore = useLoginModalStore()
+const keptAliveRouteViews = computed<string[]>(() => {
+  const isMainLayoutRoute = route.matched[0]?.path === '/'
+  const isWalletRoute =
+    route.matched.length === 1 && (route.path === '/wallet' || route.path.startsWith('/wallet/'))
+  return isMainLayoutRoute || isWalletRoute ? ['MainLayoutView'] : []
+})
 const hasRealUserSession = computed(() => gameStore.isRealUser)
 const shouldMountRechargeRewardPopup = computed(
   () => import.meta.env.DEV || hasRealUserSession.value,
@@ -37,7 +45,11 @@ const GlobalRechargeRewardPopup = defineAsyncComponent(
     class="h5-route-host"
     :class="{ 'h5-route-host--table-auth': isCocosTableAuthOverlay }"
   >
-    <RouterView />
+    <RouterView v-slot="{ Component }">
+      <KeepAlive :include="keptAliveRouteViews">
+        <component :is="Component" v-if="Component" />
+      </KeepAlive>
+    </RouterView>
   </div>
   <LoginModal />
   <GlobalBridgeDialogHost />

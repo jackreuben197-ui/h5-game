@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
+import { computed, onActivated, onDeactivated, onMounted, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import mainBgUrl from '@/assets/images/main_bg.webp'
 import mainBg2Url from '@/assets/images/main_bg2.jpg'
@@ -22,6 +22,8 @@ import { localStore } from '@/utils/localStore'
 import { useUserInfoStore } from '@/stores/userInfo'
 import { isPrivateDomainMode } from '@/utils/channelPackage'
 import { useChannelBottomMenu } from '@/composables/useChannelBottomMenu'
+
+defineOptions({ name: 'MainLayoutView' })
 
 const route = useRoute()
 const gameStore = useGameStore()
@@ -59,6 +61,7 @@ const isMessage = computed(() => route.meta.tabKey === 'message')
 const isMine = computed(() => route.meta.tabKey === 'mine')
 const isFriendsTable = computed(() => route.meta.tabKey === 'friendsTable')
 const isHomeRoute = computed(() => route.name === 'lobby')
+const isOwnRoute = computed(() => route.matched[0]?.path === '/')
 const isHomeMenu = computed(() => route.name === 'lobby')
 const isSearchRoute = computed(() => route.name === 'channel-c-search')
 const hideBottomMenu = computed(
@@ -156,11 +159,25 @@ function resolveLanguageCode(user: Record<string, unknown>): string {
   return ''
 }
 
-onMounted(() => {
+function enterMainLayout(): void {
   void fetchUserInfoOnEnter()
   if (isPrivateDomainMode() && !gameStore.isRealUser) {
     void userInfoStore.ensureChannelDefaultClub()
   }
+}
+
+let wasDeactivated = false
+
+onMounted(enterMainLayout)
+
+onDeactivated(() => {
+  wasDeactivated = true
+})
+
+onActivated(() => {
+  if (!wasDeactivated) return
+  wasDeactivated = false
+  enterMainLayout()
 })
 
 // 路由变化时同步底部 Tab 共享状态，确保子页面也能维持正确高亮。
@@ -206,7 +223,7 @@ watch(
           <KeepAlive>
             <component :is="Component" v-if="isHomeRoute" />
           </KeepAlive>
-          <component :is="Component" v-if="!isHomeRoute" />
+          <component :is="Component" v-if="!isHomeRoute && isOwnRoute" />
         </RouterView>
       </section>
     </div>

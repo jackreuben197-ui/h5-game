@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onActivated, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMainTabsStore, type MainTabKey } from '@/stores/mainTabs'
 import { useCasinoStore } from '@/stores/casino'
@@ -484,6 +484,11 @@ onMounted(() => {
     if (componentMounted) refreshPathByCurrentTab()
   })
   void stabilizeDynamicTabs()
+})
+
+onActivated(() => {
+  stopAnimation()
+  refreshPathByCurrentTab()
 })
 
 onBeforeUnmount(() => {

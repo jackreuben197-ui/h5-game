@@ -1,5 +1,6 @@
 <script lang="ts">
 let lastCommittedHomeContentMode: 'zones' | 'mtt' | 'poker' | 'casino' | null = null
+let hasClubSplashCompleted = false
 </script>
 
 <script setup lang="ts">
@@ -537,6 +538,7 @@ let layoutTimeoutTimer: ReturnType<typeof setTimeout> | null = null
 const isHomeLayoutReady = computed(() => {
   // 超时兜底：若网络异常或超时，直接展示默认布局，避免永久停留
   if (layoutTimeoutReached.value) return true
+  if (homeContentReady.value) return true
 
   // 1. 若全局域名配置尚未就绪，说明还在冷启动等待判定当前域名是官方还是渠道，保持在 splash 壳下
   if (!appConfigStore.platformDomainsReady) return false
@@ -547,8 +549,6 @@ const isHomeLayoutReady = computed(() => {
   // 3. 渠道包 / 私域模式：必须等待默认俱乐部配置确认 (以确定是 Version A, B, 还是 C)
   return userInfoStore.isChannelDefaultClubResolved
 })
-
-let hasClubSplashCompleted = false
 
 // 仅对俱乐部私域链接（非平台官方大厅）展示 splash：
 const isClubSplashEligible = computed(() => {

@@ -205,8 +205,10 @@ onBeforeUnmount(() => {
         </p>
 
         <div class="reward-card__list">
-          <div v-if="current.rewardGold" class="reward-card__item">
-            <img class="reward-card__coin-image" :src="rewardCoin" alt="" />
+          <div v-if="current.rewardGold" class="reward-card__item reward-card__item--coin">
+            <span class="reward-card__icon">
+              <img class="reward-card__coin-image" :src="rewardCoin" alt="" />
+            </span>
             <div class="reward-card__item-copy">
               <p>
                 <span>{{ t('UIChannelC_AllianceCoin') }}</span>
@@ -219,25 +221,27 @@ onBeforeUnmount(() => {
             :key="`${reward.propId}-${reward.propName}`"
             class="reward-card__item"
           >
-            <img
-              v-if="reward.propIcon"
-              class="reward-card__item-image"
-              :src="reward.propIcon"
-              alt=""
-            />
-            <svg v-else class="reward-card__ticket" viewBox="0 0 48 36" aria-hidden="true">
-              <path
-                d="M4 7.5A3.5 3.5 0 0 1 7.5 4h33A3.5 3.5 0 0 1 44 7.5v5.1a5.6 5.6 0 0 0 0 10.8v5.1a3.5 3.5 0 0 1-3.5 3.5h-33A3.5 3.5 0 0 1 4 28.5v-5.1a5.6 5.6 0 0 0 0-10.8Z"
+            <span class="reward-card__icon">
+              <img
+                v-if="reward.propIcon"
+                class="reward-card__item-image"
+                :src="reward.propIcon"
+                alt=""
               />
-              <path d="M24 11.5l2.2 4.4 4.8.7-3.5 3.4.8 4.8-4.3-2.3-4.3 2.3.8-4.8-3.5-3.4 4.8-.7Z" />
-            </svg>
+              <svg v-else class="reward-card__ticket" viewBox="0 0 48 36" aria-hidden="true">
+                <path
+                  d="M4 7.5A3.5 3.5 0 0 1 7.5 4h33A3.5 3.5 0 0 1 44 7.5v5.1a5.6 5.6 0 0 0 0 10.8v5.1a3.5 3.5 0 0 1-3.5 3.5h-33A3.5 3.5 0 0 1 4 28.5v-5.1a5.6 5.6 0 0 0 0-10.8Z"
+                />
+                <path d="M24 11.5l2.2 4.4 4.8.7-3.5 3.4.8 4.8-4.3-2.3-4.3 2.3.8-4.8-3.5-3.4 4.8-.7Z" />
+              </svg>
+            </span>
             <div class="reward-card__item-copy">
               <p>
                 <span>{{ displayRewardName(reward) }}</span>
                 <strong>×{{ reward.quantity }}</strong>
               </p>
               <small v-if="reward.propValue > 0">
-                （{{ t('UIRechargeReward_Value', reward.propValue) }}x{{ reward.quantity }}）
+                {{ t('UIRechargeReward_Value', reward.propValue) }} × {{ reward.quantity }}
               </small>
             </div>
           </div>
@@ -390,18 +394,24 @@ onBeforeUnmount(() => {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   font-family: var(--wallet-font-cn, 'HONOR Sans CN');
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 26px;
+  font-weight: 700;
   line-height: 1.3;
   letter-spacing: 0.2px;
 }
 
 .reward-card__description {
-  margin: 0 4px 8px;
-  color: rgba(255, 255, 255, 0.72);
+  margin: 0 4px 4px;
+  color: rgba(255, 255, 255, 0.9);
   font-family: var(--wallet-font-cn, 'HONOR Sans CN');
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+:root[data-locale='cn'] .reward-card__description,
+:root[data-locale='zh'] .reward-card__description {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .reward-card__list {
@@ -409,48 +419,44 @@ onBeforeUnmount(() => {
   width: 100%;
   max-height: min(230px, 32vh);
   flex-direction: column;
-  gap: 10px;
   overflow-y: auto;
-  padding: 14px 16px;
+  padding: 0 16px;
   text-align: left;
-  border: 0.5px solid rgba(242, 242, 242, 0.18);
-  border-radius: 18px;
-  background: linear-gradient(97deg, rgba(255, 255, 255, 0.1) 21.11%, rgba(230, 230, 230, 0.1) 71.43%);
-
-  @include theme-light-own {
-    border-color: rgba(242, 242, 242, 0.1);
-    background: linear-gradient(97deg, #1f1f1f 21.11%, #191919 71.43%);
-  }
 }
 
 .reward-card__item {
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+  padding: 12px 0;
 }
 
-.reward-card__item + .reward-card__item::before {
-  content: '+';
-  flex: 0 0 9px;
-  margin-left: -10px;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 16px;
-  font-weight: 700;
+.reward-card__item + .reward-card__item {
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+
+  @include theme-light-own {
+    border-top-color: rgba(255, 255, 255, 0.3);
+  }
+}
+
+.reward-card__icon {
+  display: flex;
+  flex: 0 0 48px;
+  align-items: center;
+  justify-content: center;
 }
 
 .reward-card__ticket,
 .reward-card__item-image {
-  flex: 0 0 48px;
   width: 48px;
   height: 36px;
   object-fit: contain;
 }
 
 .reward-card__coin-image {
-  flex: 0 0 48px;
-  width: 48px;
-  height: 48px;
+  width: 38px;
+  height: 38px;
   object-fit: contain;
 }
 
@@ -470,39 +476,42 @@ onBeforeUnmount(() => {
   display: flex;
   min-width: 0;
   flex: 1;
-  align-items: baseline;
-  gap: 5px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .reward-card__item-copy p {
-  display: flex;
-  min-width: 0;
-  align-items: baseline;
-  gap: 6px;
-  flex-wrap: wrap;
   margin: 0;
-  color: var(--c-text, #fff);
+  color: #fff;
   font-family: var(--wallet-font-cn, 'HONOR Sans CN');
-  font-size: 14px;
-}
-
-.reward-card__item-copy p span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .reward-card__item-copy strong {
-  flex: 0 0 auto;
-  color: #ffe26f;
+  margin-left: 6px;
+  color: #fff;
   font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.reward-card__item--coin .reward-card__item-copy p span {
+  font-weight: 500;
+}
+
+.reward-card__item--coin .reward-card__item-copy strong {
+  margin-left: 10px;
+  font-size: 20px;
 }
 
 .reward-card__item-copy small {
-  flex: 0 0 auto;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: var(--wallet-font-cn, 'HONOR Sans CN');
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .reward-card__confirm {
@@ -510,7 +519,7 @@ onBeforeUnmount(() => {
   display: flex;
   width: 100%;
   height: 48px;
-  margin-top: 8px;
+  margin-top: 12px;
   align-items: center;
   justify-content: center;
   border: none;

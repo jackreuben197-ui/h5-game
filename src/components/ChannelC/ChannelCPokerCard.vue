@@ -88,9 +88,7 @@ function fallbackDesktopIcon(event: Event) {
         <span v-if="showParticipation" class="c-participated">
           <span>{{ t('UIFriendsTable_Text3') }}</span>
         </span>
-        <span v-if="mediaIcon" class="c-media-badge">
-          <img class="c-media-icon" :src="mediaIcon" alt="" />
-        </span>
+        <img v-if="mediaIcon" class="c-media-icon" :src="mediaIcon" alt="" />
       </div>
       <div class="c-table-label">
         <div v-if="specialModes.length" class="c-special-modes">
@@ -233,28 +231,14 @@ function fallbackDesktopIcon(event: Event) {
   @include gradient-stroke(1px, linear-gradient(90deg, #fff3, #ffffff0a));
 }
 
-.c-media-badge {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: none;
-  width: 0.432rem;
-  height: 0.432rem;
-  border-radius: 0.15rem;
-  background: #000c;
-}
-
-.c-media-badge::after {
-  @include gradient-stroke(1px, linear-gradient(90deg, #fff3, #ffffff0a));
-}
-
 .c-media-icon {
-  width: 0.25rem;
-  height: 0.25rem;
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
   object-fit: contain;
   display: block;
   pointer-events: none;
+  filter: drop-shadow(0 0.02rem 0.04rem rgba(0, 0, 0, 0.75)) drop-shadow(0 0 0.08rem rgba(0, 240, 160, 0.55));
 }
 
 .c-playing::before {

@@ -61,7 +61,12 @@ function recharge() {
         }}
       </p>
     </div>
-    <ChannelCRewardLoadState :loading="loading" :failed="failed" @retry="$emit('retry')">
+    <ChannelCRewardLoadState
+      class="c-recharge-list"
+      :loading="loading"
+      :failed="failed"
+      @retry="$emit('retry')"
+    >
       <div class="c-recharge-tiers">
         <div
           v-for="(tier, index) in tiers"
@@ -147,11 +152,26 @@ function recharge() {
   font-size: r(12.27);
   font-weight: 500;
 }
+.c-reward-tabs,
+.c-recharge-promotion,
+.c-recharge-rules,
+.c-reward-primary {
+  flex-shrink: 0;
+}
+.c-recharge-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
 .c-recharge-tiers {
   display: flex;
   flex-direction: column;
   gap: r(10);
-  min-height: r(216.15);
   margin-top: r(12.27);
 }
 .c-recharge-tier {

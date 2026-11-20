@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { GameDialog } from '@/components/Dialog'
 import { t } from '@/i18n'
+import { resolvedThemeRef } from '@/utils/theme'
 import type { RewardKind } from '@/features/channelC/rewards'
 import closeIcon from '@/assets/channelC/reward-close.svg'
 
@@ -9,6 +11,9 @@ withDefaults(defineProps<{ title: string; kind?: RewardKind; thinBorder?: boolea
   thinBorder: false,
 })
 const show = defineModel<boolean>('show', { required: true })
+const overlayStyle = computed(() =>
+  resolvedThemeRef.value === 'light' ? undefined : { '--c-overlay': 'rgba(0, 0, 0, 0.53)' },
+)
 </script>
 
 <template>
@@ -17,10 +22,10 @@ const show = defineModel<boolean>('show', { required: true })
     class="c-reward-dialog"
     :class="[`c-reward-dialog--${kind}`, { 'c-reward-dialog--thin': thinBorder }]"
     dialog-width="min(9.4872rem, calc(100vw - 0.5128rem))"
-    body-max-height="calc(100dvh - 3rem)"
+    body-max-height="none"
     :show-footer="false"
     :close-on-click-overlay="true"
-    :overlay-style="{ '--c-overlay': 'rgba(0, 0, 0, 0.53)' }"
+    :overlay-style="overlayStyle"
     :card-style="{
       background: 'rgba(0, 0, 0, 0.1)',
       border: 'var(--reward-card-border)',
@@ -56,7 +61,7 @@ const show = defineModel<boolean>('show', { required: true })
 }
 
 .c-reward-dialog.van-dialog {
-  top: calc(50% + #{r(0.94)});
+  top: calc(50% + (var(--reward-top-clearance) - var(--reward-nav-clearance)) / 2);
   max-width: calc(100vw - 0.5128rem);
 }
 
@@ -69,6 +74,8 @@ const show = defineModel<boolean>('show', { required: true })
 
 // GameDialog 会 teleport；活动弹窗专用类隔离全局主题覆盖。
 .c-reward-dialog {
+  --reward-top-clearance: var(--app-viewport-safe-area-top, env(safe-area-inset-top));
+  --reward-nav-clearance: calc(env(safe-area-inset-bottom) + 2.6rem);
   --reward-hairline: 0.4;
   --reward-card-shadow: inset #{r(-2.275)} #{r(-2.275)} #{r(10.615)} rgba(255, 255, 255, 0.4),
     inset #{r(1.516)} #{r(2.275)} #{r(23.86)} rgba(255, 255, 255, 0.64),
@@ -82,11 +89,17 @@ const show = defineModel<boolean>('show', { required: true })
   --reward-close-right: #{r(-2.28)};
   .game-dialog__card {
     gap: r(4.58);
+    max-height: calc(
+      100dvh - var(--reward-top-clearance) - var(--reward-nav-clearance) - 0.8rem
+    );
     padding: r(20.47) r(14.96) r(27.47);
     border: var(--reward-card-border) !important;
     border-radius: var(--reward-card-radius);
     background: rgba(0, 0, 0, 0.1);
     box-shadow: var(--reward-card-shadow);
+  }
+  .game-dialog__body {
+    min-height: 0;
   }
   .game-dialog__title,
   .game-dialog__body {
@@ -139,15 +152,9 @@ const show = defineModel<boolean>('show', { required: true })
     outline-offset: 2px;
   }
 }
-html[data-theme='light'] .c-reward-dialog.van-dialog .game-dialog__card {
-  border: var(--reward-card-border) !important;
-  background: rgba(0, 0, 0, 0.1) !important;
-  box-shadow: var(--reward-card-shadow) !important;
-
-  &::before,
-  &::after {
-    display: none !important;
-  }
+html[data-theme='light'] .game-dialog.c-reward-dialog.van-dialog {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 @media (min-resolution: 3dppx) {
   .c-reward-dialog {
@@ -165,6 +172,15 @@ html[data-theme='light'] .c-reward-dialog.van-dialog .game-dialog__card {
   .game-dialog__card {
     gap: r(13.22);
     padding: r(25.5) r(19.54) r(26.8);
+  }
+  .game-dialog__body,
+  .c-reward-frame {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .c-reward-frame {
+    flex: 1 1 auto;
   }
 }
 .c-reward-dialog--invite,

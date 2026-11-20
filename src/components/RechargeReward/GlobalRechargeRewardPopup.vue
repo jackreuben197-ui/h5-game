@@ -270,6 +270,15 @@ onBeforeUnmount(() => {
 
   @include theme-light-own {
     background: rgba(12, 12, 12, 0.6);
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      pointer-events: none;
+    }
   }
 }
 
